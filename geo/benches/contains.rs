@@ -1,7 +1,16 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use geo::algorithm::{Contains, Convert, Relate};
-use geo::geometry::*;
-use geo::{coord, point, polygon};
+use geo::contains::IndexedMultiPolygon;
+use geo::coordinate_position::CoordPos;
+use geo::{BoundingRect, coord, point, polygon};
+use geo::{CoordinatePosition, geometry::*};
+
+#[path = "utils/random.rs"]
+mod random;
+use rand::thread_rng;
+use random::*;
+
+const NUMPOINTS: i32 = 1_000_000;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("point in simple polygon", |bencher| {
@@ -194,27 +203,45 @@ fn criterion_benchmark(c: &mut Criterion) {
         });
     });
 
-    c.bench_function("MultiPolygon contains MultiPoint (Contains trait)", |bencher| {
-        let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
-        let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
-        let multi_poly = MultiPolygon(vec![p_1, p_2]);
-        let multi_point: MultiPoint<f64> = geo::wkt!(MULTIPOINT (-60 10,-60 -70,-120 -70,-120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100 -230,-185 -230)).convert();
+    let multi_poly: MultiPolygon<f64> = geo_test_fixtures::nl_zones();
+    // these points are guaranteed to fall within the mp
+    let bounds = Rect::new(
+        Coord {
+            x: 5.555,
+            y: 52.341,
+        },
+        Coord { x: 5.57, y: 52.351 },
+    );
+    let points: Vec<Point<f64>> = (0..NUMPOINTS)
+        .map(|_| Point(uniform_point(&mut thread_rng(), bounds)))
+        .collect();
+    let multi_point = MultiPoint::new(points);
 
-        bencher.iter(|| {
-            assert!(multi_poly.contains(&multi_point));
-        });
-    });
+    c.bench_function(
+        "MultiPolygon contains MultiPoint (Contains trait)",
+        |bencher| {
+            bencher.iter(|| {
+                assert!(multi_poly.contains(&multi_point));
+            });
+        },
+    );
 
-    c.bench_function("MultiPolygon contains MultiPoint (Relate trait)", |bencher| {
-        let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
-        let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
-        let multi_poly = MultiPolygon(vec![p_1, p_2]);
-        let multi_point: MultiPoint<f64> = geo::wkt!(MULTIPOINT (-60 10,-60 -70,-120 -70,-120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100 -230,-185 -230)).convert();
+    c.bench_function(
+        "MultiPolygon contains MultiPoint (Relate trait)",
+        |bencher| {
+            let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
+            let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
+            let multi_poly = MultiPolygon(vec![p_1, p_2]);
+            let multi_point: MultiPoint<f64> = geo::wkt!(MULTIPOINT (-60 10,-60 -70,-120 -70, 
+    -120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100  
+    -230,-185 -230))
+            .convert();
 
-        bencher.iter(|| {
-            assert!(multi_poly.relate(&multi_point).is_contains());
-        });
-    });
+            bencher.iter(|| {
+                assert!(multi_poly.relate(&multi_point).is_contains());
+            });
+        },
+    );
 
     c.bench_function("MultiPolygon not contains MultiPoint (Contains trait)", |bencher| {
         let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
@@ -237,6 +264,54 @@ fn criterion_benchmark(c: &mut Criterion) {
             assert!(multi_poly.relate(&multi_point).is_contains());
         });
     });
+
+    let zones: MultiPolygon<f64> = geo_test_fixtures::nl_zones();
+    let bound = zones.bounding_rect().unwrap();
+    let mut coords = vec![];
+
+    // Generate a bunch of points inside the zone bounds
+    let size = 20;
+    let mut x = bound.min().x;
+    for _ in 0..=size {
+        let mut y = bound.min().y;
+        for _ in 0..=size {
+            coords.push(Coord { x, y });
+            y += bound.height() / size as f64;
+        }
+
+        x += bound.width() / size as f64;
+    }
+
+    #[allow(unused_variables)]
+    c.bench_function("Indexed MultiPolygon contains Point (n = 20)", |bencher| {
+        let indexed = IndexedMultiPolygon::new(&zones);
+
+        bencher.iter(|| {
+            let mut inside = 0;
+
+            for c in &coords {
+                if indexed.contains_point(*c) {
+                    inside += 1
+                }
+            }
+        });
+    });
+
+    #[allow(unused_variables)]
+    c.bench_function(
+        "Unindexed MultiPolygon contains Point (n = 20)",
+        |bencher| {
+            bencher.iter(|| {
+                let mut inside = 0;
+
+                for c in &coords {
+                    if zones.coordinate_position(c) == CoordPos::Inside {
+                        inside += 1
+                    }
+                }
+            });
+        },
+    );
 }
 
 fn bench_line_contains_multi_point(c: &mut Criterion) {

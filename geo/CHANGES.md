@@ -27,6 +27,7 @@
 - Fix false positive convexity check for "star polygon" LineStrings
   - BREAKING: previously, an empty LineString was considered non-convex. This has changed: empty LineStrings are now considered convex, in line with tools such as PostGIS
 - Update to proj 0.31.0 (libproj 9.6.2)
+- Use an interval tree for faster (Multi)Point in MultiPolygon checks 
 
 ## Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
 
