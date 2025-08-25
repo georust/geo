@@ -49,11 +49,8 @@ pub(crate) mod convert {
 
     pub fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<BoolOpsCoord<T>>>) -> Polygon<T> {
         let mut rings = shape.into_iter().map(|path| {
-            // From i_overlay: > Note: Outer boundary paths have a clockwise order, and holes have a counterclockwise order.
-            // Which is the opposite convention we use.
             let mut line_string = line_string_from_path(path);
             line_string.close();
-            line_string.0.reverse();
             line_string
         });
         let exterior = rings.next().unwrap_or(LineString::new(vec![]));

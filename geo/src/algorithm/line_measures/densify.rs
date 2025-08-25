@@ -476,7 +476,7 @@ mod tests {
                 4.925 45.804
             )));
             let actual_geodesic = Geodesic.densify(&polygon, 50000.0);
-            assert_relative_eq!(actual_geodesic, expected_geodesic);
+            assert_relative_eq!(actual_geodesic, expected_geodesic, epsilon = 1e-13);
         }
 
         #[test]

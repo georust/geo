@@ -269,7 +269,7 @@ pub fn unary_union<'a, B: BooleanOps + 'a>(
         })
         .collect::<Vec<_>>();
 
-    let fill_rule = if winding_order == Some(WindingOrder::Clockwise) {
+    let fill_rule = if winding_order == Some(WindingOrder::CounterClockwise) {
         FillRule::Positive
     } else {
         FillRule::Negative

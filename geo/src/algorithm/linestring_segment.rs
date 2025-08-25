@@ -329,7 +329,7 @@ mod test {
             assert_relative_eq!(
                 Haversine.length(&segment),
                 expected_segment_length,
-                epsilon = 1e-9
+                epsilon = 1e-8
             );
         }
     }

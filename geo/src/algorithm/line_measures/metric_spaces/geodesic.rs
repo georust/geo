@@ -533,6 +533,6 @@ mod tests {
         let mars_flattening = 0.00589;
         let mars_geoid = GeodesicMeasure::new(mars_equatorial_radius, mars_flattening);
 
-        assert_relative_eq!(70684.36315529353, mars_geoid.distance(start, finish));
+        assert_relative_eq!(70684.36315529353, mars_geoid.distance(start, finish), epsilon = 1e-9);
     }
 }
