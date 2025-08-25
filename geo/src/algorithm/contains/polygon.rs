@@ -147,6 +147,146 @@ where
     }
 }
 
+// Extension trait for optimized point-in-multipolygon test
+pub trait ContainsPointFast<T: GeoFloat + rstar::RTreeNum> {
+    /// An optimized point-in-multipolygon test using an interval tree.
+    fn contains_point_fast(&self, point: &Point<T>) -> bool;
+}
+
+impl<T> ContainsPointFast<T> for MultiPolygon<T>
+where
+    T: GeoFloat + rstar::RTreeNum,
+{
+    fn contains_point_fast(&self, point: &Point<T>) -> bool {
+        // Handle empty multipolygon
+        if self.0.is_empty() {
+            return false;
+        }
+        let imp = IndexedMultiPolygon::new(self);
+        imp.contains_point(point.0)
+    }
+}
+
+use crate::{Coord, LineString, MultiPolygon, Polygon};
+use rstar::{RTree, AABB};
+
+struct YIntervalSegment<F: GeoFloat> {
+    y_min: F,
+    y_max: F,
+    segment: (Coord<F>, Coord<F>),
+}
+
+impl<F: GeoFloat + rstar::RTreeNum> rstar::RTreeObject for YIntervalSegment<F> {
+    type Envelope = AABB<[F; 2]>;
+
+    fn envelope(&self) -> Self::Envelope {
+        // Use 2D AABB with x-extent covering the segment's x-range
+        let x_min = self.segment.0.x.min(self.segment.1.x);
+        let x_max = self.segment.0.x.max(self.segment.1.x);
+        AABB::from_corners([x_min, self.y_min], [x_max, self.y_max])
+    }
+}
+
+pub struct IndexedMultiPolygon<F: GeoFloat + rstar::RTreeNum> {
+    y_interval_tree: RTree<YIntervalSegment<F>>,
+    geometry: MultiPolygon<F>,
+}
+
+impl<F: GeoFloat + rstar::RTreeNum> IndexedMultiPolygon<F> {
+    pub fn new(mp: &MultiPolygon<F>) -> Self {
+        let mp = mp.clone();
+        let mut segments = Vec::new();
+
+        for polygon in &mp.0 {
+            Self::add_ring_segments(&mut segments, polygon.exterior());
+            for interior in polygon.interiors() {
+                Self::add_ring_segments(&mut segments, interior);
+            }
+        }
+
+        // RTree requires at least one element for 1D trees, so handle empty case
+        let y_interval_tree = if segments.is_empty() {
+            RTree::new()
+        } else {
+            RTree::bulk_load(segments)
+        };
+
+        Self {
+            y_interval_tree,
+            geometry: mp,
+        }
+    }
+
+    fn add_ring_segments(segments: &mut Vec<YIntervalSegment<F>>, ring: &LineString<F>) {
+        for window in ring.coords().collect::<Vec<_>>().windows(2) {
+            let (p1, p2) = (window[0], window[1]);
+            segments.push(YIntervalSegment {
+                y_min: p1.y.min(p2.y),
+                y_max: p1.y.max(p2.y),
+                segment: (*p1, *p2),
+            });
+        }
+    }
+
+    pub fn contains_point(&self, point: Coord<F>) -> bool {
+        // Query the R-tree for segments whose bounding box intersects with a horizontal ray
+        // from the point extending to the right.
+        // We use a degenerate AABB (a horizontal line segment) for the query.
+        let query_envelope = AABB::from_corners(
+            [point.x, point.y],
+            [F::infinity(), point.y], // Same y-coordinate creates a horizontal line
+        );
+
+        let candidates = self
+            .y_interval_tree
+            .locate_in_envelope_intersecting(&query_envelope)
+            .filter(|seg| {
+                // Additional filtering: segment must actually cross the y-coordinate
+                // and extend to the right of the point
+                seg.segment.0.x.max(seg.segment.1.x) > point.x
+            });
+
+        let mut crossings = 0;
+        for segment in candidates {
+            if self.ray_intersects_segment(point, segment.segment) {
+                crossings += 1;
+            }
+        }
+
+        crossings % 2 == 1
+    }
+
+    fn ray_intersects_segment(&self, point: Coord<F>, seg: (Coord<F>, Coord<F>)) -> bool {
+        let (p1, p2) = seg;
+
+        // Skip horizontal segments
+        if (p1.y - p2.y).abs() < F::epsilon() {
+            return false;
+        }
+
+        let y_min = p1.y.min(p2.y);
+        let y_max = p1.y.max(p2.y);
+
+        if point.y < y_min || point.y > y_max {
+            return false;
+        }
+
+        // Handle endpoint intersections
+        if (point.y - y_min).abs() < F::epsilon() {
+            return p1.y < p2.y;
+        }
+        if (point.y - y_max).abs() < F::epsilon() {
+            return p2.y < p1.y;
+        }
+
+        // Calculate intersection X coordinate
+        let t = (point.y - p1.y) / (p2.y - p1.y);
+        let intersection_x = p1.x + t * (p2.x - p1.x);
+
+        intersection_x > point.x
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
