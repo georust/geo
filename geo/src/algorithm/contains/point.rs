@@ -1,6 +1,7 @@
 use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
 use crate::algorithm::{CoordsIter, HasDimensions};
 use crate::geometry::*;
+use crate::utils::lex_cmp;
 use crate::{CoordNum, GeoFloat};
 
 // ┌────────────────────────────────┐
@@ -180,11 +181,11 @@ where
             return false;
         }
 
-        let mut self_order = self.0.clone();
-        self_order.sort_by(cmp_pts);
+        let mut self_order: Vec<_> = self.coords_iter().collect();
+        self_order.sort_by(lex_cmp);
 
-        let mut other_order = multi_point.0.clone();
-        other_order.sort_by(cmp_pts);
+        let mut other_order: Vec<_> = multi_point.coords_iter().collect();
+        other_order.sort_by(lex_cmp);
 
         let mut self_iter = self_order.iter().peekable();
         let mut other_iter = other_order.iter().peekable();
@@ -199,7 +200,7 @@ where
                 return false;
             }
 
-            match cmp_pts(self_iter.peek().unwrap(), other_iter.peek().unwrap()) {
+            match lex_cmp(self_iter.peek().unwrap(), other_iter.peek().unwrap()) {
                 std::cmp::Ordering::Equal => {
                     // other only ensures that we don't step past duplicate other points
                     other_iter.next();
@@ -212,25 +213,6 @@ where
                 }
             }
         }
-    }
-}
-
-// used for sorting points in multipoint
-fn cmp_pts<T: CoordNum>(a: &Point<T>, b: &Point<T>) -> std::cmp::Ordering {
-    let x_order = a.x().partial_cmp(&b.x());
-    match x_order {
-        Some(std::cmp::Ordering::Equal) => {
-            let y_order = a.y().partial_cmp(&b.y());
-            match y_order {
-                Some(std::cmp::Ordering::Equal) => std::cmp::Ordering::Equal,
-                Some(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
-                Some(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
-                None => std::cmp::Ordering::Equal,
-            }
-        }
-        Some(std::cmp::Ordering::Less) => std::cmp::Ordering::Less,
-        Some(std::cmp::Ordering::Greater) => std::cmp::Ordering::Greater,
-        None => std::cmp::Ordering::Equal,
     }
 }
 
