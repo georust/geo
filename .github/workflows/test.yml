@@ -23,7 +23,7 @@ jobs:
       - id: set-matrix
         run: |
           echo 'rust-versions=["1.85", "1.88", "1.89"]' >> $GITHUB_OUTPUT
-          echo "proj-version=9.6.0" >> $GITHUB_OUTPUT
+          echo "proj-version=9.6.2" >> $GITHUB_OUTPUT
 
   # The `ci-result` job doesn't actually test anything - it just aggregates the
   # overall build status, otherwise the merge queue would need an entry
