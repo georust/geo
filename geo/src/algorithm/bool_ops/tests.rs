@@ -189,6 +189,7 @@ fn jts_test_overlay_la_1() {
 
 mod gh_issues {
     use super::super::{BooleanOps, OpType};
+    use crate::algorithm::Relate;
     use crate::{geometry::*, wkt};
 
     #[test]
@@ -400,7 +401,10 @@ mod gh_issues {
                 -17.60358 - 8.013862
             ))
         ));
-        assert_eq!(c, expected_c);
+        {
+            let im = c.relate(&expected_c);
+            assert!(im.is_equal_topo());
+        }
         assert_eq!(c.0.len(), 2);
         assert!(crate::Area::unsigned_area(&c.0[1]) < 1e-5);
         // The goal is just to get here without panic

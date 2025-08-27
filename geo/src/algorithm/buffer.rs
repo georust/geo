@@ -392,7 +392,7 @@ impl<F: BoolOpsNum + 'static> Buffer for MultiLineString<F> {
 impl<F: BoolOpsNum + 'static> Buffer for Polygon<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
-        let rewound = self.orient(Direction::Reversed);
+        let rewound = self.orient(Direction::Default);
         let subject = rewound.rings().map(ring_to_shape_path).collect::<Vec<_>>();
         let shapes = subject.outline(&style.outline_style());
         multi_polygon_from_shapes(shapes)
@@ -402,7 +402,7 @@ impl<F: BoolOpsNum + 'static> Buffer for Polygon<F> {
 impl<F: BoolOpsNum + 'static> Buffer for MultiPolygon<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
-        let rewound = self.orient(Direction::Reversed);
+        let rewound = self.orient(Direction::Default);
         let subject = rewound.rings().map(ring_to_shape_path).collect::<Vec<_>>();
         let shapes = subject.outline(&style.outline_style());
         multi_polygon_from_shapes(shapes)
