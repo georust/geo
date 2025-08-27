@@ -36,9 +36,9 @@ pub trait Contains<Rhs = Self> {
     fn contains(&self, rhs: &Rhs) -> bool;
 }
 
+mod coordinate;
 mod geometry;
 mod geometry_collection;
-mod coordinate;
 mod line;
 mod line_string;
 mod point;
