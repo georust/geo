@@ -10,7 +10,12 @@
 - BREAKING: update proj dependency to 0.30.0 (libproj 9.6.0)
 - Performance: Reduce memory consumption of FrechetDistance calculation.
   - <https://github.com/georust/geo/pull/1357>
-- Bump geo MSRV to 1.82
+- Bump geo MSRV to 1.85
+- Update i_overlay (dependency of BooleanOps and Buffer).
+  This is *mostly* an internal change. However, if you are using i_overlay directly in your project,
+  you'll notice that the `FillRule`, `LineCap`, and `LineJoin` options, which are re-exported from i_overlay,
+  are now compatible with 4.0
+  <https://github.com/georust/geo/pull/1405>
 - Simplify test rustc and libproj version specification in CI
 - Performance: Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
 - Add `Bearing` and `Destination` trait implementations for `Euclidean`
