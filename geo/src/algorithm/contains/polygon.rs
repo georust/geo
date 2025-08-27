@@ -149,7 +149,6 @@ where
 
 impl_contains_geometry_for!(MultiPolygon<T>);
 
-
 #[cfg(test)]
 mod test {
     use super::*;
