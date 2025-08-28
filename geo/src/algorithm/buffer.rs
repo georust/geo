@@ -20,6 +20,7 @@ use i_overlay::mesh::{
 // but they'd be a 1:1 mapping, so it seems overly ceremonious.
 use geo_types::coord;
 pub use i_overlay::mesh::style::{LineCap, LineJoin};
+use num_traits::Float;
 
 /// Create a new geometry whose boundary is offset the specified distance from the input.
 ///
@@ -293,8 +294,8 @@ impl<F: BoolOpsNum + 'static> Buffer for Point<F> {
                             + std::f64::consts::PI,
                     )
                     .expect("valid float constant");
-                    let x = center.x + radius * angle.cos();
-                    let y = center.y + radius * angle.sin();
+                    let x = center.x + radius * Float::cos(angle);
+                    let y = center.y + radius * Float::sin(angle);
                     coords.push(Coord { x, y });
                 }
                 // Close the ring
@@ -391,9 +392,9 @@ impl<F: BoolOpsNum + 'static> Buffer for MultiLineString<F> {
 impl<F: BoolOpsNum + 'static> Buffer for Polygon<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
-        let rewound = self.orient(Direction::Reversed);
+        let rewound = self.orient(Direction::Default);
         let subject = rewound.rings().map(ring_to_shape_path).collect::<Vec<_>>();
-        let shapes = subject.outline(style.outline_style());
+        let shapes = subject.outline(&style.outline_style());
         multi_polygon_from_shapes(shapes)
     }
 }
@@ -401,9 +402,9 @@ impl<F: BoolOpsNum + 'static> Buffer for Polygon<F> {
 impl<F: BoolOpsNum + 'static> Buffer for MultiPolygon<F> {
     type Scalar = F;
     fn buffer_with_style(&self, style: BufferStyle<Self::Scalar>) -> MultiPolygon<Self::Scalar> {
-        let rewound = self.orient(Direction::Reversed);
+        let rewound = self.orient(Direction::Default);
         let subject = rewound.rings().map(ring_to_shape_path).collect::<Vec<_>>();
-        let shapes = subject.outline(style.outline_style());
+        let shapes = subject.outline(&style.outline_style());
         multi_polygon_from_shapes(shapes)
     }
 }

@@ -49,11 +49,8 @@ pub(crate) mod convert {
 
     pub fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<BoolOpsCoord<T>>>) -> Polygon<T> {
         let mut rings = shape.into_iter().map(|path| {
-            // From i_overlay: > Note: Outer boundary paths have a clockwise order, and holes have a counterclockwise order.
-            // Which is the opposite convention we use.
             let mut line_string = line_string_from_path(path);
             line_string.close();
-            line_string.0.reverse();
             line_string
         });
         let exterior = rings.next().unwrap_or(LineString::new(vec![]));
@@ -106,10 +103,10 @@ pub(crate) mod convert {
 mod tests {
     use geo_types::polygon;
 
-    use crate::algorithm::BooleanOps;
+    use crate::algorithm::{BooleanOps, Relate, Winding};
     use crate::geometry::{MultiPolygon, Polygon};
     use crate::winding_order::WindingOrder;
-    use crate::{wkt, Winding};
+    use crate::wkt;
 
     #[test]
     // see https://github.com/georust/geo/issues/1309
@@ -172,7 +169,12 @@ mod tests {
     fn one_empty_polygon() {
         let p1: Polygon = wkt!(POLYGON((0.0 0.0,1.0 0.0,1.0 1.0,0.0 1.0,0.0 0.0)));
         let p2: Polygon = wkt!(POLYGON EMPTY);
-        assert_eq!(&p1.union(&p2), &MultiPolygon(vec![p1.clone()]));
+        {
+            let unioned = p1.union(&p2);
+            let expected = MultiPolygon(vec![p1.clone()]);
+            let im = unioned.relate(&expected);
+            assert!(im.is_equal_topo());
+        }
         assert_eq!(&p1.intersection(&p2), &wkt!(MULTIPOLYGON EMPTY));
     }
 }

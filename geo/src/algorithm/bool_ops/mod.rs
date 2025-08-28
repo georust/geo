@@ -244,9 +244,9 @@ pub enum OpType {
 ///
 /// let expected_output = wkt!(MULTIPOLYGON(
 ///     // left and right piece have been combined
-///     ((0.0 0.0, 8.0 0.0, 8.0 4.0, 0.0 4.0, 0.0 0.0)),
+///     ((0.0 4.0,0.0 0.0,8.0 0.0,8.0 4.0,0.0 4.0)),
 ///     // separate piece remains separate
-///     ((14.0 10.0, 18.0 10.0, 18.0 14.0, 14.0 14.0, 14.0 10.0))
+///     ((14.0 14.0,14.0 10.0,18.0 10.0,18.0 14.0,14.0 14.0))
 /// ));
 /// assert_eq!(actual_output, expected_output);
 /// ```
@@ -269,7 +269,7 @@ pub fn unary_union<'a, B: BooleanOps + 'a>(
         })
         .collect::<Vec<_>>();
 
-    let fill_rule = if winding_order == Some(WindingOrder::Clockwise) {
+    let fill_rule = if winding_order == Some(WindingOrder::CounterClockwise) {
         FillRule::Positive
     } else {
         FillRule::Negative
