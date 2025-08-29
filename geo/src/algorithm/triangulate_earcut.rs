@@ -1,4 +1,4 @@
-use crate::{coord, CoordFloat, CoordsIter, Polygon, Triangle};
+use crate::{CoordFloat, CoordsIter, Polygon, Triangle, coord};
 
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
 ///
@@ -206,7 +206,7 @@ fn flat_line_string_coords_2<T: CoordFloat>(
 #[cfg(test)]
 mod test {
     use super::TriangulateEarcut;
-    use crate::{coord, polygon, Triangle};
+    use crate::{Triangle, coord, polygon};
 
     #[test]
     fn test_triangle() {

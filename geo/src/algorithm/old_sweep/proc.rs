@@ -78,7 +78,9 @@ impl<C: Cross + Clone> Sweep<C> {
             should_callback: false,
         };
         while let Some(isec) = other.geom().intersect_line_ordered(&active.geom()) {
-            trace!("Found intersection (LL):\n\tsegment1: {other:?}\n\tsegment2: {active:?}\n\tintersection: {isec:?}");
+            trace!(
+                "Found intersection (LL):\n\tsegment1: {other:?}\n\tsegment2: {active:?}\n\tintersection: {isec:?}"
+            );
             out.isec = Some(isec);
 
             // 1. Split adj_segment, and extra splits to storage
@@ -274,7 +276,9 @@ impl<C: Cross + Clone> Sweep<C> {
                         let geom = adj_segment.geom();
                         if let Some(adj_intersection) = segment.geom().intersect_line_ordered(&geom)
                         {
-                            trace!("Found intersection (PL):\n\tsegment1: {segment:?}\n\tsegment2: {adj_segment:?}\n\tintersection: {adj_intersection:?}");
+                            trace!(
+                                "Found intersection (PL):\n\tsegment1: {segment:?}\n\tsegment2: {adj_segment:?}\n\tintersection: {adj_intersection:?}"
+                            );
                             // 1. Split adj_segment, and extra splits to storage
                             let adj_overlap = adj_segment
                                 .adjust_one_segment(adj_intersection, |e| self.events.push(e));

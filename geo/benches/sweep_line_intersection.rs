@@ -17,7 +17,7 @@
 //! cargo bench --bench sweep_line_intersection "Realistic Patterns"
 //! ```
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use geo::algorithm::line_intersection::line_intersection;
 use geo::algorithm::sweep::Intersections;
 use geo::{Destination, Euclidean, Line};

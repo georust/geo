@@ -3,8 +3,8 @@ use std::ops::RangeInclusive;
 
 use crate::{GeoFloat, MultiPoint, Point};
 
-use rstar::primitives::GeomWithData;
 use rstar::RTree;
+use rstar::primitives::GeomWithData;
 
 /// Calculate the [Local Outlier Factor](https://en.wikipedia.org/wiki/Local_outlier_factor) of a set of points
 ///

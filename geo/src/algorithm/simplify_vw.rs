@@ -694,9 +694,9 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::{visvalingam, vwp_wrapper, SimplifyVw, SimplifyVwPreserve};
+    use super::{SimplifyVw, SimplifyVwPreserve, visvalingam, vwp_wrapper};
     use crate::{
-        line_string, polygon, Coord, LineString, MultiLineString, MultiPolygon, Point, Polygon,
+        Coord, LineString, MultiLineString, MultiPolygon, Point, Polygon, line_string, polygon,
     };
 
     // See https://github.com/georust/geo/issues/1049

@@ -6,8 +6,8 @@ use num_traits::Signed;
 use wkt::{ToWkt, TryFromWkt};
 
 use crate::{
-    area::twice_signed_ring_area, coordinate_position::CoordPos, dimensions::Dimensions,
-    monotone::monotone_subdivision, GeoFloat, GeoNum, Relate,
+    GeoFloat, GeoNum, Relate, area::twice_signed_ring_area, coordinate_position::CoordPos,
+    dimensions::Dimensions, monotone::monotone_subdivision,
 };
 
 pub(super) fn init_log() {

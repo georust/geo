@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon, Triangle};
 
-use crate::winding_order::{triangle_winding_order, WindingOrder};
+use crate::winding_order::{WindingOrder, triangle_winding_order};
 use crate::{Contains, GeoFloat};
 
 // ========= Error Type ============

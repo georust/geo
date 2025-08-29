@@ -1,4 +1,4 @@
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use geo::prelude::*;
 use geo_booleanop::boolean::BooleanOp as OtherBOp;
 use geo_types::*;
@@ -10,7 +10,7 @@ use serde_derive::Serialize;
 use std::{
     convert::TryInto,
     error::Error,
-    fs::{read_to_string, File},
+    fs::{File, read_to_string},
     io::BufWriter,
     panic::{catch_unwind, resume_unwind},
     path::Path,

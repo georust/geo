@@ -1,6 +1,6 @@
 use crate::line_measures::{Bearing, Destination, Distance, Haversine};
 use crate::{Closest, Contains};
-use crate::{CoordsIter, GeoFloat, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordsIter, GeoFloat, MEAN_EARTH_RADIUS, Point};
 use geo_types::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Polygon, Rect, Triangle,

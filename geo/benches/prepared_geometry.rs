@@ -1,6 +1,6 @@
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use geo::algorithm::Relate;
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use geo::PreparedGeometry;
+use geo::algorithm::Relate;
 use geo_types::MultiPolygon;
 
 fn criterion_benchmark(c: &mut Criterion) {

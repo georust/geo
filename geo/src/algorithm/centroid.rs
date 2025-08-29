@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
 
-use crate::area::{get_linestring_area, Area};
+use crate::GeoFloat;
+use crate::area::{Area, get_linestring_area};
 use crate::dimensions::{Dimensions, Dimensions::*, HasDimensions};
 use crate::geometry::*;
 use crate::line_measures::{Euclidean, Length};
-use crate::GeoFloat;
 
 /// Calculation of the centroid.
 /// The centroid is the arithmetic mean position of all points in the shape.

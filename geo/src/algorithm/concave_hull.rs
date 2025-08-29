@@ -1,8 +1,8 @@
 use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    coord, Centroid, Coord, CoordNum, Distance, Euclidean, GeoFloat, Length, Line, LineString,
-    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    Centroid, Coord, CoordNum, Distance, Euclidean, GeoFloat, Length, Line, LineString,
+    MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, coord,
 };
 use rstar::{RTree, RTreeNum};
 use std::collections::VecDeque;

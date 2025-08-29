@@ -1,6 +1,6 @@
-use criterion::{criterion_group, criterion_main, Criterion};
-use geo::prelude::*;
+use criterion::{Criterion, criterion_group, criterion_main};
 use geo::Polygon;
+use geo::prelude::*;
 
 fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("extremes f32", |bencher| {

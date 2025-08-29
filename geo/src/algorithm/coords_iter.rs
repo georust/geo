@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use crate::geometry::*;
-use crate::{coord, CoordNum};
+use crate::{CoordNum, coord};
 
 use std::{fmt, iter, marker, slice};
 
@@ -758,8 +758,8 @@ impl<T: CoordNum + Debug> fmt::Debug for GeometryExteriorCoordsIter<'_, T> {
 mod test {
     use super::CoordsIter;
     use crate::{
-        coord, line_string, point, polygon, Coord, Geometry, GeometryCollection, Line, LineString,
-        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+        Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+        MultiPolygon, Point, Polygon, Rect, Triangle, coord, line_string, point, polygon,
     };
 
     #[test]

@@ -1,8 +1,8 @@
-use geo_types::{private_utils::get_bounding_rect, Line};
+use geo_types::{Line, private_utils::get_bounding_rect};
 
 use crate::{
-    coordinate_position::CoordPos, old_sweep::SweepPoint, BoundingRect, Coord, CoordinatePosition,
-    GeoNum, Intersects, Kernel, LineString, Orientation, Polygon, Rect,
+    BoundingRect, Coord, CoordinatePosition, GeoNum, Intersects, Kernel, LineString, Orientation,
+    Polygon, Rect, coordinate_position::CoordPos, old_sweep::SweepPoint,
 };
 
 /// Monotone polygon

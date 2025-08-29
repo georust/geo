@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main};
 use geo::algorithm::{ConvexHull, Distance, Euclidean};
-use geo::{polygon, Polygon};
+use geo::{Polygon, polygon};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("Polygon Euclidean distance RTree f64", |bencher| {

@@ -2,10 +2,10 @@
 
 use crate::algorithm::orient::{Direction, Orient};
 use crate::bool_ops::i_overlay_integration::{
-    convert::{line_string_to_shape_path, multi_polygon_from_shapes, ring_to_shape_path},
     BoolOpsCoord,
+    convert::{line_string_to_shape_path, multi_polygon_from_shapes, ring_to_shape_path},
 };
-use crate::bool_ops::{unary_union, BoolOpsNum, BooleanOps};
+use crate::bool_ops::{BoolOpsNum, BooleanOps, unary_union};
 use crate::dimensions::{Dimensions, HasDimensions};
 use crate::geometry::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,

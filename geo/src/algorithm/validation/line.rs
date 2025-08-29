@@ -1,4 +1,4 @@
-use super::{utils, CoordIndex, Validation};
+use super::{CoordIndex, Validation, utils};
 use crate::{GeoFloat, Line};
 
 use std::fmt;

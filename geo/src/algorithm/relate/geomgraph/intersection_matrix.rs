@@ -1,5 +1,5 @@
 use crate::{
-    coordinate_position::CoordPos, dimensions::Dimensions, GeoNum, GeometryCow, HasDimensions,
+    GeoNum, GeometryCow, HasDimensions, coordinate_position::CoordPos, dimensions::Dimensions,
 };
 
 use crate::geometry_cow::GeometryCow::Point;
@@ -695,7 +695,7 @@ pub(crate) mod dimension_matcher {
                 _ => {
                     return Err(InvalidInputError::new(format!(
                         "invalid DE-9IM specification character: {value}"
-                    )))
+                    )));
                 }
             })
         }

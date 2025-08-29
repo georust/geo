@@ -1,4 +1,4 @@
-use super::{has_disjoint_bboxes, Intersects};
+use super::{Intersects, has_disjoint_bboxes};
 use crate::coordinate_position::CoordPos;
 use crate::{BoundingRect, CoordinatePosition, CoordsIter, LinesIter};
 use crate::{

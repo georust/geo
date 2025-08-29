@@ -4,7 +4,7 @@ use std::f64::consts::PI;
 use geo::algorithm::{BoundingRect, ConcaveHull, ConvexHull, MapCoords, Rotate};
 use geo::geometry::*;
 
-use rand::{thread_rng, Rng};
+use rand::{Rng, thread_rng};
 use rand_distr::{Distribution, Normal, Standard};
 
 // TODO: @rmanoka wonders if: it would be nice to provide these

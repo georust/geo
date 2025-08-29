@@ -1,5 +1,5 @@
-use super::{unary_union, BooleanOps};
-use crate::{wkt, Convert, MultiPolygon, Polygon, Relate};
+use super::{BooleanOps, unary_union};
+use crate::{Convert, MultiPolygon, Polygon, Relate, wkt};
 use i_overlay::core::fill_rule::FillRule;
 use std::time::Instant;
 use wkt::ToWkt;

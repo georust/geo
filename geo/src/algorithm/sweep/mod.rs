@@ -69,8 +69,8 @@
 // [Bentley-Ottmann]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm
 // [Chen & Chan, 2003]: https://en.wikipedia.org/wiki/Bentley%E2%80%93Ottmann_algorithm#CITEREFChenChan2003
 
-use crate::line_intersection::{line_intersection, LineIntersection};
 use crate::GeoNum;
+use crate::line_intersection::{LineIntersection, line_intersection};
 use std::fmt::Debug;
 
 mod cross;

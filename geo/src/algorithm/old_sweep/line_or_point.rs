@@ -2,8 +2,8 @@ use std::{cmp::Ordering, ops::Deref};
 
 use super::SweepPoint;
 use crate::{
-    line_intersection::line_intersection, Coord, GeoFloat, GeoNum, Kernel, Line, LineIntersection,
-    Orientation,
+    Coord, GeoFloat, GeoNum, Kernel, Line, LineIntersection, Orientation,
+    line_intersection::line_intersection,
 };
 
 /// Either a line segment or a point.

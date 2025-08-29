@@ -4,7 +4,7 @@
 // - https://nathanrooy.github.io/posts/2016-12-18/vincenty-formula-with-python/
 // - https://github.com/janantala/GPS-distance/blob/master/java/Distance.java
 
-use crate::{CoordFloat, Point, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS};
+use crate::{CoordFloat, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS, Point};
 use num_traits::FromPrimitive;
 use std::{error, fmt};
 

@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 use criterion::{measurement::Measurement, *};
 use geo::algorithm::{BooleanOps, Rotate};
 
-use rand::{thread_rng, Rng};
+use rand::{Rng, thread_rng};
 use rand_distr::Standard;
 
 #[path = "../../geo/benches/utils/random.rs"]

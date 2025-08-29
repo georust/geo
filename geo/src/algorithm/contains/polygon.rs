@@ -1,4 +1,4 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::geometry::*;
 use crate::{GeoFloat, GeoNum};
 use crate::{HasDimensions, Relate};
@@ -150,7 +150,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{coord, polygon, MultiPoint, Relate};
+    use crate::{MultiPoint, Relate, coord, polygon};
 
     fn make_test_pts() -> [Coord<f64>; 7] {
         let pt_a = coord! {x: 0., y: 0.};

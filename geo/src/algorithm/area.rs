@@ -139,11 +139,7 @@ where
             total - get_linestring_area(next).abs()
         });
 
-        if is_negative {
-            -area
-        } else {
-            area
-        }
+        if is_negative { -area } else { area }
     }
 
     fn unsigned_area(&self) -> T {
@@ -262,7 +258,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::Area;
-    use crate::{coord, polygon, wkt, Line, MultiPolygon, Polygon, Rect, Triangle};
+    use crate::{Line, MultiPolygon, Polygon, Rect, Triangle, coord, polygon, wkt};
 
     // Area of the polygon
     #[test]

@@ -1,5 +1,5 @@
-use crate::geometry::*;
 use crate::Orientation::Collinear;
+use crate::geometry::*;
 use crate::{CoordNum, GeoNum, GeometryCow};
 
 /// Geometries can have 0, 1, or two dimensions. Or, in the case of an [`empty`](#is_empty)

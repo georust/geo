@@ -1,7 +1,7 @@
 use geo_types::CoordFloat;
 
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
-use crate::{geometry::*, Area, CoordsIter, HasDimensions, Intersects};
+use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
+use crate::{Area, CoordsIter, HasDimensions, Intersects, geometry::*};
 use crate::{CoordNum, GeoFloat};
 
 // ┌──────────────────────────┐
