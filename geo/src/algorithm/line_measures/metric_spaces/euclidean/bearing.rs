@@ -1,7 +1,7 @@
-use crate::algorithm::Bearing;
 use crate::CoordFloat;
 use crate::Euclidean;
 use crate::Point;
+use crate::algorithm::Bearing;
 use num_traits::FromPrimitive;
 
 impl<F: CoordFloat + FromPrimitive> Bearing<F> for Euclidean {

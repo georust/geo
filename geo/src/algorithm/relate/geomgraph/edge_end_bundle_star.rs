@@ -113,9 +113,20 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
                     if _right_position != current_position {
                         use crate::algorithm::Validation;
                         if _geometry_graph.geometry().is_valid() {
-                            debug_assert!(false, "topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
+                            debug_assert!(
+                                false,
+                                "topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}",
+                                edge_ends.coordinate(),
+                                right_position,
+                                current_position
+                            );
                         } else {
-                            warn!("topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}", edge_ends.coordinate(), right_position, current_position);
+                            warn!(
+                                "topology position conflict with coordinate — this can happen with invalid geometries. coordinate: {:?}, right_location: {:?}, current_location: {:?}",
+                                edge_ends.coordinate(),
+                                right_position,
+                                current_position
+                            );
                         }
                     }
                     assert!(left_position.is_some(), "found single null side");

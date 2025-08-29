@@ -87,7 +87,7 @@ impl<F: CoordFloat> LengthMeasurable<F> for MultiLineString<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, Euclidean, Geodesic, Haversine, Rhumb};
+    use crate::{Euclidean, Geodesic, Haversine, Rhumb, coord};
 
     #[test]
     fn lines() {

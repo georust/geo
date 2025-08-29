@@ -268,8 +268,8 @@ mod test {
 
     #[test]
     fn test_left_right_match_rotate() {
-        use crate::algorithm::rotate::Rotate;
         use crate::Point;
+        use crate::algorithm::rotate::Rotate;
         // The aim of this test is to confirm that wording in documentation is
         // consistent.
 

@@ -56,7 +56,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{line_string, point, polygon, Coord, LineString, Polygon};
+    use crate::{Coord, LineString, Polygon, line_string, point, polygon};
 
     #[test]
     fn test_translate_point() {

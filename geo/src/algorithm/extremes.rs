@@ -82,7 +82,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{coord, polygon, MultiPoint};
+    use crate::{MultiPoint, coord, polygon};
 
     #[test]
     fn polygon() {

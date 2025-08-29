@@ -320,7 +320,7 @@ impl<F: CoordFloat + FromPrimitive> Densifiable<F> for Triangle<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, polygon, wkt, Euclidean, Geodesic, Haversine, Rhumb};
+    use crate::{Euclidean, Geodesic, Haversine, Rhumb, coord, polygon, wkt};
 
     #[test]
     fn densify_line() {

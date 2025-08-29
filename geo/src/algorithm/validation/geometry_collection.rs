@@ -46,7 +46,7 @@ impl<F: GeoFloat> Validation for GeometryCollection<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithm::validation::{assert_validation_errors, InvalidLineString};
+    use crate::algorithm::validation::{InvalidLineString, assert_validation_errors};
     use crate::wkt;
 
     #[test]

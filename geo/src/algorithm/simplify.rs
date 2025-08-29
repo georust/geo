@@ -1,6 +1,6 @@
+use crate::GeoFloat;
 use crate::algorithm::{CoordsIter, Distance, Euclidean};
 use crate::geometry::{Coord, Line, LineString, MultiLineString, MultiPolygon, Polygon};
-use crate::GeoFloat;
 
 const LINE_STRING_INITIAL_MIN: usize = 2;
 const POLYGON_INITIAL_MIN: usize = 4;

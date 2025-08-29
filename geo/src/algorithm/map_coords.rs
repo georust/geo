@@ -24,8 +24,8 @@
 //! assert_relative_eq!(3497301.5918027186, usa_ft.y(), epsilon = 1e-6);
 //! ```
 
-pub(crate) use crate::geometry::*;
 pub(crate) use crate::CoordNum;
+pub(crate) use crate::geometry::*;
 
 /// Map a function over all the coordinates in an object, returning a new one
 pub trait MapCoords<T, NT> {
@@ -694,8 +694,8 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
 mod test {
     use super::{MapCoords, MapCoordsInPlace};
     use crate::{
-        coord, polygon, Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-        MultiPoint, MultiPolygon, Point, Polygon, Rect,
+        Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+        MultiPolygon, Point, Polygon, Rect, coord, polygon,
     };
 
     #[test]

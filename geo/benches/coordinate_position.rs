@@ -3,8 +3,8 @@ extern crate criterion;
 extern crate geo;
 
 use geo::{
-    coordinate_position::CoordPos, BoundingRect, Centroid, CoordinatePosition, Point, Rect,
-    Triangle,
+    BoundingRect, Centroid, CoordinatePosition, Point, Rect, Triangle,
+    coordinate_position::CoordPos,
 };
 
 use criterion::Criterion;

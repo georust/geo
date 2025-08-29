@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use geo::algorithm::{Contains, Convert, Relate};
 use geo::geometry::*;
 use geo::{coord, point, polygon};
@@ -476,9 +476,11 @@ fn bench_polygon_contains_multipoint(c: &mut Criterion) {
             let mp: MultiPoint<f64> = geo::MultiPoint::new(mp).convert();
 
             bencher.iter(|| {
-                assert!(criterion::black_box(&base)
-                    .relate(criterion::black_box(&mp))
-                    .is_contains());
+                assert!(
+                    criterion::black_box(&base)
+                        .relate(criterion::black_box(&mp))
+                        .is_contains()
+                );
             });
         },
     );
@@ -532,9 +534,11 @@ fn bench_polygon_contains_multipoint(c: &mut Criterion) {
             let mp: MultiPoint<f64> = geo::MultiPoint::new(mp).convert();
 
             bencher.iter(|| {
-                assert!(!criterion::black_box(&base)
-                    .relate(criterion::black_box(&mp))
-                    .is_contains());
+                assert!(
+                    !criterion::black_box(&base)
+                        .relate(criterion::black_box(&mp))
+                        .is_contains()
+                );
             });
         },
     );

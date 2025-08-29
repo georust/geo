@@ -8,7 +8,7 @@ pub use area::Area;
 
 /// Boolean Operations such as the union, xor, or difference of two geometries.
 pub mod bool_ops;
-pub use bool_ops::{unary_union, BooleanOps, OpType};
+pub use bool_ops::{BooleanOps, OpType, unary_union};
 
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
@@ -322,7 +322,7 @@ pub use outlier_detection::OutlierDetection;
 
 /// Monotonic polygon subdivision
 pub mod monotone;
-pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
+pub use monotone::{MonoPoly, MonotonicPolygons, monotone_subdivision};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;

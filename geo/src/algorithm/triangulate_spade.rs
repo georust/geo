@@ -4,11 +4,11 @@ use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };
 
-use crate::{
-    line_intersection::line_intersection, CoordsIter, Distance, Euclidean, GeoFloat,
-    LineIntersection, LinesIter,
-};
 use crate::{Centroid, Contains};
+use crate::{
+    CoordsIter, Distance, Euclidean, GeoFloat, LineIntersection, LinesIter,
+    line_intersection::line_intersection,
+};
 
 // ======== Config ============
 

@@ -1,5 +1,5 @@
-use crate::line_measures::{Destination, Geodesic};
 use crate::Point;
+use crate::line_measures::{Destination, Geodesic};
 use geo_types::CoordNum;
 
 #[deprecated(

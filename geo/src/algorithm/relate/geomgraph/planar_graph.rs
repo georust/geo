@@ -1,6 +1,6 @@
 use super::{
-    node_map::{NodeFactory, NodeMap},
     CoordNode, CoordPos, Edge, Label,
+    node_map::{NodeFactory, NodeMap},
 };
 use crate::{Coord, GeoFloat};
 

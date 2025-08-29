@@ -309,7 +309,7 @@ pub(super) struct Chain<T: GeoNum>(LineString<T>);
 
 impl<T: GeoNum + std::fmt::Debug> std::fmt::Debug for Chain<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let bot: Vec<SweepPoint<T>> = self.0 .0.iter().map(|c| (*c).into()).collect();
+        let bot: Vec<SweepPoint<T>> = self.0.0.iter().map(|c| (*c).into()).collect();
         f.debug_tuple("Chain").field(&bot).finish()
     }
 }
@@ -326,21 +326,21 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn fix_top(&mut self, pt: Coord<T>) {
-        *self.0 .0.last_mut().unwrap() = pt;
+        *self.0.0.last_mut().unwrap() = pt;
     }
 
     pub fn swap_at_top(&mut self, pt: Coord<T>) -> [Self; 2] {
-        let top = self.0 .0.pop().unwrap();
-        let prev = *self.0 .0.last().unwrap();
+        let top = self.0.0.pop().unwrap();
+        let prev = *self.0.0.last().unwrap();
         debug!(
             "chain swap: {:?} -> {:?}",
             SweepPoint::from(top),
             SweepPoint::from(pt)
         );
         debug!("\tprev = {:?}", SweepPoint::from(prev));
-        self.0 .0.push(pt);
+        self.0.0.push(pt);
 
-        let old_chain = Chain(replace(&mut self.0 .0, vec![prev, top]).into());
+        let old_chain = Chain(replace(&mut self.0.0, vec![prev, top]).into());
         let new_chain = Chain(vec![prev, pt].into());
 
         let lp1 = LineOrPoint::from((prev.into(), top.into()));
@@ -353,14 +353,13 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn push(&mut self, pt: Coord<T>) {
-        debug!("chain push: {:?} -> {:?}", self.0 .0.last().unwrap(), pt);
-        self.0 .0.push(pt);
+        debug!("chain push: {:?} -> {:?}", self.0.0.last().unwrap(), pt);
+        self.0.0.push(pt);
     }
 
     pub fn finish_with(self, other: Self) -> MonoPoly<T> {
         assert!(
-            self.0 .0[0] == other.0 .0[0]
-                && self.0 .0.last().unwrap() == other.0 .0.last().unwrap(),
+            self.0.0[0] == other.0.0[0] && self.0.0.last().unwrap() == other.0.0.last().unwrap(),
             "chains must finish with same start/end points"
         );
         debug!("finishing {self:?} with {other:?}");

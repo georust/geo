@@ -1,4 +1,4 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::algorithm::Intersects;
 use crate::geometry::*;
 use crate::{GeoFloat, GeoNum};
@@ -100,7 +100,7 @@ impl_contains_geometry_for!(Line<T>);
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{coord, MultiPoint, Relate};
+    use crate::{MultiPoint, Relate, coord};
 
     #[test]
     fn test_line_contains_empty_multipoint() {

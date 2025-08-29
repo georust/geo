@@ -61,10 +61,10 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::line_string;
     #[allow(deprecated)]
     use crate::EuclideanLength;
-    use crate::{coord, Line, MultiLineString};
+    use crate::line_string;
+    use crate::{Line, MultiLineString, coord};
 
     #[allow(deprecated)]
     #[test]

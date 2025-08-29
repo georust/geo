@@ -141,7 +141,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, CoordsIter};
+    use crate::{CoordsIter, coord};
 
     #[test]
     fn test_polygon_densify() {

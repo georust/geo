@@ -1,4 +1,4 @@
-use super::{point_in_rect, Intersects};
+use super::{Intersects, point_in_rect};
 use crate::*;
 
 impl<T> Intersects<Coord<T>> for Line<T>

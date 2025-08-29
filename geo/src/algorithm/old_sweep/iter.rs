@@ -1,5 +1,5 @@
 use super::*;
-use crate::{line_intersection::line_intersection, Coord, LineIntersection};
+use crate::{Coord, LineIntersection, line_intersection::line_intersection};
 
 /// A segment of a input [`Cross`] type.
 ///

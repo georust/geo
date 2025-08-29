@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
 use geo::algorithm::sweep::Intersections;
-use geo::{line_intersection::line_intersection, Line};
+use geo::{Line, line_intersection::line_intersection};
 
-use rstar::{primitives::GeomWithData, RTree};
+use rstar::{RTree, primitives::GeomWithData};
 
 pub fn count_bo(lines: Vec<Line<f64>>) -> usize {
     Intersections::from_iter(lines).count()

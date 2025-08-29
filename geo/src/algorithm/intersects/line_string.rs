@@ -1,4 +1,4 @@
-use super::{has_disjoint_bboxes, Intersects};
+use super::{Intersects, has_disjoint_bboxes};
 use crate::BoundingRect;
 use crate::*;
 

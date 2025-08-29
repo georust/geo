@@ -1,11 +1,11 @@
 use super::{Distance, Euclidean};
 use crate::algorithm::Intersects;
-use crate::coordinate_position::{coord_pos_relative_to_ring, CoordPos};
+use crate::coordinate_position::{CoordPos, coord_pos_relative_to_ring};
 use crate::geometry::*;
 use crate::{CoordFloat, GeoFloat, GeoNum};
 use num_traits::{Bounded, Float};
-use rstar::primitives::CachedEnvelope;
 use rstar::RTree;
+use rstar::primitives::CachedEnvelope;
 
 // Distance is a symmetric operation, so we can implement it once for both
 macro_rules! symmetric_distance_impl {

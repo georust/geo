@@ -1,4 +1,4 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::algorithm::{CoordsIter, HasDimensions};
 use crate::geometry::*;
 use crate::{CoordNum, GeoFloat};
@@ -237,7 +237,7 @@ fn cmp_pts<T: CoordNum>(a: &Point<T>, b: &Point<T>) -> std::cmp::Ordering {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{coord, point, MultiPoint, Relate};
+    use crate::{MultiPoint, Relate, coord, point};
 
     #[test]
     /**

@@ -7,7 +7,7 @@ use geo::monotone::monotone_subdivision;
 use geo::{CoordinatePosition, MapCoords, Polygon};
 
 use criterion::{
-    criterion_group, criterion_main, BatchSize, BenchmarkGroup, BenchmarkId, Criterion,
+    BatchSize, BenchmarkGroup, BenchmarkId, Criterion, criterion_group, criterion_main,
 };
 use geo_types::{Coord, Rect};
 use wkt::ToWkt;

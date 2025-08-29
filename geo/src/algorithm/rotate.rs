@@ -1,6 +1,6 @@
+use crate::CoordFloat;
 use crate::algorithm::{AffineOps, AffineTransform, BoundingRect, Centroid};
 use crate::geometry::*;
-use crate::CoordFloat;
 
 /// Rotate a geometry around a point by an angle, in degrees.
 ///

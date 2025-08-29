@@ -121,8 +121,8 @@ mod test {
     #![allow(deprecated)]
 
     use super::*;
-    use crate::{coord, point};
     use crate::{ClosestPoint, LineLocatePoint};
+    use crate::{coord, point};
     use num_traits::Float;
 
     #[test]

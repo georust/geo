@@ -1,9 +1,9 @@
 use super::{
+    CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
     index::{
         EdgeSetIntersector, RStarEdgeSetIntersector, Segment, SegmentIntersector,
         SimpleEdgeSetIntersector,
     },
-    CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
 
 use crate::HasDimensions;

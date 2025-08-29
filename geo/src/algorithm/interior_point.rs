@@ -12,8 +12,8 @@ use crate::algorithm::{
 };
 use crate::geometry::*;
 // use crate::old_sweep::{Intersections, SweepPoint};
-use crate::sweep::Intersections;
 use crate::GeoFloat;
+use crate::sweep::Intersections;
 
 /// Calculation of interior points.
 ///
@@ -670,9 +670,11 @@ mod test {
     // Tests: InteriorPoint of MultiPolygon
     #[test]
     fn empty_multipolygon_polygon_test() {
-        assert!(MultiPolygon::<f64>::new(Vec::new())
-            .interior_point()
-            .is_none());
+        assert!(
+            MultiPolygon::<f64>::new(Vec::new())
+                .interior_point()
+                .is_none()
+        );
     }
 
     #[test]

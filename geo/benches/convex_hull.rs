@@ -1,10 +1,10 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use geo::prelude::*;
 use geo::{Coord, CoordNum};
 
 use num_traits::Signed;
-use rand::distributions::uniform::SampleUniform;
 use rand::Rng;
+use rand::distributions::uniform::SampleUniform;
 pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
     range: S,
     size: usize,

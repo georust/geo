@@ -1,5 +1,5 @@
-use crate::geometry::Coord;
 use crate::GeoFloat;
+use crate::geometry::Coord;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
 use num_traits::FromPrimitive;

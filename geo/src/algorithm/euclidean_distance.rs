@@ -3,11 +3,11 @@ use crate::{
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
 use crate::{Distance, Euclidean};
-use num_traits::{float::FloatConst, Bounded, Signed};
+use num_traits::{Bounded, Signed, float::FloatConst};
 
-use rstar::primitives::CachedEnvelope;
 use rstar::RTree;
 use rstar::RTreeNum;
+use rstar::primitives::CachedEnvelope;
 
 #[deprecated(
     since = "0.29.0",
@@ -519,8 +519,8 @@ mod test {
     #![allow(deprecated)]
 
     use super::*;
-    use crate::orient::Direction;
     use crate::Orient;
+    use crate::orient::Direction;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::{coord, polygon, private_utils::line_segment_distance};
 

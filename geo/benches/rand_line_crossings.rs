@@ -13,14 +13,14 @@ mod crossings;
 use crossings::*;
 use random::*;
 
-fn bench_algos<T, F, I>(g: &mut BenchmarkGroup<T>, mut gen: F, sample_size: usize, param: I)
+fn bench_algos<T, F, I>(g: &mut BenchmarkGroup<T>, mut generator: F, sample_size: usize, param: I)
 where
     T: Measurement,
     F: FnMut() -> Vec<Line<f64>>,
     I: Display + Copy,
 {
     let samples = Samples::from_fn(sample_size, || {
-        let lines = gen();
+        let lines = generator();
         let expected = count_brute(&lines);
         (lines, expected)
     });

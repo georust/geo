@@ -1,4 +1,4 @@
-use criterion::{criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, criterion_group, criterion_main};
 use geo::intersects::Intersects;
 use geo::{MultiPolygon, Triangle};
 
@@ -145,7 +145,7 @@ fn point_triangle_intersection(c: &mut Criterion) {
 }
 
 fn linestring_polygon_intersection(c: &mut Criterion) {
-    use geo::{coord, line_string, LineString, Polygon, Rect};
+    use geo::{LineString, Polygon, Rect, coord, line_string};
     c.bench_function("LineString above Polygon", |bencher| {
         let ls = line_string![
             coord! {x:0., y:1.},

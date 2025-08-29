@@ -1,8 +1,8 @@
 use num_traits::Float;
 
 use crate::{
-    algorithm::{centroid::Centroid, rotate::Rotate, BoundingRect, CoordsIter},
     Area, ConvexHull, CoordFloat, GeoFloat, GeoNum, LinesIter, Polygon,
+    algorithm::{BoundingRect, CoordsIter, centroid::Centroid, rotate::Rotate},
 };
 /// Return the minimum bounding rectangle(MBR) of geometry
 /// reference: <https://en.wikipedia.org/wiki/Minimum_bounding_box>
@@ -64,7 +64,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use geo_types::{line_string, polygon, LineString, Polygon};
+    use geo_types::{LineString, Polygon, line_string, polygon};
 
     use crate::MinimumRotatedRect;
 

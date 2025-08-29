@@ -159,7 +159,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{line_string, BoundingRect, Centroid, LineString};
+    use crate::{BoundingRect, Centroid, LineString, line_string};
 
     #[test]
     fn skew_linestring() {
