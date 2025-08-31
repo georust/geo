@@ -11,7 +11,6 @@
 - BREAKING: `BoolOpsNum` must now implement GeoFloat, not just GeoNum. In practice, this shouldn't break for any concrete types (like f32, f64).
   - <https://github.com/georust/geo/pull/1365>
 - BREAKING: The `Simplify`, `SimplifyVw`, and `SimplifyVwIdx` traits no longer require a borrowed `epsilon` parameter as these are `Copy` types
-- BREAKING: update proj dependency to 0.30.0 (libproj 9.6.0)
 - Performance: Reduce memory consumption of FrechetDistance calculation.
   - <https://github.com/georust/geo/pull/1357>
 - Bump geo MSRV to 1.85
@@ -31,17 +30,14 @@
 - Fix false positive convexity check for "star polygon" LineStrings
   - BREAKING: previously, an empty LineString was considered non-convex. This has changed: empty LineStrings are now considered convex, in line with tools such as PostGIS
 - Update to proj 0.31.0 (libproj 9.6.2)
-
-## Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
-
-- no longer `panic`'s when given pathological input
-- BREAKING: `Intersections` now computes intersections lazily
-- BREAKING: The `Crosses` trait used by `Intersections` now returns a `Line`, not a `LineOrPoint`.
-- BREAKING: The `Crosses` trait no longer needs to implement Clone
-  - <https://github.com/georust/geo/pull/1358>
-  - <https://github.com/georust/geo/pull/1387>
-  - <https://github.com/georust/geo/pull/1359>
-
+- Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
+  - no longer `panic`'s when given pathological input
+  - BREAKING: `Intersections` now computes intersections lazily
+  - BREAKING: The `Crosses` trait used by `Intersections` now returns a `Line`, not a `LineOrPoint`.
+  - BREAKING: The `Crosses` trait no longer needs to implement Clone
+    - <https://github.com/georust/geo/pull/1358>
+    - <https://github.com/georust/geo/pull/1387>
+    - <https://github.com/georust/geo/pull/1359>
 - Fix `is_convex` to correctly handle duplicate points
 - Fix`graham_hull` to correctly handle duplicate points when `on_hull` is set to true
   - `graham_hull` now always returns a boundary with no duplicated points
