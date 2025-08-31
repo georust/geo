@@ -2,6 +2,10 @@
 
 # Unreleased
 
+- (No changes)
+
+# 0.31.0 - 2025-08-31
+
 - Added: Geometry buffering to "grow" or "shrink" a geometry by creating a buffer whose boundary is the specified offset from the input.
   - <https://github.com/georust/geo/pull/1365>
 - BREAKING: `BoolOpsNum` must now implement GeoFloat, not just GeoNum. In practice, this shouldn't break for any concrete types (like f32, f64).
