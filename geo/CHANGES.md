@@ -4,7 +4,7 @@
 
 - (No changes)
 
-# 0.31.0 - 2025-08-31
+# 0.31.0 - 2025-09-01
 
 - Added: Geometry buffering to "grow" or "shrink" a geometry by creating a buffer whose boundary is the specified offset from the input.
   - <https://github.com/georust/geo/pull/1365>
