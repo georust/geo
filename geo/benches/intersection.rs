@@ -255,9 +255,9 @@ criterion_group! {
 criterion_group! { bench_linestring_poly,linestring_polygon_intersection}
 
 criterion_main!(
+    bench_linestring_poly,
     bench_multi_polygons,
-    bench_rects,
     bench_point_rect,
     bench_point_triangle,
-    bench_linestring_poly,
+    bench_rects,
 );
