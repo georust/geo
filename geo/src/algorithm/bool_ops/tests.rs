@@ -67,7 +67,7 @@ fn test_unary_union_errors() {
 
     let naive_union = {
         let start = Instant::now();
-        let mut output = MultiPolygon::new(Vec::new());
+        let mut output = MultiPolygon::empty();
         for poly in input.iter() {
             output = output.union(poly);
         }
@@ -316,7 +316,7 @@ mod gh_issues {
             wkt!(POLYGON((3.3493652 -55.80127,171.22443 -300.,195.83728 -300.,-46.650635 30.80127,3.3493652 -55.80127))),
         ];
 
-        let mut multi: MultiPolygon<f32> = MultiPolygon::new(Vec::new());
+        let mut multi: MultiPolygon<f32> = MultiPolygon::empty();
         for poly in polygons {
             multi = multi.union(&MultiPolygon::new(vec![poly]));
         }

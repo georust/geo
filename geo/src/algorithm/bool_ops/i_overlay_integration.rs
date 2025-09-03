@@ -53,7 +53,7 @@ pub(crate) mod convert {
             line_string.close();
             line_string
         });
-        let exterior = rings.next().unwrap_or(LineString::new(vec![]));
+        let exterior = rings.next().unwrap_or(LineString::empty());
 
         Polygon::new(exterior, rings.collect())
     }

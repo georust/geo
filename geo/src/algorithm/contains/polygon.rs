@@ -169,7 +169,7 @@ mod test {
         let [pt_a, pt_b, pt_c, pt_d, _pt_edge, _pt_mid, _pt_out] = make_test_pts();
 
         let poly = polygon![pt_a, pt_b, pt_c, pt_d, pt_a];
-        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+        let empty: MultiPoint<f64> = MultiPoint::empty();
 
         // contains implementation follows `Relate`` trait
         assert!(!poly.contains(&empty));

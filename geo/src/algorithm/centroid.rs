@@ -745,7 +745,7 @@ mod test {
     // Tests: Centroid of MultiLineString
     #[test]
     fn empty_multilinestring_test() {
-        let mls: MultiLineString = MultiLineString::new(vec![]);
+        let mls: MultiLineString = MultiLineString::empty();
         let centroid = mls.centroid();
         assert!(centroid.is_none());
     }
@@ -924,7 +924,7 @@ mod test {
     fn empty_interior_polygon_test() {
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
-            vec![LineString::new(vec![])],
+            vec![LineString::empty()],
         );
         assert_eq!(poly.centroid(), Some(p(0.5, 0.5)));
     }
@@ -947,7 +947,7 @@ mod test {
     // Tests: Centroid of MultiPolygon
     #[test]
     fn empty_multipolygon_polygon_test() {
-        assert!(MultiPolygon::<f64>::new(Vec::new()).centroid().is_none());
+        assert!(MultiPolygon::<f64>::empty().centroid().is_none());
     }
 
     #[test]
