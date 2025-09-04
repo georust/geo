@@ -1,4 +1,4 @@
-use super::{impl_contains_geometry_for, Contains};
+use super::{Contains, impl_contains_geometry_for};
 use crate::algorithm::{CoordsIter, HasDimensions};
 use crate::geometry::*;
 use crate::{CoordNum, GeoFloat};
