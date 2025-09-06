@@ -3,6 +3,8 @@ on:
     branches:
       - "**"
   pull_request:
+    branches:
+      - "**"
   merge_group:
 
 name: Run tests

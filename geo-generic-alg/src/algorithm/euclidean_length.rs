@@ -185,8 +185,15 @@ where
     }
 }
 
-// Note: GeometryTag implementation is complex due to trait dispatch
-// The specific geometry type implementations above handle the actual types
+#[allow(deprecated)]
+impl<T, G: GeometryTraitExt<T = T>> EuclideanLengthTrait<T, GeometryTag> for G
+where
+    T: CoordFloat + Sum,
+{
+    crate::geometry_trait_ext_delegate_impl! {
+        fn euclidean_length_trait(&self) -> T;
+    }
+}
 
 #[cfg(test)]
 mod test {

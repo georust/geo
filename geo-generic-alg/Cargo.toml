@@ -60,3 +60,7 @@ harness = false
 [[bench]]
 name = "centroid"
 harness = false
+
+[[bench]]
+name = "euclidean_length"
+harness = false
