@@ -28,16 +28,16 @@ pub enum InvalidGeometry {
 impl fmt::Display for InvalidGeometry {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            InvalidGeometry::InvalidPoint(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidLine(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidLineString(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidPolygon(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidMultiPoint(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidMultiLineString(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidMultiPolygon(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidGeometryCollection(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidRect(err) => write!(f, "{}", err),
-            InvalidGeometry::InvalidTriangle(err) => write!(f, "{}", err),
+            InvalidGeometry::InvalidPoint(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidLine(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidLineString(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidPolygon(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidMultiPoint(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidMultiLineString(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidMultiPolygon(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidGeometryCollection(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidRect(err) => write!(f, "{err}"),
+            InvalidGeometry::InvalidTriangle(err) => write!(f, "{err}"),
         }
     }
 }

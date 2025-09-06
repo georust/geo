@@ -25,7 +25,7 @@ pub fn assert_jts_tests_succeed(pattern: &str) {
         let failure_text = runner
             .failures()
             .iter()
-            .map(|failure| format!("{}", failure))
+            .map(|failure| format!("{failure}"))
             .collect::<Vec<String>>()
             .join("\n");
         panic!(

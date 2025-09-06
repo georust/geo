@@ -110,7 +110,7 @@ where
 
     /// Create a prepared outlier detector allowing multiple runs to retain the spatial index in use.
     /// A [`PreparedDetector`] can efficiently recompute outliers with different `k_neigbhours` values.
-    fn prepared_detector(&self) -> PreparedDetector<T>;
+    fn prepared_detector(&self) -> PreparedDetector<'_, T>;
 
     /// Perform successive runs with `k_neighbours` values between `bounds`,
     /// generating an ensemble of LOF scores, which may be aggregated using e.g. min, max, or mean
@@ -272,7 +272,7 @@ where
         pd.outliers(k_neighbours)
     }
 
-    fn prepared_detector(&self) -> PreparedDetector<T> {
+    fn prepared_detector(&self) -> PreparedDetector<'_, T> {
         PreparedDetector::new(&self.0)
     }
 
@@ -306,7 +306,7 @@ where
         pd.outliers(k_neighbours)
     }
 
-    fn prepared_detector(&self) -> PreparedDetector<T> {
+    fn prepared_detector(&self) -> PreparedDetector<'_, T> {
         PreparedDetector::new(self)
     }
 

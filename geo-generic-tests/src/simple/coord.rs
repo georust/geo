@@ -34,7 +34,7 @@ impl<T: CoordNum> CoordTrait for &SimpleCoord<T> {
         match n {
             0 => self.x,
             1 => self.y,
-            _ => panic!("Invalid dimension: {}", n),
+            _ => panic!("Invalid dimension: {n}"),
         }
     }
 }

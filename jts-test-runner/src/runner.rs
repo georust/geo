@@ -328,7 +328,7 @@ impl TestRunner {
                     match expected {
                         Geometry::MultiPolygon(_) | Geometry::Polygon(_) => {}
                         _ => {
-                            info!("skipping unsupported Union expectation: {:?}", expected);
+                            info!("skipping unsupported Union expectation: {expected:?}");
                             self.unsupported.push(test_case);
                             continue;
                         }
@@ -342,7 +342,7 @@ impl TestRunner {
                         }
                         (Geometry::MultiPolygon(a), Geometry::Polygon(b)) => a.boolean_op(b, *op),
                         _ => {
-                            info!("skipping unsupported Union combination: {:?}, {:?}", a, b);
+                            info!("skipping unsupported Union combination: {a:?}, {b:?}");
                             self.unsupported.push(test_case);
                             continue;
                         }
@@ -376,7 +376,7 @@ impl TestRunner {
                     match expected {
                         Geometry::MultiLineString(_) | Geometry::LineString(_) => {}
                         other => {
-                            info!("skipping unsupported ClipOp output: {:?}", other);
+                            info!("skipping unsupported ClipOp output: {other:?}");
                             self.unsupported.push(test_case);
                             continue;
                         }
@@ -532,7 +532,7 @@ impl TestRunner {
                             }
                         }
                         Err(e) => {
-                            debug!("skipping unsupported operation: {}", e);
+                            debug!("skipping unsupported operation: {e}");
                             continue;
                         }
                     }

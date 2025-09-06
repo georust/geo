@@ -48,7 +48,7 @@ impl<T: GeoNum> Builder<T> {
                         None
                     } else {
                         let line = LineOrPoint::from(line);
-                        debug!("adding line {:?}", line);
+                        debug!("adding line {line:?}");
                         Some((line, Default::default()))
                     }
                 })
@@ -103,7 +103,7 @@ impl<T: GeoNum> Builder<T> {
             .as_ref()
             .map(|seg| (seg.payload().next_is_inside.get(), seg.payload().help.get()))
             .unwrap_or((false, None));
-        debug!("bot region: {:?}", bot_region);
+        debug!("bot region: {bot_region:?}");
         debug!("bot segment: {:?}", bot_segment.as_ref().map(|s| s.line()));
 
         // Step 3. Reduce incoming segments.  Any two consecutive incoming
@@ -286,7 +286,7 @@ impl<T: GeoNum> Builder<T> {
                     first.payload().chain_idx.set(idx);
                     second.payload().chain_idx.set(jdx);
                 } else {
-                    debug!("registering help: [{}, {}]", idx, jdx);
+                    debug!("registering help: [{idx}, {jdx}]");
                     bot_segment
                         .as_ref()
                         .unwrap()

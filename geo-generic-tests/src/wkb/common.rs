@@ -53,8 +53,7 @@ impl TryFrom<geo_traits::Dimensions> for WKBDimension {
             Xyzm | Unknown(4) => Self::Xyzm,
             Unknown(n_dim) => {
                 return Err(WKBError::General(format!(
-                    "Unsupported number of dimensions: {}",
-                    n_dim
+                    "Unsupported number of dimensions: {n_dim}"
                 )))
             }
         };
@@ -129,8 +128,7 @@ impl WKBGeometryCode {
             7 => WKBType::GeometryCollection(dim),
             _ => {
                 return Err(WKBError::General(format!(
-                    "WKB type code out of range. Got: {}",
-                    code
+                    "WKB type code out of range. Got: {code}"
                 )))
             }
         };
@@ -165,12 +163,7 @@ impl WKBType {
         let geometry_code = match byte_order {
             0 => reader.read_u32::<BigEndian>().unwrap(),
             1 => reader.read_u32::<LittleEndian>().unwrap(),
-            other => {
-                return Err(WKBError::General(format!(
-                    "Unexpected byte order: {}",
-                    other
-                )))
-            }
+            other => return Err(WKBError::General(format!("Unexpected byte order: {other}"))),
         };
         WKBGeometryCode(geometry_code).get_type()
     }

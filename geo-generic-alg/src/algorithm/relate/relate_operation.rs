@@ -289,10 +289,7 @@ where
         labeled_node_edges: Vec<(CoordNode<F>, LabeledEdgeEndBundleStar<F>)>,
         intersection_matrix: &mut IntersectionMatrix,
     ) {
-        debug!(
-            "before updated_intersection_matrix(isolated_edges): {:?}",
-            intersection_matrix
-        );
+        debug!("before updated_intersection_matrix(isolated_edges): {intersection_matrix:?}");
         for isolated_edge in &self.isolated_edges {
             let edge = isolated_edge.borrow();
             Edge::<F>::update_intersection_matrix(edge.label(), intersection_matrix);

@@ -61,7 +61,7 @@ pub trait Relate<F: GeoFloat>: BoundingRect<F> + HasDimensions {
     ///
     /// `idx`: 0 or 1, designating A or B (respectively) in the role this geometry plays
     ///        in the relation. e.g. in `a.relate(b)`
-    fn geometry_graph(&self, idx: usize) -> GeometryGraph<F>;
+    fn geometry_graph(&self, idx: usize) -> GeometryGraph<'_, F>;
 
     fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix
     where
@@ -75,7 +75,7 @@ macro_rules! relate_impl {
     ($($t:ty ,)*) => {
         $(
             impl<F: GeoFloat> Relate<F> for $t {
-                fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F> {
+                fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<'_, F> {
                     $crate::relate::GeometryGraph::new(arg_index, GeometryCow::from(self))
                 }
             }

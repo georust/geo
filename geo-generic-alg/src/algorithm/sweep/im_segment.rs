@@ -99,17 +99,13 @@ impl<C: Cross> IMSegment<C> {
     ) -> SplitSegments<C::Scalar> {
         let (adjust_output, new_geom) = {
             let mut segment = RefCell::borrow_mut(&self.inner);
-            trace!(
-                "adjust_for_intersection: {:?}\n\twith: {:?}",
-                segment,
-                adj_intersection
-            );
+            trace!("adjust_for_intersection: {segment:?}\n\twith: {adj_intersection:?}");
             (
                 segment.adjust_for_intersection(adj_intersection),
                 segment.geom,
             )
         };
-        trace!("adjust_output: {:?}", adjust_output);
+        trace!("adjust_output: {adjust_output:?}");
 
         let mut this = self.clone();
         while let Some(ovl) = this.overlap() {
