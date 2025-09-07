@@ -327,4 +327,189 @@ mod tests {
         ]);
         assert_eq!(6_237_538., Euclidean.length(&projected_line_string).round());
     }
+
+    // Tests for LengthMeasurableExt - adapted from euclidean_length.rs
+    mod length_measurable_ext_tests {
+        use super::*;
+        use crate::{line_string, polygon, coord, Line, MultiLineString, Point, Polygon, MultiPoint, MultiPolygon, Geometry, GeometryCollection};
+
+        #[test]
+        fn empty_linestring_test() {
+            let linestring = line_string![];
+            assert_relative_eq!(0.0_f64, linestring.length_ext(&Euclidean));
+        }
+
+        #[test]
+        fn linestring_one_point_test() {
+            let linestring = line_string![(x: 0., y: 0.)];
+            assert_relative_eq!(0.0_f64, linestring.length_ext(&Euclidean));
+        }
+
+        #[test]
+        fn linestring_test() {
+            let linestring = line_string![
+                (x: 1., y: 1.),
+                (x: 7., y: 1.),
+                (x: 8., y: 1.),
+                (x: 9., y: 1.),
+                (x: 10., y: 1.),
+                (x: 11., y: 1.)
+            ];
+            assert_relative_eq!(10.0_f64, linestring.length_ext(&Euclidean));
+        }
+
+        #[test]
+        fn multilinestring_test() {
+            let mline = MultiLineString::new(vec![
+                line_string![
+                    (x: 1., y: 0.),
+                    (x: 7., y: 0.),
+                    (x: 8., y: 0.),
+                    (x: 9., y: 0.),
+                    (x: 10., y: 0.),
+                    (x: 11., y: 0.)
+                ],
+                line_string![
+                    (x: 0., y: 0.),
+                    (x: 0., y: 5.)
+                ],
+            ]);
+            assert_relative_eq!(15.0_f64, mline.length_ext(&Euclidean));
+        }
+
+        #[test]
+        fn line_test() {
+            let line0 = Line::new(coord! { x: 0., y: 0. }, coord! { x: 0., y: 1. });
+            let line1 = Line::new(coord! { x: 0., y: 0. }, coord! { x: 3., y: 4. });
+            assert_relative_eq!(line0.length_ext(&Euclidean), 1.);
+            assert_relative_eq!(line1.length_ext(&Euclidean), 5.);
+        }
+
+        #[test]
+        fn polygon_returns_zero_test() {
+            let polygon: Polygon<f64> = polygon![
+                (x: 0., y: 0.),
+                (x: 4., y: 0.),
+                (x: 4., y: 4.),
+                (x: 0., y: 4.),
+                (x: 0., y: 0.),
+            ];
+            // Length doesn't apply to 2D polygons, should return zero
+            assert_relative_eq!(polygon.length_ext(&Euclidean), 0.0);
+        }
+
+        #[test]
+        fn point_returns_zero_test() {
+            let point = Point::new(3.0, 4.0);
+            // Points have no length dimension
+            assert_relative_eq!(point.length_ext(&Euclidean), 0.0);
+        }
+
+        #[test]
+        fn comprehensive_test_scenarios() {
+            // Test cases matching the Python pytest scenarios
+
+            // LINESTRING EMPTY
+            let empty_linestring: crate::LineString<f64> = line_string![];
+            assert_relative_eq!(empty_linestring.length_ext(&Euclidean), 0.0);
+
+            // POINT (0 0)
+            let point = Point::new(0.0, 0.0);
+            assert_relative_eq!(point.length_ext(&Euclidean), 0.0);
+
+            // LINESTRING (0 0, 0 1) - length should be 1
+            let linestring = line_string![(x: 0., y: 0.), (x: 0., y: 1.)];
+            assert_relative_eq!(linestring.length_ext(&Euclidean), 1.0);
+
+            // MULTIPOINT ((0 0), (1 1)) - should be 0
+            let multipoint = MultiPoint::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 1.0)]);
+            assert_relative_eq!(multipoint.length_ext(&Euclidean), 0.0);
+
+            // MULTILINESTRING ((0 0, 1 1), (1 1, 2 2)) - should be ~2.828427
+            let multilinestring = MultiLineString::new(vec![
+                line_string![(x: 0., y: 0.), (x: 1., y: 1.)],
+                line_string![(x: 1., y: 1.), (x: 2., y: 2.)],
+            ]);
+            assert_relative_eq!(
+                multilinestring.length_ext(&Euclidean),
+                2.8284271247461903,
+                epsilon = 1e-10
+            );
+
+            // POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0)) - should be 0 (perimeter not included)
+            let polygon = polygon![
+                (x: 0., y: 0.),
+                (x: 1., y: 0.),
+                (x: 1., y: 1.),
+                (x: 0., y: 1.),
+                (x: 0., y: 0.),
+            ];
+            assert_relative_eq!(polygon.length_ext(&Euclidean), 0.0);
+
+            // MULTIPOLYGON - should be 0
+            let multipolygon = MultiPolygon::new(vec![
+                polygon![
+                    (x: 0., y: 0.),
+                    (x: 1., y: 0.),
+                    (x: 1., y: 1.),
+                    (x: 0., y: 1.),
+                    (x: 0., y: 0.),
+                ],
+                polygon![
+                    (x: 0., y: 0.),
+                    (x: 1., y: 0.),
+                    (x: 1., y: 1.),
+                    (x: 0., y: 1.),
+                    (x: 0., y: 0.),
+                ],
+            ]);
+            assert_relative_eq!(multipolygon.length_ext(&Euclidean), 0.0);
+
+            // GEOMETRYCOLLECTION (LINESTRING (0 0, 1 1), POLYGON (...), LINESTRING (0 0, 1 1))
+            // Should sum only the linestrings: 2 * sqrt(2) ≈ 2.8284271247461903
+            let collection = GeometryCollection::new_from(vec![
+                Geometry::LineString(line_string![(x: 0., y: 0.), (x: 1., y: 1.)]), // sqrt(2)
+                Geometry::Polygon(polygon![
+                    (x: 0., y: 0.),
+                    (x: 1., y: 0.),
+                    (x: 1., y: 1.),
+                    (x: 0., y: 1.),
+                    (x: 0., y: 0.),
+                ]), // contributes 0
+                Geometry::LineString(line_string![(x: 0., y: 0.), (x: 1., y: 1.)]), // sqrt(2)
+            ]);
+            assert_relative_eq!(
+                collection.length_ext(&Euclidean),
+                2.8284271247461903,
+                epsilon = 1e-10
+            );
+        }
+
+        #[test]
+        fn test_different_metric_spaces() {
+            // Test that different metric spaces work with LengthMeasurableExt
+            let linestring = line_string![(x: 0., y: 0.), (x: 3., y: 4.)];
+            
+            // Euclidean should give us 5.0
+            assert_relative_eq!(linestring.length_ext(&Euclidean), 5.0);
+            
+            // Test with geographic coordinates (lon/lat) - these will give nonsense results
+            // but should demonstrate the API works with different metric spaces
+            let lon_lat_line = line_string![
+                (x: -0.1278f64, y: 51.5074), // London
+                (x: 2.3522, y: 48.8566)      // Paris
+            ];
+            
+            // These should all work without errors (values are from the existing tests)
+            assert_eq!(Haversine.length(&lon_lat_line).round(), 343_557.);
+            assert_eq!(lon_lat_line.length_ext(&Haversine).round(), 343_557.);
+            
+            // Verify both APIs give the same result
+            assert_relative_eq!(
+                Haversine.length(&lon_lat_line),
+                lon_lat_line.length_ext(&Haversine),
+                epsilon = 1e-6
+            );
+        }
+    }
 }
