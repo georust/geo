@@ -35,7 +35,7 @@ mod interpolate_line;
 pub use interpolate_line::{InterpolatableLine, InterpolateLine};
 
 mod length;
-pub use length::{Length, LengthMeasurable};
+pub use length::{Length, LengthMeasurable, LengthMeasurableExt};
 
 mod densify;
 pub use densify::{Densifiable, Densify};
