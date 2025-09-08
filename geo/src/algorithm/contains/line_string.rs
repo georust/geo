@@ -1,4 +1,6 @@
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
+use crate::Orientation;
+use crate::algorithm::kernels::Kernel;
 use crate::geometry::*;
 use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions};
 
@@ -139,18 +141,13 @@ where
     }
 }
 
-// extracted math operations from T::Ker::orient2d == Orientation::Collinear
 #[inline]
 fn is_collinear<T>(l1: &Line<T>, l2: &Line<T>) -> bool
 where
     T: GeoNum,
 {
-    (l1.end.x - l1.start.x) * (l2.start.y - l1.end.y)
-        - (l1.end.y - l1.start.y) * (l2.start.x - l1.end.x)
-        == T::zero()
-        && (l1.end.x - l1.start.x) * (l2.end.y - l1.end.y)
-            - (l1.end.y - l1.start.y) * (l2.end.x - l1.end.x)
-            == T::zero()
+    T::Ker::orient2d(l1.start, l1.end, l2.start) == Orientation::Collinear
+        && T::Ker::orient2d(l1.start, l1.end, l2.end) == Orientation::Collinear
 }
 
 // faster than lex_cmp since we kmow GeoNum has total ordering
