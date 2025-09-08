@@ -86,6 +86,10 @@ pub mod euclidean_length;
 #[allow(deprecated)]
 pub use euclidean_length::EuclideanLength;
 
+/// Calculate the perimeter of a planar `Geometry`.
+pub mod perimeter;
+pub use perimeter::Perimeter;
+
 /// Calculate the extreme coordinates and indices of a geometry.
 pub mod extremes;
 pub use extremes::Extremes;
