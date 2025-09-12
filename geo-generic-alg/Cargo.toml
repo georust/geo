@@ -66,5 +66,9 @@ name = "length"
 harness = false
 
 [[bench]]
+name = "distance"
+harness = false
+
+[[bench]]
 name = "perimeter"
 harness = false

@@ -75,9 +75,9 @@ mod tests {
         P: PolygonTraitExt<T: CoordFloat>,
     {
         let area = polygon.signed_area();
-        println!("area: {:?}", area);
+        println!("area: {area:?}");
 
         let dim = polygon.dimensions();
-        println!("dim: {:?}", dim);
+        println!("dim: {dim:?}");
     }
 }

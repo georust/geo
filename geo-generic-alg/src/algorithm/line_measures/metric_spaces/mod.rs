@@ -1,5 +1,5 @@
-mod euclidean;
-pub use euclidean::Euclidean;
+pub mod euclidean;
+pub use euclidean::{DistanceExt, Euclidean};
 
 mod geodesic;
 pub use geodesic::{Geodesic, GeodesicMeasure};

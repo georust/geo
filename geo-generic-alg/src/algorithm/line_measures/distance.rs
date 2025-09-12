@@ -12,7 +12,7 @@ pub trait Distance<F, Origin, Destination> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{Haversine, Euclidean, Distance, Point};
+    /// use geo_generic_alg::{Haversine, Euclidean, Distance, Point};
     /// let p1: Point = Point::new(0.0, 0.0);
     /// let p2: Point = Point::new(0.0, 2.0);
     ///
@@ -25,3 +25,6 @@ pub trait Distance<F, Origin, Destination> {
     /// ```
     fn distance(&self, origin: Origin, destination: Destination) -> F;
 }
+
+// Re-export the DistanceExt trait from the refactored euclidean metric space
+pub use super::metric_spaces::euclidean::DistanceExt;
