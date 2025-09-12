@@ -125,7 +125,7 @@ pub trait LengthMeasurableExt<F: CoordFloat> {
     /// Calculate the perimeter using the given metric space.
     ///
     /// For 2D geometries (Polygon, MultiPolygon, Rect, Triangle), returns the perimeter.
-    /// For 1D geometries (Line, LineString, MultiLineString), returns the length.
+    /// For 1D geometries (Line, LineString, MultiLineString), returns zero.
     /// For 0D geometries (Point, MultiPoint), returns zero.
     fn perimeter_ext(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F;
 }
@@ -165,9 +165,9 @@ where
         metric_space.distance(start, end)
     }
 
-    fn perimeter_trait(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
-        // For lines, perimeter equals length
-        self.length_trait(metric_space)
+    fn perimeter_trait(&self, _metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
+        // For 1D geometries like lines, perimeter should be 0 according to PostGIS/OGC standards
+        F::zero()
     }
 }
 
@@ -186,9 +186,9 @@ where
         length
     }
 
-    fn perimeter_trait(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
-        // For linestrings, perimeter equals length
-        self.length_trait(metric_space)
+    fn perimeter_trait(&self, _metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
+        // For 1D geometries like linestrings, perimeter should be 0 according to PostGIS/OGC standards
+        F::zero()
     }
 }
 
@@ -205,9 +205,9 @@ where
         length
     }
 
-    fn perimeter_trait(&self, metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
-        // For multilinestrings, perimeter equals total length
-        self.length_trait(metric_space)
+    fn perimeter_trait(&self, _metric_space: &impl Distance<F, Point<F>, Point<F>>) -> F {
+        // For 1D geometries like multilinestrings, perimeter should be 0 according to PostGIS/OGC standards
+        F::zero()
     }
 }
 
@@ -409,11 +409,11 @@ where
         self.geometries_ext()
             .map(|g| match g.as_type_ext() {
                 GeometryTypeExt::Point(_) => F::zero(),
-                GeometryTypeExt::Line(line) => line.perimeter_trait(metric_space),
-                GeometryTypeExt::LineString(ls) => ls.perimeter_trait(metric_space),
+                GeometryTypeExt::Line(_) => F::zero(), // 1D geometry - no perimeter
+                GeometryTypeExt::LineString(_) => F::zero(), // 1D geometry - no perimeter
                 GeometryTypeExt::Polygon(polygon) => polygon.perimeter_trait(metric_space),
                 GeometryTypeExt::MultiPoint(_) => F::zero(),
-                GeometryTypeExt::MultiLineString(mls) => mls.perimeter_trait(metric_space),
+                GeometryTypeExt::MultiLineString(_) => F::zero(), // 1D geometry - no perimeter
                 GeometryTypeExt::MultiPolygon(mp) => mp.perimeter_trait(metric_space),
                 GeometryTypeExt::GeometryCollection(gc) => gc.perimeter_trait(metric_space),
                 GeometryTypeExt::Rect(rect) => rect.perimeter_trait(metric_space),
@@ -702,24 +702,20 @@ mod tests {
             let point = Point::new(0.0, 0.0);
             assert_relative_eq!(point.perimeter_ext(&Euclidean), 0.0);
 
-            // LINESTRING (0 0, 0 1) - 1D geometry, perimeter equals length
+            // LINESTRING (0 0, 0 1) - 1D geometry, perimeter should be 0
             let linestring = line_string![(x: 0., y: 0.), (x: 0., y: 1.)];
-            assert_relative_eq!(linestring.perimeter_ext(&Euclidean), 1.0);
+            assert_relative_eq!(linestring.perimeter_ext(&Euclidean), 0.0);
 
             // MULTIPOINT ((0 0), (1 1)) - 0D geometry, no perimeter
             let multipoint = MultiPoint::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 1.0)]);
             assert_relative_eq!(multipoint.perimeter_ext(&Euclidean), 0.0);
 
-            // MULTILINESTRING ((0 0, 1 1), (1 1, 2 2)) - 1D geometry, perimeter equals total length
+            // MULTILINESTRING ((0 0, 1 1), (1 1, 2 2)) - 1D geometry, perimeter should be 0
             let multilinestring = MultiLineString::new(vec![
                 line_string![(x: 0., y: 0.), (x: 1., y: 1.)],
                 line_string![(x: 1., y: 1.), (x: 2., y: 2.)],
             ]);
-            assert_relative_eq!(
-                multilinestring.perimeter_ext(&Euclidean),
-                2.8284271247461903,
-                epsilon = 1e-10
-            );
+            assert_relative_eq!(multilinestring.perimeter_ext(&Euclidean), 0.0);
 
             // POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0)) - 2D geometry, actual perimeter
             let polygon = polygon![
@@ -765,7 +761,7 @@ mod tests {
             // GEOMETRYCOLLECTION - should sum perimeters from all geometries
             let collection = GeometryCollection::new_from(vec![
                 Geometry::Point(Point::new(0.0, 0.0)), // contributes 0
-                Geometry::LineString(line_string![(x: 0., y: 0.), (x: 1., y: 1.)]), // sqrt(2) ≈ 1.414
+                Geometry::LineString(line_string![(x: 0., y: 0.), (x: 1., y: 1.)]), // contributes 0 (1D geometry)
                 Geometry::Polygon(polygon![
                     (x: 0., y: 0.),
                     (x: 1., y: 0.),
@@ -773,11 +769,11 @@ mod tests {
                     (x: 0., y: 1.),
                     (x: 0., y: 0.),
                 ]), // perimeter = 4.0
-                Geometry::LineString(line_string![(x: 0., y: 0.), (x: 1., y: 1.)]), // sqrt(2) ≈ 1.414
+                Geometry::LineString(line_string![(x: 0., y: 0.), (x: 1., y: 1.)]), // contributes 0 (1D geometry)
             ]);
             assert_relative_eq!(
                 collection.perimeter_ext(&Euclidean),
-                2.8284271247461903 + 4.0, // 2*sqrt(2) + 4 (linestrings + polygon perimeter)
+                4.0, // only polygon perimeter counts
                 epsilon = 1e-10
             );
         }
@@ -858,6 +854,128 @@ mod tests {
             assert_relative_eq!(rect.length_ext(&Euclidean), 0.0);
             // Perimeter should be 2*(3+4) = 14
             assert_relative_eq!(rect.perimeter_ext(&Euclidean), 14.0);
+        }
+
+        #[test]
+        fn test_postgis_compliance_perimeter_scenarios() {
+            // Test cases based on PostGIS ST_Perimeter behavior to ensure compliance
+            // These test cases mirror the pytest.mark.parametrize scenarios
+
+            // POINT EMPTY - should return 0
+            // Note: We can't easily test empty point, so we test a regular point
+            let point = Point::new(0.0, 0.0);
+            assert_relative_eq!(point.perimeter_ext(&Euclidean), 0.0);
+
+            // LINESTRING EMPTY - should return 0
+            let empty_linestring: crate::LineString<f64> = line_string![];
+            assert_relative_eq!(empty_linestring.perimeter_ext(&Euclidean), 0.0);
+
+            // POINT (0 0) - should return 0
+            let point_origin = Point::new(0.0, 0.0);
+            assert_relative_eq!(point_origin.perimeter_ext(&Euclidean), 0.0);
+
+            // LINESTRING (0 0, 0 1) - should return 0 (1D geometry has no perimeter)
+            let linestring_simple = line_string![(x: 0., y: 0.), (x: 0., y: 1.)];
+            assert_relative_eq!(linestring_simple.perimeter_ext(&Euclidean), 0.0);
+
+            // MULTIPOINT ((0 0), (1 1)) - should return 0
+            let multipoint = MultiPoint::new(vec![Point::new(0.0, 0.0), Point::new(1.0, 1.0)]);
+            assert_relative_eq!(multipoint.perimeter_ext(&Euclidean), 0.0);
+
+            // MULTILINESTRING ((0 0, 1 1), (1 1, 2 2)) - should return 0 (1D geometry has no perimeter)
+            let multilinestring = MultiLineString::new(vec![
+                line_string![(x: 0., y: 0.), (x: 1., y: 1.)],
+                line_string![(x: 1., y: 1.), (x: 2., y: 2.)],
+            ]);
+            assert_relative_eq!(multilinestring.perimeter_ext(&Euclidean), 0.0);
+
+            // POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0)) - should return 4 (perimeter of unit square)
+            let polygon_unit_square = polygon![
+                (x: 0., y: 0.),
+                (x: 1., y: 0.),
+                (x: 1., y: 1.),
+                (x: 0., y: 1.),
+                (x: 0., y: 0.),
+            ];
+            assert_relative_eq!(polygon_unit_square.perimeter_ext(&Euclidean), 4.0);
+
+            // MULTIPOLYGON (((0 0, 1 0, 1 1, 0 1, 0 0)), ((0 0, 1 0, 1 1, 0 1, 0 0))) - should return 8 (two unit squares)
+            let multipolygon_two_unit_squares = MultiPolygon::new(vec![
+                polygon![
+                    (x: 0., y: 0.),
+                    (x: 1., y: 0.),
+                    (x: 1., y: 1.),
+                    (x: 0., y: 1.),
+                    (x: 0., y: 0.),
+                ],
+                polygon![
+                    (x: 0., y: 0.),
+                    (x: 1., y: 0.),
+                    (x: 1., y: 1.),
+                    (x: 0., y: 1.),
+                    (x: 0., y: 0.),
+                ],
+            ]);
+            assert_relative_eq!(multipolygon_two_unit_squares.perimeter_ext(&Euclidean), 8.0);
+
+            // GEOMETRYCOLLECTION (POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0)), LINESTRING (0 0, 1 1), POLYGON ((0 0, 1 0, 1 1, 0 1, 0 0)))
+            // Should return 8 (only polygons contribute to perimeter: 4 + 0 + 4 = 8)
+            let geometry_collection_mixed = GeometryCollection::new_from(vec![
+                Geometry::Polygon(polygon![
+                    (x: 0., y: 0.),
+                    (x: 1., y: 0.),
+                    (x: 1., y: 1.),
+                    (x: 0., y: 1.),
+                    (x: 0., y: 0.),
+                ]), // contributes 4
+                Geometry::LineString(line_string![(x: 0., y: 0.), (x: 1., y: 1.)]), // contributes 0 (1D geometry)
+                Geometry::Polygon(polygon![
+                    (x: 0., y: 0.),
+                    (x: 1., y: 0.),
+                    (x: 1., y: 1.),
+                    (x: 0., y: 1.),
+                    (x: 0., y: 0.),
+                ]), // contributes 4
+            ]);
+            assert_relative_eq!(geometry_collection_mixed.perimeter_ext(&Euclidean), 8.0);
+        }
+
+        #[test]
+        fn test_perimeter_vs_length_distinction() {
+            // This test ensures we correctly distinguish between length and perimeter
+            // according to PostGIS/OGC standards
+
+            let linestring = line_string![(x: 0., y: 0.), (x: 3., y: 4.)]; // length = 5.0
+            let polygon = polygon![(x: 0., y: 0.), (x: 3., y: 0.), (x: 3., y: 4.), (x: 0., y: 4.), (x: 0., y: 0.)]; // perimeter = 14.0
+
+            // For 1D geometries: length > 0, perimeter = 0
+            assert_relative_eq!(linestring.length_ext(&Euclidean), 5.0);
+            assert_relative_eq!(linestring.perimeter_ext(&Euclidean), 0.0);
+
+            // For 2D geometries: length = 0, perimeter > 0
+            assert_relative_eq!(polygon.length_ext(&Euclidean), 0.0);
+            assert_relative_eq!(polygon.perimeter_ext(&Euclidean), 14.0);
+        }
+
+        #[test]
+        fn test_empty_geometry_perimeter() {
+            // Test empty geometries return 0 perimeter
+
+            // Empty LineString
+            let empty_ls: crate::LineString<f64> = line_string![];
+            assert_relative_eq!(empty_ls.perimeter_ext(&Euclidean), 0.0);
+
+            // Empty MultiLineString
+            let empty_mls = MultiLineString::<f64>::new(vec![]);
+            assert_relative_eq!(empty_mls.perimeter_ext(&Euclidean), 0.0);
+
+            // Empty MultiPoint
+            let empty_mp = MultiPoint::<f64>::new(vec![]);
+            assert_relative_eq!(empty_mp.perimeter_ext(&Euclidean), 0.0);
+
+            // Empty GeometryCollection
+            let empty_gc = GeometryCollection::<f64>::new_from(vec![]);
+            assert_relative_eq!(empty_gc.perimeter_ext(&Euclidean), 0.0);
         }
     }
 }
