@@ -380,6 +380,24 @@ mod test {
     }
 
     #[test]
+    fn test_external_point_horizontal_from_tip() {
+        let triangle: MultiPolygon = wkt!(MULTIPOLYGON (((-1 0, 0 1, 1 0, -1 0)))).convert();
+        let triangle_index = IntervalTreeMultiPolygon::new(&triangle);
+
+        assert!(!triangle.contains(&Coord { x: -0.75, y: 1.0 }));
+        assert!(!triangle_index.contains_point(Coord { x: -0.75, y: 1.0 }));
+
+        assert!(!triangle.contains(&Coord { x: -0.5, y: 0.5 }));
+        assert!(!triangle_index.contains_point(Coord { x: -0.5, y: 0.5 }));
+
+        assert!(!triangle.contains(&Coord { x: 0.0, y: 1.0 }));
+        assert!(!triangle_index.contains_point(Coord { x: 0.0, y: 1.0 }));
+
+        assert!(!triangle.contains(&Coord { x: 0.75, y: 1.0 }));
+        assert!(!triangle_index.contains_point(Coord { x: 0.75, y: 1.0 }));
+    }
+
+    #[test]
     fn test_polygon_should_never_contain_empty_multipoint() {
         let [pt_a, pt_b, pt_c, pt_d, _pt_edge, _pt_mid, _pt_out] = make_test_pts();
 
