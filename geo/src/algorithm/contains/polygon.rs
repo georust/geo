@@ -341,11 +341,42 @@ mod test {
     #[test]
     fn test_point_inside_indexed_polygon() {
         // Square around the origin with an extra vertex on the right side
-        let square: MultiPolygon =
-            wkt!(MULTIPOLYGON(((-1 1, 1 1, 1 0, 1 -1, -1 -1, -1 1)))).convert();
+        let square: MultiPolygon = wkt!(MULTIPOLYGON(((-1 1,1 1,1 0,1 -1,-1 -1,-1 1)))).convert();
         let square_index = IntervalTreeMultiPolygon::new(&square);
 
         assert!(square_index.contains_point(Coord { x: 0.0, y: 0.0 }));
+    }
+
+    #[test]
+    fn test_point_on_boundary_indexed_polygon() {
+        // Square around the origin with an extra vertex on the right side
+        let square: MultiPolygon =
+            wkt!(MULTIPOLYGON(((-1 1, 1 1,1 0,1 -1, -1 -1, -1 1)))).convert();
+        let square_index = IntervalTreeMultiPolygon::new(&square);
+
+        // top left corner
+        assert!(!square_index.contains_point(Coord { x: -1.0, y: 1.0 }));
+        assert!(!square.contains(&Coord { x: -1.0, y: 1.0 }));
+
+        // on left boundary
+        assert!(!square_index.contains_point(Coord { x: -1.0, y: 0.5 }));
+        assert!(!square.contains(&Coord { x: -1.0, y: 0.5 }));
+
+        // on left boundary, directly left of extra point
+        assert!(!square_index.contains_point(Coord { x: -1.0, y: 0.0 }));
+        assert!(!square.contains(&Coord { x: -1.0, y: 0.0 }));
+
+        // Outside (left) of square, directly left of extra point
+        assert!(!square_index.contains_point(Coord { x: -2.0, y: 0.0 }));
+        assert!(!square.contains(&Coord { x: -2.0, y: 0.0 }));
+
+        // on right boundary
+        assert!(!square_index.contains_point(Coord { x: 1.0, y: 0.5 }));
+        assert!(!square.contains(&Coord { x: 1.0, y: 0.5 }));
+
+        // on right boundary, directly on extra point
+        assert!(!square_index.contains_point(Coord { x: 1.0, y: 0.0 }));
+        assert!(!square.contains(&Coord { x: 1.0, y: 0.5 }));
     }
 
     #[test]
