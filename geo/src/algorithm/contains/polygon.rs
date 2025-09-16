@@ -324,7 +324,7 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{MultiPoint, Relate, coord, polygon};
+    use crate::{Convert, MultiPoint, Relate, coord, polygon, wkt};
 
     fn make_test_pts() -> [Coord<f64>; 7] {
         let pt_a = coord! {x: 0., y: 0.};
@@ -341,17 +341,8 @@ mod test {
     #[test]
     fn test_point_inside_indexed_polygon() {
         // Square around the origin with an extra vertex on the right side
-        let square = MultiPolygon::new(vec![polygon!(
-            exterior: [
-                (x: -1., y: 1.),
-                (x:  1., y: 1.),
-                (x:  1., y: 0.),
-                (x:  1., y: -1.),
-                (x: -1., y: -1.),
-            ],
-            interiors: [],
-        )]);
-
+        let square: MultiPolygon =
+            wkt!(MULTIPOLYGON(((-1 1, 1 1, 1 0, 1 -1, -1 -1, -1 1)))).convert();
         let square_index = IntervalTreeMultiPolygon::new(&square);
 
         assert!(square_index.contains_point(Coord { x: 0.0, y: 0.0 }));
