@@ -271,7 +271,7 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
 
         let result = self
             .y_interval_tree
-            .query(point_y..point_y, |(_, segment)| {
+            .query(point_y..=point_y, |(_, segment)| {
                 // Early rejection: segment must extend to the right of point
                 if segment.x_max <= point.x {
                     return ControlFlow::Continue(());

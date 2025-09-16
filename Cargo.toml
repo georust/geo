@@ -15,3 +15,4 @@ members = [
 # Ensure any transitive dependencies also use the local geo/geo-types
 geo = { path = "geo" }
 geo-types = { path = "geo-types" }
+sif-itree = { git = "https://github.com/adamreichold/sif-itree", branch = "closed-intervals" }
