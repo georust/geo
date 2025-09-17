@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- (No changes)
+- Move `PreparedGeometry` into a new `indexed` module intended to provide index-backed geometries. `relate::PreparedGeometry` has been deprecated.
 
 ## 0.31.0 - 2025-09-01
 

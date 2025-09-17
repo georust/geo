@@ -1,17 +1,16 @@
-use super::Segment;
 use crate::geometry::*;
 use crate::relate::geomgraph::{GeometryGraph, RobustLineIntersector};
 use crate::{BoundingRect, GeometryCow, HasDimensions};
 use crate::{GeoFloat, Relate};
 
-use std::cell::RefCell;
 use std::fmt::{Debug, Formatter};
 use std::rc::Rc;
 
 use crate::dimensions::Dimensions;
-use rstar::{Envelope, RTree, RTreeNum};
+use rstar::RTreeNum;
 
-/// A `PreparedGeometry` can be more efficient than a plain Geometry when performing
+/// A `PreparedGeometry` is backed by an R*-tree spatial index and
+/// can be more efficient than a plain Geometry when performing
 /// multiple topological comparisons against the `PreparedGeometry`.
 ///
 /// ```
@@ -62,7 +61,6 @@ where
     }
 }
 
-use crate::geometry::*;
 pub(crate) fn prepare_geometry<'a, F, T>(geometry: T) -> PreparedGeometry<'a, T, F>
 where
     F: GeoFloat,
