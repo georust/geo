@@ -158,6 +158,10 @@ pub use haversine_length::HaversineLength;
 pub mod haversine_closest_point;
 pub use haversine_closest_point::HaversineClosestPoint;
 
+/// Geometries backed by spatial indexes for fast bulk operations
+pub mod indexed;
+pub use indexed::PreparedGeometry;
+
 /// Calculate a representative `Point` inside a `Geometry`
 pub mod interior_point;
 pub use interior_point::InteriorPoint;

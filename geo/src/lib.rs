@@ -254,7 +254,7 @@ pub use crate::types::Closest;
 use std::cmp::Ordering;
 
 pub use crate::algorithm::sweep::Intersections;
-pub use crate::relate::PreparedGeometry;
+pub use crate::indexed::PreparedGeometry;
 pub use geo_types::{CoordFloat, CoordNum, coord, line_string, point, polygon, wkt};
 
 pub mod geometry;

@@ -3,12 +3,16 @@ pub use geomgraph::intersection_matrix::IntersectionMatrix;
 use relate_operation::RelateOperation;
 
 use crate::geometry::*;
+#[deprecated(
+    since = "0.31.1",
+    note = "PreparedGeometry has moved to geo::indexed::PreparedGeometry"
+)]
+pub use crate::indexed::PreparedGeometry;
 pub use crate::relate::geomgraph::GeometryGraph;
-pub use crate::relate::geomgraph::index::PreparedGeometry;
 use crate::{BoundingRect, GeoFloat, GeometryCow, HasDimensions};
 
 mod edge_end_builder;
-mod geomgraph;
+pub(crate) mod geomgraph;
 mod relate_operation;
 
 /// Topologically relate two geometries based on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
@@ -81,12 +85,12 @@ macro_rules! relate_impl {
             }
             impl<F: GeoFloat> From<$t> for PreparedGeometry<'static, $t, F> {
                 fn from(geometry: $t) -> Self {
-                    $crate::relate::geomgraph::index::prepare_geometry(geometry)
+                    $crate::indexed::prepared_geometry::prepare_geometry(geometry)
                 }
             }
             impl<'a, F: GeoFloat> From<&'a $t> for PreparedGeometry<'a, &'a $t, F> {
                 fn from(geometry: &'a $t) -> Self {
-                    $crate::relate::geomgraph::index::prepare_geometry(geometry)
+                    $crate::indexed::prepared_geometry::prepare_geometry(geometry)
                 }
             }
         )*
