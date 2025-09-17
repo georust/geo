@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Move `PreparedGeometry` into a new `indexed` module intended to provide index-backed geometries. `relate::PreparedGeometry` has been deprecated.
+- Use an interval tree for faster (Multi)Point in MultiPolygon checks
 
 ## 0.31.0 - 2025-09-01
 
