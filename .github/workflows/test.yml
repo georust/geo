@@ -11,6 +11,9 @@ on:
 
 name: Run tests
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   # Set configurations used throughout the workflow
   set-matrix:
@@ -92,10 +95,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
       - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
       - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
       - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F use-rstar_0_9,serde
-      - run: cargo test --all-features
+      - run: cargo nextest run --all-features
+      - run: cargo test --doc --all-features
 
   geo:
     name: geo
@@ -114,9 +121,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
       - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: nextest
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
-      - run: cargo test --features "use-proj use-serde earcutr multithreading"
+      - run: cargo nextest run --features "use-proj use-serde earcutr multithreading"
+      - run: cargo test --doc --features "use-proj use-serde earcutr multithreading"
 
   geo_traits:
     name: geo-traits
