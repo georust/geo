@@ -293,4 +293,26 @@ mod test {
         assert!(!poly.contains(&mp_bc_out));
         assert!(!poly.contains(&mp_bc_edge_out));
     }
+
+    #[test]
+    fn test_hollow_square_ccw_exterior_cw_interior() {
+        // Standard OGC winding: exterior shell CCW, interior ring CW
+        let hollow_square = wkt!(MULTIPOLYGON(((-2.0 -2.0,2.0 -2.0,2.0 2.0,-2.0 2.0,-2.0 -2.0),(-1.0 -1.0,-1.0 1.0,1.0 1.0,1.0 -1.0,-1.0 -1.0))));
+        let hollow_square_index = IntervalTreeMultiPolygon::new(&hollow_square);
+        // Point in the hole should not be contained
+        assert!(!hollow_square_index.contains(&Coord { x: 0.0, y: 0.0 }));
+        // Point in the solid part should be contained
+        assert!(hollow_square_index.contains(&Coord { x: 1.5, y: 0.0 }));
+    }
+
+    #[test]
+    fn test_hollow_square_cw_exterior_ccw_interior() {
+        // Non-standard winding: exterior shell CW, interior ring CCW
+        let hollow_square = wkt!(MULTIPOLYGON(((-2.0 -2.0,-2.0 2.0,2.0 2.0,2.0 -2.0,-2.0 -2.0),(-1.0 -1.0,1.0 -1.0,1.0 1.0,-1.0 1.0,-1.0 -1.0))));
+        let hollow_square_index = IntervalTreeMultiPolygon::new(&hollow_square);
+        // Point in the hole should not be contained
+        assert!(!hollow_square_index.contains(&Coord { x: 0.0, y: 0.0 }));
+        // Point in the solid part should be contained
+        assert!(hollow_square_index.contains(&Coord { x: 1.5, y: 0.0 }));
+    }
 }
