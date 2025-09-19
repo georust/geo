@@ -46,7 +46,6 @@ struct YIntervalSegment<T: GeoNum> {
     /// Used for early rejection of segments that don't extend far enough right.
     /// This avoids computing max(seg.0.x, seg.1.x) for every point query.
     x_max: T,
-    is_exterior: bool,
 }
 
 /// A [`MultiPolygon`] backed by an [interval tree](https://en.wikipedia.org/wiki/Interval_tree) for fast containment queries
@@ -60,29 +59,21 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
         let segments =
             mp.0.iter()
                 .flat_map(|polygon| {
-                    polygon
-                        .exterior()
-                        .lines_iter()
-                        .map(|line| (line, true))
-                        .chain(
-                            polygon
-                                .interiors()
-                                .iter()
-                                .flat_map(|interior| interior.lines_iter())
-                                .map(|line| (line, false)),
-                        )
+                    polygon.exterior().lines_iter().chain(
+                        polygon
+                            .interiors()
+                            .iter()
+                            .flat_map(|interior| interior.lines_iter()),
+                    )
                 })
-                .map(|(line, is_exterior)| Self::create_segment(line, is_exterior));
+                .map(|line| Self::create_segment(line));
 
         Self {
             y_interval_tree: ITree::new(segments),
         }
     }
 
-    fn create_segment(
-        line: Line<T>,
-        is_exterior: bool,
-    ) -> sif_itree::Item<YValue<T>, YIntervalSegment<T>> {
+    fn create_segment(line: Line<T>) -> sif_itree::Item<YValue<T>, YIntervalSegment<T>> {
         let p1 = line.start;
         let p2 = line.end;
 
@@ -106,7 +97,6 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
             YIntervalSegment {
                 segment: (p1, p2),
                 x_max,
-                is_exterior,
             },
         )
     }
@@ -155,12 +145,8 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
                     }
                 }
 
-                // Exterior rings contribute positively, interior rings (holes) contribute negatively
-                if segment.is_exterior {
-                    winding_number += contribution;
-                } else {
-                    winding_number -= contribution;
-                }
+                // Add the contribution directly: the winding order determines the sign
+                winding_number += contribution;
                 ControlFlow::Continue(())
             });
 
