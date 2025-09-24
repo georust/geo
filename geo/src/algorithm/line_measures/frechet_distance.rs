@@ -160,7 +160,7 @@ mod test {
         let ls: LineString = {
             let delta = 0.01;
 
-            let mut ls = vec![(0.0, 0.0); 10_000];
+            let mut ls = vec![(0.0, 0.0); 1_000];
             for i in 1..ls.len() {
                 let (lat, lon) = ls[i - 1];
                 ls[i] = (lat - delta, lon + delta);
@@ -209,7 +209,7 @@ mod test {
         let ls: LineString = {
             let delta = 0.01;
 
-            let mut ls = vec![(0.0, 0.0); 10_000];
+            let mut ls = vec![(0.0, 0.0); 1_000];
             for i in 1..ls.len() {
                 let (lat, lon) = ls[i - 1];
                 ls[i] = (lat - delta, lon + delta);

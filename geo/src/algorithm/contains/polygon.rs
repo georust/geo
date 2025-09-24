@@ -1,7 +1,10 @@
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::geometry::*;
+use crate::indexed::IntervalTreeMultiPolygon;
 use crate::{GeoFloat, GeoNum};
 use crate::{HasDimensions, Relate};
+
+use crate::{Coord, LineString, MultiPolygon, Polygon};
 
 // ┌─────────────────────────────┐
 // │ Implementations for Polygon │
@@ -71,7 +74,22 @@ impl<T: GeoNum> Contains<MultiPoint<T>> for MultiPolygon<T> {
         if self.is_empty() || rhs.is_empty() {
             return false;
         }
-        rhs.iter().all(|point| self.contains(point))
+        // Create IndexedMultiPolygon once and reuse for all point checks
+        let indexed = IntervalTreeMultiPolygon::new(self);
+        rhs.iter().all(|point| indexed.contains(&point.0))
+    }
+}
+
+impl<T: GeoNum> Contains<Coord<T>> for IntervalTreeMultiPolygon<T> {
+    fn contains(&self, rhs: &Coord<T>) -> bool {
+        self.containment(*rhs)
+    }
+}
+
+impl<T: GeoNum> Contains<Point<T>> for IntervalTreeMultiPolygon<T> {
+    fn contains(&self, rhs: &Point<T>) -> bool {
+        let c = Coord::from(*rhs);
+        self.containment(c)
     }
 }
 
@@ -150,7 +168,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{MultiPoint, Relate, coord, polygon};
+    use crate::{Convert, MultiPoint, Relate, coord, polygon, wkt};
 
     fn make_test_pts() -> [Coord<f64>; 7] {
         let pt_a = coord! {x: 0., y: 0.};
@@ -162,6 +180,58 @@ mod test {
         let pt_mid = coord! {x: 5., y: 5.};
         let pt_out = coord! {x: 11., y: 11.};
         [pt_a, pt_b, pt_c, pt_d, pt_edge, pt_mid, pt_out]
+    }
+
+    #[test]
+    fn test_point_on_boundary_indexed_polygon() {
+        // Square around the origin with an extra vertex on the right side
+        let square: MultiPolygon = wkt!(MULTIPOLYGON(((-1 1, 1 1, 1 -1, -1 -1, -1 1)))).convert();
+        let square_index = IntervalTreeMultiPolygon::new(&square);
+
+        assert!(!square_index.contains(&Coord { x: -1.0, y: 1.0 }));
+
+        assert!(!square_index.contains(&Coord { x: -1.0, y: 0.5 }));
+
+        assert!(!square_index.contains(&Coord { x: -1.0, y: 0.0 }));
+
+        assert!(!square_index.contains(&Coord { x: -2.0, y: 0.0 }));
+    }
+
+    #[test]
+    fn test_external_point_horizontal_from_tip() {
+        let triangle: MultiPolygon = wkt!(MULTIPOLYGON (((-1 0, 0 1, 1 0, -1 0)))).convert();
+        let triangle_index = IntervalTreeMultiPolygon::new(&triangle);
+
+        assert!(!triangle.contains(&Coord { x: -0.75, y: 1.0 }));
+        assert!(!triangle_index.contains(&Coord { x: -0.75, y: 1.0 }));
+
+        assert!(!triangle.contains(&Coord { x: -0.5, y: 0.5 }));
+        assert!(!triangle_index.contains(&Coord { x: -0.5, y: 0.5 }));
+
+        assert!(!triangle.contains(&Coord { x: 0.0, y: 1.0 }));
+        assert!(!triangle_index.contains(&Coord { x: 0.0, y: 1.0 }));
+
+        assert!(!triangle.contains(&Coord { x: 0.75, y: 1.0 }));
+        assert!(!triangle_index.contains(&Coord { x: 0.75, y: 1.0 }));
+    }
+
+    #[test]
+    fn test_point_inside_indexed_polygon() {
+        // Square around the origin with an extra vertex on the right side
+        let square = MultiPolygon::new(vec![polygon!(
+            exterior: [
+                (x: -1., y: 1.),
+                (x:  1., y: 1.),
+                (x:  1., y: 0.),
+                (x:  1., y: -1.),
+                (x: -1., y: -1.),
+            ],
+            interiors: [],
+        )]);
+
+        let square_index = IntervalTreeMultiPolygon::new(&square);
+
+        assert!(square_index.contains(&Coord { x: 0.0, y: 0.0 }));
     }
 
     #[test]
@@ -222,5 +292,27 @@ mod test {
         assert!(!poly.contains(&mp_a_out));
         assert!(!poly.contains(&mp_bc_out));
         assert!(!poly.contains(&mp_bc_edge_out));
+    }
+
+    #[test]
+    fn test_hollow_square_ccw_exterior_cw_interior() {
+        // Standard OGC winding: exterior shell CCW, interior ring CW
+        let hollow_square = wkt!(MULTIPOLYGON(((-2.0 -2.0,2.0 -2.0,2.0 2.0,-2.0 2.0,-2.0 -2.0),(-1.0 -1.0,-1.0 1.0,1.0 1.0,1.0 -1.0,-1.0 -1.0))));
+        let hollow_square_index = IntervalTreeMultiPolygon::new(&hollow_square);
+        // Point in the hole should not be contained
+        assert!(!hollow_square_index.contains(&Coord { x: 0.0, y: 0.0 }));
+        // Point in the solid part should be contained
+        assert!(hollow_square_index.contains(&Coord { x: 1.5, y: 0.0 }));
+    }
+
+    #[test]
+    fn test_hollow_square_cw_exterior_ccw_interior() {
+        // Non-standard winding: exterior shell CW, interior ring CCW
+        let hollow_square = wkt!(MULTIPOLYGON(((-2.0 -2.0,-2.0 2.0,2.0 2.0,2.0 -2.0,-2.0 -2.0),(-1.0 -1.0,1.0 -1.0,1.0 1.0,-1.0 1.0,-1.0 -1.0))));
+        let hollow_square_index = IntervalTreeMultiPolygon::new(&hollow_square);
+        // Point in the hole should not be contained
+        assert!(!hollow_square_index.contains(&Coord { x: 0.0, y: 0.0 }));
+        // Point in the solid part should be contained
+        assert!(hollow_square_index.contains(&Coord { x: 1.5, y: 0.0 }));
     }
 }
