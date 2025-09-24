@@ -14,6 +14,6 @@ edition = "2021"
 default = ["geo-types"]
 
 [dependencies]
-geo-types = { version = "0.7", optional = true }
+geo-types = { version = "0.7.17", optional = true }
 
 [dev-dependencies]

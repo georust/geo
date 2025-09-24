@@ -763,7 +763,7 @@ mod tests {
 
     #[test]
     fn empty_is_equal_topo() {
-        let empty_polygon = Polygon::<f64>::new(LineString::new(vec![]), vec![]);
+        let empty_polygon = Polygon::<f64>::empty();
         let im = empty_polygon.relate(&empty_polygon);
         assert!(im.is_equal_topo());
     }

@@ -282,8 +282,7 @@ mod test {
         assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
         // Empty line
-        let coords: Vec<Point> = Vec::new();
-        let linestring: LineString = coords.into();
+        let linestring: LineString = LineString::empty();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
     }
 

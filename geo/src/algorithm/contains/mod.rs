@@ -185,7 +185,7 @@ mod test {
     /// Tests: Point in LineString
     #[test]
     fn empty_linestring_test() {
-        let linestring = LineString::new(Vec::new());
+        let linestring = LineString::empty();
         assert!(!linestring.contains(&Point::new(2., 1.)));
     }
     #[test]
@@ -205,8 +205,7 @@ mod test {
     /// Tests: Point in Polygon
     #[test]
     fn empty_polygon_test() {
-        let linestring = LineString::new(Vec::new());
-        let poly = Polygon::new(linestring, Vec::new());
+        let poly = Polygon::empty();
         assert!(!poly.contains(&Point::new(2., 1.)));
     }
     #[test]
@@ -284,7 +283,7 @@ mod test {
     /// Tests: Point in MultiPolygon
     #[test]
     fn empty_multipolygon_test() {
-        let multipoly = MultiPolygon::new(Vec::new());
+        let multipoly = MultiPolygon::empty();
         assert!(!multipoly.contains(&Point::new(2., 1.)));
     }
     #[test]
@@ -690,7 +689,7 @@ mod test {
     #[test]
     fn rect_contains_empty_polygon() {
         let rect = Rect::new(coord! { x: 90., y: 150. }, coord! { x: 300., y: 360. });
-        let empty_poly = Polygon::new(line_string![], vec![]);
+        let empty_poly = Polygon::empty();
         assert_eq!(
             rect.contains(&empty_poly),
             rect.relate(&empty_poly).is_contains()
