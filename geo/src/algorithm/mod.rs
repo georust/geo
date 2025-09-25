@@ -316,6 +316,9 @@ pub use within::Within;
 /// Planar sweep algorithm and related utils for use by the monotone module
 pub(crate) mod old_sweep;
 
+/// Project polygon geometry from 2D space into 1D space
+pub(crate) mod projection_1d;
+
 /// Find line intersections using the Bentley-Ottmann algorithm
 pub mod sweep;
 
