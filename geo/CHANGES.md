@@ -7,6 +7,7 @@
 - LOF algorithm efficiency improvements due to caching kth distance
 - Add DBSCAN clustering algorithm implementation
 - Add `distance_within` method with default impl for any geometry that implements `Distance`, with similar semantics to the PostGIS [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function
+- Add fast minimum 1D and 2D Euclidean distance algorithm for linearly separable geometries (#1424)
 
 ## 0.31.0 - 2025-09-01
 
