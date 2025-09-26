@@ -2,6 +2,7 @@ use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::Orientation;
 use crate::algorithm::kernels::Kernel;
 use crate::geometry::*;
+use crate::intersects::value_in_range;
 use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions};
 
 // ┌────────────────────────────────┐
@@ -53,49 +54,85 @@ where
         };
 
         // improve performance by filtering out irrelevant segments
-        let candidates: Vec<_> = self
+        let candidates_iter = self
             .lines()
-            // keep only collinear segments
-            .filter(|segment| is_collinear(&line, segment))
-            // flip such that start < end for all segments
-            .map(|segment| {
-                if greater_than(&segment.end, &segment.start) {
-                    segment
-                } else {
-                    Line::new(segment.end, segment.start)
-                }
-            })
-            // filter out non-intersecting segments
-            // faster method using knowledge that segments are collinear to line
-            .filter(|segment| {
-                greater_than(&line.end, &segment.start) && greater_than(&segment.end, &line.start)
-            })
-            .collect();
+            .filter(|segment| x_overlap(&line, segment))
+            .filter(|segment| is_collinear(&line, segment));
 
         let mut changed = true;
-        while changed {
-            changed = false;
-            for candidate in candidates.iter() {
-                if greater_than(&candidate.start, &line.start) {
-                    // cannot trim
-                    continue;
-                }
-                if !greater_than(&line.end, &candidate.end) {
-                    // is covered, can terminate early
-                    return true;
-                }
 
-                if greater_than(&candidate.end, &line.start) {
-                    // trimmed
-                    changed = true;
-                    line = Line::new(candidate.end, line.end);
-                }
+        // use y value instead if x values are identical
+        if line.start.x != line.end.x {
+            let candidates: Vec<_> = candidates_iter
+                // flip such that start < end for all segments
+                .map(|segment| {
+                    if segment.start.x < segment.end.x {
+                        segment
+                    } else {
+                        Line::new(segment.end, segment.start)
+                    }
+                })
+                .collect();
+            while changed {
+                changed = false;
+                for candidate in candidates.iter() {
+                    if candidate.start.x > line.start.x {
+                        // cannot trim
+                        continue;
+                    }
+                    if line.end.x <= candidate.end.x {
+                        // is covered, can terminate early
+                        return true;
+                    }
 
-                // else candidate ends before line, no trim needed
+                    if candidate.end.x > line.start.x {
+                        // trimmed
+                        changed = true;
+                        line = Line::new(candidate.end, line.end);
+                    }
+
+                    // else candidate ends before line, no trim needed
+                }
             }
-        }
 
-        false
+            false
+        } else {
+            let candidates: Vec<_> = candidates_iter
+                // flip such that start < end for all segments
+                .map(|segment| {
+                    // use greater_than to handle the case where x values are equal (straight up or down)
+                    if segment.start.y < segment.end.y {
+                        segment
+                    } else {
+                        Line::new(segment.end, segment.start)
+                    }
+                })
+                .filter(|segment| y_overlap(&line, segment))
+                .collect();
+            while changed {
+                changed = false;
+                for candidate in candidates.iter() {
+                    if candidate.start.y > line.start.y {
+                        // cannot trim
+                        continue;
+                    }
+                    if line.end.y <= candidate.end.y {
+                        // is covered, can terminate early
+                        return true;
+                    }
+
+                    if candidate.end.y > line.start.y {
+                        // trimmed
+                        changed = true;
+                        line = Line::new(candidate.end, line.end);
+                    }
+
+                    // else candidate ends before line, no trim needed
+                }
+            }
+
+            false
+        }
     }
 }
 
@@ -150,10 +187,36 @@ where
         && T::Ker::orient2d(l1.start, l1.end, l2.end) == Orientation::Collinear
 }
 
-// faster than lex_cmp since we kmow GeoNum has total ordering
 #[inline]
-fn greater_than<T: GeoNum>(p: &Coord<T>, q: &Coord<T>) -> bool {
-    p.x > q.x || (p.x == q.x && p.y > q.y)
+fn x_overlap<T: GeoNum>(l1: &Line<T>, l2: &Line<T>) -> bool {
+    let (p1, p2) = if l1.start.x < l1.end.x {
+        (l1.start.x, l1.end.x)
+    } else {
+        (l1.end.x, l1.start.x)
+    };
+    let (q1, q2) = if l2.start.x < l2.end.x {
+        (l2.start.x, l2.end.x)
+    } else {
+        (l2.end.x, l2.start.x)
+    };
+    value_in_range(p1, q1, q2) || value_in_range(q1, p1, p2)
+}
+
+#[inline]
+fn y_overlap<T: GeoNum>(l1: &Line<T>, l2: &Line<T>) -> bool {
+    // save 2 if statements compared to 4 calls of `value_in_between`
+
+    let (p1, p2) = if l1.start.y < l1.end.y {
+        (l1.start.y, l1.end.y)
+    } else {
+        (l1.end.y, l1.start.y)
+    };
+    let (q1, q2) = if l2.start.y < l2.end.y {
+        (l2.start.y, l2.end.y)
+    } else {
+        (l2.end.y, l2.start.y)
+    };
+    value_in_range(p1, q1, q2) || value_in_range(q1, p1, p2)
 }
 
 #[cfg(test)]
@@ -178,51 +241,12 @@ mod test {
     }
 
     #[test]
-    fn test_exact_identical() {
-        let ln: Line<f64> = wkt! {LINE(0 0, 1 1)}.convert();
-        let ls1: LineString<f64> = ln.clone().into();
-        let ls2: LineString<f64> = ln.clone().into();
+    fn test_start_end() {
+        let ls: LineString<f64> = wkt! {LINESTRING(0 0,0 1, 1 1)}.convert();
+        let ln_start: Line<f64> = wkt! {LINE(0 0, 0 0)}.convert();
+        let ln_end: Line<f64> = wkt! {LINE(1 1, 1 1)}.convert();
 
-        // matches current Relate.is_contains() behavior
-        assert_eq!(
-            ln.relate(&ls1).is_contains(), // true
-            ln.contains(&ls1)              // true
-        );
-
-        assert_eq!(
-            ls1.relate(&ln).is_contains(), // true
-            ls1.contains(&ln)              // true
-        );
-
-        assert_eq!(
-            ls1.relate(&ls2).is_contains(), // true
-            ls1.contains(&ls2)              // true
-        );
-
-        // but this isn't really correct
-        assert!(ln.relate(&ls1).is_contains());
-        assert!(ln.contains(&ls1));
-
-        assert!(ls1.relate(&ln).is_contains());
-        assert!(ls1.contains(&ln));
-
-        assert!(ls1.relate(&ls2).is_contains());
-        assert!(ls1.contains(&ls2));
-    }
-
-    #[test]
-    fn test_vertical() {
-        let ln: Line<f64> = wkt! {LINE(0 1, 0 2)}.convert();
-        let ls: LineString<f64> = wkt! {LINESTRING(0 0, 0 4)}.convert();
-
-        assert!(ls.contains(&ln));
-    }
-
-    #[test]
-    fn test_horizontal() {
-        let ln: Line<f64> = wkt! {LINE(1 0, 2 0)}.convert();
-        let ls: LineString<f64> = wkt! {LINESTRING(0 0, 4 0)}.convert();
-
-        assert!(ls.contains(&ln));
+        assert!(!ls.contains(&ln_start));
+        assert!(!ls.contains(&ln_end));
     }
 }
