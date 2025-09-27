@@ -53,18 +53,24 @@ where
             *line
         };
 
-        // improve performance by filtering out irrelevant segments
-        let candidates_iter = self
-            .lines()
-            .filter(|segment| x_overlap(&line, segment))
-            .filter(|segment| is_collinear(&line, segment));
+        let is_vertical = line.start.x == line.end.x;
 
-        let mut changed = true;
-
-        // use y value instead if x values are identical
-        if line.start.x != line.end.x {
-            let candidates: Vec<_> = candidates_iter
-                // flip such that start < end for all segments
+        let candidates: Vec<_> = if is_vertical {
+            self.lines()
+                .filter(|segment| y_overlap(&line, segment))
+                .filter(|segment| is_collinear(&line, segment))
+                .map(|segment| {
+                    if segment.start.y < segment.end.y {
+                        segment
+                    } else {
+                        Line::new(segment.end, segment.start)
+                    }
+                })
+                .collect()
+        } else {
+            self.lines()
+                .filter(|segment| x_overlap(&line, segment))
+                .filter(|segment| is_collinear(&line, segment))
                 .map(|segment| {
                     if segment.start.x < segment.end.x {
                         segment
@@ -72,62 +78,54 @@ where
                         Line::new(segment.end, segment.start)
                     }
                 })
-                .collect();
+                .collect()
+        };
+
+        let mut changed = true;
+
+        // use y value instead if x values are identical
+        if is_vertical {
             while changed {
                 changed = false;
                 for candidate in candidates.iter() {
-                    if candidate.start.x > line.start.x {
-                        // cannot trim
-                        continue;
+                    // if no overlap, skip
+                    if candidate.end.y <= line.start.y || line.end.y <= candidate.start.y {
                     }
-                    if line.end.x <= candidate.end.x {
-                        // is covered, can terminate early
+                    // if candidate covers line, return true
+                    else if candidate.start.y <= line.start.y && line.end.y <= candidate.end.y {
                         return true;
-                    }
-
-                    if candidate.end.x > line.start.x {
-                        // trimmed
+                    } else if candidate.start.y <= line.start.y {
+                        // trim start
                         changed = true;
                         line = Line::new(candidate.end, line.end);
+                    } else if line.end.y <= candidate.end.y {
+                        // trim end
+                        changed = true;
+                        line = Line::new(line.start, candidate.start);
                     }
-
-                    // else candidate ends before line, no trim needed
                 }
             }
 
             false
         } else {
-            let candidates: Vec<_> = candidates_iter
-                // flip such that start < end for all segments
-                .map(|segment| {
-                    // use greater_than to handle the case where x values are equal (straight up or down)
-                    if segment.start.y < segment.end.y {
-                        segment
-                    } else {
-                        Line::new(segment.end, segment.start)
-                    }
-                })
-                .filter(|segment| y_overlap(&line, segment))
-                .collect();
             while changed {
                 changed = false;
                 for candidate in candidates.iter() {
-                    if candidate.start.y > line.start.y {
-                        // cannot trim
-                        continue;
+                    // if no overlap, skip
+                    if candidate.end.x <= line.start.x || line.end.x <= candidate.start.x {
                     }
-                    if line.end.y <= candidate.end.y {
-                        // is covered, can terminate early
+                    // if candidate covers line, return true
+                    else if candidate.start.x <= line.start.x && line.end.x <= candidate.end.x {
                         return true;
-                    }
-
-                    if candidate.end.y > line.start.y {
-                        // trimmed
+                    } else if candidate.start.x <= line.start.x {
+                        // trim start
                         changed = true;
                         line = Line::new(candidate.end, line.end);
+                    } else if line.end.x <= candidate.end.x {
+                        // trim end
+                        changed = true;
+                        line = Line::new(line.start, candidate.start);
                     }
-
-                    // else candidate ends before line, no trim needed
                 }
             }
 
@@ -199,6 +197,7 @@ fn x_overlap<T: GeoNum>(l1: &Line<T>, l2: &Line<T>) -> bool {
     } else {
         (l2.end.x, l2.start.x)
     };
+
     value_in_range(p1, q1, q2) || value_in_range(q1, p1, p2)
 }
 
@@ -248,5 +247,16 @@ mod test {
 
         assert!(!ls.contains(&ln_start));
         assert!(!ls.contains(&ln_end));
+    }
+
+    #[test]
+    fn test_vertical() {
+        let ls1: LineString<f64> = wkt! {LINESTRING(0 0,0 10)}.convert();
+        let ls2: LineString<f64> = wkt! {LINESTRING(0 10,0 0)}.convert();
+
+        let ln: Line<f64> = wkt! {LINE(0 0, 0 10)}.convert();
+
+        assert!(ls1.contains(&ln));
+        assert!(ls2.contains(&ln));
     }
 }
