@@ -48,18 +48,12 @@ where
         let is_vertical = line.start.x == line.end.x;
 
         // pre-order the line so that we can use the faster overlap check
-        let line = if is_vertical {
-            if line.start.y > line.end.y {
-                Line::new(line.end, line.start)
-            } else {
-                *line
-            }
+        let line = if (is_vertical && line.start.y > line.end.y)
+            || (!is_vertical && line.start.x > line.end.x)
+        {
+            Line::new(line.end, line.start)
         } else {
-            if line.start.x > line.end.x {
-                Line::new(line.end, line.start)
-            } else {
-                *line
-            }
+            *line
         };
 
         let candidates: Vec<(T, T)> = if is_vertical {
