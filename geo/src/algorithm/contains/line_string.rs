@@ -2,7 +2,6 @@ use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::Orientation;
 use crate::algorithm::kernels::Kernel;
 use crate::geometry::*;
-use crate::intersects::value_in_range;
 use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions};
 
 // ┌────────────────────────────────┐
@@ -46,36 +45,44 @@ where
             return self.contains(&line.start);
         }
 
-        // orient the other segment
-        let mut line = if line.start.x > line.end.x {
-            Line::new(line.end, line.start)
-        } else {
-            *line
-        };
-
         let is_vertical = line.start.x == line.end.x;
 
-        let candidates: Vec<_> = if is_vertical {
+        // pre-order the line so that we can use the faster overlap check
+        let line = if is_vertical {
+            if line.start.y > line.end.y {
+                Line::new(line.end, line.start)
+            } else {
+                *line
+            }
+        } else {
+            if line.start.x > line.end.x {
+                Line::new(line.end, line.start)
+            } else {
+                *line
+            }
+        };
+
+        let candidates: Vec<(T, T)> = if is_vertical {
             self.lines()
-                .filter(|segment| y_overlap(&line, segment))
+                .filter(|segment| overlap::y_overlap(&line, segment))
                 .filter(|segment| is_collinear(&line, segment))
                 .map(|segment| {
                     if segment.start.y < segment.end.y {
-                        segment
+                        (segment.start.y, segment.end.y)
                     } else {
-                        Line::new(segment.end, segment.start)
+                        (segment.end.y, segment.start.y)
                     }
                 })
                 .collect()
         } else {
             self.lines()
-                .filter(|segment| x_overlap(&line, segment))
+                .filter(|segment| overlap::x_overlap(&line, segment))
                 .filter(|segment| is_collinear(&line, segment))
                 .map(|segment| {
                     if segment.start.x < segment.end.x {
-                        segment
+                        (segment.start.x, segment.end.x)
                     } else {
-                        Line::new(segment.end, segment.start)
+                        (segment.end.x, segment.start.x)
                     }
                 })
                 .collect()
@@ -84,53 +91,35 @@ where
         let mut changed = true;
 
         // use y value instead if x values are identical
-        if is_vertical {
-            while changed {
-                changed = false;
-                for candidate in candidates.iter() {
-                    // if no overlap, skip
-                    if candidate.end.y <= line.start.y || line.end.y <= candidate.start.y {
-                    }
-                    // if candidate covers line, return true
-                    else if candidate.start.y <= line.start.y && line.end.y <= candidate.end.y {
-                        return true;
-                    } else if candidate.start.y <= line.start.y {
-                        // trim start
-                        changed = true;
-                        line = Line::new(candidate.end, line.end);
-                    } else if line.end.y <= candidate.end.y {
-                        // trim end
-                        changed = true;
-                        line = Line::new(line.start, candidate.start);
-                    }
-                }
-            }
-
-            false
+        let (mut line_start, mut line_end) = if is_vertical {
+            (line.start.y, line.end.y)
         } else {
-            while changed {
-                changed = false;
-                for candidate in candidates.iter() {
-                    // if no overlap, skip
-                    if candidate.end.x <= line.start.x || line.end.x <= candidate.start.x {
-                    }
-                    // if candidate covers line, return true
-                    else if candidate.start.x <= line.start.x && line.end.x <= candidate.end.x {
-                        return true;
-                    } else if candidate.start.x <= line.start.x {
-                        // trim start
-                        changed = true;
-                        line = Line::new(candidate.end, line.end);
-                    } else if line.end.x <= candidate.end.x {
-                        // trim end
-                        changed = true;
-                        line = Line::new(line.start, candidate.start);
-                    }
+            (line.start.x, line.end.x)
+        };
+
+        // interval-based overlap checks
+        while changed {
+            changed = false;
+            for (c_start, c_end) in candidates.iter() {
+                // if no overlap, skip
+                if *c_end <= line_start || line_end <= *c_start {
+                }
+                // if candidate covers line, return true
+                else if *c_start <= line_start && line_end <= *c_end {
+                    return true;
+                } else if *c_start <= line_start {
+                    // trim start
+                    changed = true;
+                    line_start = *c_end;
+                } else if line_end <= *c_end {
+                    // trim end
+                    changed = true;
+                    line_end = *c_start;
                 }
             }
-
-            false
         }
+
+        false
     }
 }
 
@@ -185,37 +174,43 @@ where
         && T::Ker::orient2d(l1.start, l1.end, l2.end) == Orientation::Collinear
 }
 
-#[inline]
-fn x_overlap<T: GeoNum>(l1: &Line<T>, l2: &Line<T>) -> bool {
-    let (p1, p2) = if l1.start.x < l1.end.x {
-        (l1.start.x, l1.end.x)
-    } else {
-        (l1.end.x, l1.start.x)
-    };
-    let (q1, q2) = if l2.start.x < l2.end.x {
-        (l2.start.x, l2.end.x)
-    } else {
-        (l2.end.x, l2.start.x)
-    };
+/// Suppose we have 2 pairs (p1,p2) and (q1,q2) where p1 < p2 and q1 < q2
+///
+/// It is sufficient to show that each lower bound is smaller than the others' upper bound for the ranges to overlap  
+mod overlap {
+    use super::*;
 
-    value_in_range(p1, q1, q2) || value_in_range(q1, p1, p2)
-}
+    #[inline]
+    /// Since l1 is ordered, we can execute overlap check in 3 comparisons.  
+    /// We use exclusive bounds because we only want to keep segments which can trim the line
+    pub(super) fn x_overlap<T: GeoNum>(ordered_l1: &Line<T>, l2: &Line<T>) -> bool {
+        debug_assert!(ordered_l1.start.x <= ordered_l1.end.x);
 
-#[inline]
-fn y_overlap<T: GeoNum>(l1: &Line<T>, l2: &Line<T>) -> bool {
-    // save 2 if statements compared to 4 calls of `value_in_between`
+        let (p1, p2) = (ordered_l1.start.x, ordered_l1.end.x);
+        let (q1, q2) = if l2.start.x < l2.end.x {
+            (l2.start.x, l2.end.x)
+        } else {
+            (l2.end.x, l2.start.x)
+        };
 
-    let (p1, p2) = if l1.start.y < l1.end.y {
-        (l1.start.y, l1.end.y)
-    } else {
-        (l1.end.y, l1.start.y)
-    };
-    let (q1, q2) = if l2.start.y < l2.end.y {
-        (l2.start.y, l2.end.y)
-    } else {
-        (l2.end.y, l2.start.y)
-    };
-    value_in_range(p1, q1, q2) || value_in_range(q1, p1, p2)
+        p1 < q2 && q1 < p2
+    }
+
+    #[inline]
+    /// Since l1 is ordered, we can execute overlap check in 3 comparisons.  
+    /// We use exclusive bounds because we only want to keep segments which can trim the line
+    pub(super) fn y_overlap<T: GeoNum>(ordered_l1: &Line<T>, l2: &Line<T>) -> bool {
+        debug_assert!(ordered_l1.start.y <= ordered_l1.end.y);
+
+        let (p1, p2) = (ordered_l1.start.y, ordered_l1.end.y);
+        let (q1, q2) = if l2.start.y < l2.end.y {
+            (l2.start.y, l2.end.y)
+        } else {
+            (l2.end.y, l2.start.y)
+        };
+
+        p1 < q2 && q1 < p2
+    }
 }
 
 #[cfg(test)]
@@ -251,10 +246,10 @@ mod test {
 
     #[test]
     fn test_vertical() {
-        let ls1: LineString<f64> = wkt! {LINESTRING(0 0,0 10)}.convert();
-        let ls2: LineString<f64> = wkt! {LINESTRING(0 10,0 0)}.convert();
+        let ls1: LineString<f64> = wkt! {LINESTRING(0 0,0 5,0 10)}.convert();
+        let ls2: LineString<f64> = wkt! {LINESTRING(0 10,0 5, 0 0)}.convert();
 
-        let ln: Line<f64> = wkt! {LINE(0 0, 0 10)}.convert();
+        let ln: Line<f64> = wkt! {LINE(0 0, 0 9)}.convert();
 
         assert!(ls1.contains(&ln));
         assert!(ls2.contains(&ln));
