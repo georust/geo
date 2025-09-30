@@ -246,7 +246,7 @@ mod test {
      * behaviour follows `Relate` Trait
      */
     fn test_empty_multipoint_contains_multipoint() {
-        let empty: MultiPoint<f64> = MultiPoint::new(Vec::new());
+        let empty: MultiPoint<f64> = MultiPoint::empty();
         let non_empty: MultiPoint<f64> = MultiPoint::new(vec![point! {x: 0.0, y: 0.0}]);
 
         // empty multipoint does not contains non-empty multipoint

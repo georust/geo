@@ -435,7 +435,7 @@ mod test {
     // Tests: InteriorPoint of MultiLineString
     #[test]
     fn empty_multilinestring_test() {
-        let mls: MultiLineString = MultiLineString::new(vec![]);
+        let mls: MultiLineString = MultiLineString::empty();
         let interior_point = mls.interior_point();
         assert!(interior_point.is_none());
     }
@@ -642,7 +642,7 @@ mod test {
     fn empty_interior_polygon_test() {
         let poly = Polygon::new(
             LineString::from(vec![p(0., 0.), p(0., 1.), p(1., 1.), p(1., 0.), p(0., 0.)]),
-            vec![LineString::new(vec![])],
+            vec![LineString::empty()],
         );
         assert_eq!(poly.interior_point(), Some(p(0.5, 0.5)));
     }
@@ -670,11 +670,7 @@ mod test {
     // Tests: InteriorPoint of MultiPolygon
     #[test]
     fn empty_multipolygon_polygon_test() {
-        assert!(
-            MultiPolygon::<f64>::new(Vec::new())
-                .interior_point()
-                .is_none()
-        );
+        assert!(MultiPolygon::<f64>::empty().interior_point().is_none());
     }
 
     #[test]
