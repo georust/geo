@@ -46,7 +46,7 @@
 - BREAKING: Break up blanket implementation of `Intersects<LineString>` into specific traits
   - faster implementations for `Rect`, `Triangle`, `MultiPolygon`, `Polygon` intersects `LineString`
   - <https://github.com/georust/geo/pull/1379>
-
+- Added `Contains` implementation for all remaining geometries.  
 
 ## 0.30.0 - 2025-03-24
 

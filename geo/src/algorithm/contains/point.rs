@@ -146,6 +146,7 @@ impl_contains_geometry_for!(Point<T>);
 // └────────────────────────────────┘
 
 impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_geometry_for!(MultiPoint<T>);
 
 impl<T> Contains<Coord<T>> for MultiPoint<T>
 where
