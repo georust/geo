@@ -4,6 +4,7 @@
 
 - Move `PreparedGeometry` into a new `indexed` module intended to provide index-backed geometries. `relate::PreparedGeometry` has been deprecated.
 - Use an interval tree for faster (Multi)Point in MultiPolygon checks
+- Add `distance_within` method with default impl for any geometry that implements `Distance`, with similar semantics to the PostGIS [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function
 
 ## 0.31.0 - 2025-09-01
 
