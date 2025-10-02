@@ -1,6 +1,8 @@
 mod bearing;
 mod destination;
 mod distance;
+#[cfg(test)]
+mod distance_fast_tests;
 
 use super::super::{Distance, InterpolatePoint};
 use crate::line_measures::densify::densify_between;
