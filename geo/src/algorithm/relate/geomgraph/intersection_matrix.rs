@@ -419,6 +419,23 @@ impl IntersectionMatrix {
         && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
     }
 
+    /// Returns `true` if every point in Geometry `b` is a point of Geometry `a` interior.
+    ///
+    /// # Notes
+    /// - If Geometry `b` has any interaction with the boundary of Geometry `a`, then the result is `false`.
+    /// - Geometry`a` will never contains_properly itself.
+    /// - Matches `[T**FF*FF*]`
+    /// - This predicate is **transitive** but not **reflexive**
+    #[allow(clippy::nonminimal_bool)]
+    pub fn is_contains_properly(&self) -> bool {
+        //  [T**FF*FF*]
+        self.0[CoordPos::Inside][CoordPos::Inside] != Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::Inside] == Dimensions::Empty
+            && self.0[CoordPos::OnBoundary][CoordPos::OnBoundary] == Dimensions::Empty
+            && self.0[CoordPos::Outside][CoordPos::Inside] == Dimensions::Empty
+            && self.0[CoordPos::Outside][CoordPos::OnBoundary] == Dimensions::Empty
+    }
+
     /// Returns `true` if `a` touches `b`: they have at least one point in common, but their
     /// interiors do not intersect.
     ///
