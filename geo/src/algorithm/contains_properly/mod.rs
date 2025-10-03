@@ -29,7 +29,6 @@ macro_rules! impl_contains_properly_from_relate {
 }
 use impl_contains_properly_from_relate;
 
-
 macro_rules! impl_contains_properly_geometry_for {
     ($geom_type: ty) => {
         impl<T> ContainsProperly<Geometry<T>> for $geom_type
