@@ -1,11 +1,10 @@
-use crate::geometry::*;
-use super::{ContainsProperly};
-use crate::{GeoFloat};
-use crate::geometry_delegate_impl;
+use super::ContainsProperly;
 use super::impl_contains_properly_geometry_for;
+use crate::GeoFloat;
+use crate::geometry::*;
+use crate::geometry_delegate_impl;
 
-
-impl<T,G> ContainsProperly<G> for Geometry<T>
+impl<T, G> ContainsProperly<G> for Geometry<T>
 where
     T: GeoFloat,
     Point<T>: ContainsProperly<G>,
@@ -19,13 +18,11 @@ where
     MultiPolygon<T>: ContainsProperly<G>,
     GeometryCollection<T>: ContainsProperly<G>,
     // G: BoundingRect<T>,
-
 {
     geometry_delegate_impl! {
         fn contains_properly(&self, rhs: &G) -> bool;
     }
 }
-
 
 impl_contains_properly_geometry_for!(Point<T>);
 impl_contains_properly_geometry_for!(MultiPoint<T>);
@@ -40,8 +37,6 @@ impl_contains_properly_geometry_for!(MultiPolygon<T>);
 impl_contains_properly_geometry_for!(GeometryCollection<T>);
 impl_contains_properly_geometry_for!(Rect<T>);
 impl_contains_properly_geometry_for!(Triangle<T>);
-
-
 
 // impl<T> ContainsProperly<Geometry<T>> for Geometry<T>
 // where
