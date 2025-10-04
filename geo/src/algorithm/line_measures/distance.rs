@@ -24,4 +24,16 @@ pub trait Distance<F, Origin, Destination> {
     /// assert_eq!(Haversine.distance(p1, p2).round(), 222_390.0);
     /// ```
     fn distance(&self, origin: Origin, destination: Destination) -> F;
+
+    /// Returns `true` if the minimum distance between `origin` and `destination` is less than
+    /// or equal to `distance`
+    ///
+    /// # Notes
+    /// When the calculated distance is 0 (intersecting / touching / overlapping geometries), _any_ positive `distance` value will return `True`
+    fn distance_within(&self, origin: Origin, destination: Destination, distance: F) -> bool
+    where
+        F: PartialOrd,
+    {
+        self.distance(origin, destination) <= distance
+    }
 }
