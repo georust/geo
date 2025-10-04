@@ -1,3 +1,48 @@
+/// Checks if `rhs` is completely contained within `self`.
+/// More formally, the interior of `rhs` has non-empty
+/// (set-theoretic) intersection but neither the interior,
+/// nor the boundary of `rhs` intersects the boundary and exterior of
+/// `self`. In other words, the [DE-9IM] intersection matrix
+/// of `(rhs, self)` is `T**FF*FF*`.
+///
+/// [DE-9IM]: https://en.wikipedia.org/wiki/DE-9IM
+///
+/// # Examples
+///
+/// ```
+/// use geo::ContainsProperly;
+/// use geo::{line_string, point, Polygon};
+///
+/// let line_string = line_string![
+///     (x: 0., y: 0.),
+///     (x: 2., y: 0.),
+///     (x: 2., y: 2.),
+///     (x: 0., y: 2.),
+///     (x: 0., y: 0.),
+/// ];
+///
+/// let polygon = Polygon::new(line_string.clone(), vec![]);
+///
+/// // Point in Point
+/// assert!(point!(x: 2., y: 0.).contains_properly(&point!(x: 2., y: 0.)));
+///
+/// // Point in Linestring
+/// assert!(line_string.contains_properly(&point!(x: 2., y: 0.)));
+///
+/// // Point in Polygon
+/// assert!(polygon.contains_properly(&point!(x: 1., y: 1.)));
+/// assert!(!polygon.contains_properly(&point!(x: 0., y: 0.)));
+/// ```
+///
+/// # Performance Note
+///
+/// Much of this is currently implemented by delegating to the Relate trait.
+/// Custom Contains implementations are possibly faster, rememner to benchmark your function
+///
+pub trait ContainsProperly<Rhs = Self> {
+    fn contains_properly(&self, rhs: &Rhs) -> bool;
+}
+
 mod coordinate;
 mod geometry;
 mod geometry_collection;
@@ -7,10 +52,6 @@ mod point;
 mod polygon;
 mod rect;
 mod triangle;
-
-pub trait ContainsProperly<Rhs = Self> {
-    fn contains_properly(&self, rhs: &Rhs) -> bool;
-}
 
 macro_rules! impl_contains_properly_from_relate {
     ($for:ty,  [$($target:ty),*]) => {

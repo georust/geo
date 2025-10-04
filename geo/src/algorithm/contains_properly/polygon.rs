@@ -223,8 +223,7 @@ impl_contains_properly_from_relate!(MultiPolygon<T>, [Point<T>,MultiPoint<T>,Lin
 // Util functions
 //------------------------------------------------------------------------------
 
-/// Returns true if self_hole is inside an RHS hole
-/// ~ if self_hole is not inside an rhs hole, then part of RHS is outside of self  
+/// Returns true if no part of RHS lies within self_hole
 fn is_covered_hole<T>(self_hole: &LineString<T>, rhs: &Polygon<T>) -> bool
 where
     T: GeoNum,
@@ -273,10 +272,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::Convert;
     use crate::wkt;
-    use crate::{MultiPolygon, Polygon};
+    use crate::{ContainsProperly, Convert, Relate};
+    use crate::{LineString, MultiPolygon, Polygon};
 
     #[test]
     fn test_contains_properly_donut() {
@@ -285,6 +283,10 @@ mod tests {
         let poly2: Polygon<f64> =
             wkt! {POLYGON((8 1,8 8,1 8,1 1,8 1),(7 2,7 7,2 7,2 2,7 2))}.convert();
 
+        assert_eq!(
+            poly1.contains_properly(&poly2),
+            poly1.relate(&poly2).is_contains_properly()
+        );
         assert!(poly1.contains_properly(&poly2));
     }
 
@@ -295,7 +297,42 @@ mod tests {
         let poly2: Polygon<f64> =
             wkt! {POLYGON((6 1,6 6,1 6,1 1,6 1),(3 2,3 3,2 3,2 2,3 2))}.convert();
 
+        assert_eq!(
+            poly1.contains_properly(&poly2),
+            poly1.relate(&poly2).is_contains_properly()
+        );
         assert!(poly1.contains_properly(&poly2));
+    }
+
+    #[test]
+    fn test_contains_properly_in_donut_hole() {
+        let poly1: Polygon<f64> =
+            wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0),(6 3,6 6,3 6,3 3,6 3))}.convert();
+        let poly2: Polygon<f64> =
+            wkt! {POLYGON((7 4,7 7,4 7,4 4,7 4),(6 5,6 6,5 6,5 5,6 5))}.convert();
+
+        assert_eq!(
+            poly1.contains_properly(&poly2),
+            poly1.relate(&poly2).is_contains_properly()
+        );
+        assert!(!poly1.contains_properly(&poly2));
+    }
+
+    #[test]
+    fn test_contains_properly_degenerate_cross_boundary() {
+        let degenerate_poly: Polygon<f64> = wkt! {POLYGON((2 2,8 8,2 2))}.convert();
+        let ls: LineString<f64> = wkt! {LINESTRING(2 2,8 8)}.convert();
+        let mp: MultiPolygon<f64> =
+            wkt! {MULTIPOLYGON(((5 1,5 5,1 5,1 1,5 1)),((9 5,9 9,5 9,5 5,9 5)))}.convert();
+
+        assert_eq!(
+            mp.contains_properly(&ls),
+            mp.relate(&ls).is_contains_properly()
+        );
+        assert_eq!(
+            mp.contains_properly(&degenerate_poly),
+            mp.relate(&degenerate_poly).is_contains_properly()
+        );
     }
 
     #[test]
@@ -305,6 +342,10 @@ mod tests {
         let poly2: MultiPolygon<f64> =
             wkt! {MULTIPOLYGON(((8 1,8 8,1 8,1 1,8 1),(7 2,7 7,2 7,2 2,7 2)))}.convert();
 
+        assert_eq!(
+            poly1.contains_properly(&poly2),
+            poly1.relate(&poly2).is_contains_properly()
+        );
         assert!(poly1.contains_properly(&poly2));
     }
 
@@ -313,6 +354,10 @@ mod tests {
         let mp: MultiPolygon<f64> = wkt!{MULTIPOLYGON(((9 0,9 9,0 9,0 0,9 0),(8 1,8 8,1 8,1 1,8 1)),((7 2,7 7,2 7,2 2,7 2)))}.convert();
         let poly2: Polygon<f64> = wkt! {POLYGON((6 3,6 6,3 6,3 3,6 3))}.convert();
 
+        assert_eq!(
+            mp.contains_properly(&poly2),
+            mp.relate(&poly2).is_contains_properly()
+        );
         assert!(mp.contains_properly(&poly2));
     }
 }
