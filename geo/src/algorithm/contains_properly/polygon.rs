@@ -238,6 +238,11 @@ where
         return true;
     }
 
+    // hole outside of RHS does not affect intersection
+    if coord_pos_relative_to_ring(*self_hole_first_coord, rhs.exterior()) != CoordPos::Inside {
+        return true;
+    }
+
     // since all rings are either concentric or disjoint, we can check using represenative point
     rhs.interiors()
         .iter()
@@ -279,6 +284,16 @@ mod tests {
             wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0),(6 3,6 6,3 6,3 3,6 3))}.convert();
         let poly2: Polygon<f64> =
             wkt! {POLYGON((8 1,8 8,1 8,1 1,8 1),(7 2,7 7,2 7,2 2,7 2))}.convert();
+
+        assert!(poly1.contains_properly(&poly2));
+    }
+
+    #[test]
+    fn test_contains_properly_donut2() {
+        let poly1: Polygon<f64> =
+            wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0),(8 7,8 8,7 8,7 7,8 7))}.convert();
+        let poly2: Polygon<f64> =
+            wkt! {POLYGON((6 1,6 6,1 6,1 1,6 1),(3 2,3 3,2 3,2 2,3 2))}.convert();
 
         assert!(poly1.contains_properly(&poly2));
     }
