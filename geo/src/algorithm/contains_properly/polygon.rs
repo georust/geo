@@ -232,10 +232,6 @@ where
     let Some(self_hole_first_coord) = self_hole.0.first() else {
         return true;
     };
-    // no hole in rhs means hole is covered
-    if rhs.interiors().is_empty() {
-        return true;
-    }
 
     // hole outside of RHS does not affect intersection
     if coord_pos_relative_to_ring(*self_hole_first_coord, rhs.exterior()) != CoordPos::Inside {
