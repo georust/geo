@@ -60,26 +60,7 @@ where
         }
         // established that pairwise relation betwwen any two rings is either concentric or disjoint
 
-        // if any point of rhs.exterior lies within self.exterior, then all points of rhs exterior lie within self.exterior
-        let Some(rhs_ext_coord) = rhs.exterior().0.first() else {
-            return false;
-        };
-
-        //check for disjoint
-        if !coord_in_ring(rhs_ext_coord, self.exterior()) {
-            return false;
-        }
-
-        // if there exits a self_hole which is not inside a rhs_hole
-        // then there must be some point of rhs which does not lie on the interior of self
-        // and hence self does not contains_properly rhs
-        for self_hole in self.interiors() {
-            // if self_hole is empty, then it is covered by rhs
-            if !is_covered_hole(self_hole, rhs) {
-                return false;
-            }
-        }
-        true
+        polygon_polygon_inner_loop(self, rhs)
     }
 }
 
@@ -91,7 +72,15 @@ where
         if self.is_empty() || rhs.is_empty() {
             return false;
         }
-        rhs.iter().all(|poly| self.contains_properly(poly))
+
+        if boundary_intersects::<T, Polygon<T>, MultiPolygon<T>>(self, rhs) {
+            return false;
+        }
+        // all rings are concentric or disjoint
+
+        rhs.iter()
+            .filter(|poly| !poly.is_empty())
+            .all(|rhs_poly| polygon_polygon_inner_loop(self, rhs_poly))
     }
 }
 
@@ -131,71 +120,59 @@ where
             return false;
         };
 
-        // check for disjoint within the loop
-        // rhs will lie in at most one polygon of self
-        // filtering by intersects is sufficient to identify this polygon
-        // if there is no intersection, then rhs lies in no polygon of self and is disjoint
-        // if there are multiple intersections, then self must have been self intersecting
-        let mut is_disjoint = true;
-
-        let candidates = self
+        let mut self_candidates = self
             .0
             .iter()
             .filter(|poly| poly.contains_properly(rhs_ext_coord));
 
-        // there should at most one candidate
+        /* There will be at most one candidate
+         *
+         * This is because:
+         * 1. sub-polygons of a multi-polygon are disjoint
+         * 2. therefore, for rhs_poly to intersect multiple polygons of self_poly, it must cross some boundary of sub-polygons of self_poly
+         * 3. however, since all rings are either concentric or disjoint, there can be no boundary intersection
+         * Therefore rhs_poly can lie in at most one sub-polygon of self_poly
+         */
+        debug_assert!(self_candidates.clone().count() <= 1);
 
-        for self_poly in candidates {
-            is_disjoint = false;
+        let Some(self_candidate) = self_candidates.next() else {
+            // disjoint
+            return false;
+        };
 
-            for self_hole in self_poly.interiors() {
-                if !is_covered_hole(self_hole, rhs) {
-                    return false;
-                }
-            }
-        }
-
-        !is_disjoint
+        polygon_polygon_inner_loop(self_candidate, rhs)
     }
 }
+
 impl<T> ContainsProperly<MultiPolygon<T>> for MultiPolygon<T>
 where
     T: GeoNum,
 {
     fn contains_properly(&self, rhs: &MultiPolygon<T>) -> bool {
         if self.is_empty() || rhs.is_empty() {
+            // there is at least one non-empty polygon in self and rhs
             return false;
         }
 
         if boundary_intersects::<T, MultiPolygon<T>, MultiPolygon<T>>(self, rhs) {
             return false;
         }
+        // all rings are concentric or disjoint
 
-        for rhs_poly in rhs.0.iter() {
-            // if any point of rhs exterior lies within self.exterior, then all points of rhs exterior lie within self.exterior
-            let Some(rhs_ext_coord) = rhs_poly.exterior().0.first() else {
-                return false;
-            };
-            // check for disjoint per rhs_poly
-            let mut is_disjoint = true;
-            let candidates = self
+        // every rhs_poly must be covered by at some self_poly to return true
+        for rhs_poly in rhs.0.iter().filter(|poly| !poly.is_empty()) {
+            let rhs_poly_covered = self
                 .0
                 .iter()
-                .filter(|poly| poly.contains_properly(rhs_ext_coord));
+                .filter(|poly| !poly.is_empty())
+                .any(|self_poly| polygon_polygon_inner_loop(self_poly, rhs_poly));
 
-            for self_poly in candidates {
-                is_disjoint = false;
-                for self_hole in self_poly.interiors() {
-                    if !is_covered_hole(self_hole, rhs_poly) {
-                        return false;
-                    }
-                }
-            }
-
-            if is_disjoint {
+            if !rhs_poly_covered {
+                println!("oh");
                 return false;
             }
         }
+
         true
     }
 }
@@ -223,28 +200,6 @@ impl_contains_properly_from_relate!(MultiPolygon<T>, [Point<T>,MultiPoint<T>,Lin
 // Util functions
 //------------------------------------------------------------------------------
 
-/// Returns true if no part of RHS lies within self_hole
-fn is_covered_hole<T>(self_hole: &LineString<T>, rhs: &Polygon<T>) -> bool
-where
-    T: GeoNum,
-{
-    // empty hole is always covered
-    let Some(self_hole_first_coord) = self_hole.0.first() else {
-        return true;
-    };
-
-    // hole outside of RHS does not affect intersection
-    if coord_pos_relative_to_ring(*self_hole_first_coord, rhs.exterior()) != CoordPos::Inside {
-        return true;
-    }
-
-    // since all rings are either concentric or disjoint, we can check using represenative point
-    rhs.interiors()
-        .iter()
-        .map(|ring| coord_pos_relative_to_ring(*self_hole_first_coord, ring))
-        .any(|pos| pos == CoordPos::Inside)
-}
-
 /// Return true if the boundary of lhs intersects any of the boundaries of rhs
 /// where lhs and rhs are both polygons/multipolygons
 fn boundary_intersects<'a, T, G1, G2>(lhs: &'a G1, rhs: &'a G2) -> bool
@@ -259,11 +214,57 @@ where
         .any(|(self_l, rhs_l)| self_l.intersects(&rhs_l))
 }
 
-fn coord_in_ring<T>(coord: &Coord<T>, ring: &LineString<T>) -> bool
+/// Given two non-empty polygons with no intersecting boundaries,
+/// Return true if first polygon completely contains second polygon
+fn polygon_polygon_inner_loop<T>(self_poly: &Polygon<T>, rhs_poly: &Polygon<T>) -> bool
 where
     T: GeoNum,
 {
-    coord_pos_relative_to_ring(*coord, ring) == CoordPos::Inside
+    debug_assert!(!self_poly.is_empty() && !rhs_poly.is_empty());
+    debug_assert!(
+        self_poly
+            .lines_iter()
+            .flat_map(|s| rhs_poly.lines_iter().map(move |s2| (s, s2)))
+            .all(|(s, s2)| !s.intersects(&s2))
+    );
+
+    let Some(rhs_ext_coord) = rhs_poly.exterior().0.first() else {
+        return false;
+    };
+
+    if !self_poly.contains_properly(rhs_ext_coord) {
+        // is disjoint
+        return false;
+    }
+
+    // if there exits a self_hole which is not inside a rhs_hole
+    // then there must be some point of rhs which does not lie on the interior of self
+    // and hence self does not contains_properly rhs
+    for self_hole in self_poly.interiors() {
+        // empty hole is always covered
+        let Some(self_hole_first_coord) = self_hole.0.first() else {
+            continue;
+        };
+
+        // hole outside of RHS does not affect intersection
+        if coord_pos_relative_to_ring(*self_hole_first_coord, rhs_poly.exterior())
+            != CoordPos::Inside
+        {
+            continue;
+        }
+
+        // if any RHS point is inside self_hole, then we fail the contains_properly test
+        // since all rings are either concentric or disjoint, we can check using representative point
+        let self_hole_pt_in_rhs_hole = rhs_poly
+            .interiors()
+            .iter()
+            .map(|rhs_ring| coord_pos_relative_to_ring(*self_hole_first_coord, rhs_ring))
+            .any(|pos| pos == CoordPos::Inside);
+        if !self_hole_pt_in_rhs_hole {
+            return false;
+        }
+    }
+    true
 }
 
 #[cfg(test)]
@@ -306,12 +307,19 @@ mod tests {
             wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0),(6 3,6 6,3 6,3 3,6 3))}.convert();
         let poly2: Polygon<f64> =
             wkt! {POLYGON((7 4,7 7,4 7,4 4,7 4),(6 5,6 6,5 6,5 5,6 5))}.convert();
+        let poly3: Polygon<f64> = wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0))}.convert();
 
         assert_eq!(
             poly1.contains_properly(&poly2),
             poly1.relate(&poly2).is_contains_properly()
         );
         assert!(!poly1.contains_properly(&poly2));
+
+        assert_eq!(
+            poly1.contains_properly(&poly3),
+            poly1.relate(&poly3).is_contains_properly()
+        );
+        assert!(!poly1.contains_properly(&poly3));
     }
 
     #[test]
@@ -355,5 +363,63 @@ mod tests {
             mp.relate(&poly2).is_contains_properly()
         );
         assert!(mp.contains_properly(&poly2));
+    }
+
+    #[test]
+    fn test_mp_with_empty_part() {
+        let empty_p: Polygon<f64> = wkt! {POLYGON(EMPTY)};
+        let empty_mp: MultiPolygon<f64> = wkt! {MULTIPOLYGON(EMPTY)};
+        let p_outer: Polygon<f64> = wkt! {POLYGON((0 0,0 9,9 9,9 0,0 0))}.convert();
+        let p_inner: Polygon<f64> = wkt! {POLYGON((1 1,1 8,8 8,8 1,1 1))}.convert();
+
+        let mp = MultiPolygon::new(vec![p_inner.clone(), empty_p.clone()]);
+        let mp2 = MultiPolygon::new(vec![empty_p.clone()]);
+
+        assert_eq!(
+            p_outer.contains_properly(&empty_p),
+            p_outer.relate(&empty_p).is_contains_properly()
+        );
+        assert_eq!(
+            p_outer.contains_properly(&empty_mp),
+            p_outer.relate(&empty_mp).is_contains_properly()
+        );
+        // mp with only empty parts is empty ==> should fail
+        assert_eq!(
+            p_outer.contains_properly(&mp2),
+            p_outer.relate(&mp2).is_contains_properly()
+        );
+
+        assert_eq!(
+            p_outer.contains_properly(&p_inner),
+            p_outer.relate(&p_inner).is_contains_properly()
+        );
+        assert_eq!(
+            p_outer.contains_properly(&mp),
+            p_outer.relate(&mp).is_contains_properly()
+        );
+    }
+
+    #[test]
+    fn aa() {
+        let p1: Polygon<f64> = wkt! {
+              POLYGON(
+        (40 60, 420 60, 420 320, 40 320, 40 60),
+        (200 140, 160 220, 260 200, 200 140))
+              }
+        .convert();
+        let p2: Polygon<f64> = wkt! {
+        POLYGON(
+          (80 100, 360 100, 360 280, 80 280, 80 100))
+        }
+        .convert();
+
+        assert_eq!(
+            p1.contains_properly(&p2),
+            p1.relate(&p2).is_contains_properly()
+        );
+        assert_eq!(
+            p2.contains_properly(&p1),
+            p2.relate(&p1).is_contains_properly()
+        );
     }
 }
