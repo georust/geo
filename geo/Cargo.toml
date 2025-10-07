@@ -131,3 +131,7 @@ harness = false
 [[bench]]
 name = "sweep_line_intersection"
 harness = false
+
+[[bench]]
+name = "dbscan"
+harness = false

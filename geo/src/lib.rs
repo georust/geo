@@ -83,9 +83,10 @@
 //! - **[`BooleanOps`]**: Combine or split (Multi)Polygons using intersection, union, xor, or difference operations
 //! - **[`unary_union`]**: Efficient union of many [`Polygon`] or [`MultiPolygon`]s
 //!
-//! ## Outlier Detection
+//! ## Outlier Detection / Clustering
 //!
 //! - **[`OutlierDetection`]**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
+//! - **[`Dbscan`]**: Calculate point clusters using the DBSCAN algorithm
 //!
 //! ## Simplification
 //!

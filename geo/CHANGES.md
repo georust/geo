@@ -5,6 +5,7 @@
 - Move `PreparedGeometry` into a new `indexed` module intended to provide index-backed geometries. `relate::PreparedGeometry` has been deprecated.
 - Use an interval tree for faster (Multi)Point in MultiPolygon checks
 - LOF algorithm efficiency improvements due to caching kth distance
+- Add DBSCAN clustering algorithm implementation
 
 ## 0.31.0 - 2025-09-01
 
