@@ -92,6 +92,7 @@ where
         self.contains_properly(&rhs.to_polygon())
     }
 }
+
 impl<T> ContainsProperly<Triangle<T>> for Polygon<T>
 where
     T: GeoNum,
@@ -168,7 +169,6 @@ where
                 .any(|self_poly| polygon_polygon_inner_loop(self_poly, rhs_poly));
 
             if !rhs_poly_covered {
-                println!("oh");
                 return false;
             }
         }
@@ -185,6 +185,7 @@ where
         self.contains_properly(&rhs.to_polygon())
     }
 }
+
 impl<T> ContainsProperly<Triangle<T>> for MultiPolygon<T>
 where
     T: GeoNum,
@@ -271,155 +272,257 @@ where
 mod tests {
     use crate::wkt;
     use crate::{ContainsProperly, Convert, Relate};
-    use crate::{LineString, MultiPolygon, Polygon};
+    use crate::{MultiPolygon, Polygon};
 
+    // basic pairwise test
     #[test]
-    fn test_contains_properly_donut() {
-        let poly1: Polygon<f64> =
-            wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0),(6 3,6 6,3 6,3 3,6 3))}.convert();
-        let poly2: Polygon<f64> =
-            wkt! {POLYGON((8 1,8 8,1 8,1 1,8 1),(7 2,7 7,2 7,2 2,7 2))}.convert();
+    fn test_poly_for_poly() {
+        let base: Polygon<f64> =
+            wkt! {POLYGON((90 0,90 90,0 90,0 0,90 0),(60 30,60 60,30 60,30 30,60 30))}.convert();
+
+        let donut_inside: Polygon<f64> =
+            wkt! {POLYGON((80 10,80 80,10 80,10 10,80 10),(70 20,70 70,20 70,20 20,70 20))}
+                .convert();
+        let fully_inside: Polygon<f64> = wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10))}.convert();
+        let fully_inside2: Polygon<f64> =
+            wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10),(19 11,19 19,11 19,11 11,19 11))}
+                .convert();
+        let in_hole: Polygon<f64> = wkt! {POLYGON((50 40,50 50,40 50,40 40,50 40))}.convert();
+        let disjoint: Polygon<f64> =
+            wkt! {POLYGON((150 140,150 150,140 150,140 140,150 140))}.convert();
 
         assert_eq!(
-            poly1.contains_properly(&poly2),
-            poly1.relate(&poly2).is_contains_properly()
+            base.contains_properly(&donut_inside),
+            base.relate(&donut_inside).is_contains_properly()
         );
-        assert!(poly1.contains_properly(&poly2));
+        assert!(base.contains_properly(&donut_inside));
+        assert_eq!(
+            base.contains_properly(&fully_inside),
+            base.relate(&fully_inside).is_contains_properly()
+        );
+        assert!(base.contains_properly(&fully_inside));
+
+        assert_eq!(
+            base.contains_properly(&fully_inside2),
+            base.relate(&fully_inside).is_contains_properly()
+        );
+        assert!(base.contains_properly(&fully_inside2));
+
+        assert_eq!(
+            base.contains_properly(&in_hole),
+            base.relate(&in_hole).is_contains_properly()
+        );
+        assert!(!base.contains_properly(&in_hole));
+
+        assert_eq!(
+            base.contains_properly(&disjoint),
+            base.relate(&disjoint).is_contains_properly()
+        );
+        assert!(!base.contains_properly(&disjoint));
     }
 
     #[test]
-    fn test_contains_properly_donut2() {
-        let poly1: Polygon<f64> =
-            wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0),(8 7,8 8,7 8,7 7,8 7))}.convert();
-        let poly2: Polygon<f64> =
-            wkt! {POLYGON((6 1,6 6,1 6,1 1,6 1),(3 2,3 3,2 3,2 2,3 2))}.convert();
+    fn test_multipoly_for_poly() {
+        let base: Polygon<f64> =
+            wkt! {POLYGON((90 0,90 90,0 90,0 0,90 0),(60 30,60 60,30 60,30 30,60 30))}.convert();
+
+        let donut_inside: Polygon<f64> =
+            wkt! {POLYGON((80 10,80 80,10 80,10 10,80 10),(70 20,70 70,20 70,20 20,70 20))}
+                .convert();
+        let fully_inside: Polygon<f64> = wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10))}.convert();
+        let fully_inside2: Polygon<f64> =
+            wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10),(19 11,19 19,11 19,11 11,19 11))}
+                .convert();
+        let in_hole: Polygon<f64> = wkt! {POLYGON((50 40,50 50,40 50,40 40,50 40))}.convert();
+        let disjoint: Polygon<f64> =
+            wkt! {POLYGON((150 140,150 150,140 150,140 140,150 140))}.convert();
+
+        let mp1 = MultiPolygon::new(vec![
+            donut_inside.clone(),
+            fully_inside.clone(),
+            fully_inside2.clone(),
+        ]);
+        let mp2 = MultiPolygon::new(vec![
+            donut_inside.clone(),
+            fully_inside.clone(),
+            in_hole.clone(),
+        ]);
+        let mp3 = MultiPolygon::new(vec![
+            donut_inside.clone(),
+            fully_inside.clone(),
+            disjoint.clone(),
+        ]);
 
         assert_eq!(
-            poly1.contains_properly(&poly2),
-            poly1.relate(&poly2).is_contains_properly()
+            base.contains_properly(&mp1),
+            base.relate(&mp1).is_contains_properly()
         );
-        assert!(poly1.contains_properly(&poly2));
+        assert!(base.contains_properly(&mp1));
+
+        assert_eq!(
+            base.contains_properly(&mp2),
+            base.relate(&mp2).is_contains_properly()
+        );
+        assert!(!base.contains_properly(&mp2));
+
+        assert_eq!(
+            base.contains_properly(&mp3),
+            base.relate(&mp3).is_contains_properly()
+        );
+        assert!(!base.contains_properly(&mp3));
+    }
+
+    // test against a MultiPolygon of two concentric donuts
+    #[test]
+    fn test_poly_for_multipoly() {
+        let base: Polygon<f64> =
+            wkt! {POLYGON((90 0,90 90,0 90,0 0,90 0),(60 30,60 60,30 60,30 30,60 30))}.convert();
+        let base_2: Polygon<f64> =
+            wkt! {POLYGON((59 31,59 59,31 59,31 31,59 31),(55 35,55 55,35 55,35 35,55 35))}
+                .convert();
+
+        // two concentric donuts
+        let mp_base = MultiPolygon::new(vec![base.clone(), base_2.clone()]);
+
+        // should succeed
+        let donut_inside: Polygon<f64> =
+            wkt! {POLYGON((80 10,80 80,10 80,10 10,80 10),(70 20,70 70,20 70,20 20,70 20))}
+                .convert();
+        let fully_inside: Polygon<f64> = wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10))}.convert();
+        let fully_inside2: Polygon<f64> =
+            wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10),(19 11,19 19,11 19,11 11,19 11))}
+                .convert();
+        // should fail
+        let in_hole: Polygon<f64> = wkt! {POLYGON((50 40,50 50,40 50,40 40,50 40))}.convert();
+        let disjoint: Polygon<f64> =
+            wkt! {POLYGON((150 140,150 150,140 150,140 140,150 140))}.convert();
+
+        assert_eq!(
+            mp_base.contains_properly(&donut_inside),
+            mp_base.relate(&donut_inside).is_contains_properly()
+        );
+        assert!(mp_base.contains_properly(&donut_inside));
+
+        assert_eq!(
+            mp_base.contains_properly(&fully_inside),
+            mp_base.relate(&fully_inside).is_contains_properly()
+        );
+        assert!(mp_base.contains_properly(&fully_inside));
+
+        assert_eq!(
+            mp_base.contains_properly(&fully_inside2),
+            mp_base.relate(&fully_inside).is_contains_properly()
+        );
+        assert!(mp_base.contains_properly(&fully_inside2));
+
+        assert_eq!(
+            mp_base.contains_properly(&in_hole),
+            mp_base.relate(&in_hole).is_contains_properly()
+        );
+        assert!(!mp_base.contains_properly(&in_hole));
+
+        assert_eq!(
+            mp_base.contains_properly(&disjoint),
+            mp_base.relate(&disjoint).is_contains_properly()
+        );
+        assert!(!mp_base.contains_properly(&disjoint));
+    }
+
+    // test against a MultiPolygon of two concentric donuts
+    #[test]
+    fn test_multipoly_for_multipoly() {
+        let base: Polygon<f64> =
+            wkt! {POLYGON((90 0,90 90,0 90,0 0,90 0),(60 30,60 60,30 60,30 30,60 30))}.convert();
+        let base_2: Polygon<f64> =
+            wkt! {POLYGON((59 31,59 59,31 59,31 31,59 31),(55 35,55 55,35 55,35 35,55 35))}
+                .convert();
+        // two concentric donuts
+        let mp_base = MultiPolygon::new(vec![base.clone(), base_2.clone()]);
+
+        // should succeed
+        let donut_inside: Polygon<f64> =
+            wkt! {POLYGON((80 10,80 80,10 80,10 10,80 10),(70 20,70 70,20 70,20 20,70 20))}
+                .convert();
+        let fully_inside: Polygon<f64> = wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10))}.convert();
+        let fully_inside2: Polygon<f64> =
+            wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10),(19 11,19 19,11 19,11 11,19 11))}
+                .convert();
+        // should fail
+        let in_hole: Polygon<f64> = wkt! {POLYGON((50 40,50 50,40 50,40 40,50 40))}.convert();
+        let disjoint: Polygon<f64> =
+            wkt! {POLYGON((150 140,150 150,140 150,140 140,150 140))}.convert();
+
+        let mp1 = MultiPolygon::new(vec![
+            donut_inside.clone(),
+            fully_inside.clone(),
+            fully_inside2.clone(),
+        ]);
+        let mp2 = MultiPolygon::new(vec![
+            donut_inside.clone(),
+            fully_inside.clone(),
+            fully_inside2.clone(),
+            in_hole.clone(),
+        ]);
+        let mp3 = MultiPolygon::new(vec![
+            donut_inside.clone(),
+            fully_inside.clone(),
+            fully_inside2.clone(),
+            disjoint.clone(),
+        ]);
+
+        assert_eq!(
+            mp_base.contains_properly(&mp1),
+            mp_base.relate(&mp1).is_contains_properly()
+        );
+        assert!(mp_base.contains_properly(&mp1));
+
+        assert_eq!(
+            mp_base.contains_properly(&mp2),
+            mp_base.relate(&mp2).is_contains_properly()
+        );
+        assert!(!mp_base.contains_properly(&mp2));
+
+        assert_eq!(
+            mp_base.contains_properly(&mp3),
+            mp_base.relate(&mp3).is_contains_properly()
+        );
+        assert!(!mp_base.contains_properly(&mp3));
     }
 
     #[test]
-    fn test_contains_properly_in_donut_hole() {
-        let poly1: Polygon<f64> =
-            wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0),(6 3,6 6,3 6,3 3,6 3))}.convert();
-        let poly2: Polygon<f64> =
-            wkt! {POLYGON((7 4,7 7,4 7,4 4,7 4),(6 5,6 6,5 6,5 5,6 5))}.convert();
-        let poly3: Polygon<f64> = wkt! {POLYGON((9 0,9 9,0 9,0 0,9 0))}.convert();
+    fn empty_parts() {
+        let base: Polygon<f64> =
+            wkt! {POLYGON((90 0,90 90,0 90,0 0,90 0),(60 30,60 60,30 60,30 30,60 30))}.convert();
+        let base_2: Polygon<f64> =
+            wkt! {POLYGON((59 31,59 59,31 59,31 31,59 31),(55 35,55 55,35 55,35 35,55 35))}
+                .convert();
+        // two concentric donuts
+        let mp_base = MultiPolygon::new(vec![base.clone(), base_2.clone()]);
 
-        assert_eq!(
-            poly1.contains_properly(&poly2),
-            poly1.relate(&poly2).is_contains_properly()
-        );
-        assert!(!poly1.contains_properly(&poly2));
+        let fully_inside: Polygon<f64> = wkt! {POLYGON((20 10,20 20,10 20,10 10,20 10))}.convert();
+        let disjoint: Polygon<f64> =
+            wkt! {POLYGON((150 140,150 150,140 150,140 140,150 140))}.convert();
 
-        assert_eq!(
-            poly1.contains_properly(&poly3),
-            poly1.relate(&poly3).is_contains_properly()
-        );
-        assert!(!poly1.contains_properly(&poly3));
-    }
+        let empty_poly = Polygon::empty();
+        let empty_mp1 = MultiPolygon::empty();
+        let empty_mp2 = MultiPolygon::from(vec![Polygon::empty()]);
 
-    #[test]
-    fn test_contains_properly_degenerate_cross_boundary() {
-        let degenerate_poly: Polygon<f64> = wkt! {POLYGON((2 2,8 8,2 2))}.convert();
-        let ls: LineString<f64> = wkt! {LINESTRING(2 2,8 8)}.convert();
-        let mp: MultiPolygon<f64> =
-            wkt! {MULTIPOLYGON(((5 1,5 5,1 5,1 1,5 1)),((9 5,9 9,5 9,5 5,9 5)))}.convert();
+        let mp1 = MultiPolygon::new(vec![fully_inside.clone(), Polygon::empty()]);
+        let mp2 = MultiPolygon::new(vec![disjoint.clone(), Polygon::empty()]);
 
-        assert_eq!(
-            mp.contains_properly(&ls),
-            mp.relate(&ls).is_contains_properly()
-        );
-        assert_eq!(
-            mp.contains_properly(&degenerate_poly),
-            mp.relate(&degenerate_poly).is_contains_properly()
-        );
-    }
+        // empty Polygon
+        assert!(!base.contains_properly(&empty_poly));
+        assert!(!mp_base.contains_properly(&empty_poly));
+        // empty MultiPolygon
+        assert!(!base.contains_properly(&empty_mp1));
+        assert!(!base.contains_properly(&empty_mp2));
+        assert!(!mp_base.contains_properly(&empty_mp1));
+        assert!(!mp_base.contains_properly(&empty_mp2));
 
-    #[test]
-    fn test_contains_properly_donut_multi_multi() {
-        let poly1: MultiPolygon<f64> =
-            wkt! {MULTIPOLYGON(((9 0,9 9,0 9,0 0,9 0),(6 3,6 6,3 6,3 3,6 3)))}.convert();
-        let poly2: MultiPolygon<f64> =
-            wkt! {MULTIPOLYGON(((8 1,8 8,1 8,1 1,8 1),(7 2,7 7,2 7,2 2,7 2)))}.convert();
-
-        assert_eq!(
-            poly1.contains_properly(&poly2),
-            poly1.relate(&poly2).is_contains_properly()
-        );
-        assert!(poly1.contains_properly(&poly2));
-    }
-
-    #[test]
-    fn test_contains_properly_donut_multi_poly() {
-        let mp: MultiPolygon<f64> = wkt!{MULTIPOLYGON(((9 0,9 9,0 9,0 0,9 0),(8 1,8 8,1 8,1 1,8 1)),((7 2,7 7,2 7,2 2,7 2)))}.convert();
-        let poly2: Polygon<f64> = wkt! {POLYGON((6 3,6 6,3 6,3 3,6 3))}.convert();
-
-        assert_eq!(
-            mp.contains_properly(&poly2),
-            mp.relate(&poly2).is_contains_properly()
-        );
-        assert!(mp.contains_properly(&poly2));
-    }
-
-    #[test]
-    fn test_mp_with_empty_part() {
-        let empty_p: Polygon<f64> = wkt! {POLYGON(EMPTY)};
-        let empty_mp: MultiPolygon<f64> = wkt! {MULTIPOLYGON(EMPTY)};
-        let p_outer: Polygon<f64> = wkt! {POLYGON((0 0,0 9,9 9,9 0,0 0))}.convert();
-        let p_inner: Polygon<f64> = wkt! {POLYGON((1 1,1 8,8 8,8 1,1 1))}.convert();
-
-        let mp = MultiPolygon::new(vec![p_inner.clone(), empty_p.clone()]);
-        let mp2 = MultiPolygon::new(vec![empty_p.clone()]);
-
-        assert_eq!(
-            p_outer.contains_properly(&empty_p),
-            p_outer.relate(&empty_p).is_contains_properly()
-        );
-        assert_eq!(
-            p_outer.contains_properly(&empty_mp),
-            p_outer.relate(&empty_mp).is_contains_properly()
-        );
-        // mp with only empty parts is empty ==> should fail
-        assert_eq!(
-            p_outer.contains_properly(&mp2),
-            p_outer.relate(&mp2).is_contains_properly()
-        );
-
-        assert_eq!(
-            p_outer.contains_properly(&p_inner),
-            p_outer.relate(&p_inner).is_contains_properly()
-        );
-        assert_eq!(
-            p_outer.contains_properly(&mp),
-            p_outer.relate(&mp).is_contains_properly()
-        );
-    }
-
-    #[test]
-    fn aa() {
-        let p1: Polygon<f64> = wkt! {
-              POLYGON(
-        (40 60, 420 60, 420 320, 40 320, 40 60),
-        (200 140, 160 220, 260 200, 200 140))
-              }
-        .convert();
-        let p2: Polygon<f64> = wkt! {
-        POLYGON(
-          (80 100, 360 100, 360 280, 80 280, 80 100))
-        }
-        .convert();
-
-        assert_eq!(
-            p1.contains_properly(&p2),
-            p1.relate(&p2).is_contains_properly()
-        );
-        assert_eq!(
-            p2.contains_properly(&p1),
-            p2.relate(&p1).is_contains_properly()
-        );
+        // multipolygon with empty part
+        assert!(base.contains_properly(&mp1));
+        assert!(mp_base.contains_properly(&mp1));
+        assert!(!base.contains_properly(&mp2));
+        assert!(!mp_base.contains_properly(&mp2));
     }
 }

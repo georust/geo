@@ -36,8 +36,8 @@
 ///
 /// # Performance Note
 ///
-/// Much of this is currently implemented by delegating to the Relate trait.
-/// Custom Contains implementations are possibly faster, rememner to benchmark your function
+/// Much of this trait is currently implemented by delegating to the Relate trait.
+/// Custom Contains implementations might be faster
 ///
 pub trait ContainsProperly<Rhs = Self> {
     fn contains_properly(&self, rhs: &Rhs) -> bool;
