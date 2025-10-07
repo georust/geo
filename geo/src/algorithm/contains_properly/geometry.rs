@@ -17,7 +17,6 @@ where
     Polygon<T>: ContainsProperly<G>,
     MultiPolygon<T>: ContainsProperly<G>,
     GeometryCollection<T>: ContainsProperly<G>,
-    // G: BoundingRect<T>,
 {
     geometry_delegate_impl! {
         fn contains_properly(&self, rhs: &G) -> bool;
@@ -37,23 +36,3 @@ impl_contains_properly_geometry_for!(MultiPolygon<T>);
 impl_contains_properly_geometry_for!(GeometryCollection<T>);
 impl_contains_properly_geometry_for!(Rect<T>);
 impl_contains_properly_geometry_for!(Triangle<T>);
-
-// impl<T> ContainsProperly<Geometry<T>> for Geometry<T>
-// where
-//     T: GeoFloat,
-// {
-//     fn contains_properly(&self, other: &Geometry<T>) -> bool {
-//         match other {
-//             Geometry::Point(geom) => self.contains_properly(geom),
-//             Geometry::Line(geom) => self.contains_properly(geom),
-//             Geometry::LineString(geom) => self.contains_properly(geom),
-//             Geometry::Polygon(geom) => self.contains_properly(geom),
-//             Geometry::MultiPoint(geom) => self.contains_properly(geom),
-//             Geometry::MultiLineString(geom) => self.contains_properly(geom),
-//             Geometry::MultiPolygon(geom) => self.contains_properly(geom),
-//             Geometry::GeometryCollection(geom) => self.contains_properly(geom),
-//             Geometry::Rect(geom) => self.contains_properly(geom),
-//             Geometry::Triangle(geom) => self.contains_properly(geom),
-//         }
-//     }
-// }
