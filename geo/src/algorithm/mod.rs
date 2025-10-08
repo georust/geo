@@ -331,6 +331,10 @@ pub use outlier_detection::OutlierDetection;
 pub mod dbscan;
 pub use dbscan::Dbscan;
 
+/// Cluster points using [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering)
+pub mod kmeans;
+pub use kmeans::{KMeans, KMeansError, KMeansParams};
+
 /// Monotonic polygon subdivision
 pub mod monotone;
 pub use monotone::{MonoPoly, MonotonicPolygons, monotone_subdivision};
