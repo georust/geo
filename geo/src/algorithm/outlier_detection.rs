@@ -197,37 +197,35 @@ where
 fn lof<T>(
     points: &[Point<T>],
     tree: &RTree<GeomWithData<Point<T>, usize>>,
-    kneighbours: usize,
+    k_neighbours: usize,
 ) -> Vec<T>
 where
     T: GeoFloat + Sum,
 {
-    debug_assert!(kneighbours > 0);
-    if points.len() <= kneighbours || kneighbours < 1 {
+    debug_assert!(k_neighbours > 0);
+    if points.len() <= k_neighbours || k_neighbours < 1 {
         // no point in trying to run the algorithm in this case
         return points.iter().map(|_| T::one()).collect();
     }
-    let knn_dists = points
+    // calculate neighbours and kth distance in a single pass
+    let knn_data: Vec<(Vec<_>, T)> = points
         .iter()
         .map(|point| {
-            tree.nearest_neighbor_iter_with_distance_2(point)
-                .take(kneighbours)
-                .collect()
+            let neighbours = tree
+                .nearest_neighbor_iter_with_distance_2(point)
+                .take(k_neighbours)
+                .collect::<Vec<_>>();
+            let kth_dist = neighbours.last().map(|(_, d)| *d).unwrap();
+            (neighbours, kth_dist)
         })
-        .collect::<Vec<Vec<_>>>();
+        .collect();
     // calculate LRD (local reachability density) of each point
     // LRD is the estimated distance at which a point can be found by its neighbours:
     // count(neighbour_set) / sum(max(point.kTh_dist, point.dist2(other point)) for all points in neighbour_set)
     // we call this sum-of–max-distances reachDistance
-    let local_reachability_densities: Vec<T> = knn_dists
+    let local_reachability_densities: Vec<T> = knn_data
         .iter()
-        .map(|neighbours| {
-            // for each point's neighbour set, calculate kth distance
-            let kth_dist = neighbours
-                .iter()
-                .map(|(_, distance)| distance)
-                .next_back()
-                .unwrap();
+        .map(|(neighbours, kth_dist)| {
             T::from(neighbours.len()).unwrap()
                 / neighbours
                     .iter()
@@ -239,15 +237,9 @@ where
     // LOF of a point p is the sum of the LRD of all the points
     // in the set kNearestSet(p) * the sum of the reachDistance of all the points of the same set,
     // to the point p, all divided by the number of items in p's kNN set, squared.
-    knn_dists
+    knn_data
         .iter()
-        .map(|neighbours| {
-            // for each point's neighbour set, calculate kth distance
-            let kth_dist = neighbours
-                .iter()
-                .map(|(_, distance)| distance)
-                .next_back()
-                .unwrap();
+        .map(|(neighbours, kth_dist)| {
             // sum neighbour set LRD scores
             let lrd_scores: T = neighbours
                 .iter()
