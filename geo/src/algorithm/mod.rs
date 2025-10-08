@@ -324,6 +324,10 @@ pub mod outlier_detection;
 
 pub use outlier_detection::OutlierDetection;
 
+/// Cluster points using [DBSCAN](https://en.wikipedia.org/wiki/DBSCAN) (Density-Based Spatial Clustering of Applications with Noise)
+pub mod dbscan;
+pub use dbscan::Dbscan;
+
 /// Monotonic polygon subdivision
 pub mod monotone;
 pub use monotone::{MonoPoly, MonotonicPolygons, monotone_subdivision};
