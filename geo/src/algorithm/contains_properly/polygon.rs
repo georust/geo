@@ -272,7 +272,7 @@ where
 mod tests {
     use crate::wkt;
     use crate::{ContainsProperly, Convert, Relate};
-    use crate::{MultiPolygon, Polygon};
+    use crate::{MultiPolygon, Point, Polygon};
 
     // basic pairwise test
     #[test]
@@ -524,5 +524,23 @@ mod tests {
         assert!(mp_base.contains_properly(&mp1));
         assert!(!base.contains_properly(&mp2));
         assert!(!mp_base.contains_properly(&mp2));
+    }
+
+    // degenerate polygon should always return false
+    // because it would be intersecting the boundary of the degenerate polygon
+    #[test]
+    fn test_degenerate_self() {
+        let degenerate_poly_as_pt: Polygon<f64> = wkt! {POLYGON((0 0, 0 0, 0 0, 0 0))}.convert();
+        let pt: Point<f64> = wkt! {POINT(0 0)}.convert();
+        assert!(!degenerate_poly_as_pt.relate(&pt).is_contains_properly());
+    }
+
+    #[test]
+    fn test_degenerate_other() {
+        let base: Polygon<f64> = wkt! {POLYGON((90 0,90 90,0 90,0 0,90 0))}.convert();
+        let degenerate_poly_as_pt: Polygon<f64> = wkt! {POLYGON((1 1, 1 1, 1 1, 1 1))}.convert();
+        let degenerate_poly_as_ls: Polygon<f64> = wkt! {POLYGON((1 1, 2 2, 1 1))}.convert();
+        assert!(base.relate(&degenerate_poly_as_pt).is_contains_properly());
+        assert!(base.relate(&degenerate_poly_as_ls).is_contains_properly());
     }
 }
