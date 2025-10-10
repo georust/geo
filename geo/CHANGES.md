@@ -7,6 +7,7 @@
 - LOF algorithm efficiency improvements due to caching kth distance
 - Add DBSCAN clustering algorithm implementation
 - Add `distance_within` method with default impl for any geometry that implements `Distance`, with similar semantics to the PostGIS [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function
+- Add `Covers` trait, a simplification of `Contains` in which geometries in the boundary are considered to be Covered
 
 ## 0.31.0 - 2025-09-01
 

@@ -135,6 +135,15 @@ pub struct ContainsInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct CoversInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: bool,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct WithinInput {
     pub(crate) arg1: String,
     pub(crate) arg2: String,
@@ -160,6 +169,9 @@ pub(crate) enum OperationInput {
 
     #[serde(rename = "contains")]
     ContainsInput(ContainsInput),
+
+    #[serde(rename = "covers")]
+    CoversInput(CoversInput),
 
     #[serde(rename = "getCentroid")]
     CentroidInput(CentroidInput),
@@ -210,6 +222,11 @@ pub(crate) enum Operation {
         expected: Option<Point>,
     },
     Contains {
+        subject: Geometry,
+        target: Geometry,
+        expected: bool,
+    },
+    Covers {
         subject: Geometry,
         target: Geometry,
         expected: bool,
@@ -330,6 +347,15 @@ impl OperationInput {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
                 Ok(Operation::Contains {
+                    subject: geometry.clone(),
+                    target: case.b.clone().expect("no geometry b in case"),
+                    expected: input.expected,
+                })
+            }
+            Self::CoversInput(input) => {
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+                Ok(Operation::Covers {
                     subject: geometry.clone(),
                     target: case.b.clone().expect("no geometry b in case"),
                     expected: input.expected,
