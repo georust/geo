@@ -90,7 +90,7 @@ macro_rules! impl_covers_from_intersects {
                     if HasDimensions::is_empty(target) {
                         return false;
                     }
-                    target.coords_iter().all(|pt| self.intersects(&pt))
+                    target.exterior_coords_iter().all(|pt| self.intersects(&pt))
                 }
             }
         )*
@@ -111,7 +111,7 @@ macro_rules! impl_covers_from_intersects {
                     if HasDimensions::is_empty(self) || HasDimensions::is_empty(target){
                         return false;
                     }
-                    target.coords_iter().all(|pt| self.intersects(&pt))
+                    target.exterior_coords_iter().all(|pt| self.intersects(&pt))
                 }
             }
         )*

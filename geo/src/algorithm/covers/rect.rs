@@ -1,29 +1,12 @@
 use super::{Covers, impl_covers_from_intersects};
 use crate::GeoNum;
-use crate::{CoordsIter, Intersects, geometry::*};
-
-impl<T> Covers<Polygon<T>> for Rect<T>
-where
-    T: GeoNum,
-{
-    fn covers(&self, rhs: &Polygon<T>) -> bool {
-        rhs.exterior_coords_iter().all(|c| self.intersects(&c))
-    }
-}
-
-impl<T> Covers<MultiPolygon<T>> for Rect<T>
-where
-    T: GeoNum,
-{
-    fn covers(&self, rhs: &MultiPolygon<T>) -> bool {
-        rhs.exterior_coords_iter().all(|c| self.intersects(&c))
-    }
-}
+use crate::geometry::*;
 
 impl_covers_from_intersects!(Rect<T>, [
 Point<T>,MultiPoint<T>,
 Line<T>,
 LineString<T>, MultiLineString<T>,
 Rect<T>, Triangle<T>,
+Polygon<T>,  MultiPolygon<T>,
 Geometry<T>, GeometryCollection<T>
 ]);
