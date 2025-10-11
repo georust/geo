@@ -1,4 +1,7 @@
 use super::{Distance, Euclidean};
+use crate::Centroid;
+use crate::HasDimensions;
+use crate::algorithm::BoundingRect;
 use crate::algorithm::Intersects;
 use crate::coordinate_position::{CoordPos, coord_pos_relative_to_ring};
 use crate::geometry::*;
@@ -6,6 +9,7 @@ use crate::{CoordFloat, GeoFloat, GeoNum};
 use num_traits::{Bounded, Float};
 use rstar::RTree;
 use rstar::primitives::CachedEnvelope;
+use std::ops::ControlFlow;
 
 // Distance is a symmetric operation, so we can implement it once for both
 macro_rules! symmetric_distance_impl {
@@ -175,18 +179,67 @@ symmetric_distance_impl!(GeoFloat, &LineString<F>, &Line<F>);
 impl<F: GeoFloat> Distance<F, &LineString<F>, &LineString<F>> for Euclidean {
     fn distance(&self, line_string_a: &LineString<F>, line_string_b: &LineString<F>) -> F {
         if line_string_a.intersects(line_string_b) {
-            F::zero()
-        } else {
-            nearest_neighbour_distance(line_string_a, line_string_b)
+            return F::zero();
         }
+        if line_string_a.0.is_empty() || line_string_b.0.is_empty() {
+            return F::zero();
+        }
+
+        // Check if bounding boxes are non-overlapping: if so, use project-and-prune optimisation
+        // Safety: both linestrings have been checked for emptiness, so bounding_rect() will return Some
+        let rect_a = line_string_a.bounding_rect().unwrap();
+        let rect_b = line_string_b.bounding_rect().unwrap();
+
+        // Check for bbox separation along both axes
+        let x_separated = rect_a.max().x < rect_b.min().x || rect_b.max().x < rect_a.min().x;
+        let y_separated = rect_a.max().y < rect_b.min().y || rect_b.max().y < rect_a.min().y;
+
+        // Ensure geometries meet minimum size requirements for the fast algorithm
+        // LineStrings need at least 2 coordinates to form valid segments
+        let has_min_coords = line_string_a.0.len() >= 2 && line_string_b.0.len() >= 2;
+
+        if (x_separated || y_separated) && has_min_coords {
+            return separable_geometry_distance_fast(line_string_a, line_string_b, rect_a, rect_b);
+        }
+
+        nearest_neighbour_distance(line_string_a, line_string_b)
     }
 }
 
 impl<F: GeoFloat> Distance<F, &LineString<F>, &Polygon<F>> for Euclidean {
     fn distance(&self, line_string: &LineString<F>, polygon: &Polygon<F>) -> F {
         if line_string.intersects(polygon) {
-            F::zero()
-        } else if !polygon.interiors().is_empty()
+            return F::zero();
+        }
+        if line_string.0.is_empty() || polygon.exterior().0.is_empty() {
+            return F::zero();
+        }
+
+        // Check if bounding boxes are non-overlapping: if so, use project-and-prune optimisation
+        // Safety: both geometries have been checked for emptiness, so bounding_rect() will return Some
+        let rect_ls = line_string.bounding_rect().unwrap();
+        let rect_poly = polygon.bounding_rect().unwrap();
+
+        // Check for bbox separation along both axes
+        let x_separated =
+            rect_ls.max().x < rect_poly.min().x || rect_poly.max().x < rect_ls.min().x;
+        let y_separated =
+            rect_ls.max().y < rect_poly.min().y || rect_poly.max().y < rect_ls.min().y;
+
+        // Ensure geometries meet minimum size requirements for the fast algorithm
+        // LineStrings need at least 2 coordinates; Polygons need at least 4 (triangle + closing vertex)
+        let has_min_coords = line_string.0.len() >= 2 && polygon.exterior().0.len() >= 4;
+
+        if (x_separated || y_separated) && has_min_coords {
+            return separable_geometry_distance_fast(
+                line_string,
+                polygon.exterior(),
+                rect_ls,
+                rect_poly,
+            );
+        }
+
+        if !polygon.interiors().is_empty()
             // FIXME: Explodes on empty line_string
             && ring_contains_coord(polygon.exterior(), line_string.0[0])
         {
@@ -214,6 +267,33 @@ impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
         if polygon_a.intersects(polygon_b) {
             return F::zero();
         }
+        if polygon_a.is_empty() || polygon_b.is_empty() {
+            return F::zero();
+        }
+
+        // Check if bounding boxes are non-overlapping: if so, use project-and-sort optimisation
+        // Safety: both polygons have been checked for emptiness, so bounding_rect() will return Some
+        let rect_a = polygon_a.bounding_rect().unwrap();
+        let rect_b = polygon_b.bounding_rect().unwrap();
+
+        // Check for bbox separation along both axes
+        // TODO: do we have anything built-in that does this cheaply?
+        let x_separated = rect_a.max().x < rect_b.min().x || rect_b.max().x < rect_a.min().x;
+        let y_separated = rect_a.max().y < rect_b.min().y || rect_b.max().y < rect_a.min().y;
+
+        // Ensure geometries meet minimum size requirements for the fast algorithm
+        // Polygons need at least 4 coordinates (triangle + closing vertex)
+        let has_min_coords = polygon_a.exterior().0.len() >= 4 && polygon_b.exterior().0.len() >= 4;
+
+        if (x_separated || y_separated) && has_min_coords {
+            return separable_geometry_distance_fast(
+                polygon_a.exterior(),
+                polygon_b.exterior(),
+                rect_a,
+                rect_b,
+            );
+        }
+
         // FIXME: explodes when polygon_b.exterior() is empty
         // Containment check
         if !polygon_a.interiors().is_empty()
@@ -382,6 +462,366 @@ fn ring_contains_coord<T: GeoNum>(ring: &LineString<T>, c: Coord<T>) -> bool {
         CoordPos::Inside => true,
         CoordPos::OnBoundary | CoordPos::Outside => false,
     }
+}
+
+/// A geometry vertex with its 1D projection value
+///
+/// This structure maintains the mapping between a vertex's position in the
+/// original geometry and its 1D projection value
+#[derive(Clone, Copy, Debug)]
+struct ProjectedVertex<F: GeoFloat> {
+    /// The 1D projection value of this vertex
+    intercept: F,
+    /// Index into original geometry
+    vertex_idx: usize,
+}
+
+/// Optimized minimum distance calculation for linearly-separable geometries
+///
+/// # Algorithm Overview
+///
+/// Let the geometries be named `P` and `Q`
+///
+/// 1. **Slope Calculation and Projection Axis Selection**: Calculate the vector between `P` and `Q` bbox
+///    centroids and determine the slope of lines perpendicular to this connector. This slope is constant.
+///
+/// 2. **Vertex Projection**: Project all vertices from `P` and `Q` into 1D space by calculating where a line
+///    through each vertex (with the perpendicular slope) intercepts either the `x` axis or `y` axis
+///
+/// 3. **Sorting**: Sort `P` and `Q`'s intercept values, maintaining
+///    an index to their associated vertex coordinates
+///
+/// 4. **Pruned Search**: Iterate through all `PQ` vertex pairs in sorted order, using early
+///    termination to skip full distance calculation for pairs whose intercept difference exceeds
+///    the current minimum distance, updating it when a new minimum is found.
+///    P is iterated from last to first (i.e. in reverse) and Q is iterated forwards.
+///    If we encounter a gap larger than `max_projection_delta`, we can safely break from the inner
+///    loop and move to the next vertex on P
+///
+/// # Projection Mathematics
+///
+/// The algorithm uses "lines" perpendicular to the connector between bbox centroids.
+/// If the centroid-to-centroid vector is `(dx, dy)`, the perpendicular slope is:
+/// - If `|dx| < |dy|` (connector more vertical): `slope = -dx/dy` (perpendicular is horizontal)
+/// - If `|dx| ≥ |dy|` (connector more horizontal): `slope = -dy/dx` (perpendicular is vertical)
+///
+/// Each "line" is drawn by plotting a line (with the perpendicular slope) through a vertex
+/// and its axis intercept (either `x` or `y`, see above).
+///
+/// # Early Termination
+///
+/// The algorithm maintains a `max_projection_delta` threshold calculated as:
+/// `min_distance * sqrt(1 + slope²)` (see step 4b, below)
+///
+/// This factor enables pruning by relating `PQ` vertex pair intercept differences to minimum
+/// possible distances.
+///
+/// ## Why the Factor Works
+///
+/// Each vertex lies on a line with slope `k` (perpendicular to the connector). These parallel
+/// lines are distinguished by their axis intercepts: this is what we calculate and sort by.
+///
+/// If two `PQ` pair vertices have intercept difference Δi, their minimum possible Euclidean distance
+/// occurs when the minimum distance between the vertices is perpendicular to these parallel lines:
+/// - Moving 1 unit perpendicular to the lines changes actual distance by 1 unit
+/// - But changes the intercept by `sqrt(1 + slope²)` units
+///
+/// Therefore: `perpendicular_distance = intercept_difference / sqrt(1 + slope²)`
+///
+/// ## Pruning
+///
+/// Given current minimum distance `d_min`:
+/// - Any closer pair must have perpendicular separation `< d_min`
+/// - Therefore their intercept difference must be `< d_min * sqrt(1 + slope²)`
+///
+/// If two `PQ` pair vertices have intercept difference `> max_projection_delta`, they CANNOT be closer
+/// than `d_min` regardless of where they lie along their respective parallel lines. This is
+/// conservative but guarantees we never skip a potentially optimal pair.
+///
+/// # Performance
+///
+/// - Time complexity: `O(n log n)`
+///
+/// # References
+/// https://www.crunchydata.com/blog/inside-postgis-calculating-distance
+fn separable_geometry_distance_fast<F: GeoFloat>(
+    linestring_p: &LineString<F>,
+    linestring_q: &LineString<F>,
+    bbox_p: Rect<F>,
+    bbox_q: Rect<F>,
+) -> F {
+    // Calculate bounding box centroids.
+    let centroid_p = bbox_p.centroid();
+    let centroid_q = bbox_q.centroid();
+
+    let delta_x = centroid_q.x() - centroid_p.x();
+    let delta_y = centroid_q.y() - centroid_p.y();
+
+    // this is the slope (the `m` in `y = mx + b`) of lines that are perpendicular
+    // to the bbox centroid connector.
+    let (slope, use_x_projection) = if delta_x.abs() < delta_y.abs() {
+        // Midpoint connection is more vertical → use horizontal-favouring projection
+        (-delta_x / delta_y, false)
+    } else {
+        // Midpoint connection is more horizontal → use vertical-favouring projection
+        (-delta_y / delta_x, true)
+    };
+
+    // Convenient access to the coordinate slices
+    let p_coords = &linestring_p.0;
+    let q_coords = &linestring_q.0;
+
+    // Step 1: Project all vertices into 1D space
+    // This gives us intercepts + index of original vertex
+    let mut projected_vertices_p = calculate_vertex_intercepts(p_coords, slope, use_x_projection);
+    let mut projected_vertices_q = calculate_vertex_intercepts(q_coords, slope, use_x_projection);
+
+    // Step 2: Sort vertices by intercepts for spatial locality
+    projected_vertices_p.sort_unstable_by(|a, b| a.intercept.total_cmp(&b.intercept));
+    projected_vertices_q.sort_unstable_by(|a, b| a.intercept.total_cmp(&b.intercept));
+
+    // Step 3: Determine which geometry is "left" (lower bbox centroid intercept value) vs "right"
+    // (higher bbox centroid intercept value). This is critical for the iteration filter step to work efficiently
+    let centroid_p_projection = if use_x_projection {
+        centroid_p.x() - slope * centroid_p.y()
+    } else {
+        centroid_p.y() - slope * centroid_p.x()
+    };
+    let centroid_q_projection = if use_x_projection {
+        centroid_q.x() - slope * centroid_q.y()
+    } else {
+        centroid_q.y() - slope * centroid_q.x()
+    };
+    // the geometry whose midpoint has the lower projection value becomes
+    // the "left" geometry.
+    let (left_intercepts, right_intercepts, left_coords, right_coords) =
+        if centroid_p_projection < centroid_q_projection {
+            (
+                &projected_vertices_p,
+                &projected_vertices_q,
+                p_coords,
+                q_coords,
+            )
+        } else {
+            (
+                &projected_vertices_q,
+                &projected_vertices_p,
+                q_coords,
+                p_coords,
+            )
+        };
+
+    // Step 4a: use the minimum distance between the segments containing
+    // the first vertex pair we'll check as the initial lower distance
+    // This corresponds to the highest intercept from left_list and lowest intercept from right_list
+    //
+    // NOTE: this was initially a point-point distance calculation
+    // and the bound probably tightens within a few iterations
+    // but we have the technology, so I'm erring on the side of less divergent logic
+    let highest_left = left_intercepts
+        .last()
+        .expect("left intercepts should not be empty")
+        .vertex_idx;
+    let lowest_right = right_intercepts
+        .first()
+        .expect("right intercepts should not be empty")
+        .vertex_idx;
+    let min_distance =
+        get_min_segment_distance(left_coords, highest_left, right_coords, lowest_right);
+
+    // Step 4b: calculate the upper bound for a projection delta that could yield a smaller distance
+    // This threshold allows us to skip vertex pairs that are too far apart by breaking early
+    // this is the key piece of the algorithm!
+    let max_projection_delta = min_distance * (F::one() + (slope * slope)).sqrt();
+
+    // Step 5: minimum distance calculation. This is a bit hairy as an iterator, but the logic is straightforward:
+    //
+    // First: geometry vertex order: the vertices are ordered by their intercepts, NOT in original order!
+    // We iterate through left geometry vertices in reverse (high→low intercept values)
+    // and for each one, iterate forward through right geometry vertices (low→high).
+    // 1. We start from the vertices that are closest together in 1D space
+    // (high values from left meeting low values from right)
+    // 2. As we iterate, the gap between projection values grows
+    // 3. We break whenever the gap exceeds our threshold
+    // 4. If we find a new minimum distance, store it and update the threshold.
+    let result = left_intercepts.iter().rev().try_fold(
+        (min_distance, max_projection_delta),
+        |(min_dist, max_delta), vertex1| {
+            // Outer loop early termination: skip if remaining vertices are too far away.
+            // Uses strict inequality to check if the best-case scenario (smallest possible gap)
+            // is already too large, in which case we can skip the entire inner loop.
+            if right_intercepts[0].intercept - vertex1.intercept > max_delta {
+                return ControlFlow::Break((min_dist, max_delta));
+            }
+
+            // Inner loop with early termination
+            let inner_result = right_intercepts.iter().try_fold(
+                (min_dist, max_delta),
+                |(mut min_d, mut max_d), vertex2| {
+                    // Inner loop early termination: skip vertices beyond threshold.
+                    // Uses non-strict inequality (>=) as we iterate through increasingly distant points:
+                    // Once we reach OR exceed the threshold, this point and all subsequent points are too far.
+                    if vertex2.intercept - vertex1.intercept >= max_d {
+                        return ControlFlow::Break((min_d, max_d));
+                    }
+
+                    // Calculate minimum distance between segments adjacent to these vertices
+                    let dist = get_min_segment_distance(
+                        left_coords,
+                        vertex1.vertex_idx,
+                        right_coords,
+                        vertex2.vertex_idx,
+                    );
+
+                    if dist < min_d {
+                        min_d = dist;
+                        // Update threshold when we find a closer distance
+                        max_d = (min_d * min_d * (F::one() + slope * slope)).sqrt();
+                    }
+                    ControlFlow::Continue((min_d, max_d))
+                },
+            );
+
+            let (new_min, new_delta) = match inner_result {
+                ControlFlow::Continue(values) | ControlFlow::Break(values) => values,
+            };
+
+            ControlFlow::Continue((new_min, new_delta))
+        },
+    );
+
+    match result {
+        ControlFlow::Continue((min, _)) | ControlFlow::Break((min, _)) => min,
+    }
+}
+
+/// Projects vertices into 1D space (their intercept, given a slope and axis)
+/// The slope is the perpendicular to the `PQ` bbox centroid connecting line. Either `x` or
+/// `y` axis would work, but one is chosen to avoid division by zero errors / small values causing fp
+/// issues.
+///
+/// # Notes
+/// This function excludes the duplicate closing vertex in polygon rings to avoid
+/// redundant calculations, as the first and last vertices are identical in closed polygons.
+fn calculate_vertex_intercepts<F: GeoFloat>(
+    coords: &[Coord<F>],
+    perpendicular_slope: F,
+    use_x_intercept: bool,
+) -> Vec<ProjectedVertex<F>> {
+    // Skip the last coordinate as it duplicates the first in closed polygon rings.
+    // We maintain the original index for later segment construction.
+    coords[..coords.len().saturating_sub(1)]
+        .iter()
+        .enumerate()
+        .map(|(idx, &coord)| {
+            // Calculate where a line through this vertex (with the perpendicular slope)
+            // intercepts either the x-axis or y-axis.
+            // This is the rearranged line equation: given y = mx + b, we solve for b.
+            let intercept = if use_x_intercept {
+                // For nearly vertical perpendiculars, find x-intercept
+                // From x = my + b, we get b = x - my
+                coord.x - perpendicular_slope * coord.y
+            } else {
+                // For nearly horizontal perpendiculars, find y-intercept
+                // From y = mx + b, we get b = y - mx
+                coord.y - perpendicular_slope * coord.x
+            };
+            ProjectedVertex {
+                intercept,
+                vertex_idx: idx,
+            }
+        })
+        .collect()
+}
+
+/// Calculates the minimum Euclidean distance between segments adjacent to two vertices
+///
+/// For each vertex in a geometry, there are adjacent segments (edges) connecting
+/// it to neighbouring vertices. This function finds all possible segment
+/// combinations between two vertices and returns their minimum distance.
+///
+/// # Algorithm
+///
+/// For each vertex, we identify 2 adjacent segments:
+/// - Closed ring (polygon): prev and next with wraparound
+/// - Open linestring at endpoint: duplicate the single adjacent segment
+/// - Open linestring at middle vertex: prev and next without wraparound
+///
+/// Then we compute distances between all 4 combinations.
+///
+/// # Edge Cases
+///
+/// - Closed rings: last coordinate duplicates first, vertices wrap around
+/// - Open linestrings at endpoints: both array entries contain the same segment
+#[inline(always)]
+fn get_min_segment_distance<F: GeoFloat>(
+    coords_p: &[Coord<F>],
+    vertex_idx_p: usize,
+    coords_q: &[Coord<F>],
+    vertex_idx_q: usize,
+) -> F {
+    // Detect if geometry is closed (ring) or open (linestring)
+    let is_closed_p = coords_p.first() == coords_p.last();
+    let is_closed_q = coords_q.first() == coords_q.last();
+
+    // Helper to compute adjacent segment indices for a vertex
+    let get_segment_indices =
+        |coords: &[Coord<F>], vertex_idx: usize, is_closed: bool| -> (usize, usize) {
+            if is_closed {
+                // Closed ring: wraparound logic
+                let n = coords.len() - 1; // Exclude duplicate closing vertex
+                let prev = if vertex_idx == 0 {
+                    n - 1
+                } else {
+                    vertex_idx - 1
+                };
+                let next = if vertex_idx >= n - 1 {
+                    0
+                } else {
+                    vertex_idx + 1
+                };
+                (prev, next)
+            } else {
+                // Open linestring: duplicate segment at endpoints
+                let n = coords.len();
+                if vertex_idx == 0 {
+                    // First vertex: both prev and next use segment [0,1]
+                    (0, 1)
+                } else if vertex_idx == n - 1 {
+                    // Last vertex: both prev and next use segment [n-2, n-1]
+                    (n - 2, n - 1)
+                } else {
+                    // Middle vertex: normal prev/next
+                    (vertex_idx - 1, vertex_idx + 1)
+                }
+            }
+        };
+
+    // Get segment indices for both geometries
+    let (prev_idx_p, next_idx_p) = get_segment_indices(coords_p, vertex_idx_p, is_closed_p);
+    let (prev_idx_q, next_idx_q) = get_segment_indices(coords_q, vertex_idx_q, is_closed_q);
+
+    // Build segment arrays
+    // separate arrays means it's easy to compute the cross product, and we won't have to alter
+    // the iterator if we ever expand the number of segments
+    let segments_p = [
+        Line::new(coords_p[prev_idx_p], coords_p[vertex_idx_p]),
+        Line::new(coords_p[vertex_idx_p], coords_p[next_idx_p]),
+    ];
+    let segments_q = [
+        Line::new(coords_q[prev_idx_q], coords_q[vertex_idx_q]),
+        Line::new(coords_q[vertex_idx_q], coords_q[next_idx_q]),
+    ];
+
+    // Find minimum distance between all segment combinations
+    segments_p
+        .iter()
+        .flat_map(|seg_p| {
+            segments_q
+                .iter()
+                .map(move |seg_q| Euclidean.distance(seg_p, seg_q))
+        })
+        .fold(Bounded::max_value(), |acc, dist| acc.min(dist))
 }
 
 #[cfg(test)]
