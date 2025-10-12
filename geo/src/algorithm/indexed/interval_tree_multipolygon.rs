@@ -4,6 +4,7 @@ use geo_types::{Coord, Line, MultiPolygon};
 use sif_itree::ITree;
 
 use crate::algorithm::kernels::Kernel;
+use crate::coordinate_position::CoordPos;
 use crate::intersects::value_in_between;
 use crate::{GeoNum, LinesIter, Orientation};
 
@@ -101,7 +102,7 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
         )
     }
 
-    pub(crate) fn containment(&self, coord: Coord<T>) -> bool {
+    pub(crate) fn containment(&self, coord: Coord<T>) -> CoordPos {
         // Use winding number algorithm with robust predicates
         // Based on coord_pos_relative_to_ring in coordinate_position.rs
         let mut winding_number = 0;
@@ -130,7 +131,7 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
                             && value_in_between(coord.x, seg.0.x, seg.1.x)
                         {
                             // Point on boundary!
-                            return ControlFlow::Break(false);
+                            return ControlFlow::Break(CoordPos::OnBoundary);
                         }
                     }
                 } else {
@@ -141,7 +142,7 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
                         && value_in_between(coord.x, seg.0.x, seg.1.x)
                     {
                         // Point on boundary!
-                        return ControlFlow::Break(false);
+                        return ControlFlow::Break(CoordPos::OnBoundary);
                     }
                 }
 
@@ -151,8 +152,14 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
             });
 
         match result {
-            ControlFlow::Break(r) => r,
-            ControlFlow::Continue(()) => winding_number != 0,
+            ControlFlow::Break(pos) => pos,
+            ControlFlow::Continue(()) => {
+                if winding_number != 0 {
+                    CoordPos::Inside
+                } else {
+                    CoordPos::Outside
+                }
+            }
         }
     }
 }

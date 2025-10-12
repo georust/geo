@@ -1,4 +1,5 @@
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
+use crate::coordinate_position::CoordPos;
 use crate::geometry::*;
 use crate::indexed::IntervalTreeMultiPolygon;
 use crate::{GeoFloat, GeoNum};
@@ -71,25 +72,39 @@ where
 
 impl<T: GeoNum> Contains<MultiPoint<T>> for MultiPolygon<T> {
     fn contains(&self, rhs: &MultiPoint<T>) -> bool {
+        use crate::coordinate_position::CoordPos;
+
         if self.is_empty() || rhs.is_empty() {
             return false;
         }
+
         // Create IndexedMultiPolygon once and reuse for all point checks
         let indexed = IntervalTreeMultiPolygon::new(self);
-        rhs.iter().all(|point| indexed.contains(&point.0))
+
+        let mut has_inside = false;
+
+        for point in rhs.iter() {
+            match indexed.containment(point.0) {
+                CoordPos::Outside => return false,
+                CoordPos::Inside => has_inside = true,
+                CoordPos::OnBoundary => {}
+            }
+        }
+
+        has_inside
     }
 }
 
 impl<T: GeoNum> Contains<Coord<T>> for IntervalTreeMultiPolygon<T> {
     fn contains(&self, rhs: &Coord<T>) -> bool {
-        self.containment(*rhs)
+        self.containment(*rhs) == CoordPos::Inside
     }
 }
 
 impl<T: GeoNum> Contains<Point<T>> for IntervalTreeMultiPolygon<T> {
     fn contains(&self, rhs: &Point<T>) -> bool {
         let c = Coord::from(*rhs);
-        self.containment(c)
+        self.containment(c) == CoordPos::Inside
     }
 }
 
@@ -182,6 +197,21 @@ mod test {
         let pt_mid = coord! {x: 5., y: 5.};
         let pt_out = coord! {x: 11., y: 11.};
         [pt_a, pt_b, pt_c, pt_d, pt_edge, pt_mid, pt_out]
+    }
+
+    #[test]
+    fn test_multipolygon_boundary() {
+        // from benches/contains.rs
+        // MultiPolygon not contains MultiPoint (Contains trait)
+        let p_1: Polygon<f64> = Polygon::new(geo_test_fixtures::poly1(), vec![]);
+        let p_2: Polygon<f64> = Polygon::new(geo_test_fixtures::poly2(), vec![]);
+        let multi_poly = MultiPolygon(vec![p_1, p_2]);
+        let multi_point: MultiPoint<f64> = wkt!(MULTIPOINT (-160 10,-60 -70,-120 -70,-120 10,-40 80,30 80,30 10,-40 10,100 210,100 120,30 120,30 210,-185 -135,-100 -135,-100 -230,-185 -230)).convert();
+
+        assert_eq!(
+            multi_poly.contains(&multi_point),
+            multi_poly.relate(&multi_point).is_contains()
+        );
     }
 
     #[test]
