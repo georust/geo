@@ -1,6 +1,8 @@
 use std::collections::BTreeSet;
+use std::iter::once;
 
 use approx::relative_eq;
+use geo::relate::IntersectionMatrix;
 use include_dir::{include_dir, Dir, DirEntry};
 use log::{debug, info};
 use wkt::ToWkt;
@@ -364,15 +366,74 @@ impl TestRunner {
                     let actual = a.relate(b);
                     if actual == *expected {
                         debug!("Relate success: actual == expected");
-                        self.successes.push(test_case);
+                        self.successes.push(test_case.clone());
                     } else {
                         debug!("Relate failure: actual != expected");
                         let error_description =
                             format!("expected {expected:?}, actual: {actual:?}");
                         self.add_failure(TestFailure {
-                            test_case,
+                            test_case: test_case.clone(),
                             error_description,
                         });
+                    }
+
+                    #[allow(clippy::type_complexity)]
+                    let op_pairs: Vec<(
+                        &str,
+                        Box<dyn Fn(&IntersectionMatrix) -> bool>,
+                        Box<dyn Fn(&Geometry, &Geometry) -> bool>,
+                    )> = vec![
+                        (
+                            "contains",
+                            Box::new(IntersectionMatrix::is_contains),
+                            Box::new(|a: &Geometry, b: &Geometry| a.contains(b)),
+                        ),
+                        (
+                            "within",
+                            Box::new(IntersectionMatrix::is_within),
+                            Box::new(|a: &Geometry, b: &Geometry| a.is_within(b)),
+                        ),
+                        (
+                            "intersects",
+                            Box::new(IntersectionMatrix::is_intersects),
+                            Box::new(|a: &Geometry, b: &Geometry| a.intersects(b)),
+                        ),
+                        // add more here as required
+                    ];
+
+                    let forward_relate = actual;
+                    let backward_relate = b.relate(a);
+
+                    // zip the trait operations together with relate results and geometry arguments
+                    let args = once((&forward_relate, a, b, ""))
+                        .cycle()
+                        .zip(&op_pairs)
+                        .chain(
+                            once((&backward_relate, b, a, "(reversed)"))
+                                .cycle()
+                                .zip(&op_pairs),
+                        );
+
+                    for ((matrix, first, second, direction), (op_name, relate_fn, trait_fn)) in args
+                    {
+                        let actual_result = relate_fn(matrix);
+                        let trait_result = trait_fn(first, second);
+
+                        if actual_result == trait_result {
+                            debug!(
+                                "{op_name} {direction} sucess: Relate matches {op_name} trait implementation"
+                            );
+                            self.successes.push(test_case.clone());
+                        } else {
+                            debug!("{op_name} {direction} failure: Relate doesn't match {op_name} trait implementation");
+                            let error_description = format!(
+                            "{op_name} {direction} failure: Relate: {actual_result:?}, {op_name} trait: {trait_result:?}"
+                        );
+                            self.add_failure(TestFailure {
+                                test_case: test_case.clone(),
+                                error_description,
+                            });
+                        }
                     }
                 }
                 Operation::BooleanOp { a, b, op, expected } => {
