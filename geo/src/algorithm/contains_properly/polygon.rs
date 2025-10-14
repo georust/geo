@@ -1,10 +1,7 @@
 use super::{ContainsProperly, impl_contains_properly_from_relate};
-use crate::CoordsIter;
-use crate::HasDimensions;
-use crate::Intersects;
-use crate::LinesIter;
 use crate::coordinate_position::{CoordPos, CoordinatePosition, coord_pos_relative_to_ring};
 use crate::geometry::*;
+use crate::{BoundingRect, CoordsIter, HasDimensions, Intersects, LinesIter};
 use crate::{GeoFloat, GeoNum};
 
 impl<T> ContainsProperly<Coord<T>> for Polygon<T>
@@ -209,10 +206,21 @@ where
     G1: LinesIter<'a, Scalar = T>,
     G2: LinesIter<'a, Scalar = T>,
     Line<T>: Intersects<Line<T>>,
+    Rect<T>: Intersects<Rect<T>>,
 {
-    lhs.lines_iter()
-        .flat_map(|self_l| rhs.lines_iter().map(move |rhs_l| (self_l, rhs_l)))
-        .any(|(self_l, rhs_l)| self_l.intersects(&rhs_l))
+    let rhs_bbox_cache = rhs
+        .lines_iter()
+        .map(|l| (l, l.bounding_rect()))
+        .collect::<Vec<(Line<T>, Rect<T>)>>();
+
+    return lhs
+        .lines_iter()
+        .map(|l| (l, l.bounding_rect()))
+        .any(|(l, l_bbox)| {
+            rhs_bbox_cache
+                .iter()
+                .any(|(r, r_bbox)| l_bbox.intersects(r_bbox) && l.intersects(r))
+        });
 }
 
 /// Given two non-empty polygons with no intersecting boundaries,
@@ -237,6 +245,15 @@ where
         // is disjoint
         return false;
     }
+
+    //  let Some(lhs_ext_coord) = self_poly.exterior().0.first() else {
+    //         return false;
+    //     };
+
+    //     if rhs_poly.contains_properly(lhs_ext_coord) {
+    //         // is disjoint
+    //         return false;
+    //     }
 
     // if there exits a self_hole which is not inside a rhs_hole
     // then there must be some point of rhs which does not lie on the interior of self
