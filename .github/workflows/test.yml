@@ -38,7 +38,6 @@ jobs:
       - geo_types
       - geo
       - geo_traits
-      - geo_postgis
       - geo_fuzz
       - docs
     if: success()
@@ -53,7 +52,6 @@ jobs:
       - geo_types
       - geo
       - geo_traits
-      - geo_postgis
       - geo_fuzz
     if: failure()
     steps:
@@ -126,26 +124,6 @@ jobs:
     defaults:
       run:
         working-directory: geo-traits
-    strategy:
-      matrix:
-        rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
-    container:
-      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v5
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo check --all-targets
-      - run: cargo test
-
-  geo_postgis:
-    name: geo-postgis
-    needs: set-matrix
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    defaults:
-      run:
-        working-directory: geo-postgis
     strategy:
       matrix:
         rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
