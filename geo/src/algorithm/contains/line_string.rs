@@ -1,8 +1,7 @@
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
-use crate::Orientation;
 use crate::algorithm::kernels::Kernel;
 use crate::geometry::*;
-use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions};
+use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions, Intersects, Orientation};
 
 // ┌────────────────────────────────┐
 // │ Implementations for LineString │
@@ -21,9 +20,9 @@ where
             return self.is_closed();
         }
 
-        self.lines()
-            .enumerate()
-            .any(|(i, line)| line.contains(coord) || (i > 0 && coord == &line.start))
+        // since it is already known that coord != linestring start or end
+        // it is sufficient to check if the coord intersects any line,
+        self.lines().any(|ln| ln.intersects(coord))
     }
 }
 
