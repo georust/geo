@@ -1,10 +1,8 @@
 use crate::{
+    structs::{LineString, MultiLineString, MultiPoint, Point, Polygon},
     Dimensions, GeometryTrait, UnimplementedGeometryCollection, UnimplementedLine,
-    UnimplementedMultiLineString, UnimplementedMultiPolygon, UnimplementedRect,
-    UnimplementedTriangle,
+    UnimplementedMultiPolygon, UnimplementedRect, UnimplementedTriangle,
 };
-
-use super::{LineString, MultiPoint, Point, Polygon};
 
 #[derive(Clone, Debug, PartialEq)]
 /// All supported WKT geometry [`types`]
@@ -17,7 +15,8 @@ pub enum Geometry<T: Copy> {
     Polygon(Polygon<T>),
     /// A multipoint.
     MultiPoint(MultiPoint<T>),
-    // MultiLineString(MultiLineString<T>),
+    /// A multilinestring.
+    MultiLineString(MultiLineString<T>),
     // MultiPolygon(MultiPolygon<T>),
     // GeometryCollection(GeometryCollection<T>),
 }
@@ -33,7 +32,7 @@ where
             Self::LineString(g) => g.dimension(),
             Self::Polygon(g) => g.dimension(),
             Self::MultiPoint(g) => g.dimension(),
-            // Self::MultiLineString(g) => g.dimension(),
+            Self::MultiLineString(g) => g.dimension(),
             // Self::MultiPolygon(g) => g.dimension(),
             // Self::GeometryCollection(g) => g.dimension(),
         }
@@ -59,8 +58,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
     where
         Self: 'b;
     type MultiLineStringType<'b>
-        = UnimplementedMultiLineString<T>
-    // = MultiLineString<T>
+        = MultiLineString<T>
     where
         Self: 'b;
     type MultiPolygonType<'b>
@@ -92,7 +90,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
             Geometry::LineString(geom) => geom.dim(),
             Geometry::Polygon(geom) => geom.dim(),
             Geometry::MultiPoint(geom) => geom.dim(),
-            // Geometry::MultiLineString(geom) => geom.dim(),
+            Geometry::MultiLineString(geom) => geom.dim(),
             // Geometry::MultiPolygon(geom) => geom.dim(),
             // Geometry::GeometryCollection(geom) => geom.dim(),
         }
@@ -118,7 +116,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
             Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
             Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
             Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
-            // Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
+            Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
             // Geometry::MultiPolygon(geom) => crate::GeometryType::MultiPolygon(geom),
             // Geometry::GeometryCollection(geom) => crate::GeometryType::GeometryCollection(geom),
         }
@@ -144,8 +142,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
     where
         Self: 'b;
     type MultiLineStringType<'b>
-        = UnimplementedMultiLineString<T>
-    // = MultiLineString<T>
+        = MultiLineString<T>
     where
         Self: 'b;
     type MultiPolygonType<'b>
@@ -177,7 +174,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
             Geometry::LineString(geom) => geom.dim(),
             Geometry::Polygon(geom) => geom.dim(),
             Geometry::MultiPoint(geom) => geom.dim(),
-            // Geometry::MultiLineString(geom) => geom.dim(),
+            Geometry::MultiLineString(geom) => geom.dim(),
             // Geometry::MultiPolygon(geom) => geom.dim(),
             // Geometry::GeometryCollection(geom) => geom.dim(),
         }
@@ -203,7 +200,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
             Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
             Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
             Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
-            // Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
+            Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
             // Geometry::MultiPolygon(geom) => crate::GeometryType::MultiPolygon(geom),
             // Geometry::GeometryCollection(geom) => crate::GeometryType::GeometryCollection(geom),
         }
@@ -233,8 +230,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type MultiLineStringType<'b>
-                = UnimplementedMultiLineString<T>
-            // = MultiLineString<T>
+                = MultiLineString<T>
             where
                 Self: 'b;
             type MultiPolygonType<'b>
@@ -302,8 +298,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type MultiLineStringType<'b>
-                = UnimplementedMultiLineString<T>
-            // = MultiLineString<T>
+                = MultiLineString<T>
             where
                 Self: 'b;
             type MultiPolygonType<'b>
@@ -358,6 +353,6 @@ impl_specialization!(Point);
 impl_specialization!(LineString);
 impl_specialization!(Polygon);
 impl_specialization!(MultiPoint);
-// impl_specialization!(MultiLineString);
+impl_specialization!(MultiLineString);
 // impl_specialization!(MultiPolygon);
 // impl_specialization!(GeometryCollection);
