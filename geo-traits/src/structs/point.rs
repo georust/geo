@@ -20,6 +20,26 @@ impl<T: Copy> Point<T> {
         Self::new(None, dim)
     }
 
+    /// Creates a new coordinate from X and Y coordinates.
+    pub fn from_xy(x: T, y: T) -> Self {
+        Self::new(Some(Coord::from_xy(x, y)), Dimensions::Xy)
+    }
+
+    /// Creates a new coordinate from X, Y and Z coordinates.
+    pub fn from_xyz(x: T, y: T, z: T) -> Self {
+        Self::new(Some(Coord::from_xyz(x, y, z)), Dimensions::Xyz)
+    }
+
+    /// Creates a new coordinate from X, Y, and M coordinates.
+    pub fn from_xym(x: T, y: T, m: T) -> Self {
+        Self::new(Some(Coord::from_xyz(x, y, m)), Dimensions::Xym)
+    }
+
+    /// Creates a new coordinate from X, Y, Z, and M coordinates.
+    pub fn from_xyzm(x: T, y: T, z: T, m: T) -> Self {
+        Self::new(Some(Coord::from_xyzm(x, y, z, m)), Dimensions::Xyzm)
+    }
+
     /// Return the [Dimensions] of this geometry.
     pub fn dimension(&self) -> Dimensions {
         self.dim

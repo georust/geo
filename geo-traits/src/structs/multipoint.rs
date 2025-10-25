@@ -1,6 +1,6 @@
 use crate::{
     structs::{Geometry, Point},
-    Dimensions, MultiPointTrait, PointTrait,
+    CoordTrait, Dimensions, MultiPointTrait, PointTrait,
 };
 
 /// A parsed MultiPoint.
@@ -51,6 +51,20 @@ impl<T: Copy> MultiPoint<T> {
         let points = points
             .into_iter()
             .map(|p| Point::from_point(&p))
+            .collect::<Vec<_>>();
+        if points.is_empty() {
+            None
+        } else {
+            let dim = points[0].dimension();
+            Some(Self::new(points, dim))
+        }
+    }
+
+    /// Create a new MultiPoint from a non-empty sequence of objects implementing [CoordTrait].
+    pub fn from_coords(coords: impl IntoIterator<Item = impl CoordTrait<T = T>>) -> Option<Self> {
+        let points = coords
+            .into_iter()
+            .map(|c| Point::from_coord(c))
             .collect::<Vec<_>>();
         if points.is_empty() {
             None

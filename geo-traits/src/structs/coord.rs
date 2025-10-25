@@ -47,6 +47,46 @@ impl<T: Copy> Coord<T> {
             },
         }
     }
+
+    /// Creates a new coordinate from X and Y coordinates.
+    pub fn from_xy(x: T, y: T) -> Self {
+        Self {
+            x,
+            y,
+            z: None,
+            m: None,
+        }
+    }
+
+    /// Creates a new coordinate from X, Y and Z coordinates.
+    pub fn from_xyz(x: T, y: T, z: T) -> Self {
+        Self {
+            x,
+            y,
+            z: Some(z),
+            m: None,
+        }
+    }
+
+    /// Creates a new coordinate from X, Y, and M coordinates.
+    pub fn from_xym(x: T, y: T, m: T) -> Self {
+        Self {
+            x,
+            y,
+            z: None,
+            m: Some(m),
+        }
+    }
+
+    /// Creates a new coordinate from X, Y, Z, and M coordinates.
+    pub fn from_xyzm(x: T, y: T, z: T, m: T) -> Self {
+        Self {
+            x,
+            y,
+            z: Some(z),
+            m: Some(m),
+        }
+    }
 }
 
 impl<T: Copy> CoordTrait for Coord<T> {
