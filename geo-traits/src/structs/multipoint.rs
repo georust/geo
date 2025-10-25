@@ -105,4 +105,111 @@ impl<T: Copy> MultiPointTrait for &MultiPoint<T> {
     }
 }
 
-// TODO: add tests
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::structs::Coord;
+    use crate::MultiPointTrait;
+
+    #[test]
+    fn empty_multipoint_preserves_dimension() {
+        let mp: MultiPoint<i16> = MultiPoint::empty(Dimensions::Xym);
+        assert_eq!(mp.dimension(), Dimensions::Xym);
+        assert!(mp.points().is_empty());
+    }
+
+    #[test]
+    fn from_points_infers_dimension() {
+        let points = vec![
+            Point::new(
+                Some(Coord {
+                    x: 1,
+                    y: 2,
+                    z: Some(3),
+                    m: None,
+                }),
+                Dimensions::Xyz,
+            ),
+            Point::new(
+                Some(Coord {
+                    x: 4,
+                    y: 5,
+                    z: Some(6),
+                    m: None,
+                }),
+                Dimensions::Xyz,
+            ),
+        ];
+
+        let mp = MultiPoint::from_points(points.clone()).expect("points are non-empty");
+        assert_eq!(mp.dimension(), Dimensions::Xyz);
+        assert_eq!(mp.points(), points.as_slice());
+    }
+
+    #[test]
+    fn from_points_returns_none_for_empty_iter() {
+        let empty = std::iter::empty::<Point<i32>>();
+        assert!(MultiPoint::from_points(empty).is_none());
+    }
+
+    #[test]
+    fn from_multipoint_copies_source() {
+        let points = vec![
+            Point::new(
+                Some(Coord {
+                    x: 10,
+                    y: 11,
+                    z: None,
+                    m: Some(1),
+                }),
+                Dimensions::Xym,
+            ),
+            Point::new(
+                Some(Coord {
+                    x: 12,
+                    y: 13,
+                    z: None,
+                    m: Some(2),
+                }),
+                Dimensions::Xym,
+            ),
+        ];
+        let original = MultiPoint::new(points.clone(), Dimensions::Xym);
+        let converted = MultiPoint::from_multipoint(&original);
+
+        assert_eq!(converted.dimension(), original.dimension());
+        assert_eq!(converted.points(), original.points());
+    }
+
+    #[test]
+    fn multipoint_trait_point_access() {
+        let mp = MultiPoint::new(
+            vec![
+                Point::new(
+                    Some(Coord {
+                        x: 7,
+                        y: 8,
+                        z: None,
+                        m: None,
+                    }),
+                    Dimensions::Xy,
+                ),
+                Point::new(
+                    Some(Coord {
+                        x: 9,
+                        y: 10,
+                        z: None,
+                        m: None,
+                    }),
+                    Dimensions::Xy,
+                ),
+            ],
+            Dimensions::Xy,
+        );
+
+        let mp_ref = &mp;
+        let first = mp_ref.point(0).expect("first point exists");
+        assert_eq!(first, &mp.points()[0]);
+        assert!(mp_ref.point(5).is_none());
+    }
+}

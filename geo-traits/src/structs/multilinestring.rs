@@ -111,3 +111,113 @@ impl<T: Copy> MultiLineStringTrait for &MultiLineString<T> {
         self.line_strings.get_unchecked(i)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::structs::Coord;
+    use crate::{LineStringTrait, MultiLineStringTrait};
+
+    fn line_xy(coords: &[(i32, i32)]) -> LineString<i32> {
+        LineString::new(
+            coords
+                .iter()
+                .map(|&(x, y)| Coord {
+                    x,
+                    y,
+                    z: None,
+                    m: None,
+                })
+                .collect(),
+            Dimensions::Xy,
+        )
+    }
+
+    #[test]
+    fn empty_multilinestring_preserves_dimension() {
+        let mls: MultiLineString<i32> = MultiLineString::empty(Dimensions::Xyz);
+        assert_eq!(mls.dimension(), Dimensions::Xyz);
+        assert!(mls.line_strings().is_empty());
+    }
+
+    #[test]
+    fn from_line_strings_infers_dimension() {
+        let lines = vec![
+            LineString::new(
+                vec![
+                    Coord {
+                        x: 0,
+                        y: 0,
+                        z: Some(1),
+                        m: None,
+                    },
+                    Coord {
+                        x: 1,
+                        y: 1,
+                        z: Some(2),
+                        m: None,
+                    },
+                ],
+                Dimensions::Xyz,
+            ),
+            LineString::new(
+                vec![
+                    Coord {
+                        x: 2,
+                        y: 3,
+                        z: Some(4),
+                        m: None,
+                    },
+                    Coord {
+                        x: 5,
+                        y: 8,
+                        z: Some(9),
+                        m: None,
+                    },
+                ],
+                Dimensions::Xyz,
+            ),
+        ];
+
+        let mls =
+            MultiLineString::from_line_strings(lines.clone()).expect("line strings are non-empty");
+        assert_eq!(mls.dimension(), Dimensions::Xyz);
+        assert_eq!(mls.line_strings(), lines.as_slice());
+    }
+
+    #[test]
+    fn from_line_strings_returns_none_for_empty_iter() {
+        let empty = std::iter::empty::<LineString<i64>>();
+        assert!(MultiLineString::from_line_strings(empty).is_none());
+    }
+
+    #[test]
+    fn from_multilinestring_copies_source() {
+        let lines = vec![
+            line_xy(&[(0, 0), (1, 0), (1, 1)]),
+            line_xy(&[(2, 2), (3, 3), (3, 4)]),
+        ];
+        let original = MultiLineString::new(lines.clone(), Dimensions::Xy);
+        let converted = MultiLineString::from_multilinestring(&original);
+
+        assert_eq!(converted.dimension(), original.dimension());
+        assert_eq!(converted.line_strings(), original.line_strings());
+    }
+
+    #[test]
+    fn multilinestring_trait_accessors_work() {
+        let lines = vec![
+            line_xy(&[(0, 0), (0, 1)]),
+            line_xy(&[(1, 1), (2, 2)]),
+        ];
+        let mls = MultiLineString::new(lines.clone(), Dimensions::Xy);
+
+        assert_eq!(mls.num_line_strings(), 2);
+        assert_eq!(mls.line_string(0), Some(&lines[0]));
+        assert!(mls.line_string(5).is_none());
+
+        let borrowed = &mls;
+        let second = borrowed.line_string(1).expect("second line exists");
+        assert_eq!(second, &lines[1]);
+    }
+}

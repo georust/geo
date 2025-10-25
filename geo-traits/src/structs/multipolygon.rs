@@ -111,3 +111,132 @@ impl<T: Copy> MultiPolygonTrait for &MultiPolygon<T> {
         self.polygons.get_unchecked(i)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::structs::{Coord, LineString};
+    use crate::{MultiPolygonTrait, PolygonTrait};
+
+    fn square_ring_xy(offset: i32, size: i32) -> LineString<i32> {
+        LineString::new(
+            vec![
+                Coord {
+                    x: offset,
+                    y: offset,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset + size,
+                    y: offset,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset + size,
+                    y: offset + size,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset,
+                    y: offset + size,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset,
+                    y: offset,
+                    z: None,
+                    m: None,
+                },
+            ],
+            Dimensions::Xy,
+        )
+    }
+
+    #[test]
+    fn empty_multipolygon_preserves_dimension() {
+        let mp: MultiPolygon<u8> = MultiPolygon::empty(Dimensions::Xyzm);
+        assert_eq!(mp.dimension(), Dimensions::Xyzm);
+        assert!(mp.polygons().is_empty());
+    }
+
+    #[test]
+    fn from_polygons_infers_dimension() {
+        let exterior = LineString::new(
+            vec![
+                Coord {
+                    x: 0,
+                    y: 0,
+                    z: None,
+                    m: Some(1),
+                },
+                Coord {
+                    x: 3,
+                    y: 0,
+                    z: None,
+                    m: Some(2),
+                },
+                Coord {
+                    x: 3,
+                    y: 3,
+                    z: None,
+                    m: Some(3),
+                },
+                Coord {
+                    x: 0,
+                    y: 0,
+                    z: None,
+                    m: Some(4),
+                },
+            ],
+            Dimensions::Xym,
+        );
+        let polygon = Polygon::new(vec![exterior.clone()], Dimensions::Xym);
+        let mp =
+            MultiPolygon::from_polygons(vec![polygon.clone()]).expect("polygons are non-empty");
+
+        assert_eq!(mp.dimension(), Dimensions::Xym);
+        assert_eq!(mp.polygons(), &[polygon]);
+    }
+
+    #[test]
+    fn from_polygons_returns_none_for_empty_iter() {
+        let empty = std::iter::empty::<Polygon<i32>>();
+        assert!(MultiPolygon::from_polygons(empty).is_none());
+    }
+
+    #[test]
+    fn from_multipolygon_copies_source() {
+        let polygon_a = Polygon::new(
+            vec![square_ring_xy(0, 2)],
+            Dimensions::Xy,
+        );
+        let polygon_b = Polygon::new(
+            vec![square_ring_xy(3, 2)],
+            Dimensions::Xy,
+        );
+        let original = MultiPolygon::new(vec![polygon_a.clone(), polygon_b.clone()], Dimensions::Xy);
+
+        let converted = MultiPolygon::from_multipolygon(&original);
+        assert_eq!(converted.dimension(), original.dimension());
+        assert_eq!(converted.polygons(), original.polygons());
+    }
+
+    #[test]
+    fn multipolygon_trait_accessors_work() {
+        let poly_a = Polygon::new(vec![square_ring_xy(0, 3)], Dimensions::Xy);
+        let poly_b = Polygon::new(vec![square_ring_xy(5, 1)], Dimensions::Xy);
+        let mp = MultiPolygon::new(vec![poly_a.clone(), poly_b.clone()], Dimensions::Xy);
+
+        assert_eq!(mp.num_polygons(), 2);
+        assert_eq!(mp.polygon(0), Some(&poly_a));
+        assert!(mp.polygon(3).is_none());
+
+        let borrowed = &mp;
+        let second = borrowed.polygon(1).expect("second polygon exists");
+        assert_eq!(second, &poly_b);
+    }
+}
