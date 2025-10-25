@@ -1,6 +1,5 @@
-use crate::CoordTrait;
-
 use crate::dimension::Dimensions;
+use crate::CoordTrait;
 
 /// A parsed coordinate.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
