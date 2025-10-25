@@ -1,10 +1,10 @@
 use crate::{
     Dimensions, GeometryTrait, UnimplementedGeometryCollection, UnimplementedLine,
     UnimplementedMultiLineString, UnimplementedMultiPoint, UnimplementedMultiPolygon,
-    UnimplementedPolygon, UnimplementedRect, UnimplementedTriangle,
+    UnimplementedRect, UnimplementedTriangle,
 };
 
-use super::{LineString, Point};
+use super::{LineString, Point, Polygon};
 
 #[derive(Clone, Debug, PartialEq)]
 /// All supported WKT geometry [`types`]
@@ -13,7 +13,8 @@ pub enum Geometry<T: Copy> {
     Point(Point<T>),
     /// A linestring.
     LineString(LineString<T>),
-    // Polygon(Polygon<T>),
+    /// A polygon.
+    Polygon(Polygon<T>),
     // MultiPoint(MultiPoint<T>),
     // MultiLineString(MultiLineString<T>),
     // MultiPolygon(MultiPolygon<T>),
@@ -29,7 +30,7 @@ where
         match self {
             Self::Point(g) => g.dimension(),
             Self::LineString(g) => g.dimension(),
-            // Self::Polygon(g) => g.dimension(),
+            Self::Polygon(g) => g.dimension(),
             // Self::MultiPoint(g) => g.dimension(),
             // Self::MultiLineString(g) => g.dimension(),
             // Self::MultiPolygon(g) => g.dimension(),
@@ -49,8 +50,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
     where
         Self: 'b;
     type PolygonType<'b>
-        = UnimplementedPolygon<T>
-    // = Polygon<T>
+        = Polygon<T>
     where
         Self: 'b;
     type MultiPointType<'b>
@@ -90,7 +90,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
         match self {
             Geometry::Point(geom) => geom.dim(),
             Geometry::LineString(geom) => geom.dim(),
-            // Geometry::Polygon(geom) => geom.dim(),
+            Geometry::Polygon(geom) => geom.dim(),
             // Geometry::MultiPoint(geom) => geom.dim(),
             // Geometry::MultiLineString(geom) => geom.dim(),
             // Geometry::MultiPolygon(geom) => geom.dim(),
@@ -116,7 +116,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
         match self {
             Geometry::Point(geom) => crate::GeometryType::Point(geom),
             Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
-            // Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
+            Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
             // Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
             // Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
             // Geometry::MultiPolygon(geom) => crate::GeometryType::MultiPolygon(geom),
@@ -136,8 +136,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
     where
         Self: 'b;
     type PolygonType<'b>
-        = UnimplementedPolygon<T>
-    // = Polygon<T>
+        = Polygon<T>
     where
         Self: 'b;
     type MultiPointType<'b>
@@ -177,7 +176,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
         match self {
             Geometry::Point(geom) => geom.dim(),
             Geometry::LineString(geom) => geom.dim(),
-            // Geometry::Polygon(geom) => geom.dim(),
+            Geometry::Polygon(geom) => geom.dim(),
             // Geometry::MultiPoint(geom) => geom.dim(),
             // Geometry::MultiLineString(geom) => geom.dim(),
             // Geometry::MultiPolygon(geom) => geom.dim(),
@@ -203,7 +202,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
         match self {
             Geometry::Point(geom) => crate::GeometryType::Point(geom),
             Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
-            // Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
+            Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
             // Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
             // Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
             // Geometry::MultiPolygon(geom) => crate::GeometryType::MultiPolygon(geom),
@@ -227,8 +226,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type PolygonType<'b>
-                = UnimplementedPolygon<T>
-            // = Polygon<T>
+                = Polygon<T>
             where
                 Self: 'b;
             type MultiPointType<'b>
@@ -298,8 +296,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type PolygonType<'b>
-                = UnimplementedPolygon<T>
-            // = Polygon<T>
+                = Polygon<T>
             where
                 Self: 'b;
             type MultiPointType<'b>
@@ -362,7 +359,7 @@ macro_rules! impl_specialization {
 
 impl_specialization!(Point);
 impl_specialization!(LineString);
-// impl_specialization!(Polygon);
+impl_specialization!(Polygon);
 // impl_specialization!(MultiPoint);
 // impl_specialization!(MultiLineString);
 // impl_specialization!(MultiPolygon);

@@ -9,7 +9,7 @@ pub use self::linestring::LineString;
 // pub use self::multipoint::MultiPoint;
 // pub use self::multipolygon::MultiPolygon;
 pub use self::point::Point;
-// pub use self::polygon::Polygon;
+pub use self::polygon::Polygon;
 
 mod coord;
 mod geometry;
@@ -20,4 +20,4 @@ mod linestring;
 // mod multipoint;
 // mod multipolygon;
 mod point;
-// mod polygon;
+mod polygon;
