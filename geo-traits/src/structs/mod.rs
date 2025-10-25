@@ -7,15 +7,16 @@ pub use self::coord::Coord;
 // pub use self::multilinestring::MultiLineString;
 // pub use self::multipoint::MultiPoint;
 // pub use self::multipolygon::MultiPolygon;
-// pub use self::point::Point;
+pub use self::point::Point;
 // pub use self::polygon::Polygon;
 
 mod coord;
+mod geometry;
 // mod geometry_type;
 // mod geometrycollection;
 // mod linestring;
 // mod multilinestring;
 // mod multipoint;
 // mod multipolygon;
-// mod point;
+mod point;
 // mod polygon;
