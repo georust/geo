@@ -104,3 +104,93 @@ impl<'a, T: Copy> LineStringTrait for &'a LineString<T> {
         self.coords.get_unchecked(i)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::LineStringTrait;
+
+    #[test]
+    fn empty_linestring_preserves_dimension() {
+        let ls: LineString<i32> = LineString::empty(Dimensions::Xym);
+        assert_eq!(ls.dimension(), Dimensions::Xym);
+        assert!(ls.coords().is_empty());
+    }
+
+    #[test]
+    fn from_coords_infers_dimension() {
+        let coords = vec![
+            Coord {
+                x: 1,
+                y: 2,
+                z: Some(3),
+                m: None,
+            },
+            Coord {
+                x: 4,
+                y: 5,
+                z: Some(6),
+                m: None,
+            },
+        ];
+        let ls = LineString::from_coords(coords.clone()).expect("coords are non-empty");
+        assert_eq!(ls.dimension(), Dimensions::Xyz);
+        assert_eq!(ls.coords(), coords.as_slice());
+    }
+
+    #[test]
+    fn from_coords_returns_none_for_empty_iter() {
+        let empty = std::iter::empty::<Coord<i16>>();
+        assert!(LineString::from_coords(empty).is_none());
+    }
+
+    #[test]
+    fn from_linestring_copies_source() {
+        let original = LineString::new(
+            vec![
+                Coord {
+                    x: 1,
+                    y: 2,
+                    z: None,
+                    m: Some(7),
+                },
+                Coord {
+                    x: 3,
+                    y: 4,
+                    z: None,
+                    m: Some(8),
+                },
+            ],
+            Dimensions::Xym,
+        );
+        let converted = LineString::from_linestring(&original);
+        assert_eq!(converted.dimension(), original.dimension());
+        assert_eq!(converted.coords(), original.coords());
+    }
+
+    #[test]
+    fn linestring_trait_coord_access() {
+        let ls = LineString::new(
+            vec![
+                Coord {
+                    x: 10,
+                    y: 11,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: 12,
+                    y: 13,
+                    z: None,
+                    m: None,
+                },
+            ],
+            Dimensions::Xy,
+        );
+
+        let ls_ref = &ls;
+        let second = ls_ref.coord(1).expect("second coord exists");
+        assert_eq!(second, &ls.coords()[1]);
+        assert!(ls_ref.coord(5).is_none());
+    }
+}
