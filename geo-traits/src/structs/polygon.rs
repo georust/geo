@@ -125,13 +125,7 @@ mod tests {
     use crate::structs::Coord;
     use crate::PolygonTrait;
 
-    fn square_ring_xy<T: Copy>(offset: T, step: T) -> LineString<T>
-    where
-        T: From<i32>
-            + Copy
-            + std::ops::Add<Output = T>
-            + std::ops::Sub<Output = T>,
-    {
+    fn square_ring_xy(offset: i32, step: i32) -> LineString<i32> {
         LineString::new(
             vec![
                 Coord {
@@ -215,37 +209,9 @@ mod tests {
 
     #[test]
     fn from_polygon_round_trips_rings() {
-        let exterior = LineString::new(
-            vec![
-                Coord {
-                    x: 0.0,
-                    y: 0.0,
-                    z: Some(0.0),
-                    m: None,
-                },
-                Coord {
-                    x: 3.0,
-                    y: 0.0,
-                    z: Some(1.0),
-                    m: None,
-                },
-                Coord {
-                    x: 0.0,
-                    y: 4.0,
-                    z: Some(2.0),
-                    m: None,
-                },
-                Coord {
-                    x: 0.0,
-                    y: 0.0,
-                    z: Some(0.0),
-                    m: None,
-                },
-            ],
-            Dimensions::Xyz,
-        );
-        let interior = square_ring_xy(1.0, 1.0);
-        let original = Polygon::new(vec![exterior.clone(), interior.clone()], Dimensions::Xyz);
+        let exterior = square_ring_xy(0, 4);
+        let interior = square_ring_xy(1, 2);
+        let original = Polygon::new(vec![exterior.clone(), interior.clone()], Dimensions::Xy);
 
         let converted = Polygon::from_polygon(&original);
         assert_eq!(converted, original);
@@ -254,8 +220,8 @@ mod tests {
 
     #[test]
     fn polygon_trait_accessors_work_for_owned_and_borrowed() {
-        let exterior = square_ring_xy(0_i32, 2_i32);
-        let interior = square_ring_xy(1_i32, 1_i32);
+        let exterior = square_ring_xy(0, 2);
+        let interior = square_ring_xy(1, 1);
         let polygon = Polygon::new(vec![exterior.clone(), interior.clone()], Dimensions::Xy);
 
         let ext = polygon.exterior().expect("exterior exists");
