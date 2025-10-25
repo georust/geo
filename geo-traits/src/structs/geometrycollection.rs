@@ -8,7 +8,7 @@ pub struct GeometryCollection<T: Copy> {
 }
 
 impl<T: Copy> GeometryCollection<T> {
-    /// Create a new GeometryCollection from a sequence of [Wkt].
+    /// Create a new GeometryCollection from a sequence of [Geometry].
     pub fn new(geoms: Vec<Geometry<T>>, dim: Dimensions) -> Self {
         Self { geoms, dim }
     }
@@ -18,7 +18,7 @@ impl<T: Copy> GeometryCollection<T> {
         Self::new(vec![], dim)
     }
 
-    /// Create a new GeometryCollection from a non-empty sequence of [Wkt].
+    /// Create a new GeometryCollection from a non-empty sequence of [Geometry].
     ///
     /// This will infer the dimension from the first geometry, and will not validate that all
     /// geometries have the same dimension.
@@ -44,7 +44,7 @@ impl<T: Copy> GeometryCollection<T> {
         self.dim
     }
 
-    /// Access the underlying [Wkt] geometries.
+    /// Access the underlying geometries.
     pub fn geometries(&self) -> &[Geometry<T>] {
         &self.geoms
     }

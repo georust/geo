@@ -6,7 +6,7 @@ use crate::{
 };
 
 #[derive(Clone, Debug, PartialEq)]
-/// All supported WKT geometry [`types`]
+/// All supported geometry
 pub enum Geometry<T: Copy> {
     /// A point.
     Point(Point<T>),
