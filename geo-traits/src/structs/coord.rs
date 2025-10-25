@@ -137,3 +137,83 @@ impl<T: Copy> CoordTrait for &Coord<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::CoordTrait;
+
+    #[derive(Clone, Copy)]
+    struct DummyCoord<T: Copy> {
+        dims: Dimensions,
+        coords: [T; 4],
+    }
+
+    impl<T: Copy> DummyCoord<T> {
+        fn new(coords: [T; 4], dims: Dimensions) -> Self {
+            Self { dims, coords }
+        }
+    }
+
+    impl<T: Copy> CoordTrait for DummyCoord<T> {
+        type T = T;
+
+        fn dim(&self) -> Dimensions {
+            self.dims
+        }
+
+        fn nth_or_panic(&self, n: usize) -> Self::T {
+            assert!(n < self.dims.size());
+            self.coords[n]
+        }
+
+        fn x(&self) -> Self::T {
+            self.coords[0]
+        }
+
+        fn y(&self) -> Self::T {
+            self.coords[1]
+        }
+    }
+
+    #[test]
+    fn coord_new_from_tuple_xy() {
+        let coord = Coord::new((1_i32, 2_i32));
+        assert_eq!(coord.x, 1);
+        assert_eq!(coord.y, 2);
+        assert_eq!(coord.z, None);
+        assert_eq!(coord.m, None);
+        assert_eq!(CoordTrait::dim(&coord), Dimensions::Xy);
+    }
+
+    #[test]
+    fn coord_new_from_xyz() {
+        let source = DummyCoord::new([1.0_f64, 2.0, 3.0, 0.0], Dimensions::Xyz);
+        let coord = Coord::new(source);
+        assert_eq!(coord.z, Some(3.0));
+        assert_eq!(coord.m, None);
+        assert_eq!(coord.nth_or_panic(2), 3.0);
+        assert_eq!(CoordTrait::dim(&coord), Dimensions::Xyz);
+    }
+
+    #[test]
+    fn coord_new_from_xym() {
+        let source = DummyCoord::new([4_u32, 5, 6, 0], Dimensions::Xym);
+        let coord = Coord::new(source);
+        assert_eq!(coord.z, None);
+        assert_eq!(coord.m, Some(6));
+        assert_eq!(coord.nth_or_panic(2), 6);
+        assert_eq!(CoordTrait::dim(&coord), Dimensions::Xym);
+    }
+
+    #[test]
+    fn coord_new_from_xyzm() {
+        let source = DummyCoord::new([7_i16, 8, 9, 10], Dimensions::Xyzm);
+        let coord = Coord::new(source);
+        assert_eq!(coord.z, Some(9));
+        assert_eq!(coord.m, Some(10));
+        assert_eq!(coord.nth_or_panic(2), 9);
+        assert_eq!(coord.nth_or_panic(3), 10);
+        assert_eq!(CoordTrait::dim(&coord), Dimensions::Xyzm);
+    }
+}
