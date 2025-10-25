@@ -1,6 +1,6 @@
 use crate::dimension::Dimensions;
 use crate::structs::Coord;
-use crate::PointTrait;
+use crate::{CoordTrait as _, PointTrait};
 
 /// A parsed Point.
 #[derive(Clone, Debug, PartialEq)]
@@ -20,7 +20,7 @@ impl<T: Copy> Point<T> {
     /// This infers the dimension from the coordinate.
     pub fn from_coord(coord: Coord<T>) -> Self {
         Self {
-            dim: coord.dimension(),
+            dim: coord.dim(),
             coord: Some(coord),
         }
     }

@@ -1,16 +1,18 @@
 use crate::{
     Dimensions, GeometryTrait, UnimplementedGeometryCollection, UnimplementedLine,
-    UnimplementedLineString, UnimplementedMultiLineString, UnimplementedMultiPoint,
-    UnimplementedMultiPolygon, UnimplementedPolygon, UnimplementedRect, UnimplementedTriangle,
+    UnimplementedMultiLineString, UnimplementedMultiPoint, UnimplementedMultiPolygon,
+    UnimplementedPolygon, UnimplementedRect, UnimplementedTriangle,
 };
 
-use super::Point;
+use super::{LineString, Point};
 
 #[derive(Clone, Debug, PartialEq)]
 /// All supported WKT geometry [`types`]
 pub enum Geometry<T: Copy> {
+    /// A point.
     Point(Point<T>),
-    // LineString(LineString<T>),
+    /// A linestring.
+    LineString(LineString<T>),
     // Polygon(Polygon<T>),
     // MultiPoint(MultiPoint<T>),
     // MultiLineString(MultiLineString<T>),
@@ -26,7 +28,7 @@ where
     pub fn dimension(&self) -> Dimensions {
         match self {
             Self::Point(g) => g.dimension(),
-            // Self::LineString(g) => g.dimension(),
+            Self::LineString(g) => g.dimension(),
             // Self::Polygon(g) => g.dimension(),
             // Self::MultiPoint(g) => g.dimension(),
             // Self::MultiLineString(g) => g.dimension(),
@@ -43,8 +45,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
     where
         Self: 'b;
     type LineStringType<'b>
-        = UnimplementedLineString<T>
-    // = LineString<T>
+        = LineString<T>
     where
         Self: 'b;
     type PolygonType<'b>
@@ -88,7 +89,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
     fn dim(&self) -> Dimensions {
         match self {
             Geometry::Point(geom) => geom.dim(),
-            // Geometry::LineString(geom) => geom.dim(),
+            Geometry::LineString(geom) => geom.dim(),
             // Geometry::Polygon(geom) => geom.dim(),
             // Geometry::MultiPoint(geom) => geom.dim(),
             // Geometry::MultiLineString(geom) => geom.dim(),
@@ -114,7 +115,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
     > {
         match self {
             Geometry::Point(geom) => crate::GeometryType::Point(geom),
-            // Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
+            Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
             // Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
             // Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
             // Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
@@ -131,8 +132,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
     where
         Self: 'b;
     type LineStringType<'b>
-        = UnimplementedLineString<T>
-    // = LineString<T>
+        = LineString<T>
     where
         Self: 'b;
     type PolygonType<'b>
@@ -176,7 +176,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
     fn dim(&self) -> Dimensions {
         match self {
             Geometry::Point(geom) => geom.dim(),
-            // Geometry::LineString(geom) => geom.dim(),
+            Geometry::LineString(geom) => geom.dim(),
             // Geometry::Polygon(geom) => geom.dim(),
             // Geometry::MultiPoint(geom) => geom.dim(),
             // Geometry::MultiLineString(geom) => geom.dim(),
@@ -202,7 +202,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
     > {
         match self {
             Geometry::Point(geom) => crate::GeometryType::Point(geom),
-            // Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
+            Geometry::LineString(geom) => crate::GeometryType::LineString(geom),
             // Geometry::Polygon(geom) => crate::GeometryType::Polygon(geom),
             // Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
             // Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
@@ -223,8 +223,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type LineStringType<'b>
-                = UnimplementedLineString<T>
-            // = LineString<T>
+                = LineString<T>
             where
                 Self: 'b;
             type PolygonType<'b>
@@ -295,8 +294,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type LineStringType<'b>
-                = UnimplementedLineString<T>
-            // = LineString<T>
+                = LineString<T>
             where
                 Self: 'b;
             type PolygonType<'b>
@@ -363,7 +361,7 @@ macro_rules! impl_specialization {
 }
 
 impl_specialization!(Point);
-// impl_specialization!(LineString);
+impl_specialization!(LineString);
 // impl_specialization!(Polygon);
 // impl_specialization!(MultiPoint);
 // impl_specialization!(MultiLineString);

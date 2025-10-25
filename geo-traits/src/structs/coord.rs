@@ -47,23 +47,18 @@ impl<T: Copy> Coord<T> {
             },
         }
     }
-
-    /// Return the [Dimensions] of this coord.
-    pub fn dimension(&self) -> Dimensions {
-        match (self.z.is_some(), self.m.is_some()) {
-            (true, true) => Dimensions::Xyzm,
-            (true, false) => Dimensions::Xyz,
-            (false, true) => Dimensions::Xym,
-            (false, false) => Dimensions::Xy,
-        }
-    }
 }
 
 impl<T: Copy> CoordTrait for Coord<T> {
     type T = T;
 
     fn dim(&self) -> Dimensions {
-        self.dimension().into()
+        match (self.z.is_some(), self.m.is_some()) {
+            (true, true) => Dimensions::Xyzm,
+            (true, false) => Dimensions::Xyz,
+            (false, true) => Dimensions::Xym,
+            (false, false) => Dimensions::Xy,
+        }
     }
 
     fn x(&self) -> Self::T {
@@ -105,7 +100,7 @@ impl<T: Copy> CoordTrait for &Coord<T> {
     type T = T;
 
     fn dim(&self) -> Dimensions {
-        self.dimension().into()
+        (*self).dim()
     }
 
     fn x(&self) -> Self::T {
