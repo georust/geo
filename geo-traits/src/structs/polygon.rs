@@ -4,7 +4,7 @@ use super::LineString;
 
 /// A parsed Polygon.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Polygon<T: Copy = f64> {
+pub struct Polygon<T: Copy> {
     pub(crate) rings: Vec<LineString<T>>,
     pub(crate) dim: Dimensions,
 }

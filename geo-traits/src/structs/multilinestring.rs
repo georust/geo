@@ -5,7 +5,7 @@ use crate::{
 
 /// A parsed MultiLineString.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MultiLineString<T: Copy = f64> {
+pub struct MultiLineString<T: Copy> {
     pub(crate) line_strings: Vec<LineString<T>>,
     pub(crate) dim: Dimensions,
 }

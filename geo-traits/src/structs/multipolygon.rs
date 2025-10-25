@@ -5,7 +5,7 @@ use crate::{
 
 /// A parsed MultiPolygon.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MultiPolygon<T: Copy = f64> {
+pub struct MultiPolygon<T: Copy> {
     pub(crate) polygons: Vec<Polygon<T>>,
     pub(crate) dim: Dimensions,
 }

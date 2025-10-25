@@ -1,7 +1,8 @@
 use crate::{
-    structs::{LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon},
-    Dimensions, GeometryTrait, UnimplementedGeometryCollection, UnimplementedLine,
-    UnimplementedRect, UnimplementedTriangle,
+    structs::{
+        GeometryCollection, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon,
+    },
+    Dimensions, GeometryTrait, UnimplementedLine, UnimplementedRect, UnimplementedTriangle,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -19,7 +20,8 @@ pub enum Geometry<T: Copy> {
     MultiLineString(MultiLineString<T>),
     /// A multipolygon.
     MultiPolygon(MultiPolygon<T>),
-    // GeometryCollection(GeometryCollection<T>),
+    /// A geometry collection.
+    GeometryCollection(GeometryCollection<T>),
 }
 
 impl<T> Geometry<T>
@@ -35,7 +37,7 @@ where
             Self::MultiPoint(g) => g.dimension(),
             Self::MultiLineString(g) => g.dimension(),
             Self::MultiPolygon(g) => g.dimension(),
-            // Self::GeometryCollection(g) => g.dimension(),
+            Self::GeometryCollection(g) => g.dimension(),
         }
     }
 }
@@ -67,8 +69,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
     where
         Self: 'b;
     type GeometryCollectionType<'b>
-        = UnimplementedGeometryCollection<T>
-    // = GeometryCollection<T>
+        = GeometryCollection<T>
     where
         Self: 'b;
     type RectType<'b>
@@ -92,7 +93,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
             Geometry::MultiPoint(geom) => geom.dim(),
             Geometry::MultiLineString(geom) => geom.dim(),
             Geometry::MultiPolygon(geom) => geom.dim(),
-            // Geometry::GeometryCollection(geom) => geom.dim(),
+            Geometry::GeometryCollection(geom) => geom.dim(),
         }
     }
 
@@ -118,7 +119,7 @@ impl<T: Copy> GeometryTrait for Geometry<T> {
             Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
             Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
             Geometry::MultiPolygon(geom) => crate::GeometryType::MultiPolygon(geom),
-            // Geometry::GeometryCollection(geom) => crate::GeometryType::GeometryCollection(geom),
+            Geometry::GeometryCollection(geom) => crate::GeometryType::GeometryCollection(geom),
         }
     }
 }
@@ -150,8 +151,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
     where
         Self: 'b;
     type GeometryCollectionType<'b>
-        = UnimplementedGeometryCollection<T>
-    // = GeometryCollection<T>
+        = GeometryCollection<T>
     where
         Self: 'b;
     type RectType<'b>
@@ -175,7 +175,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
             Geometry::MultiPoint(geom) => geom.dim(),
             Geometry::MultiLineString(geom) => geom.dim(),
             Geometry::MultiPolygon(geom) => geom.dim(),
-            // Geometry::GeometryCollection(geom) => geom.dim(),
+            Geometry::GeometryCollection(geom) => geom.dim(),
         }
     }
 
@@ -201,7 +201,7 @@ impl<T: Copy> GeometryTrait for &Geometry<T> {
             Geometry::MultiPoint(geom) => crate::GeometryType::MultiPoint(geom),
             Geometry::MultiLineString(geom) => crate::GeometryType::MultiLineString(geom),
             Geometry::MultiPolygon(geom) => crate::GeometryType::MultiPolygon(geom),
-            // Geometry::GeometryCollection(geom) => crate::GeometryType::GeometryCollection(geom),
+            Geometry::GeometryCollection(geom) => crate::GeometryType::GeometryCollection(geom),
         }
     }
 }
@@ -237,8 +237,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type GeometryCollectionType<'b>
-                = UnimplementedGeometryCollection<T>
-            // = GeometryCollection<T>
+                = GeometryCollection<T>
             where
                 Self: 'b;
             type RectType<'b>
@@ -304,8 +303,7 @@ macro_rules! impl_specialization {
             where
                 Self: 'b;
             type GeometryCollectionType<'b>
-                = UnimplementedGeometryCollection<T>
-            // = GeometryCollection<T>
+                = GeometryCollection<T>
             where
                 Self: 'b;
             type RectType<'b>
@@ -352,4 +350,4 @@ impl_specialization!(Polygon);
 impl_specialization!(MultiPoint);
 impl_specialization!(MultiLineString);
 impl_specialization!(MultiPolygon);
-// impl_specialization!(GeometryCollection);
+impl_specialization!(GeometryCollection);

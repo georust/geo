@@ -5,7 +5,7 @@ use crate::{
 
 /// A parsed LineString.
 #[derive(Clone, Debug, PartialEq)]
-pub struct LineString<T: Copy = f64> {
+pub struct LineString<T: Copy> {
     pub(crate) coords: Vec<super::Coord<T>>,
     pub(crate) dim: Dimensions,
 }
