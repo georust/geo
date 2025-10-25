@@ -7,7 +7,7 @@ pub use self::geometry::Geometry;
 pub use self::linestring::LineString;
 pub use self::multilinestring::MultiLineString;
 pub use self::multipoint::MultiPoint;
-// pub use self::multipolygon::MultiPolygon;
+pub use self::multipolygon::MultiPolygon;
 pub use self::point::Point;
 pub use self::polygon::Polygon;
 
@@ -18,6 +18,6 @@ mod geometry;
 mod linestring;
 mod multilinestring;
 mod multipoint;
-// mod multipolygon;
+mod multipolygon;
 mod point;
 mod polygon;
