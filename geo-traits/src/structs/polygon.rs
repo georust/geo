@@ -1,6 +1,6 @@
 use crate::{
     structs::{Geometry, LineString},
-    Dimensions, PolygonTrait,
+    Dimensions, LineStringTrait, PolygonTrait,
 };
 
 /// A parsed Polygon.
@@ -21,25 +21,6 @@ impl<T: Copy> Polygon<T> {
         Self::new(vec![], dim)
     }
 
-    /// Create a new polygon from a non-empty sequence of [LineString].
-    ///
-    /// This will infer the dimension from the first line string, and will not validate that all
-    /// line strings have the same dimension.
-    ///
-    /// Returns `None` if the input iterator is empty.
-    ///
-    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
-    /// to an [empty][Self::empty] geometry with specified dimension.
-    pub fn from_rings(rings: impl IntoIterator<Item = LineString<T>>) -> Option<Self> {
-        let rings = rings.into_iter().collect::<Vec<_>>();
-        if rings.is_empty() {
-            None
-        } else {
-            let dim = rings[0].dimension();
-            Some(Self::new(rings, dim))
-        }
-    }
-
     /// Return the [Dimensions] of this geometry.
     pub fn dimension(&self) -> Dimensions {
         self.dim
@@ -55,6 +36,39 @@ impl<T: Copy> Polygon<T> {
     /// Consume self and return the inner parts.
     pub fn into_inner(self) -> (Vec<LineString<T>>, Dimensions) {
         (self.rings, self.dim)
+    }
+
+    // Conversion from geo-traits' traits
+
+    /// Create a new polygon from a non-empty sequence of objects implementing [LineStringTrait].
+    ///
+    /// This will infer the dimension from the first line string, and will not validate that all
+    /// line strings have the same dimension.
+    ///
+    /// Returns `None` if the input iterator is empty.
+    ///
+    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
+    /// to an [empty][Self::empty] geometry with specified dimension.
+    pub fn from_rings(
+        rings: impl IntoIterator<Item = impl LineStringTrait<T = T>>,
+    ) -> Option<Self> {
+        let rings = rings
+            .into_iter()
+            .map(|l| LineString::from_linestring(l))
+            .collect::<Vec<_>>();
+        if rings.is_empty() {
+            None
+        } else {
+            let dim = rings[0].dimension();
+            Some(Self::new(rings, dim))
+        }
+    }
+
+    /// Create a new polygon from an object implementing [PolygonTrait].
+    pub fn from_polygon(polygon: impl PolygonTrait<T = T>) -> Self {
+        let exterior = polygon.exterior().into_iter();
+        let other = polygon.interiors();
+        Self::from_rings(exterior.chain(other)).unwrap()
     }
 }
 

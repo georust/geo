@@ -1,6 +1,6 @@
 use crate::dimension::Dimensions;
 use crate::structs::Coord;
-use crate::{CoordTrait as _, PointTrait};
+use crate::{CoordTrait, PointTrait};
 
 /// A parsed Point.
 #[derive(Clone, Debug, PartialEq)]
@@ -13,16 +13,6 @@ impl<T: Copy> Point<T> {
     /// Create a new Point from a coordinate and known [Dimension].
     pub fn new(coord: Option<Coord<T>>, dim: Dimensions) -> Self {
         Self { coord, dim }
-    }
-
-    /// Create a new point from a valid [Coord].
-    ///
-    /// This infers the dimension from the coordinate.
-    pub fn from_coord(coord: Coord<T>) -> Self {
-        Self {
-            dim: coord.dim(),
-            coord: Some(coord),
-        }
     }
 
     /// Create a new empty point.
@@ -43,6 +33,27 @@ impl<T: Copy> Point<T> {
     /// Consume self and return the inner parts.
     pub fn into_inner(self) -> (Option<Coord<T>>, Dimensions) {
         (self.coord, self.dim)
+    }
+
+    // Conversion from geo-traits' traits
+
+    /// Create a new point from an object implementing [CoordTrait].
+    ///
+    /// This infers the dimension from the coordinate.
+    pub fn from_coord(coord: impl CoordTrait<T = T>) -> Self {
+        Self {
+            dim: coord.dim(),
+            coord: Some(Coord::new(coord)),
+        }
+    }
+
+    /// Create a new point from an object implementing [PointTrait].
+    ///
+    /// This infers the dimension from the coordinate.
+    pub fn from_point(point: impl PointTrait<T = T>) -> Self {
+        let dim = point.dim();
+        let coord = point.coord().map(|c| Coord::new(c));
+        Self { coord, dim }
     }
 }
 
