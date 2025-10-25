@@ -3,7 +3,7 @@ use crate::CoordTrait;
 
 /// A parsed coordinate.
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
-pub struct Coord<T: Copy> {
+pub struct Coord<T: Copy = f64> {
     /// The x-coordinate.
     pub x: T,
     /// The y-coordinate.
