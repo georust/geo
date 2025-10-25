@@ -116,7 +116,7 @@ impl<T: Copy> MultiPolygonTrait for &MultiPolygon<T> {
 mod tests {
     use super::*;
     use crate::structs::{Coord, LineString};
-    use crate::{MultiPolygonTrait, PolygonTrait};
+    use crate::MultiPolygonTrait;
 
     fn square_ring_xy(offset: i32, size: i32) -> LineString<i32> {
         LineString::new(

@@ -116,7 +116,7 @@ impl<T: Copy> MultiLineStringTrait for &MultiLineString<T> {
 mod tests {
     use super::*;
     use crate::structs::Coord;
-    use crate::{LineStringTrait, MultiLineStringTrait};
+    use crate::MultiLineStringTrait;
 
     fn line_xy(coords: &[(i32, i32)]) -> LineString<i32> {
         LineString::new(
