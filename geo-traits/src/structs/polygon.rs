@@ -118,3 +118,156 @@ impl<T: Copy> PolygonTrait for &Polygon<T> {
         self.rings.get_unchecked(i + 1)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::structs::Coord;
+    use crate::PolygonTrait;
+
+    fn square_ring_xy<T: Copy>(offset: T, step: T) -> LineString<T>
+    where
+        T: From<i32>
+            + Copy
+            + std::ops::Add<Output = T>
+            + std::ops::Sub<Output = T>,
+    {
+        LineString::new(
+            vec![
+                Coord {
+                    x: offset,
+                    y: offset,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset + step,
+                    y: offset,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset + step,
+                    y: offset + step,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset,
+                    y: offset + step,
+                    z: None,
+                    m: None,
+                },
+                Coord {
+                    x: offset,
+                    y: offset,
+                    z: None,
+                    m: None,
+                },
+            ],
+            Dimensions::Xy,
+        )
+    }
+
+    #[test]
+    fn empty_polygon_preserves_dimension() {
+        let polygon: Polygon<u8> = Polygon::empty(Dimensions::Xyzm);
+        assert_eq!(polygon.dimension(), Dimensions::Xyzm);
+        assert!(polygon.rings().is_empty());
+    }
+
+    #[test]
+    fn from_rings_infers_dimension() {
+        let exterior = LineString::new(
+            vec![
+                Coord {
+                    x: 0,
+                    y: 0,
+                    z: None,
+                    m: Some(1),
+                },
+                Coord {
+                    x: 2,
+                    y: 0,
+                    z: None,
+                    m: Some(2),
+                },
+                Coord {
+                    x: 1,
+                    y: 2,
+                    z: None,
+                    m: Some(3),
+                },
+            ],
+            Dimensions::Xym,
+        );
+
+        let polygon = Polygon::from_rings(vec![exterior.clone()]).expect("non-empty rings");
+        assert_eq!(polygon.dimension(), Dimensions::Xym);
+        assert_eq!(polygon.rings(), &[exterior]);
+    }
+
+    #[test]
+    fn from_rings_returns_none_for_empty_iter() {
+        let empty = std::iter::empty::<LineString<i32>>();
+        assert!(Polygon::from_rings(empty).is_none());
+    }
+
+    #[test]
+    fn from_polygon_round_trips_rings() {
+        let exterior = LineString::new(
+            vec![
+                Coord {
+                    x: 0.0,
+                    y: 0.0,
+                    z: Some(0.0),
+                    m: None,
+                },
+                Coord {
+                    x: 3.0,
+                    y: 0.0,
+                    z: Some(1.0),
+                    m: None,
+                },
+                Coord {
+                    x: 0.0,
+                    y: 4.0,
+                    z: Some(2.0),
+                    m: None,
+                },
+                Coord {
+                    x: 0.0,
+                    y: 0.0,
+                    z: Some(0.0),
+                    m: None,
+                },
+            ],
+            Dimensions::Xyz,
+        );
+        let interior = square_ring_xy(1.0, 1.0);
+        let original = Polygon::new(vec![exterior.clone(), interior.clone()], Dimensions::Xyz);
+
+        let converted = Polygon::from_polygon(&original);
+        assert_eq!(converted, original);
+        assert_eq!(converted.rings(), &[exterior, interior]);
+    }
+
+    #[test]
+    fn polygon_trait_accessors_work_for_owned_and_borrowed() {
+        let exterior = square_ring_xy(0_i32, 2_i32);
+        let interior = square_ring_xy(1_i32, 1_i32);
+        let polygon = Polygon::new(vec![exterior.clone(), interior.clone()], Dimensions::Xy);
+
+        let ext = polygon.exterior().expect("exterior exists");
+        assert_eq!(ext, &exterior);
+        assert_eq!(polygon.num_interiors(), 1);
+        assert_eq!(polygon.interior(0), Some(&interior));
+        assert!(polygon.interior(1).is_none());
+
+        let borrowed = &polygon;
+        let borrowed_ext = borrowed.exterior().expect("borrowed exterior exists");
+        assert_eq!(borrowed_ext, &exterior);
+        assert_eq!(borrowed.num_interiors(), 1);
+        assert_eq!(borrowed.interior(0), Some(&interior));
+    }
+}
