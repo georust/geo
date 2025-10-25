@@ -1,4 +1,4 @@
-use crate::{structs::Geometry, Dimensions, GeometryCollectionTrait};
+use crate::{structs::Geometry, Dimensions, GeometryCollectionTrait, GeometryTrait};
 
 /// A parsed GeometryCollection.
 #[derive(Clone, Debug, PartialEq)]
@@ -18,27 +18,6 @@ impl<T: Copy> GeometryCollection<T> {
         Self::new(vec![], dim)
     }
 
-    /// Create a new GeometryCollection from a non-empty sequence of [Geometry].
-    ///
-    /// This will infer the dimension from the first geometry, and will not validate that all
-    /// geometries have the same dimension.
-    ///
-    /// ## Errors
-    ///
-    /// If the input iterator is empty.
-    ///
-    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
-    /// to an [empty][Self::empty] geometry with specified dimension.
-    pub fn from_geometries(geoms: impl IntoIterator<Item = Geometry<T>>) -> Option<Self> {
-        let geoms = geoms.into_iter().collect::<Vec<_>>();
-        if geoms.is_empty() {
-            None
-        } else {
-            let dim = geoms[0].dimension();
-            Some(Self::new(geoms, dim))
-        }
-    }
-
     /// Return the [Dimensions] of this geometry.
     pub fn dimension(&self) -> Dimensions {
         self.dim
@@ -52,6 +31,39 @@ impl<T: Copy> GeometryCollection<T> {
     /// Consume self and return the inner parts.
     pub fn into_inner(self) -> (Vec<Geometry<T>>, Dimensions) {
         (self.geoms, self.dim)
+    }
+
+    // Conversion from geo-traits' traits
+
+    /// Create a new GeometryCollection from a non-empty sequence of objects implementing [GeometryTrait].
+    ///
+    /// This will infer the dimension from the first geometry, and will not validate that all
+    /// geometries have the same dimension.
+    ///
+    /// ## Errors
+    ///
+    /// If the input iterator is empty.
+    ///
+    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
+    /// to an [empty][Self::empty] geometry with specified dimension.
+    pub fn from_geometries(
+        geoms: impl IntoIterator<Item = impl GeometryTrait<T = T>>,
+    ) -> Option<Self> {
+        let geoms = geoms
+            .into_iter()
+            .map(|g| Geometry::from_geometry(&g))
+            .collect::<Vec<_>>();
+        if geoms.is_empty() {
+            None
+        } else {
+            let dim = geoms[0].dimension();
+            Some(Self::new(geoms, dim))
+        }
+    }
+
+    /// Create a new GeometryCollection from an objects implementing [GeometryCollectionTrait].
+    pub fn from_geometry_collection(geoms: &impl GeometryCollectionTrait<T = T>) -> Self {
+        Self::from_geometries(geoms.geometries()).unwrap()
     }
 }
 

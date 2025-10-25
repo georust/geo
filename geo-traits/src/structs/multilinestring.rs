@@ -52,7 +52,7 @@ impl<T: Copy> MultiLineString<T> {
     ) -> Option<Self> {
         let line_strings = line_strings
             .into_iter()
-            .map(|l| LineString::from_linestring(l))
+            .map(|l| LineString::from_linestring(&l))
             .collect::<Vec<_>>();
         if line_strings.is_empty() {
             None
@@ -63,10 +63,10 @@ impl<T: Copy> MultiLineString<T> {
     }
 
     /// Create a new MultiLineString from an objects implementing [MultiLineStringTrait].
-    pub fn from_multilinestring(multilinestring: impl MultiLineStringTrait<T = T>) -> Self {
+    pub fn from_multilinestring(multilinestring: &impl MultiLineStringTrait<T = T>) -> Self {
         let line_strings = multilinestring
             .line_strings()
-            .map(|l| LineString::from_linestring(l))
+            .map(|l| LineString::from_linestring(&l))
             .collect::<Vec<_>>();
         let dim = line_strings[0].dimension();
         Self::new(line_strings, dim)

@@ -40,6 +40,34 @@ where
             Self::GeometryCollection(g) => g.dimension(),
         }
     }
+
+    /// Create a new Geometry from an objects implementing [GeometryTrait].
+    pub fn from_geometry(geometry: &impl GeometryTrait<T = T>) -> Self {
+        match geometry.as_type() {
+            crate::GeometryType::Point(geom) => Self::Point(Point::from_point(geom)),
+            crate::GeometryType::LineString(geom) => {
+                Self::LineString(LineString::from_linestring(geom))
+            }
+            crate::GeometryType::Polygon(geom) => Self::Polygon(Polygon::from_polygon(geom)),
+            crate::GeometryType::MultiPoint(geom) => {
+                Self::MultiPoint(MultiPoint::from_multipoint(geom))
+            }
+            crate::GeometryType::MultiLineString(geom) => {
+                Self::MultiLineString(MultiLineString::from_multilinestring(geom))
+            }
+            crate::GeometryType::MultiPolygon(geom) => {
+                Self::MultiPolygon(MultiPolygon::from_multipolygon(geom))
+            }
+            crate::GeometryType::GeometryCollection(geom) => {
+                Self::GeometryCollection(GeometryCollection::from_geometry_collection(geom))
+            }
+            _ => unimplemented!(),
+            // TODO
+            // crate::GeometryType::Rect(geom) => Self::Rect(Rect::from_rect(geom)),
+            // crate::GeometryType::Triangle(geom) => Self::Triangle(Triangle::from_triangle(geom)),
+            // crate::GeometryType::Line(geom) => Self::Line(Line::from_line(geom)),
+        }
+    }
 }
 
 impl<T: Copy> GeometryTrait for Geometry<T> {

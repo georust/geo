@@ -54,7 +54,7 @@ impl<T: Copy> Polygon<T> {
     ) -> Option<Self> {
         let rings = rings
             .into_iter()
-            .map(|l| LineString::from_linestring(l))
+            .map(|l| LineString::from_linestring(&l))
             .collect::<Vec<_>>();
         if rings.is_empty() {
             None
@@ -65,7 +65,7 @@ impl<T: Copy> Polygon<T> {
     }
 
     /// Create a new polygon from an object implementing [PolygonTrait].
-    pub fn from_polygon(polygon: impl PolygonTrait<T = T>) -> Self {
+    pub fn from_polygon(polygon: &impl PolygonTrait<T = T>) -> Self {
         let exterior = polygon.exterior().into_iter();
         let other = polygon.interiors();
         Self::from_rings(exterior.chain(other)).unwrap()

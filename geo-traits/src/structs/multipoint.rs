@@ -50,7 +50,7 @@ impl<T: Copy> MultiPoint<T> {
     pub fn from_points(points: impl IntoIterator<Item = impl PointTrait<T = T>>) -> Option<Self> {
         let points = points
             .into_iter()
-            .map(|p| Point::from_point(p))
+            .map(|p| Point::from_point(&p))
             .collect::<Vec<_>>();
         if points.is_empty() {
             None
@@ -61,7 +61,7 @@ impl<T: Copy> MultiPoint<T> {
     }
 
     /// Create a new MultiPoint from an objects implementing [MultiPointTrait].
-    pub fn from_multipoint(multipoint: impl MultiPointTrait<T = T>) -> Self {
+    pub fn from_multipoint(multipoint: &impl MultiPointTrait<T = T>) -> Self {
         Self::from_points(multipoint.points()).unwrap()
     }
 }

@@ -50,7 +50,7 @@ impl<T: Copy> Point<T> {
     /// Create a new point from an object implementing [PointTrait].
     ///
     /// This infers the dimension from the coordinate.
-    pub fn from_point(point: impl PointTrait<T = T>) -> Self {
+    pub fn from_point(point: &impl PointTrait<T = T>) -> Self {
         let dim = point.dim();
         let coord = point.coord().map(|c| Coord::new(c));
         Self { coord, dim }

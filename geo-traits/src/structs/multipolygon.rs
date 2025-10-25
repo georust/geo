@@ -52,7 +52,7 @@ impl<T: Copy> MultiPolygon<T> {
     ) -> Option<Self> {
         let polygons = polygons
             .into_iter()
-            .map(|p| Polygon::from_polygon(p))
+            .map(|p| Polygon::from_polygon(&p))
             .collect::<Vec<_>>();
         if polygons.is_empty() {
             None
@@ -63,10 +63,10 @@ impl<T: Copy> MultiPolygon<T> {
     }
 
     /// Create a new MultiPolygon from an objects implementing [MultiPolygonTrait].
-    pub fn from_multipolygon(multipolygon: impl MultiPolygonTrait<T = T>) -> Self {
+    pub fn from_multipolygon(multipolygon: &impl MultiPolygonTrait<T = T>) -> Self {
         let polygons = multipolygon
             .polygons()
-            .map(|p| Polygon::from_polygon(p))
+            .map(|p| Polygon::from_polygon(&p))
             .collect::<Vec<_>>();
         let dim = polygons[0].dimension();
         Self::new(polygons, dim)
