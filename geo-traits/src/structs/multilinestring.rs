@@ -1,6 +1,6 @@
 use crate::{
     structs::{Geometry, LineString},
-    Dimensions, MultiLineStringTrait,
+    Dimensions, LineStringTrait, MultiLineStringTrait,
 };
 
 /// A parsed MultiLineString.
@@ -21,27 +21,6 @@ impl<T: Copy> MultiLineString<T> {
         Self::new(vec![], dim)
     }
 
-    /// Create a new MultiLineString from a non-empty sequence of [LineString].
-    ///
-    /// This will infer the dimension from the first line string, and will not validate that all
-    /// line strings have the same dimension.
-    ///
-    /// Returns `None` if the input iterator is empty.
-    ///
-    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
-    /// to an [empty][Self::empty] geometry with specified dimension.
-    pub fn from_line_strings(
-        line_strings: impl IntoIterator<Item = LineString<T>>,
-    ) -> Option<Self> {
-        let line_strings = line_strings.into_iter().collect::<Vec<_>>();
-        if line_strings.is_empty() {
-            None
-        } else {
-            let dim = line_strings[0].dimension();
-            Some(Self::new(line_strings, dim))
-        }
-    }
-
     /// Return the [Dimensions] of this geometry.
     pub fn dimension(&self) -> Dimensions {
         self.dim
@@ -55,6 +34,42 @@ impl<T: Copy> MultiLineString<T> {
     /// Consume self and return the inner parts.
     pub fn into_inner(self) -> (Vec<LineString<T>>, Dimensions) {
         (self.line_strings, self.dim)
+    }
+
+    // Conversion from geo-traits' traits
+
+    /// Create a new MultiLineString from a non-empty sequence of objects implementing [LineStringTrait].
+    ///
+    /// This will infer the dimension from the first line string, and will not validate that all
+    /// line strings have the same dimension.
+    ///
+    /// Returns `None` if the input iterator is empty.
+    ///
+    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
+    /// to an [empty][Self::empty] geometry with specified dimension.
+    pub fn from_line_strings(
+        line_strings: impl IntoIterator<Item = impl LineStringTrait<T = T>>,
+    ) -> Option<Self> {
+        let line_strings = line_strings
+            .into_iter()
+            .map(|l| LineString::from_linestring(l))
+            .collect::<Vec<_>>();
+        if line_strings.is_empty() {
+            None
+        } else {
+            let dim = line_strings[0].dimension();
+            Some(Self::new(line_strings, dim))
+        }
+    }
+
+    /// Create a new MultiLineString from an objects implementing [MultiLineStringTrait].
+    pub fn from_multilinestring(multilinestring: impl MultiLineStringTrait<T = T>) -> Self {
+        let line_strings = multilinestring
+            .line_strings()
+            .map(|l| LineString::from_linestring(l))
+            .collect::<Vec<_>>();
+        let dim = line_strings[0].dimension();
+        Self::new(line_strings, dim)
     }
 }
 

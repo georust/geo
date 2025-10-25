@@ -1,6 +1,6 @@
 use crate::{
     structs::{Geometry, Point},
-    Dimensions, MultiPointTrait,
+    Dimensions, MultiPointTrait, PointTrait,
 };
 
 /// A parsed MultiPoint.
@@ -21,25 +21,6 @@ impl<T: Copy> MultiPoint<T> {
         Self::new(vec![], dim)
     }
 
-    /// Create a new MultiPoint from a non-empty sequence of [Point].
-    ///
-    /// This will infer the dimension from the first point, and will not validate that all
-    /// points have the same dimension.
-    ///
-    /// Returns `None` if the input iterator is empty.
-    ///
-    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
-    /// to an [empty][Self::empty] geometry with specified dimension.
-    pub fn from_points(points: impl IntoIterator<Item = Point<T>>) -> Option<Self> {
-        let points = points.into_iter().collect::<Vec<_>>();
-        if points.is_empty() {
-            None
-        } else {
-            let dim = points[0].dimension();
-            Some(Self::new(points, dim))
-        }
-    }
-
     /// Return the [Dimensions] of this geometry.
     pub fn dimension(&self) -> Dimensions {
         self.dim
@@ -53,6 +34,35 @@ impl<T: Copy> MultiPoint<T> {
     /// Consume self and return the inner parts.
     pub fn into_inner(self) -> (Vec<Point<T>>, Dimensions) {
         (self.points, self.dim)
+    }
+
+    // Conversion from geo-traits' traits
+
+    /// Create a new MultiPoint from a non-empty sequence of objects implementing [PointTrait].
+    ///
+    /// This will infer the dimension from the first point, and will not validate that all
+    /// points have the same dimension.
+    ///
+    /// Returns `None` if the input iterator is empty.
+    ///
+    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
+    /// to an [empty][Self::empty] geometry with specified dimension.
+    pub fn from_points(points: impl IntoIterator<Item = impl PointTrait<T = T>>) -> Option<Self> {
+        let points = points
+            .into_iter()
+            .map(|p| Point::from_point(p))
+            .collect::<Vec<_>>();
+        if points.is_empty() {
+            None
+        } else {
+            let dim = points[0].dimension();
+            Some(Self::new(points, dim))
+        }
+    }
+
+    /// Create a new MultiPoint from an objects implementing [MultiPointTrait].
+    pub fn from_multipoint(multipoint: impl MultiPointTrait<T = T>) -> Self {
+        Self::from_points(multipoint.points()).unwrap()
     }
 }
 
