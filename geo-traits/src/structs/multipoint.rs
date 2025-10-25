@@ -104,3 +104,5 @@ impl<T: Copy> MultiPointTrait for &MultiPoint<T> {
         self.points.get_unchecked(i)
     }
 }
+
+// TODO: add tests

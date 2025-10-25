@@ -1,6 +1,6 @@
 use crate::{
     structs::{Geometry, Polygon},
-    Dimensions, MultiPolygonTrait,
+    Dimensions, MultiPolygonTrait, PolygonTrait,
 };
 
 /// A parsed MultiPolygon.
@@ -21,25 +21,6 @@ impl<T: Copy> MultiPolygon<T> {
         Self::new(vec![], dim)
     }
 
-    /// Create a new MultiPolygon from a non-empty sequence of [Polygon].
-    ///
-    /// This will infer the dimension from the first polygon, and will not validate that all
-    /// polygons have the same dimension.
-    ///
-    /// Returns `None` if the input iterator is empty.
-    ///
-    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
-    /// to an [empty][Self::empty] geometry with specified dimension.
-    pub fn from_polygons(polygons: impl IntoIterator<Item = Polygon<T>>) -> Option<Self> {
-        let polygons = polygons.into_iter().collect::<Vec<_>>();
-        if polygons.is_empty() {
-            None
-        } else {
-            let dim = polygons[0].dimension();
-            Some(Self::new(polygons, dim))
-        }
-    }
-
     /// Return the [Dimensions] of this geometry.
     pub fn dimension(&self) -> Dimensions {
         self.dim
@@ -53,6 +34,42 @@ impl<T: Copy> MultiPolygon<T> {
     /// Consume self and return the inner parts.
     pub fn into_inner(self) -> (Vec<Polygon<T>>, Dimensions) {
         (self.polygons, self.dim)
+    }
+
+    // Conversion from geo-traits' traits
+
+    /// Create a new MultiPolygon from a non-empty sequence of objects implementing [PolygonTrait].
+    ///
+    /// This will infer the dimension from the first polygon, and will not validate that all
+    /// polygons have the same dimension.
+    ///
+    /// Returns `None` if the input iterator is empty.
+    ///
+    /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
+    /// to an [empty][Self::empty] geometry with specified dimension.
+    pub fn from_polygons(
+        polygons: impl IntoIterator<Item = impl PolygonTrait<T = T>>,
+    ) -> Option<Self> {
+        let polygons = polygons
+            .into_iter()
+            .map(|p| Polygon::from_polygon(p))
+            .collect::<Vec<_>>();
+        if polygons.is_empty() {
+            None
+        } else {
+            let dim = polygons[0].dimension();
+            Some(Self::new(polygons, dim))
+        }
+    }
+
+    /// Create a new MultiPolygon from an objects implementing [MultiPolygonTrait].
+    pub fn from_multipolygon(multipolygon: impl MultiPolygonTrait<T = T>) -> Self {
+        let polygons = multipolygon
+            .polygons()
+            .map(|p| Polygon::from_polygon(p))
+            .collect::<Vec<_>>();
+        let dim = polygons[0].dimension();
+        Self::new(polygons, dim)
     }
 }
 
