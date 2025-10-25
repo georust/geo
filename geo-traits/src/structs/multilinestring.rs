@@ -5,7 +5,7 @@ use crate::{
 
 /// A parsed MultiLineString.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MultiLineString<T: Copy> {
+pub struct MultiLineString<T: Copy = f64> {
     pub(crate) line_strings: Vec<LineString<T>>,
     pub(crate) dim: Dimensions,
 }
@@ -206,10 +206,7 @@ mod tests {
 
     #[test]
     fn multilinestring_trait_accessors_work() {
-        let lines = vec![
-            line_xy(&[(0, 0), (0, 1)]),
-            line_xy(&[(1, 1), (2, 2)]),
-        ];
+        let lines = vec![line_xy(&[(0, 0), (0, 1)]), line_xy(&[(1, 1), (2, 2)])];
         let mls = MultiLineString::new(lines.clone(), Dimensions::Xy);
 
         assert_eq!(mls.num_line_strings(), 2);

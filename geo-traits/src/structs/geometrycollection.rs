@@ -2,7 +2,7 @@ use crate::{structs::Geometry, Dimensions, GeometryCollectionTrait};
 
 /// A parsed GeometryCollection.
 #[derive(Clone, Debug, PartialEq)]
-pub struct GeometryCollection<T: Copy> {
+pub struct GeometryCollection<T: Copy = f64> {
     pub(crate) geoms: Vec<Geometry<T>>,
     pub(crate) dim: Dimensions,
 }

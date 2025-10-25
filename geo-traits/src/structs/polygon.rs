@@ -5,7 +5,7 @@ use crate::{
 
 /// A parsed Polygon.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Polygon<T: Copy> {
+pub struct Polygon<T: Copy = f64> {
     pub(crate) rings: Vec<LineString<T>>,
     pub(crate) dim: Dimensions,
 }

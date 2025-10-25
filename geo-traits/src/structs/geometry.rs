@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Clone, Debug, PartialEq)]
 /// All supported geometry
-pub enum Geometry<T: Copy> {
+pub enum Geometry<T: Copy = f64> {
     /// A point.
     Point(Point<T>),
     /// A linestring.

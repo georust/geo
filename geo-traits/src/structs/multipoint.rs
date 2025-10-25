@@ -5,7 +5,7 @@ use crate::{
 
 /// A parsed MultiPoint.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MultiPoint<T: Copy> {
+pub struct MultiPoint<T: Copy = f64> {
     pub(crate) points: Vec<Point<T>>,
     pub(crate) dim: Dimensions,
 }

@@ -4,7 +4,7 @@ use crate::{CoordTrait, PointTrait};
 
 /// A parsed Point.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Point<T: Copy> {
+pub struct Point<T: Copy = f64> {
     pub(crate) coord: Option<Coord<T>>,
     pub(crate) dim: Dimensions,
 }

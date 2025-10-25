@@ -5,7 +5,7 @@ use crate::{
 
 /// A parsed MultiPolygon.
 #[derive(Clone, Debug, PartialEq)]
-pub struct MultiPolygon<T: Copy> {
+pub struct MultiPolygon<T: Copy = f64> {
     pub(crate) polygons: Vec<Polygon<T>>,
     pub(crate) dim: Dimensions,
 }
@@ -210,15 +210,10 @@ mod tests {
 
     #[test]
     fn from_multipolygon_copies_source() {
-        let polygon_a = Polygon::new(
-            vec![square_ring_xy(0, 2)],
-            Dimensions::Xy,
-        );
-        let polygon_b = Polygon::new(
-            vec![square_ring_xy(3, 2)],
-            Dimensions::Xy,
-        );
-        let original = MultiPolygon::new(vec![polygon_a.clone(), polygon_b.clone()], Dimensions::Xy);
+        let polygon_a = Polygon::new(vec![square_ring_xy(0, 2)], Dimensions::Xy);
+        let polygon_b = Polygon::new(vec![square_ring_xy(3, 2)], Dimensions::Xy);
+        let original =
+            MultiPolygon::new(vec![polygon_a.clone(), polygon_b.clone()], Dimensions::Xy);
 
         let converted = MultiPolygon::from_multipolygon(&original);
         assert_eq!(converted.dimension(), original.dimension());
