@@ -1,6 +1,7 @@
-use crate::{structs::Geometry, Dimensions, PolygonTrait};
-
-use super::LineString;
+use crate::{
+    structs::{Geometry, LineString},
+    Dimensions, PolygonTrait,
+};
 
 /// A parsed Polygon.
 #[derive(Clone, Debug, PartialEq)]
