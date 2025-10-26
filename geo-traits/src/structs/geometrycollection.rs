@@ -40,9 +40,10 @@ impl<T: Copy> GeometryCollection<T> {
     /// This will infer the dimension from the first geometry, and will not validate that all
     /// geometries have the same dimension.
     ///
-    /// ## Errors
+    /// This returns `None` when
     ///
-    /// If the input iterator is empty.
+    /// - the input iterator is empty
+    /// - all the geometries are `Line`, `Triangle`, or `Rect` (these geometries are silently skipped)
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -51,7 +52,7 @@ impl<T: Copy> GeometryCollection<T> {
     ) -> Option<Self> {
         let geoms = geoms
             .into_iter()
-            .map(|g| Geometry::from_geometry(&g))
+            .flat_map(|g| Geometry::from_geometry(&g))
             .collect::<Vec<_>>();
         if geoms.is_empty() {
             None
