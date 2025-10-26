@@ -10,7 +10,7 @@ pub struct Point<T: Copy = f64> {
 }
 
 impl<T: Copy> Point<T> {
-    /// Create a new Point from a coordinate and known [Dimension].
+    /// Create a new Point from a coordinate and known [Dimensions].
     pub fn new(coord: Option<Coord<T>>, dim: Dimensions) -> Self {
         Self { coord, dim }
     }

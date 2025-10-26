@@ -11,7 +11,7 @@ pub struct MultiLineString<T: Copy = f64> {
 }
 
 impl<T: Copy> MultiLineString<T> {
-    /// Create a new LineString from a sequence of [LineString] and known [Dimension].
+    /// Create a new LineString from a sequence of [LineString] and known [Dimensions].
     pub fn new(line_strings: Vec<LineString<T>>, dim: Dimensions) -> Self {
         MultiLineString { dim, line_strings }
     }

@@ -28,7 +28,7 @@ impl<T> Geometry<T>
 where
     T: Copy,
 {
-    /// Return the [Dimension] of this geometry.
+    /// Return the [Dimensions] of this geometry.
     pub fn dimension(&self) -> Dimensions {
         match self {
             Self::Point(g) => g.dimension(),
