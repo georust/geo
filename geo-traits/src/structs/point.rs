@@ -63,7 +63,7 @@ impl<T: Copy> Point<T> {
     pub fn from_coord(coord: impl CoordTrait<T = T>) -> Self {
         Self {
             dim: coord.dim(),
-            coord: Some(Coord::new(coord)),
+            coord: Some(Coord::from_coord(&coord)),
         }
     }
 
@@ -72,7 +72,7 @@ impl<T: Copy> Point<T> {
     /// This infers the dimension from the coordinate.
     pub fn from_point(point: &impl PointTrait<T = T>) -> Self {
         let dim = point.dim();
-        let coord = point.coord().map(|c| Coord::new(c));
+        let coord = point.coord().map(|c| Coord::from_coord(&c));
         Self { coord, dim }
     }
 }

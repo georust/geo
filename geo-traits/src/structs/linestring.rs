@@ -50,7 +50,7 @@ impl<T: Copy> LineString<T> {
     pub fn from_coords(coords: impl IntoIterator<Item = impl CoordTrait<T = T>>) -> Option<Self> {
         let coords = coords
             .into_iter()
-            .map(|c| Coord::new(c))
+            .map(|c| Coord::from_coord(&c))
             .collect::<Vec<_>>();
         if coords.is_empty() {
             None

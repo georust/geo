@@ -15,8 +15,13 @@ pub struct Coord<T: Copy = f64> {
 }
 
 impl<T: Copy> Coord<T> {
+    /// Creates a new coordinate.
+    pub fn new(x: T, y: T, z: Option<T>, m: Option<T>) -> Self {
+        Self { x, y, z, m }
+    }
+
     /// Creates a new coordinate from a coordinate trait.
-    pub fn new(coord: impl CoordTrait<T = T>) -> Self {
+    pub fn from_coord(coord: &impl CoordTrait<T = T>) -> Self {
         let x = coord.x();
         let y = coord.y();
 
@@ -218,7 +223,7 @@ mod tests {
 
     #[test]
     fn coord_new_from_tuple_xy() {
-        let coord = Coord::new((1_i32, 2_i32));
+        let coord = Coord::from_coord(&(1_i32, 2_i32));
         assert_eq!(coord.x, 1);
         assert_eq!(coord.y, 2);
         assert_eq!(coord.z, None);
@@ -229,7 +234,7 @@ mod tests {
     #[test]
     fn coord_new_from_xyz() {
         let source = DummyCoord::new([1.0_f64, 2.0, 3.0, 0.0], Dimensions::Xyz);
-        let coord = Coord::new(source);
+        let coord = Coord::from_coord(&source);
         assert_eq!(coord.z, Some(3.0));
         assert_eq!(coord.m, None);
         assert_eq!(coord.nth_or_panic(2), 3.0);
@@ -239,7 +244,7 @@ mod tests {
     #[test]
     fn coord_new_from_xym() {
         let source = DummyCoord::new([4_u32, 5, 6, 0], Dimensions::Xym);
-        let coord = Coord::new(source);
+        let coord = Coord::from_coord(&source);
         assert_eq!(coord.z, None);
         assert_eq!(coord.m, Some(6));
         assert_eq!(coord.nth_or_panic(2), 6);
@@ -249,7 +254,7 @@ mod tests {
     #[test]
     fn coord_new_from_xyzm() {
         let source = DummyCoord::new([7_i16, 8, 9, 10], Dimensions::Xyzm);
-        let coord = Coord::new(source);
+        let coord = Coord::from_coord(&source);
         assert_eq!(coord.z, Some(9));
         assert_eq!(coord.m, Some(10));
         assert_eq!(coord.nth_or_panic(2), 9);
