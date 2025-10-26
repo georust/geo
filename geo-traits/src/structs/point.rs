@@ -107,3 +107,69 @@ impl<'a, T: Copy> PointTrait for &'a Point<T> {
         self.coord.as_ref()
     }
 }
+
+/// Convert from a tuple of (X, Y).
+impl<T: Copy> From<(T, T)> for Point<T> {
+    fn from((x, y): (T, T)) -> Self {
+        Self {
+            dim: Dimensions::Xy,
+            coord: Some(Coord::from_xy(x, y)),
+        }
+    }
+}
+
+/// Convert from a tuple of (X, Y, Z). If you want to create a `Point` of
+/// `Dimensions::Xym`, use `Point::from_xym`.
+impl<T: Copy> From<(T, T, T)> for Point<T> {
+    fn from((x, y, z): (T, T, T)) -> Self {
+        Self {
+            dim: Dimensions::Xyz,
+            coord: Some(Coord::from_xyz(x, y, z)),
+        }
+    }
+}
+
+/// Convert from a tuple of (X, Y, Z, M).
+impl<T: Copy> From<(T, T, T, T)> for Point<T> {
+    fn from((x, y, z, m): (T, T, T, T)) -> Self {
+        Self {
+            dim: Dimensions::Xyzm,
+            coord: Some(Coord::from_xyzm(x, y, z, m)),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn point_from_tuple_xy() {
+        let point: Point<i32> = Point::from((3, 4));
+        let coord = point.coord().unwrap();
+        assert_eq!(*coord, Coord::from_xy(3, 4));
+        assert_eq!(coord.z, None);
+        assert_eq!(coord.m, None);
+        assert_eq!(point.dimension(), Dimensions::Xy);
+    }
+
+    #[test]
+    fn point_from_tuple_xyz() {
+        let point: Point<f64> = Point::from((1.5, 2.5, 3.5));
+        let coord = point.coord().unwrap();
+        assert_eq!(*coord, Coord::from_xyz(1.5, 2.5, 3.5));
+        assert_eq!(coord.z, Some(3.5));
+        assert_eq!(coord.m, None);
+        assert_eq!(point.dimension(), Dimensions::Xyz);
+    }
+
+    #[test]
+    fn point_from_tuple_xyzm() {
+        let point: Point<i16> = Point::from((7, 8, 9, 10));
+        let coord = point.coord().unwrap();
+        assert_eq!(*coord, Coord::from_xyzm(7, 8, 9, 10));
+        assert_eq!(coord.z, Some(9));
+        assert_eq!(coord.m, Some(10));
+        assert_eq!(point.dimension(), Dimensions::Xyzm);
+    }
+}
