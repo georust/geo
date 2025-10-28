@@ -53,7 +53,7 @@ impl<T: Copy> MultiLineString<T> {
     ) -> Option<Self> {
         let line_strings = line_strings
             .into_iter()
-            .map(|l| LineString::from_linestring(&l))
+            .map(|l| LineString::from_line_string(&l))
             .collect::<Vec<_>>();
         if line_strings.is_empty() {
             None
@@ -77,7 +77,7 @@ impl<T: Copy> MultiLineString<T> {
     }
 
     /// Create a new MultiLineString from an objects implementing [MultiLineStringTrait].
-    pub fn from_multilinestring(multilinestring: &impl MultiLineStringTrait<T = T>) -> Self {
+    pub fn from_multi_line_string(multilinestring: &impl MultiLineStringTrait<T = T>) -> Self {
         Self::from_line_strings_with_dim(multilinestring.line_strings(), multilinestring.dim())
     }
 }
@@ -207,7 +207,7 @@ mod tests {
             line_xy(&[(2, 2), (3, 3), (3, 4)]),
         ];
         let original = MultiLineString::new(lines.clone(), Dimensions::Xy);
-        let converted = MultiLineString::from_multilinestring(&original);
+        let converted = MultiLineString::from_multi_line_string(&original);
 
         assert_eq!(converted.dimension(), original.dimension());
         assert_eq!(converted.line_strings(), original.line_strings());

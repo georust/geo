@@ -54,7 +54,7 @@ impl<T: Copy> Polygon<T> {
     ) -> Option<Self> {
         let rings = rings
             .into_iter()
-            .map(|l| LineString::from_linestring(&l))
+            .map(|l| LineString::from_line_string(&l))
             .collect::<Vec<_>>();
         if rings.is_empty() {
             None

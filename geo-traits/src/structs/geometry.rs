@@ -48,14 +48,14 @@ where
         match geometry.as_type() {
             crate::GeometryType::Point(geom) => Self::Point(Point::from_point(geom)),
             crate::GeometryType::LineString(geom) => {
-                Self::LineString(LineString::from_linestring(geom))
+                Self::LineString(LineString::from_line_string(geom))
             }
             crate::GeometryType::Polygon(geom) => Self::Polygon(Polygon::from_polygon(geom)),
             crate::GeometryType::MultiPoint(geom) => {
                 Self::MultiPoint(MultiPoint::from_multipoint(geom))
             }
             crate::GeometryType::MultiLineString(geom) => {
-                Self::MultiLineString(MultiLineString::from_multilinestring(geom))
+                Self::MultiLineString(MultiLineString::from_multi_line_string(geom))
             }
             crate::GeometryType::MultiPolygon(geom) => {
                 Self::MultiPolygon(MultiPolygon::from_multipolygon(geom))

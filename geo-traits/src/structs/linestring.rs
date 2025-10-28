@@ -75,7 +75,7 @@ impl<T: Copy> LineString<T> {
     }
 
     /// Create a new LineString from an objects implementing [LineStringTrait].
-    pub fn from_linestring(linestring: &impl LineStringTrait<T = T>) -> Self {
+    pub fn from_line_string(linestring: &impl LineStringTrait<T = T>) -> Self {
         Self::from_coords_with_dim(linestring.coords(), linestring.dim())
     }
 
@@ -182,7 +182,7 @@ mod tests {
             ],
             Dimensions::Xym,
         );
-        let converted = LineString::from_linestring(&original);
+        let converted = LineString::from_line_string(&original);
         assert_eq!(converted.dimension(), original.dimension());
         assert_eq!(converted.coords(), original.coords());
     }
