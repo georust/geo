@@ -69,10 +69,7 @@ impl<T: Copy> MultiLineString<T> {
     ) -> Self {
         match Self::from_line_strings(line_strings) {
             Some(multi_line_string) => multi_line_string,
-            None => Self {
-                line_strings: Vec::new(),
-                dim,
-            },
+            None => Self::empty(dim),
         }
     }
 
@@ -147,6 +144,14 @@ mod tests {
         let mls: MultiLineString<i32> = MultiLineString::empty(Dimensions::Xyz);
         assert_eq!(mls.dimension(), Dimensions::Xyz);
         assert!(mls.line_strings().is_empty());
+    }
+
+    #[test]
+    fn from_multilinestring_preserves_dimension_for_empty() {
+        let source = MultiLineString::<f64>::empty(Dimensions::Xyzm);
+        let converted = MultiLineString::from_multi_line_string(&source);
+        assert_eq!(converted.dimension(), Dimensions::Xyzm);
+        assert!(converted.line_strings().is_empty());
     }
 
     #[test]

@@ -67,10 +67,7 @@ impl<T: Copy> LineString<T> {
     ) -> Self {
         match Self::from_coords(coords) {
             Some(line_string) => line_string,
-            None => Self {
-                coords: Vec::new(),
-                dim,
-            },
+            None => Self::empty(dim),
         }
     }
 
@@ -134,6 +131,14 @@ mod tests {
         let ls: LineString<i32> = LineString::empty(Dimensions::Xym);
         assert_eq!(ls.dimension(), Dimensions::Xym);
         assert!(ls.coords().is_empty());
+    }
+
+    #[test]
+    fn from_linestring_preserves_dimension_for_empty() {
+        let source = LineString::<f64>::empty(Dimensions::Xyzm);
+        let converted = LineString::from_line_string(&source);
+        assert_eq!(converted.dimension(), Dimensions::Xyzm);
+        assert!(converted.coords().is_empty());
     }
 
     #[test]

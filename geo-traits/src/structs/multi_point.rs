@@ -67,10 +67,7 @@ impl<T: Copy> MultiPoint<T> {
     ) -> Self {
         match Self::from_points(points) {
             Some(multi_point) => multi_point,
-            None => Self {
-                points: Vec::new(),
-                dim,
-            },
+            None => Self::empty(dim),
         }
     }
 
@@ -144,6 +141,14 @@ mod tests {
         let mp: MultiPoint<i16> = MultiPoint::empty(Dimensions::Xym);
         assert_eq!(mp.dimension(), Dimensions::Xym);
         assert!(mp.points().is_empty());
+    }
+
+    #[test]
+    fn from_multipoint_preserves_dimension_for_empty() {
+        let source = MultiPoint::<f64>::empty(Dimensions::Xyzm);
+        let converted = MultiPoint::from_multi_point(&source);
+        assert_eq!(converted.dimension(), Dimensions::Xyzm);
+        assert!(converted.points().is_empty());
     }
 
     #[test]

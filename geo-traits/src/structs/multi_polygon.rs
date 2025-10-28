@@ -69,10 +69,7 @@ impl<T: Copy> MultiPolygon<T> {
     ) -> Self {
         match Self::from_polygons(polygons) {
             Some(multipolygon) => multipolygon,
-            None => Self {
-                polygons: Vec::new(),
-                dim,
-            },
+            None => Self::empty(dim),
         }
     }
 
@@ -170,6 +167,14 @@ mod tests {
         let mp: MultiPolygon<u8> = MultiPolygon::empty(Dimensions::Xyzm);
         assert_eq!(mp.dimension(), Dimensions::Xyzm);
         assert!(mp.polygons().is_empty());
+    }
+
+    #[test]
+    fn from_multipolygon_preserves_dimension_for_empty() {
+        let source = MultiPolygon::<f64>::empty(Dimensions::Xyzm);
+        let converted = MultiPolygon::from_multi_polygon(&source);
+        assert_eq!(converted.dimension(), Dimensions::Xyzm);
+        assert!(converted.polygons().is_empty());
     }
 
     #[test]

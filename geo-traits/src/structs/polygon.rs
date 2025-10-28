@@ -71,10 +71,7 @@ impl<T: Copy> Polygon<T> {
     ) -> Self {
         match Self::from_rings(rings) {
             Some(polygon) => polygon,
-            None => Self {
-                rings: Vec::new(),
-                dim,
-            },
+            None => Self::empty(dim),
         }
     }
 
@@ -237,6 +234,14 @@ mod tests {
         let polygon: Polygon<u8> = Polygon::empty(Dimensions::Xyzm);
         assert_eq!(polygon.dimension(), Dimensions::Xyzm);
         assert!(polygon.rings().is_empty());
+    }
+
+    #[test]
+    fn from_polygon_preserves_dimension_for_empty() {
+        let source = Polygon::<f64>::empty(Dimensions::Xyzm);
+        let converted = Polygon::from_polygon(&source);
+        assert_eq!(converted.dimension(), Dimensions::Xyzm);
+        assert!(converted.rings().is_empty());
     }
 
     #[test]
