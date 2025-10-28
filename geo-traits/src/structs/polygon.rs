@@ -45,7 +45,8 @@ impl<T: Copy> Polygon<T> {
     /// This will infer the dimension from the first line string, and will not validate that all
     /// line strings have the same dimension.
     ///
-    /// Returns `None` if the input iterator is empty.
+    /// Returns `None` if the input iterator is empty; while an empty POLYGON is valid, the
+    /// dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -64,11 +65,24 @@ impl<T: Copy> Polygon<T> {
         }
     }
 
+    pub(crate) fn from_rings_with_dim(
+        rings: impl IntoIterator<Item = impl LineStringTrait<T = T>>,
+        dim: Dimensions,
+    ) -> Self {
+        match Self::from_rings(rings) {
+            Some(polygon) => polygon,
+            None => Self {
+                rings: Vec::new(),
+                dim,
+            },
+        }
+    }
+
     /// Create a new polygon from an object implementing [PolygonTrait].
     pub fn from_polygon(polygon: &impl PolygonTrait<T = T>) -> Self {
         let exterior = polygon.exterior().into_iter();
         let other = polygon.interiors();
-        Self::from_rings(exterior.chain(other)).unwrap()
+        Self::from_rings_with_dim(exterior.chain(other), polygon.dim())
     }
 
     /// Create a new polygon from an object implementing [TriangleTrait].

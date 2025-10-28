@@ -43,8 +43,8 @@ impl<T: Copy> LineString<T> {
     /// This will infer the dimension from the first coordinate, and will not validate that all
     /// coordinates have the same dimension.
     ///
-    /// Returns `None` if the input iterator is empty; while the empty
-    /// linestring is valid, the dimension cannot be inferred.
+    /// Returns `None` if the input iterator is empty; while an empty LINESTRING is valid, the
+    /// dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.

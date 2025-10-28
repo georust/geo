@@ -52,13 +52,13 @@ where
             }
             crate::GeometryType::Polygon(geom) => Self::Polygon(Polygon::from_polygon(geom)),
             crate::GeometryType::MultiPoint(geom) => {
-                Self::MultiPoint(MultiPoint::from_multipoint(geom))
+                Self::MultiPoint(MultiPoint::from_multi_point(geom))
             }
             crate::GeometryType::MultiLineString(geom) => {
                 Self::MultiLineString(MultiLineString::from_multi_line_string(geom))
             }
             crate::GeometryType::MultiPolygon(geom) => {
-                Self::MultiPolygon(MultiPolygon::from_multipolygon(geom))
+                Self::MultiPolygon(MultiPolygon::from_multi_polygon(geom))
             }
             crate::GeometryType::GeometryCollection(geom) => {
                 Self::GeometryCollection(GeometryCollection::from_geometry_collection(geom))

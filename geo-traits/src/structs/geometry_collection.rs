@@ -40,10 +40,8 @@ impl<T: Copy> GeometryCollection<T> {
     /// This will infer the dimension from the first geometry, and will not validate that all
     /// geometries have the same dimension.
     ///
-    /// This returns `None` when
-    ///
-    /// - the input iterator is empty
-    /// - all the geometries are `Line`, `Triangle`, or `Rect` (these geometries are silently skipped)
+    /// Returns `None` if the input iterator is empty; while an empty GEOMETRYCOLLECTION is valid, the
+    /// dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -62,9 +60,24 @@ impl<T: Copy> GeometryCollection<T> {
         }
     }
 
+    pub(crate) fn from_geometries_with_dim(
+        geoms: impl IntoIterator<Item = impl GeometryTrait<T = T>>,
+        dim: Dimensions,
+    ) -> Self {
+        match Self::from_geometries(geoms) {
+            Some(geometry_collection) => geometry_collection,
+            None => Self {
+                geoms: Vec::new(),
+                dim,
+            },
+        }
+    }
+
     /// Create a new GeometryCollection from an objects implementing [GeometryCollectionTrait].
-    pub fn from_geometry_collection(geoms: &impl GeometryCollectionTrait<T = T>) -> Self {
-        Self::from_geometries(geoms.geometries()).unwrap()
+    pub fn from_geometry_collection(
+        geometry_collection: &impl GeometryCollectionTrait<T = T>,
+    ) -> Self {
+        Self::from_geometries_with_dim(geometry_collection.geometries(), geometry_collection.dim())
     }
 }
 

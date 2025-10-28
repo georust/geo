@@ -2,20 +2,20 @@
 
 pub use self::coord::Coord;
 pub use self::geometry::Geometry;
-pub use self::geometrycollection::GeometryCollection;
-pub use self::linestring::LineString;
-pub use self::multilinestring::MultiLineString;
-pub use self::multipoint::MultiPoint;
-pub use self::multipolygon::MultiPolygon;
+pub use self::geometry_collection::GeometryCollection;
+pub use self::line_string::LineString;
+pub use self::multi_line_string::MultiLineString;
+pub use self::multi_point::MultiPoint;
+pub use self::multi_polygon::MultiPolygon;
 pub use self::point::Point;
 pub use self::polygon::Polygon;
 
 mod coord;
 mod geometry;
-mod geometrycollection;
-mod linestring;
-mod multilinestring;
-mod multipoint;
-mod multipolygon;
+mod geometry_collection;
+mod line_string;
+mod multi_line_string;
+mod multi_point;
+mod multi_polygon;
 mod point;
 mod polygon;

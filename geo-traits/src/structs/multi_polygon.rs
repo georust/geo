@@ -43,7 +43,8 @@ impl<T: Copy> MultiPolygon<T> {
     /// This will infer the dimension from the first polygon, and will not validate that all
     /// polygons have the same dimension.
     ///
-    /// Returns `None` if the input iterator is empty.
+    /// Returns `None` if the input iterator is empty; while an empty MULTIPOLYGON is valid, the
+    /// dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -62,14 +63,22 @@ impl<T: Copy> MultiPolygon<T> {
         }
     }
 
+    pub(crate) fn from_polygons_with_dim(
+        polygons: impl IntoIterator<Item = impl PolygonTrait<T = T>>,
+        dim: Dimensions,
+    ) -> Self {
+        match Self::from_polygons(polygons) {
+            Some(multipolygon) => multipolygon,
+            None => Self {
+                polygons: Vec::new(),
+                dim,
+            },
+        }
+    }
+
     /// Create a new MultiPolygon from an objects implementing [MultiPolygonTrait].
-    pub fn from_multipolygon(multipolygon: &impl MultiPolygonTrait<T = T>) -> Self {
-        let polygons = multipolygon
-            .polygons()
-            .map(|p| Polygon::from_polygon(&p))
-            .collect::<Vec<_>>();
-        let dim = polygons[0].dimension();
-        Self::new(polygons, dim)
+    pub fn from_multi_polygon(multi_polygon: &impl MultiPolygonTrait<T = T>) -> Self {
+        Self::from_polygons_with_dim(multi_polygon.polygons(), multi_polygon.dim())
     }
 }
 
@@ -215,7 +224,7 @@ mod tests {
         let original =
             MultiPolygon::new(vec![polygon_a.clone(), polygon_b.clone()], Dimensions::Xy);
 
-        let converted = MultiPolygon::from_multipolygon(&original);
+        let converted = MultiPolygon::from_multi_polygon(&original);
         assert_eq!(converted.dimension(), original.dimension());
         assert_eq!(converted.polygons(), original.polygons());
     }

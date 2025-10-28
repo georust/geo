@@ -43,8 +43,8 @@ impl<T: Copy> MultiLineString<T> {
     /// This will infer the dimension from the first line string, and will not validate that all
     /// line strings have the same dimension.
     ///
-    /// Returns `None` if the input iterator is empty; while the empty
-    /// linestring is valid, the dimension cannot be inferred.
+    /// Returns `None` if the input iterator is empty; while an empty MULTILINESTRING is valid, the
+    /// dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -77,8 +77,8 @@ impl<T: Copy> MultiLineString<T> {
     }
 
     /// Create a new MultiLineString from an objects implementing [MultiLineStringTrait].
-    pub fn from_multi_line_string(multilinestring: &impl MultiLineStringTrait<T = T>) -> Self {
-        Self::from_line_strings_with_dim(multilinestring.line_strings(), multilinestring.dim())
+    pub fn from_multi_line_string(multi_line_string: &impl MultiLineStringTrait<T = T>) -> Self {
+        Self::from_line_strings_with_dim(multi_line_string.line_strings(), multi_line_string.dim())
     }
 }
 

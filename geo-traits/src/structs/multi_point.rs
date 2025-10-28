@@ -43,7 +43,8 @@ impl<T: Copy> MultiPoint<T> {
     /// This will infer the dimension from the first point, and will not validate that all
     /// points have the same dimension.
     ///
-    /// Returns `None` if the input iterator is empty.
+    /// Returns `None` if the input iterator is empty; while an empty MULTIPOINT is valid, the
+    /// dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -57,6 +58,19 @@ impl<T: Copy> MultiPoint<T> {
         } else {
             let dim = points[0].dimension();
             Some(Self::new(points, dim))
+        }
+    }
+
+    pub(crate) fn from_points_with_dim(
+        points: impl IntoIterator<Item = impl PointTrait<T = T>>,
+        dim: Dimensions,
+    ) -> Self {
+        match Self::from_points(points) {
+            Some(multi_point) => multi_point,
+            None => Self {
+                points: Vec::new(),
+                dim,
+            },
         }
     }
 
@@ -75,8 +89,8 @@ impl<T: Copy> MultiPoint<T> {
     }
 
     /// Create a new MultiPoint from an objects implementing [MultiPointTrait].
-    pub fn from_multipoint(multipoint: &impl MultiPointTrait<T = T>) -> Self {
-        Self::from_points(multipoint.points()).unwrap()
+    pub fn from_multi_point(multi_point: &impl MultiPointTrait<T = T>) -> Self {
+        Self::from_points_with_dim(multi_point.points(), multi_point.dim())
     }
 }
 
@@ -189,7 +203,7 @@ mod tests {
             ),
         ];
         let original = MultiPoint::new(points.clone(), Dimensions::Xym);
-        let converted = MultiPoint::from_multipoint(&original);
+        let converted = MultiPoint::from_multi_point(&original);
 
         assert_eq!(converted.dimension(), original.dimension());
         assert_eq!(converted.points(), original.points());
