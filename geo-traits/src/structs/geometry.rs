@@ -41,8 +41,9 @@ where
         }
     }
 
-    /// Create a new Geometry from an objects implementing [GeometryTrait]. The
-    /// result is `None` if the geometry is `Line`, `Rect`, or `Triangle`.
+    /// Create a new Geometry from an objects implementing [GeometryTrait].
+    /// `Line` geometry is converted to a `LineString`, `Rect` and `Triangle`
+    /// geometries are converted to `Polygon`.
     pub fn from_geometry(geometry: &impl GeometryTrait<T = T>) -> Option<Self> {
         match geometry.as_type() {
             crate::GeometryType::Point(geom) => Some(Self::Point(Point::from_point(geom))),
@@ -62,7 +63,11 @@ where
             crate::GeometryType::GeometryCollection(geom) => Some(Self::GeometryCollection(
                 GeometryCollection::from_geometry_collection(geom),
             )),
-            _ => None,
+            crate::GeometryType::Rect(rect) => Some(Self::Polygon(Polygon::from_rect(rect))),
+            crate::GeometryType::Triangle(triangle) => {
+                Some(Self::Polygon(Polygon::from_triangle(triangle)))
+            }
+            crate::GeometryType::Line(line) => Some(Self::LineString(LineString::from_line(line))),
         }
     }
 }

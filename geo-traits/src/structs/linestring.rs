@@ -1,6 +1,6 @@
 use crate::{
     structs::{Coord, Geometry},
-    CoordTrait, Dimensions, LineStringTrait,
+    CoordTrait, Dimensions, LineStringTrait, LineTrait,
 };
 
 /// A parsed LineString.
@@ -63,6 +63,11 @@ impl<T: Copy> LineString<T> {
     /// Create a new LineString from an objects implementing [LineStringTrait].
     pub fn from_linestring(linestring: &impl LineStringTrait<T = T>) -> Self {
         Self::from_coords(linestring.coords()).unwrap()
+    }
+
+    /// Create a new LineString from an objects implementing [LineTrait].
+    pub fn from_line(line: &impl LineTrait<T = T>) -> Self {
+        Self::from_coords(line.coords()).unwrap()
     }
 }
 

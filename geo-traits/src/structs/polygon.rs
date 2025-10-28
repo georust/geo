@@ -1,6 +1,6 @@
 use crate::{
     structs::{Geometry, LineString},
-    Dimensions, LineStringTrait, PolygonTrait,
+    CoordTrait, Dimensions, GeometryTrait, LineStringTrait, PolygonTrait, RectTrait, TriangleTrait,
 };
 
 /// A parsed Polygon.
@@ -69,6 +69,61 @@ impl<T: Copy> Polygon<T> {
         let exterior = polygon.exterior().into_iter();
         let other = polygon.interiors();
         Self::from_rings(exterior.chain(other)).unwrap()
+    }
+
+    /// Create a new polygon from an object implementing [TriangleTrait].
+    pub fn from_triangle(triangle: &impl TriangleTrait<T = T>) -> Self {
+        let ring = super::LineString::from_coords(triangle.coords()).unwrap();
+        Self {
+            dim: ring.dimension(),
+            rings: vec![ring],
+        }
+    }
+
+    /// Create a new polygon from an object implementing [RectTrait].
+    pub fn from_rect(rect: &impl RectTrait<T = T>) -> Self {
+        let min = rect.min();
+        let max = rect.max();
+        // Rect should be 2D, so this just uses X and Y coordinates
+        let ring = super::LineString {
+            dim: Dimensions::Xy,
+            coords: vec![
+                super::Coord {
+                    x: min.x(),
+                    y: min.y(),
+                    z: None,
+                    m: None,
+                },
+                super::Coord {
+                    x: max.x(),
+                    y: min.y(),
+                    z: None,
+                    m: None,
+                },
+                super::Coord {
+                    x: max.x(),
+                    y: max.y(),
+                    z: None,
+                    m: None,
+                },
+                super::Coord {
+                    x: min.x(),
+                    y: max.y(),
+                    z: None,
+                    m: None,
+                },
+                super::Coord {
+                    x: min.x(),
+                    y: min.y(),
+                    z: None,
+                    m: None,
+                },
+            ],
+        };
+        Self {
+            rings: vec![ring],
+            dim: Dimensions::Xy,
+        }
     }
 }
 
