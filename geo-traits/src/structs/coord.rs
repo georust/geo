@@ -191,21 +191,6 @@ impl<T: Copy> From<(T, T)> for Coord<T> {
     }
 }
 
-/// Convert from a tuple of (X, Y, Z). If you want to create a `Coord` of
-/// `Dimensions::Xym`, use `Coord::from_xym`.
-impl<T: Copy> From<(T, T, T)> for Coord<T> {
-    fn from((x, y, z): (T, T, T)) -> Self {
-        Self::new(x, y, Some(z), None)
-    }
-}
-
-/// Convert from a tuple of (X, Y, Z, M).
-impl<T: Copy> From<(T, T, T, T)> for Coord<T> {
-    fn from((x, y, z, m): (T, T, T, T)) -> Self {
-        Self::new(x, y, Some(z), Some(m))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -292,23 +277,5 @@ mod tests {
         assert_eq!(coord.z, None);
         assert_eq!(coord.m, None);
         assert_eq!(CoordTrait::dim(&coord), Dimensions::Xy);
-    }
-
-    #[test]
-    fn coord_from_tuple_xyz() {
-        let coord: Coord<f64> = Coord::from((1.5, 2.5, 3.5));
-        assert_eq!(coord, Coord::from_xyz(1.5, 2.5, 3.5));
-        assert_eq!(coord.nth_or_panic(2), 3.5);
-        assert_eq!(coord.m, None);
-        assert_eq!(CoordTrait::dim(&coord), Dimensions::Xyz);
-    }
-
-    #[test]
-    fn coord_from_tuple_xyzm() {
-        let coord: Coord<i16> = Coord::from((7, 8, 9, 10));
-        assert_eq!(coord, Coord::from_xyzm(7, 8, 9, 10));
-        assert_eq!(coord.nth_or_panic(2), 9);
-        assert_eq!(coord.nth_or_panic(3), 10);
-        assert_eq!(CoordTrait::dim(&coord), Dimensions::Xyzm);
     }
 }
