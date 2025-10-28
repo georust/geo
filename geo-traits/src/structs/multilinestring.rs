@@ -63,19 +63,22 @@ impl<T: Copy> MultiLineString<T> {
         }
     }
 
+    pub(crate) fn from_line_strings_with_dim(
+        line_strings: impl IntoIterator<Item = impl LineStringTrait<T = T>>,
+        dim: Dimensions,
+    ) -> Self {
+        match Self::from_line_strings(line_strings) {
+            Some(multi_line_string) => multi_line_string,
+            None => Self {
+                line_strings: Vec::new(),
+                dim,
+            },
+        }
+    }
+
     /// Create a new MultiLineString from an objects implementing [MultiLineStringTrait].
     pub fn from_multilinestring(multilinestring: &impl MultiLineStringTrait<T = T>) -> Self {
-        let line_strings = multilinestring
-            .line_strings()
-            .map(|l| LineString::from_linestring(&l))
-            .collect::<Vec<_>>();
-        if line_strings.is_empty() {
-            // How should we infer the dimension?
-            todo!()
-        } else {
-            let dim = line_strings[0].dimension();
-            Self::new(line_strings, dim)
-        }
+        Self::from_line_strings_with_dim(multilinestring.line_strings(), multilinestring.dim())
     }
 }
 
