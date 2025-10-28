@@ -43,7 +43,8 @@ impl<T: Copy> LineString<T> {
     /// This will infer the dimension from the first coordinate, and will not validate that all
     /// coordinates have the same dimension.
     ///
-    /// Returns `None` if the input iterator is empty.
+    /// Returns `None` if the input iterator is empty; while the empty
+    /// linestring is valid, the dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -60,14 +61,27 @@ impl<T: Copy> LineString<T> {
         }
     }
 
+    pub(crate) fn from_coords_with_dim(
+        coords: impl IntoIterator<Item = impl CoordTrait<T = T>>,
+        dim: Dimensions,
+    ) -> Self {
+        match Self::from_coords(coords) {
+            Some(line_string) => line_string,
+            None => Self {
+                coords: Vec::new(),
+                dim,
+            },
+        }
+    }
+
     /// Create a new LineString from an objects implementing [LineStringTrait].
     pub fn from_linestring(linestring: &impl LineStringTrait<T = T>) -> Self {
-        Self::from_coords(linestring.coords()).unwrap()
+        Self::from_coords_with_dim(linestring.coords(), linestring.dim())
     }
 
     /// Create a new LineString from an objects implementing [LineTrait].
     pub fn from_line(line: &impl LineTrait<T = T>) -> Self {
-        Self::from_coords(line.coords()).unwrap()
+        Self::from_coords_with_dim(line.coords(), line.dim())
     }
 }
 

@@ -43,7 +43,8 @@ impl<T: Copy> MultiLineString<T> {
     /// This will infer the dimension from the first line string, and will not validate that all
     /// line strings have the same dimension.
     ///
-    /// Returns `None` if the input iterator is empty.
+    /// Returns `None` if the input iterator is empty; while the empty
+    /// linestring is valid, the dimension cannot be inferred.
     ///
     /// To handle empty input iterators, consider calling `unwrap_or` on the result and defaulting
     /// to an [empty][Self::empty] geometry with specified dimension.
@@ -68,8 +69,13 @@ impl<T: Copy> MultiLineString<T> {
             .line_strings()
             .map(|l| LineString::from_linestring(&l))
             .collect::<Vec<_>>();
-        let dim = line_strings[0].dimension();
-        Self::new(line_strings, dim)
+        if line_strings.is_empty() {
+            // How should we infer the dimension?
+            todo!()
+        } else {
+            let dim = line_strings[0].dimension();
+            Self::new(line_strings, dim)
+        }
     }
 }
 
