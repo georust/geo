@@ -1,6 +1,6 @@
 use crate::{
     structs::{Geometry, LineString},
-    CoordTrait, Dimensions, GeometryTrait, LineStringTrait, PolygonTrait, RectTrait, TriangleTrait,
+    CoordTrait, Dimensions, LineStringTrait, PolygonTrait, RectTrait, TriangleTrait,
 };
 
 /// A parsed Polygon.

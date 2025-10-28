@@ -52,7 +52,7 @@ impl<T: Copy> GeometryCollection<T> {
     ) -> Option<Self> {
         let geoms = geoms
             .into_iter()
-            .flat_map(|g| Geometry::from_geometry(&g))
+            .map(|g| Geometry::from_geometry(&g))
             .collect::<Vec<_>>();
         if geoms.is_empty() {
             None

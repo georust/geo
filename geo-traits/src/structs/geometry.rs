@@ -44,30 +44,30 @@ where
     /// Create a new Geometry from an objects implementing [GeometryTrait].
     /// `Line` geometry is converted to a `LineString`, `Rect` and `Triangle`
     /// geometries are converted to `Polygon`.
-    pub fn from_geometry(geometry: &impl GeometryTrait<T = T>) -> Option<Self> {
+    pub fn from_geometry(geometry: &impl GeometryTrait<T = T>) -> Self {
         match geometry.as_type() {
-            crate::GeometryType::Point(geom) => Some(Self::Point(Point::from_point(geom))),
+            crate::GeometryType::Point(geom) => Self::Point(Point::from_point(geom)),
             crate::GeometryType::LineString(geom) => {
-                Some(Self::LineString(LineString::from_linestring(geom)))
+                Self::LineString(LineString::from_linestring(geom))
             }
-            crate::GeometryType::Polygon(geom) => Some(Self::Polygon(Polygon::from_polygon(geom))),
+            crate::GeometryType::Polygon(geom) => Self::Polygon(Polygon::from_polygon(geom)),
             crate::GeometryType::MultiPoint(geom) => {
-                Some(Self::MultiPoint(MultiPoint::from_multipoint(geom)))
+                Self::MultiPoint(MultiPoint::from_multipoint(geom))
             }
-            crate::GeometryType::MultiLineString(geom) => Some(Self::MultiLineString(
-                MultiLineString::from_multilinestring(geom),
-            )),
+            crate::GeometryType::MultiLineString(geom) => {
+                Self::MultiLineString(MultiLineString::from_multilinestring(geom))
+            }
             crate::GeometryType::MultiPolygon(geom) => {
-                Some(Self::MultiPolygon(MultiPolygon::from_multipolygon(geom)))
+                Self::MultiPolygon(MultiPolygon::from_multipolygon(geom))
             }
-            crate::GeometryType::GeometryCollection(geom) => Some(Self::GeometryCollection(
-                GeometryCollection::from_geometry_collection(geom),
-            )),
-            crate::GeometryType::Rect(rect) => Some(Self::Polygon(Polygon::from_rect(rect))),
+            crate::GeometryType::GeometryCollection(geom) => {
+                Self::GeometryCollection(GeometryCollection::from_geometry_collection(geom))
+            }
+            crate::GeometryType::Rect(rect) => Self::Polygon(Polygon::from_rect(rect)),
             crate::GeometryType::Triangle(triangle) => {
-                Some(Self::Polygon(Polygon::from_triangle(triangle)))
+                Self::Polygon(Polygon::from_triangle(triangle))
             }
-            crate::GeometryType::Line(line) => Some(Self::LineString(LineString::from_line(line))),
+            crate::GeometryType::Line(line) => Self::LineString(LineString::from_line(line)),
         }
     }
 }
