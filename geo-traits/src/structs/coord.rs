@@ -26,13 +26,13 @@ impl<T: Copy> Coord<T> {
         let y = coord.y();
 
         match coord.dim() {
-            Dimensions::Xyzm | Dimensions::Unknown(_) => Self {
+            Dimensions::Xyzm | Dimensions::Unknown(4) => Self {
                 x,
                 y,
                 z: coord.nth(2),
                 m: coord.nth(3),
             },
-            Dimensions::Xyz => Self {
+            Dimensions::Xyz | Dimensions::Unknown(3) => Self {
                 x,
                 y,
                 z: coord.nth(2),
@@ -44,12 +44,13 @@ impl<T: Copy> Coord<T> {
                 z: None,
                 m: coord.nth(2),
             },
-            Dimensions::Xy => Self {
+            Dimensions::Xy | Dimensions::Unknown(2) => Self {
                 x,
                 y,
                 z: None,
                 m: None,
             },
+            Dimensions::Unknown(_) => todo!(),
         }
     }
 
