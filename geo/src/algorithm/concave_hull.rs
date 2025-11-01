@@ -1,7 +1,7 @@
 use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    Coord, CoordNum, Distance, Euclidean, GeoFloat, Intersects, Length, Line, LineString, 
+    Coord, CoordNum, Distance, Euclidean, GeoFloat, Intersects, Length, Line, LineString,
     MultiLineString, MultiPoint, MultiPolygon, Polygon, coord, point,
 };
 use rstar::{AABB, Envelope, ParentNode, RTree, RTreeNode, RTreeNum};
@@ -24,13 +24,13 @@ use std::{
 ///
 /// // a collection of points
 /// let points: MultiPoint<_> = vec![
-///     (0.0, 0.0), 
+///     (0.0, 0.0),
 ///     (2.0, 0.0),
 ///     (1.5, 1.0),
 ///     (2.0, 2.0),
 ///     (0.0, 2.0),
 /// ].into();
-/// 
+///
 /// let correct_hull = polygon![
 ///     (x: 2.0, y: 0.0),
 ///     (x: 1.5, y: 1.0),
@@ -39,7 +39,7 @@ use std::{
 ///     (x: 0.0, y: 0.0),
 ///     (x: 2.0, y: 0.0),
 /// ];
-/// 
+///
 /// let hull = points.concave_hull(1.0, 0.0);
 /// assert_eq!(hull, correct_hull);
 /// ```
@@ -47,17 +47,21 @@ pub trait ConcaveHull {
     type Scalar: CoordNum;
 
     /// Create a new polygon as the concave hull of the geometry.
-    /// 
+    ///
     /// # Arguments
     /// * `concavity` - A relative measure of how concave the hull should be. Higher values result in a more
     ///   concave hull. Inifinity would result in a convex hull. 2.0 results in a relatively detailed shape.
-    /// 
-    /// * `length_threshold` - The minimum length of constituent hull lines. Lines shorter than this will not be 
+    ///
+    /// * `length_threshold` - The minimum length of constituent hull lines. Lines shorter than this will not be
     ///   drilled down any further. Set to 0.0 for no threshold.
-    /// 
+    ///
     /// # Returns
     /// * A Polygon representing the concave hull of the geometry.
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar>;
+    fn concave_hull(
+        &self,
+        concavity: Self::Scalar,
+        length_threshold: Self::Scalar,
+    ) -> Polygon<Self::Scalar>;
 }
 
 impl<T> ConcaveHull for MultiPoint<T>
@@ -76,7 +80,11 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
+    fn concave_hull(
+        &self,
+        concavity: Self::Scalar,
+        length_threshold: Self::Scalar,
+    ) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = self.exterior().0.clone();
         concave_hull(&mut coords, concavity, length_threshold)
     }
@@ -87,7 +95,11 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
+    fn concave_hull(
+        &self,
+        concavity: Self::Scalar,
+        length_threshold: Self::Scalar,
+    ) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = Vec::new();
         for polygon in self.0.iter() {
             coords.extend(polygon.exterior().0.iter().skip(1));
@@ -101,7 +113,11 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
+    fn concave_hull(
+        &self,
+        concavity: Self::Scalar,
+        length_threshold: Self::Scalar,
+    ) -> Polygon<Self::Scalar> {
         concave_hull(&mut self.0.clone(), concavity, length_threshold)
     }
 }
@@ -122,7 +138,11 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
+    fn concave_hull(
+        &self,
+        concavity: Self::Scalar,
+        length_threshold: Self::Scalar,
+    ) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = self.clone();
         concave_hull(&mut coords, concavity, length_threshold)
     }
@@ -133,46 +153,50 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
+    fn concave_hull(
+        &self,
+        concavity: Self::Scalar,
+        length_threshold: Self::Scalar,
+    ) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = self.to_vec();
         concave_hull(&mut coords, concavity, length_threshold)
     }
 }
 
-enum RTreeNodeRef<'a, T> 
-where 
+enum RTreeNodeRef<'a, T>
+where
     T: GeoFloat + RTreeNum,
 {
     Parent(&'a ParentNode<Coord<T>>),
     Leaf(&'a Coord<T>),
 }
 
-struct NodeQueueItem<'a, T> 
-where 
+struct NodeQueueItem<'a, T>
+where
     T: GeoFloat + RTreeNum,
 {
     tree_node: RTreeNodeRef<'a, T>,
     distance: T,
 }
 
-impl<'a, T> Ord for NodeQueueItem<'a, T> 
-where 
+impl<'a, T> Ord for NodeQueueItem<'a, T>
+where
     T: GeoFloat + RTreeNum,
 {
     fn cmp(&self, other: &Self) -> Ordering {
         other.distance.partial_cmp(&self.distance).unwrap()
     }
 }
-impl<'a, T> PartialOrd for NodeQueueItem<'a, T> 
-where 
+impl<'a, T> PartialOrd for NodeQueueItem<'a, T>
+where
     T: GeoFloat + RTreeNum,
 {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
-impl<'a, T> PartialEq for NodeQueueItem<'a, T> 
-where 
+impl<'a, T> PartialEq for NodeQueueItem<'a, T>
+where
     T: GeoFloat + RTreeNum,
 {
     fn eq(&self, other: &Self) -> bool {
@@ -195,10 +219,10 @@ where
     if aabb.contains_point(&line.start) || aabb.contains_point(&line.end) {
         return T::zero();
     }
-    let c1 = coord!{x: aabb.lower().x, y: aabb.lower().y};
-    let c2 = coord!{x: aabb.lower().x, y: aabb.upper().y};
-    let c3 = coord!{x: aabb.upper().x, y: aabb.upper().y};
-    let c4 = coord!{x: aabb.upper().x, y: aabb.lower().y};
+    let c1 = coord! {x: aabb.lower().x, y: aabb.lower().y};
+    let c2 = coord! {x: aabb.lower().x, y: aabb.upper().y};
+    let c3 = coord! {x: aabb.upper().x, y: aabb.upper().y};
+    let c4 = coord! {x: aabb.upper().x, y: aabb.lower().y};
     let d1 = Euclidean.distance(line, &Line::new(c1, c4));
     if d1 == T::zero() {
         return d1;
@@ -219,7 +243,7 @@ where
 }
 
 fn no_hull_intersections<T>(line: &Line<T>, current_hull_tree: &RTree<Line<T>>) -> bool
-where 
+where
     T: GeoFloat + RTreeNum,
 {
     let min_x = T::min(line.start.x, line.end.x);
@@ -229,8 +253,11 @@ where
     let bbox = AABB::from_corners(point!([min_x, min_y]), point!([max_x, max_y]));
     let hull_lines = current_hull_tree.locate_in_envelope_intersecting(&bbox);
     for hull_line in hull_lines {
-        if hull_line.start == line.start || hull_line.start == line.end ||
-           hull_line.end == line.start || hull_line.end == line.end {
+        if hull_line.start == line.start
+            || hull_line.start == line.end
+            || hull_line.end == line.start
+            || hull_line.end == line.end
+        {
             continue;
         }
         if line.intersects(hull_line) {
@@ -289,15 +316,19 @@ where
             }
             RTreeNodeRef::Leaf(leaf) => {
                 // Skip candidate points that as close to adjacent edges
-                if node.distance >= Euclidean.distance(*leaf, hull_lines.get(&line_queue_item.prev_i).unwrap()) || 
-                   node.distance >= Euclidean.distance(*leaf, hull_lines.get(&line_queue_item.next_i).unwrap()) {
+                if node.distance
+                    >= Euclidean.distance(*leaf, hull_lines.get(&line_queue_item.prev_i).unwrap())
+                    || node.distance
+                        >= Euclidean
+                            .distance(*leaf, hull_lines.get(&line_queue_item.next_i).unwrap())
+                {
                     continue;
                 }
                 let start_line = Line::new(line.start, *leaf);
                 let end_line = Line::new(*leaf, line.end);
 
                 // Skip candidate point if it would cause intersections with hull lines
-                if no_hull_intersections(&start_line, current_hull_tree) 
+                if no_hull_intersections(&start_line, current_hull_tree)
                     && no_hull_intersections(&end_line, current_hull_tree)
                 {
                     return Some(*leaf);
@@ -308,7 +339,10 @@ where
     None
 }
 
-fn order_concave_hull<T>(hull_order: HashMap<usize, usize>, hull_lines: HashMap<usize, Line<T>>) -> LineString<T>
+fn order_concave_hull<T>(
+    hull_order: HashMap<usize, usize>,
+    hull_lines: HashMap<usize, Line<T>>,
+) -> LineString<T>
 where
     T: GeoFloat,
 {
@@ -336,11 +370,7 @@ where
     }
 }
 
-fn concave_hull<T>(
-    coords: &mut [Coord<T>],
-    concavity: T, 
-    length_threshold: T, 
-) -> Polygon<T>
+fn concave_hull<T>(coords: &mut [Coord<T>], concavity: T, length_threshold: T) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -349,7 +379,7 @@ where
 
     // Compute initial convex hull
     let hull = qhull::quick_hull(coords);
-    
+
     // Return convex hull if less than 4 points
     if coords.len() < 4 {
         return Polygon::new(hull, vec![]);
@@ -386,11 +416,11 @@ where
     while let Some(line_queue_item) = line_queue.pop_front() {
         let line = line_queue_item.line;
         let length = Euclidean.length(&line);
-        
+
         // Only consider drilling down if line length exceeds threshold
         if length > length_threshold {
             let max_length = length / concavity;
-            
+
             if let Some(candidate_point) = find_candidate(
                 &line_queue_item,
                 &max_length,
@@ -400,11 +430,13 @@ where
             ) {
                 let start_line = Line::new(line.start, candidate_point);
                 let end_line = Line::new(candidate_point, line.end);
-                
-                if partial_min(Euclidean.length(&start_line), Euclidean.length(&end_line)) < max_length {
+
+                if partial_min(Euclidean.length(&start_line), Euclidean.length(&end_line))
+                    < max_length
+                {
                     // Remove candidate point from interior points
                     remove_interior_point(&candidate_point, &mut interior_points_tree);
-                    
+
                     // Update current hull tree
                     current_hull_tree.remove(&line);
                     current_hull_tree.insert(start_line);
@@ -413,7 +445,7 @@ where
                     // Update hull lines
                     hull_lines.insert(line_queue_item.i, start_line);
                     hull_lines.insert(current_i, end_line);
-                    
+
                     // Push new lines to queue
                     line_queue.push_back(LineQueueItem {
                         line: start_line,
@@ -427,14 +459,14 @@ where
                         prev_i: line_queue_item.i,
                         next_i: line_queue_item.next_i,
                     });
-                    
+
                     // Increment current_i for next new potential hull line
                     current_i += 1;
                     continue;
                 }
             }
         }
-        
+
         hull_order.insert(line_queue_item.i, line_queue_item.next_i);
     }
     Polygon::new(order_concave_hull(hull_order, hull_lines), vec![])
@@ -527,7 +559,8 @@ mod tests {
                 (x: 4.0, y: 0.0),
                 (x: 3.0, y: 0.0),
             ],
-        ].into();
+        ]
+        .into();
         let hull = mp.concave_hull(2.0, 0.0);
         let correct_hull = polygon![
             (x: 4.0, y: 0.0),
