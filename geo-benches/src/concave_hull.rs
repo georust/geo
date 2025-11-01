@@ -22,7 +22,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&line_string).concave_hull(criterion::black_box(2.0)),
+                criterion::black_box(&line_string).concave_hull(criterion::black_box(2.0), 0.0),
             );
         });
     });
@@ -32,7 +32,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(
-                criterion::black_box(&line_string).concave_hull(criterion::black_box(2.0)),
+                criterion::black_box(&line_string).concave_hull(criterion::black_box(2.0), 0.0),
             );
         });
     });
