@@ -65,7 +65,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T, length_threshold: T) -> Polygon<T> {
+    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.iter().map(|point| point.0).collect();
         concave_hull(&mut coords, concavity, length_threshold)
     }
@@ -76,7 +76,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T, length_threshold: T) -> Polygon<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = self.exterior().0.clone();
         concave_hull(&mut coords, concavity, length_threshold)
     }
@@ -87,7 +87,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T, length_threshold: T) -> Polygon<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = Vec::new();
         for polygon in self.0.iter() {
             coords.extend(polygon.exterior().0.iter().skip(1));
@@ -101,7 +101,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T, length_threshold: T) -> Polygon<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
         concave_hull(&mut self.0.clone(), concavity, length_threshold)
     }
 }
@@ -111,7 +111,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T, length_threshold: T) -> Polygon<T> {
+    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.iter().flat_map(|elem| elem.0.clone()).collect();
         concave_hull(&mut coords, concavity, length_threshold)
     }
@@ -122,7 +122,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T, length_threshold: T) -> Polygon<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = self.clone();
         concave_hull(&mut coords, concavity, length_threshold)
     }
@@ -133,7 +133,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: T, length_threshold: T) -> Polygon<Self::Scalar> {
+    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<Self::Scalar> {
         let mut coords: Vec<Coord<T>> = self.to_vec();
         concave_hull(&mut coords, concavity, length_threshold)
     }
@@ -147,7 +147,7 @@ where
     Leaf(&'a Coord<T>),
 }
 
-struct QueueItem<'a, T> 
+struct NodeQueueItem<'a, T> 
 where 
     T: GeoFloat + RTreeNum,
 {
@@ -155,7 +155,7 @@ where
     distance: T,
 }
 
-impl<'a, T> Ord for QueueItem<'a, T> 
+impl<'a, T> Ord for NodeQueueItem<'a, T> 
 where 
     T: GeoFloat + RTreeNum,
 {
@@ -163,7 +163,7 @@ where
         other.distance.partial_cmp(&self.distance).unwrap()
     }
 }
-impl<'a, T> PartialOrd for QueueItem<'a, T> 
+impl<'a, T> PartialOrd for NodeQueueItem<'a, T> 
 where 
     T: GeoFloat + RTreeNum,
 {
@@ -171,7 +171,7 @@ where
         Some(self.cmp(other))
     }
 }
-impl<'a, T> PartialEq for QueueItem<'a, T> 
+impl<'a, T> PartialEq for NodeQueueItem<'a, T> 
 where 
     T: GeoFloat + RTreeNum,
 {
@@ -179,7 +179,7 @@ where
         self.distance == other.distance
     }
 }
-impl<'a, T> Eq for QueueItem<'a, T> where T: GeoFloat + RTreeNum {}
+impl<'a, T> Eq for NodeQueueItem<'a, T> where T: GeoFloat + RTreeNum {}
 
 struct LineQueueItem<T: GeoFloat + RTreeNum> {
     line: Line<T>,
@@ -253,8 +253,8 @@ where
     let line = hull_lines.get(&line_queue_item.i).unwrap();
 
     // Initialize priority queue with R-tree root node
-    let mut queue: BinaryHeap<QueueItem<T>> = BinaryHeap::new();
-    queue.push(QueueItem {
+    let mut queue: BinaryHeap<NodeQueueItem<T>> = BinaryHeap::new();
+    queue.push(NodeQueueItem {
         tree_node: RTreeNodeRef::Parent(interior_points_tree.root()),
         distance: T::zero(),
     });
@@ -269,7 +269,7 @@ where
                             let envelope = p.envelope();
                             let distance = line_to_bbox_distance(line, &envelope);
                             if distance <= *max_length {
-                                queue.push(QueueItem {
+                                queue.push(NodeQueueItem {
                                     tree_node: RTreeNodeRef::Parent(p),
                                     distance,
                                 });
@@ -278,7 +278,7 @@ where
                         RTreeNode::Leaf(l) => {
                             let distance = Euclidean.distance(*l, line);
                             if distance <= *max_length {
-                                queue.push(QueueItem {
+                                queue.push(NodeQueueItem {
                                     tree_node: RTreeNodeRef::Leaf(l),
                                     distance,
                                 });
