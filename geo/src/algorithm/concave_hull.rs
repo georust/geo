@@ -80,7 +80,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    /// Note that the concave hull may intersect with the interior the original geometry boundaries.
+    /// Note that the concave hull may intersect with the interior of the original geometry boundaries.
     fn concave_hull(
         &self,
         concavity: Self::Scalar,
@@ -96,7 +96,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    /// Note that the concave hull may intersect with the interior the original geometry boundaries.
+    /// Note that the concave hull may intersect with the interior of the original geometry boundaries.
     fn concave_hull(
         &self,
         concavity: Self::Scalar,
