@@ -80,6 +80,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
+    /// Note that the concave hull may intersect with the interior the original geometry boundaries.
     fn concave_hull(
         &self,
         concavity: Self::Scalar,
@@ -95,6 +96,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
+    /// Note that the concave hull may intersect with the interior the original geometry boundaries.
     fn concave_hull(
         &self,
         concavity: Self::Scalar,
@@ -113,6 +115,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
+    /// Note that the concave hull may intersect with the original geometry boundaries.
     fn concave_hull(
         &self,
         concavity: Self::Scalar,
@@ -127,6 +130,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
+    /// Note that the concave hull may intersect with the original geometry boundaries.
     fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.iter().flat_map(|elem| elem.0.clone()).collect();
         concave_hull(&mut coords, concavity, length_threshold)
@@ -315,7 +319,7 @@ where
                 }
             }
             RTreeNodeRef::Leaf(leaf) => {
-                // Skip candidate points that as close to adjacent edges
+                // Skip candidate points that are as close to adjacent hull lines
                 if node.distance
                     >= Euclidean.distance(*leaf, hull_lines.get(&line_queue_item.prev_i).unwrap())
                     || node.distance
@@ -394,13 +398,14 @@ where
     let mut hull_order: HashMap<usize, usize> = HashMap::new();
 
     // Populate line queue with initial hull lines
+    let hull_length = hull.lines().len();
     for (i, line) in hull.lines().enumerate() {
         hull_lines.insert(i, line);
         line_queue.push_back(LineQueueItem {
             line,
             i,
-            prev_i: if i == 0 { hull.0.len() - 2 } else { i - 1 },
-            next_i: if i == hull.0.len() - 2 { 0 } else { i + 1 },
+            prev_i: if i == 0 { hull_length - 1 } else { i - 1 },
+            next_i: if i == hull_length - 1 { 0 } else { i + 1 },
         });
 
         // Remove hull points from interior points
@@ -411,7 +416,7 @@ where
     }
 
     // Set current hull line index for new lines
-    let mut current_i = hull.0.len() + 1;
+    let mut current_i = hull_length;
 
     while let Some(line_queue_item) = line_queue.pop_front() {
         let line = line_queue_item.line;
@@ -514,7 +519,7 @@ mod tests {
     }
 
     #[test]
-    fn concave_hull_norway_test() {
+    fn test_norway_mainland() {
         let norway = geo_test_fixtures::norway_main::<f64>();
         let norway_concave_hull: LineString = geo_test_fixtures::norway_concave_hull::<f64>();
         let hull = norway.concave_hull(2.0, 0.0);
