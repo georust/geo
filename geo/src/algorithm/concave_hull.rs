@@ -19,7 +19,7 @@ use std::{
 ///
 /// # Examples
 /// ```
-/// use geo::{line_string, MultiPoint};
+/// use geo::{polygon, MultiPoint};
 /// use geo::ConcaveHull;
 ///
 /// // a collection of points
