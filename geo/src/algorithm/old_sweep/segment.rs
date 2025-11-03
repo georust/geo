@@ -221,7 +221,7 @@ mod tests {
             }
         }
 
-        let test_cases = vec![
+        let test_cases = [
             TestCase {
                 a: 0,
                 b: 0,
