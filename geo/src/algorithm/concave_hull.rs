@@ -7,7 +7,7 @@ use crate::{
 use rstar::{AABB, Envelope, ParentNode, RTree, RTreeNode, RTreeNum};
 use std::{
     cmp::Ordering,
-    collections::{BinaryHeap, HashMap, VecDeque},
+    collections::{BinaryHeap, VecDeque},
 };
 
 /// Returns a polygon which covers a geometry. Unlike convex hulls, which also cover
@@ -15,7 +15,34 @@ use std::{
 /// constructing edges such that the exterior of the polygon incorporates points that would
 /// be interior points in a convex hull.
 ///
-/// This implementation is a port of <https://github.com/mapbox/concaveman>
+/// This implementation is a port of <https://github.com/mapbox/concaveman> which is based on ideas from
+/// the paper [A New Concave Hull Algorithm and Concaveness Measure for n-dimensional Datasets, 2012](https://jise.iis.sinica.edu.tw/JISESearch/fullText?pId=245&code=5A9B97538372AA1).
+///
+/// # Arguments
+/// * `concavity` - A relative measure of how concave the hull should be. Lower values result in a more
+///   concave hull. Inifinity would result in a convex hull. 2.0 results in a relatively detailed shape.
+///
+/// * `length_threshold` - The minimum length of constituent hull edges. Edges shorter than this will not be
+///   drilled down any further. Set to 0.0 for no threshold.
+///
+/// # Returns
+/// * A Polygon representing the concave hull of the geometry.
+/// 
+/// # Algorithm
+/// 
+/// The algorithm works as follows:
+/// 1. Start with the convex hull of all input points as the initial boundary
+/// 2. For each edge of the hull boundary:
+///    - If the edge length exceeds the `length_threshold`, attempt to "drill inward"
+///    - Search for the closest interior point within `max_distance = edge_length / concavity`
+///    - Verify the candidate is closer to this edge than adjacent hull edges
+///    - Verify that connecting to this point won't cause intersections with existing hull edges
+///    - Continue searching until a valid candidate is found or no more points are within the `max_distance`
+/// 3. If a valid candidate is found:
+///    - Replace the original edge with two new edges: start→candidate and candidate→end
+///    - Remove the candidate point from further selection
+///    - Add the new edges to the boundary and processing queue for potential further drilling
+/// 4. Repeat until no more edges can be drilled
 ///
 /// # Examples
 /// ```
@@ -45,18 +72,9 @@ use std::{
 /// ```
 pub trait ConcaveHull {
     type Scalar: CoordNum;
-
-    /// Create a new polygon as the concave hull of the geometry.
+    /// Create a concave hull around the geometry set.
     ///
-    /// # Arguments
-    /// * `concavity` - A relative measure of how concave the hull should be. Higher values result in a more
-    ///   concave hull. Inifinity would result in a convex hull. 2.0 results in a relatively detailed shape.
-    ///
-    /// * `length_threshold` - The minimum length of constituent hull lines. Lines shorter than this will not be
-    ///   drilled down any further. Set to 0.0 for no threshold.
-    ///
-    /// # Returns
-    /// * A Polygon representing the concave hull of the geometry.
+    /// See the [module-level documentation](self) for details on the algorithm and parameters.
     fn concave_hull(
         &self,
         concavity: Self::Scalar,
@@ -188,7 +206,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.distance.partial_cmp(&self.distance).unwrap()
+        other.distance.total_cmp(&self.distance)
     }
 }
 impl<'a, T> PartialOrd for NodeQueueItem<'a, T>
@@ -209,7 +227,8 @@ where
 }
 impl<'a, T> Eq for NodeQueueItem<'a, T> where T: GeoFloat + RTreeNum {}
 
-struct LineQueueItem<T: GeoFloat + RTreeNum> {
+#[derive(Clone)]
+struct CurrentHullEdge<T: GeoFloat + RTreeNum> {
     line: Line<T>,
     i: usize,
     prev_i: usize,
@@ -220,9 +239,19 @@ fn line_to_bbox_distance<T>(line: &Line<T>, aabb: &AABB<Coord<T>>) -> T
 where
     T: GeoFloat + RTreeNum,
 {
+    // Calculate the euclidean distance from a line to a bounding box.
+    // This function is equivalent to `Euclidean.distance` between a `Rect` and a `Line`,
+    // but is optimized for the R-tree depth-first search used here.
+    // Since lines are likely to be intersecting the bounding box resulting in a distance of zero, 
+    // we calculate each line seperately and return early if zero is found, avoiding unnecessary 
+    // further distance calculations.
+
+    // If either line endpoint is contained within the bbox, distance is zero
     if aabb.contains_point(&line.start) || aabb.contains_point(&line.end) {
         return T::zero();
     }
+
+    // If any any distances are zero, then return as no further distance calculations needed
     let c1 = coord! {x: aabb.lower().x, y: aabb.lower().y};
     let c2 = coord! {x: aabb.lower().x, y: aabb.upper().y};
     let c3 = coord! {x: aabb.upper().x, y: aabb.upper().y};
@@ -243,6 +272,8 @@ where
     if d4 == T::zero() {
         return d4;
     }
+
+    // If no intersections, return the minimum distance
     partial_min(partial_min(d1, d2), partial_min(d3, d4))
 }
 
@@ -250,13 +281,20 @@ fn no_hull_intersections<T>(line: &Line<T>, current_hull_tree: &RTree<Line<T>>) 
 where
     T: GeoFloat + RTreeNum,
 {
+    // Check if the line intersects with any existing hull line.
+    // Hull lines which share an endpoint with the line are skipped
+
+    // Create bounding box for the line
     let min_x = T::min(line.start.x, line.end.x);
     let max_x = T::max(line.start.x, line.end.x);
     let min_y = T::min(line.start.y, line.end.y);
     let max_y = T::max(line.start.y, line.end.y);
     let bbox = AABB::from_corners(point!([min_x, min_y]), point!([max_x, max_y]));
+
+    // Iterate over all lines in the hull which intersect with the bounding box
     let hull_lines = current_hull_tree.locate_in_envelope_intersecting(&bbox);
     for hull_line in hull_lines {
+        // Skip lines which share an endpoint
         if hull_line.start == line.start
             || hull_line.start == line.end
             || hull_line.end == line.start
@@ -272,16 +310,16 @@ where
 }
 
 fn find_candidate<T>(
-    line_queue_item: &LineQueueItem<T>,
+    hull_edge: &CurrentHullEdge<T>,
     max_length: &T,
-    hull_lines: &HashMap<usize, Line<T>>,
+    current_hull_edges: &[CurrentHullEdge<T>],
     interior_points_tree: &RTree<Coord<T>>,
     current_hull_tree: &RTree<Line<T>>,
 ) -> Option<Coord<T>>
 where
     T: GeoFloat + RTreeNum,
 {
-    let line = hull_lines.get(&line_queue_item.i).unwrap();
+    let line = hull_edge.line;
 
     // Initialize priority queue with R-tree root node
     let mut queue: BinaryHeap<NodeQueueItem<T>> = BinaryHeap::new();
@@ -290,15 +328,15 @@ where
         distance: T::zero(),
     });
 
-    // Perform depth first search through R-tree
+    // Perform depth-first search through the R-tree
     while let Some(node) = queue.pop() {
         match node.tree_node {
             RTreeNodeRef::Parent(parent) => {
+                // Add the children of a parent node to the queue if they are within the max distance
                 for child in parent.children() {
                     match child {
                         RTreeNode::Parent(p) => {
-                            let envelope = p.envelope();
-                            let distance = line_to_bbox_distance(line, &envelope);
+                            let distance = line_to_bbox_distance(&line, &p.envelope());
                             if distance <= *max_length {
                                 queue.push(NodeQueueItem {
                                     tree_node: RTreeNodeRef::Parent(p),
@@ -307,7 +345,7 @@ where
                             }
                         }
                         RTreeNode::Leaf(l) => {
-                            let distance = Euclidean.distance(*l, line);
+                            let distance = Euclidean.distance(*l, &line);
                             if distance <= *max_length {
                                 queue.push(NodeQueueItem {
                                     tree_node: RTreeNodeRef::Leaf(l),
@@ -321,10 +359,10 @@ where
             RTreeNodeRef::Leaf(leaf) => {
                 // Skip candidate points that are as close to adjacent hull lines
                 if node.distance
-                    >= Euclidean.distance(*leaf, hull_lines.get(&line_queue_item.prev_i).unwrap())
+                    >= Euclidean.distance(*leaf, &current_hull_edges[hull_edge.prev_i].line)
                     || node.distance
                         >= Euclidean
-                            .distance(*leaf, hull_lines.get(&line_queue_item.next_i).unwrap())
+                            .distance(*leaf, &current_hull_edges[hull_edge.next_i].line)
                 {
                     continue;
                 }
@@ -343,22 +381,20 @@ where
     None
 }
 
-fn order_concave_hull<T>(
-    hull_order: HashMap<usize, usize>,
-    hull_lines: HashMap<usize, Line<T>>,
-) -> LineString<T>
+fn order_concave_hull<T>(current_hull_edges: Vec<CurrentHullEdge<T>>) -> LineString<T>
 where
     T: GeoFloat,
 {
+    // Order the constituent concave hull lines and return as a `LineString`
     let mut ordered_coords: Vec<Coord<T>> = vec![];
     let mut current_i = 0;
-    ordered_coords.push(hull_lines.get(&current_i).unwrap().start);
+    ordered_coords.push(current_hull_edges[current_i].line.start);
 
-    for _ in 0..hull_order.len() {
-        let next_i = hull_order.get(&current_i).unwrap();
-        let line = hull_lines.get(&current_i).unwrap();
+    for _ in 0..current_hull_edges.len() {
+        let next_i = current_hull_edges[current_i].next_i;
+        let line = current_hull_edges[current_i].line;
         ordered_coords.push(line.end);
-        current_i = *next_i;
+        current_i = next_i;
     }
     LineString::from(ordered_coords)
 }
@@ -367,7 +403,7 @@ fn remove_interior_point<T>(coord: &Coord<T>, tree: &mut RTree<Coord<T>>)
 where
     T: GeoFloat + RTreeNum,
 {
-    // Remove all instances of the coordinate from the R-tree
+    // Remove all instances of the point from the R-tree
     let n = tree.nearest_neighbors(coord).len();
     for _ in 0..n {
         tree.remove(coord);
@@ -382,26 +418,30 @@ where
     let concavity: T = T::max(T::zero(), concavity);
 
     // Compute initial convex hull
-    let hull = qhull::quick_hull(coords);
+    let convex_hull = qhull::quick_hull(coords);
 
     // Return convex hull if less than 4 points
     if coords.len() < 4 {
-        return Polygon::new(hull, vec![]);
+        return Polygon::new(convex_hull, vec![]);
     }
 
     // Build R-trees for interior points and hull lines
     let mut interior_points_tree: RTree<Coord<T>> = RTree::bulk_load(coords.to_owned());
-    let mut current_hull_tree: RTree<Line<T>> = RTree::bulk_load(hull.lines().collect());
+    let mut current_hull_tree: RTree<Line<T>> = RTree::bulk_load(convex_hull.lines().collect());
 
-    let mut line_queue: VecDeque<LineQueueItem<T>> = VecDeque::new();
-    let mut hull_lines: HashMap<usize, Line<T>> = HashMap::new();
-    let mut hull_order: HashMap<usize, usize> = HashMap::new();
+    let mut edge_queue: VecDeque<CurrentHullEdge<T>> = VecDeque::new();
+    let mut current_hull_edges: Vec<CurrentHullEdge<T>> = Vec::new();
 
-    // Populate line queue with initial hull lines
-    let hull_length = hull.lines().len();
-    for (i, line) in hull.lines().enumerate() {
-        hull_lines.insert(i, line);
-        line_queue.push_back(LineQueueItem {
+    // Populate edge queue and current hull edges with convex hull edges
+    let hull_length = convex_hull.lines().len();
+    for (i, line) in convex_hull.lines().enumerate() {
+        current_hull_edges.push(CurrentHullEdge {
+            line,
+            i,
+            prev_i: if i == 0 { hull_length - 1 } else { i - 1 },
+            next_i: if i == hull_length - 1 { 0 } else { i + 1 },
+        });
+        edge_queue.push_back(CurrentHullEdge {
             line,
             i,
             prev_i: if i == 0 { hull_length - 1 } else { i - 1 },
@@ -415,11 +455,8 @@ where
         remove_interior_point(&line.end, &mut interior_points_tree);
     }
 
-    // Set current hull line index for new lines
-    let mut current_i = hull_length;
-
-    while let Some(line_queue_item) = line_queue.pop_front() {
-        let line = line_queue_item.line;
+    while let Some(hull_edge) = edge_queue.pop_front() {
+        let line = hull_edge.line;
         let length = Euclidean.length(&line);
 
         // Only consider drilling down if line length exceeds threshold
@@ -427,9 +464,9 @@ where
             let max_length = length / concavity;
 
             if let Some(candidate_point) = find_candidate(
-                &line_queue_item,
+                &hull_edge,
                 &max_length,
-                &hull_lines,
+                &current_hull_edges,
                 &interior_points_tree,
                 &current_hull_tree,
             ) {
@@ -447,34 +484,39 @@ where
                     current_hull_tree.insert(start_line);
                     current_hull_tree.insert(end_line);
 
-                    // Update hull lines
-                    hull_lines.insert(line_queue_item.i, start_line);
-                    hull_lines.insert(current_i, end_line);
+                    // Set end edges' index as the length of current hull
+                    let end_edge_i = current_hull_edges.len();
 
-                    // Push new lines to queue
-                    line_queue.push_back(LineQueueItem {
+                    // Set new hull edges with indexes of adjacent edges
+                    let start_hull_edge = CurrentHullEdge {
                         line: start_line,
-                        i: line_queue_item.i,
-                        prev_i: line_queue_item.prev_i,
-                        next_i: current_i,
-                    });
-                    line_queue.push_back(LineQueueItem {
+                        i: hull_edge.i,
+                        prev_i: hull_edge.prev_i,
+                        next_i: end_edge_i,
+                    };
+                    let end_hull_edge = CurrentHullEdge {
                         line: end_line,
-                        i: current_i,
-                        prev_i: line_queue_item.i,
-                        next_i: line_queue_item.next_i,
-                    });
+                        i: end_edge_i,
+                        prev_i: hull_edge.i,
+                        next_i: hull_edge.next_i,
+                    };
 
-                    // Increment current_i for next new potential hull line
-                    current_i += 1;
+                    // Replace the current edge with the new start edge
+                    current_hull_edges[hull_edge.i] = start_hull_edge.clone();
+
+                    // Push new end edge to current hull edges
+                    current_hull_edges.push(end_hull_edge.clone());
+
+                    // Push new edges to queue
+                    edge_queue.push_back(start_hull_edge);
+                    edge_queue.push_back(end_hull_edge);
+
                     continue;
                 }
             }
         }
-
-        hull_order.insert(line_queue_item.i, line_queue_item.next_i);
     }
-    Polygon::new(order_concave_hull(hull_order, hull_lines), vec![])
+    Polygon::new(order_concave_hull(current_hull_edges), vec![])
 }
 
 #[cfg(test)]
