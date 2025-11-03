@@ -27,9 +27,9 @@ use std::{
 ///
 /// # Returns
 /// * A Polygon representing the concave hull of the geometry.
-/// 
+///
 /// # Algorithm
-/// 
+///
 /// The algorithm works as follows:
 /// 1. Start with the convex hull of all input points as the initial boundary
 /// 2. For each edge of the hull boundary:
@@ -242,8 +242,8 @@ where
     // Calculate the euclidean distance from a line to a bounding box.
     // This function is equivalent to `Euclidean.distance` between a `Rect` and a `Line`,
     // but is optimized for the R-tree depth-first search used here.
-    // Since lines are likely to be intersecting the bounding box resulting in a distance of zero, 
-    // we calculate each line seperately and return early if zero is found, avoiding unnecessary 
+    // Since lines are likely to be intersecting the bounding box resulting in a distance of zero,
+    // we calculate each line seperately and return early if zero is found, avoiding unnecessary
     // further distance calculations.
 
     // If either line endpoint is contained within the bbox, distance is zero
@@ -361,8 +361,7 @@ where
                 if node.distance
                     >= Euclidean.distance(*leaf, &current_hull_edges[hull_edge.prev_i].line)
                     || node.distance
-                        >= Euclidean
-                            .distance(*leaf, &current_hull_edges[hull_edge.next_i].line)
+                        >= Euclidean.distance(*leaf, &current_hull_edges[hull_edge.next_i].line)
                 {
                     continue;
                 }
