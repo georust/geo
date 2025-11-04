@@ -1,4 +1,4 @@
-/// Checks if `rhs` is completely contained within `self`.
+/// Checks if `rhs` is completely contained within the interior of `self`.
 /// More formally, the interior of `rhs` has non-empty
 /// (set-theoretic) intersection but neither the interior,
 /// nor the boundary of `rhs` intersects the boundary and exterior of
