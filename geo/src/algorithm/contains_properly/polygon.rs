@@ -55,7 +55,7 @@ where
         if boundary_intersects::<T, Polygon<T>, Polygon<T>>(self, rhs) {
             return false;
         }
-        // established that pairwise relation betwwen any two rings is either concentric or disjoint
+        // established that pairwise relation between any two rings is either concentric or disjoint
 
         polygon_polygon_inner_loop(self, rhs)
     }
