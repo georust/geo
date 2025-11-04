@@ -21,7 +21,7 @@ where
     T: GeoNum,
 {
     fn contains_properly(&self, rhs: &Point<T>) -> bool {
-        if self.is_empty() || rhs.is_empty() {
+        if self.is_empty() {
             return false;
         }
 
@@ -245,15 +245,6 @@ where
         // is disjoint
         return false;
     }
-
-    //  let Some(lhs_ext_coord) = self_poly.exterior().0.first() else {
-    //         return false;
-    //     };
-
-    //     if rhs_poly.contains_properly(lhs_ext_coord) {
-    //         // is disjoint
-    //         return false;
-    //     }
 
     // if there exits a self_hole which is not inside a rhs_hole
     // then there must be some point of rhs which does not lie on the interior of self
