@@ -37,9 +37,9 @@
 ///
 /// # Performance Note
 ///
-/// Much of this trait is currently implemented by delegating to the [`Relate`] trait - see
-/// [`Relate::is_contains_properly`]; However, [`ContainsProperly`] may be faster for checking
-/// some `Polygon`s.
+/// Much of this trait is currently implemented by delegating to the [`Relate`](crate::algorithm::Relate) trait - see
+/// [`IntersectionMatrix::is_contains_properly`](crate::algorithm::relate::IntersectionMatrix::is_contains_properly);
+/// However, [`ContainsProperly`] may be faster for checking some `Polygon`s.
 pub trait ContainsProperly<Rhs = Self> {
     fn contains_properly(&self, rhs: &Rhs) -> bool;
 }
