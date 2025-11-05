@@ -53,6 +53,7 @@ jobs:
       - geo
       - geo_traits
       - geo_fuzz
+      - docs
     if: failure()
     steps:
       - name: Mark the job as a failure
