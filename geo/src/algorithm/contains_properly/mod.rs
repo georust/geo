@@ -1,7 +1,8 @@
 /// Checks if `rhs` is completely contained within the interior of `self`.
+///
 /// More formally, the interior of `rhs` has non-empty
 /// (set-theoretic) intersection but neither the interior,
-/// nor the boundary of `rhs` intersects the boundary and exterior of
+/// nor the boundary of `rhs` intersects the boundary nor exterior of
 /// `self`. In other words, the [DE-9IM] intersection matrix
 /// of `(rhs, self)` is `T**FF*FF*`.
 ///
@@ -30,15 +31,15 @@
 /// assert!(line_string.contains_properly(&point!(x: 2., y: 0.)));
 ///
 /// // Point in Polygon
+/// assert!(!polygon.contains_properly(&point!(x: 2., y: 0.)));
 /// assert!(polygon.contains_properly(&point!(x: 1., y: 1.)));
-/// assert!(!polygon.contains_properly(&point!(x: 0., y: 0.)));
 /// ```
 ///
 /// # Performance Note
 ///
-/// Much of this trait is currently implemented by delegating to the Relate trait.
-/// Custom Contains implementations might be faster
-///
+/// Much of this trait is currently implemented by delegating to the [`Relate`] trait - see
+/// [`Relate::is_contains_properly`]; However, [`ContainsProperly`] may be faster for checking
+/// some `Polygon`s.
 pub trait ContainsProperly<Rhs = Self> {
     fn contains_properly(&self, rhs: &Rhs) -> bool;
 }
@@ -120,6 +121,8 @@ mod test {
         let multi_point = MultiPoint::new(vec![pt]);
         let multi_poly = MultiPolygon::new(vec![poly.clone()]);
 
+        // Coordinate implementation is TODO
+        //
         // let _ = c.contains_properly(&c);
         // let _ = c.contains_properly(&pt);
         // let _ = c.contains_properly(&ln);

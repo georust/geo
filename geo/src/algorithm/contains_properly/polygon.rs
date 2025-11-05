@@ -213,14 +213,13 @@ where
         .map(|l| (l, l.bounding_rect()))
         .collect::<Vec<(Line<T>, Rect<T>)>>();
 
-    return lhs
-        .lines_iter()
+    lhs.lines_iter()
         .map(|l| (l, l.bounding_rect()))
         .any(|(l, l_bbox)| {
             rhs_bbox_cache
                 .iter()
                 .any(|(r, r_bbox)| l_bbox.intersects(r_bbox) && l.intersects(r))
-        });
+        })
 }
 
 /// Given two non-empty polygons with no intersecting boundaries,
