@@ -8,7 +8,9 @@ use log::{debug, info};
 use wkt::ToWkt;
 
 use super::{check_buffer_test_case, input, Operation, Result};
-use geo::algorithm::{BooleanOps, Contains, HasDimensions, Intersects, Relate, Within};
+use geo::algorithm::{
+    BooleanOps, Contains, ContainsProperly, HasDimensions, Intersects, Relate, Within,
+};
 use geo::geometry::*;
 use geo::GeoNum;
 
@@ -397,6 +399,11 @@ impl TestRunner {
                             "intersects",
                             Box::new(IntersectionMatrix::is_intersects),
                             Box::new(|a: &Geometry, b: &Geometry| a.intersects(b)),
+                        ),
+                        (
+                            "contains_properly",
+                            Box::new(IntersectionMatrix::is_contains_properly),
+                            Box::new(|a: &Geometry, b: &Geometry| a.contains_properly(b)),
                         ),
                         // add more here as required
                     ];
