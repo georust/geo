@@ -174,7 +174,7 @@ mod tests {
             ),
         ];
 
-        let mp = MultiPoint::from_points(points.clone()).expect("points are non-empty");
+        let mp = MultiPoint::from_points(&points).expect("points are non-empty");
         assert_eq!(mp.dimension(), Dimensions::Xyz);
         assert_eq!(mp.points(), points.as_slice());
     }

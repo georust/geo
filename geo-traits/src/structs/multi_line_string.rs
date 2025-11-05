@@ -193,8 +193,7 @@ mod tests {
             ),
         ];
 
-        let mls =
-            MultiLineString::from_line_strings(lines.clone()).expect("line strings are non-empty");
+        let mls = MultiLineString::from_line_strings(&lines).expect("line strings are non-empty");
         assert_eq!(mls.dimension(), Dimensions::Xyz);
         assert_eq!(mls.line_strings(), lines.as_slice());
     }

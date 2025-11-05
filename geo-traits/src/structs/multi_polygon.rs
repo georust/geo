@@ -209,8 +209,7 @@ mod tests {
             Dimensions::Xym,
         );
         let polygon = Polygon::new(vec![exterior.clone()], Dimensions::Xym);
-        let mp =
-            MultiPolygon::from_polygons(vec![polygon.clone()]).expect("polygons are non-empty");
+        let mp = MultiPolygon::from_polygons(&[polygon.clone()]).expect("polygons are non-empty");
 
         assert_eq!(mp.dimension(), Dimensions::Xym);
         assert_eq!(mp.polygons(), &[polygon]);

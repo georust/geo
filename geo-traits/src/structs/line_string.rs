@@ -157,7 +157,7 @@ mod tests {
                 m: None,
             },
         ];
-        let ls = LineString::from_coords(coords.clone()).expect("coords are non-empty");
+        let ls = LineString::from_coords(&coords).expect("coords are non-empty");
         assert_eq!(ls.dimension(), Dimensions::Xyz);
         assert_eq!(ls.coords(), coords.as_slice());
     }
