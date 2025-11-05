@@ -426,6 +426,11 @@ impl IntersectionMatrix {
     /// - Geometry`a` will never contains_properly itself.
     /// - Matches `[T**FF*FF*]`
     /// - This predicate is **transitive** but not **reflexive**
+    ///
+    /// # Performance
+    ///
+    /// [`ContainsProperly`](crate::algorithm::ContainsProperly) may be faster than this method for
+    /// some `Polygon` comparisons.
     #[allow(clippy::nonminimal_bool)]
     pub fn is_contains_properly(&self) -> bool {
         //  [T**FF*FF*]
