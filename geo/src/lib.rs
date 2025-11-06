@@ -8,6 +8,7 @@
 //! - Affine operations on geometries (scale, rotate, skew, translate)
 //! - Boolean operations on geometries (clip, union, difference, intersection, xor)
 //! - Buffer / offset operations on geometries
+//! - Clustering operations such as DBSCAN and _k_-means
 //! - Euclidean, as well as spherical, haversine and other non-planar length and distance calculations
 //! - Support for projecting and converting between coordinate reference systems using PROJ
 //! - IO using the `geojson` and `geozero` crates.
@@ -87,6 +88,7 @@
 //!
 //! - **[`OutlierDetection`]**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 //! - **[`Dbscan`]**: Calculate point clusters using the DBSCAN algorithm
+//! - **[`KMeans`]**: Calculate point clusters using the k-means algorithm
 //!
 //! ## Simplification
 //!
