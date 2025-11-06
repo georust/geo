@@ -9,6 +9,7 @@
 - Add `distance_within` method with default impl for any geometry that implements `Distance`, with similar semantics to the PostGIS [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function
 - Add fast minimum 1D and 2D Euclidean distance algorithm for linearly separable geometries (#1424)
 - Add `ContainsProperly` trait to relate and as a standalone operation
+- Add k-means clustering algorithm
 
 ## 0.31.0 - 2025-09-01
 
