@@ -34,12 +34,14 @@ use std::{
 /// 1. Start with the convex hull of all input points as the initial boundary
 /// 2. For each edge of the hull boundary:
 ///    - If the edge length exceeds the `length_threshold`, attempt to "drill inward"
-///    - Search for the closest interior point within `max_distance = edge_length / concavity`
+///    - Search for the closest interior point within `max_length = edge_length / concavity` from edge
 ///    - Verify the candidate is closer to this edge than adjacent hull edges
 ///    - Verify that connecting to this point won't cause intersections with existing hull edges
-///    - Continue searching until a valid candidate is found or no more points are within the `max_distance`
+///    - Continue searching until a valid candidate is found or no more points are within the `max_length`
 /// 3. If a valid candidate is found:
-///    - Replace the original edge with two new edges: start→candidate and candidate→end
+///    - Create two new edges: start→candidate and candidate→end
+///    - Verify at least one of the new edges is less than `max_length`
+///    - Replace the original edge with the two new edges
 ///    - Remove the candidate point from further selection
 ///    - Add the new edges to the boundary and processing queue for potential further drilling
 /// 4. Repeat until no more edges can be drilled
@@ -242,16 +244,15 @@ where
     // Calculate the euclidean distance from a line to a bounding box.
     // This function is equivalent to `Euclidean.distance` between a `Rect` and a `Line`,
     // but is optimized for the R-tree depth-first search used here.
-    // Since lines are likely to be intersecting the bounding box resulting in a distance of zero,
-    // we calculate each line seperately and return early if zero is found, avoiding unnecessary
-    // further distance calculations.
+    // Since lines are likely to be intersecting or contained within the bounding box, resulting 
+    // in a distance of zero, calculate each seperately and return early if zero is found.
 
     // If either line endpoint is contained within the bbox, distance is zero
     if aabb.contains_point(&line.start) || aabb.contains_point(&line.end) {
         return T::zero();
     }
 
-    // If any any distances are zero, then return as no further distance calculations needed
+    // If any distances are zero, then return as no further distance calculations needed
     let c1 = coord! {x: aabb.lower().x, y: aabb.lower().y};
     let c2 = coord! {x: aabb.lower().x, y: aabb.upper().y};
     let c3 = coord! {x: aabb.upper().x, y: aabb.upper().y};
@@ -273,7 +274,7 @@ where
         return d4;
     }
 
-    // If no intersections, return the minimum distance
+    // If the line is contained within or intersecting the bounding box, return the minimum distance
     partial_min(partial_min(d1, d2), partial_min(d3, d4))
 }
 
@@ -281,7 +282,7 @@ fn no_hull_intersections<T>(line: &Line<T>, current_hull_tree: &RTree<Line<T>>) 
 where
     T: GeoFloat + RTreeNum,
 {
-    // Check if the line intersects with any existing hull line.
+    // Check if the line intersects with any existing hull line
     // Hull lines which share an endpoint with the line are skipped
 
     // Create bounding box for the line
@@ -460,6 +461,7 @@ where
 
         // Only consider drilling down if line length exceeds threshold
         if length > length_threshold {
+            // Calculate maximum length for new hull edges
             let max_length = length / concavity;
 
             if let Some(candidate_point) = find_candidate(
@@ -469,9 +471,11 @@ where
                 &interior_points_tree,
                 &current_hull_tree,
             ) {
+                // Create new hull lines from start→candidate and candidate→end
                 let start_line = Line::new(line.start, candidate_point);
                 let end_line = Line::new(candidate_point, line.end);
 
+                // Verify at least one of the new edges is less than max_length
                 if partial_min(Euclidean.length(&start_line), Euclidean.length(&end_line))
                     < max_length
                 {
@@ -532,7 +536,7 @@ mod tests {
             coord! { x: 2.0, y: 2.0 },
             coord! { x: 0.0, y: 2.0 },
         ];
-        let hull_1 = coords.concave_hull(1.0, 0.0);
+        let hull_1 = coords.concave_hull(0.0, 0.0);
         assert_eq!(hull_1.exterior().0.len(), 6);
 
         let hull_2 = coords.concave_hull(2.0, 0.0);
@@ -562,9 +566,9 @@ mod tests {
     #[test]
     fn test_norway_mainland() {
         let norway = geo_test_fixtures::norway_main::<f64>();
-        let norway_concave_hull: LineString = geo_test_fixtures::norway_concave_hull::<f64>();
+        let correct_hull: LineString = geo_test_fixtures::norway_concave_hull::<f64>();
         let hull = norway.concave_hull(2.0, 0.0);
-        assert_eq!(hull.exterior(), &norway_concave_hull);
+        assert_eq!(hull.exterior(), &correct_hull);
     }
 
     #[test]
@@ -689,7 +693,7 @@ mod tests {
     }
 
     #[test]
-    fn test_straight_line() {
+    fn test_only_collinear_points() {
         let linestring: LineString<f64> = line_string![
             (x: 0.0, y: 0.0),
             (x: 2.0, y: 2.0),
@@ -701,6 +705,22 @@ mod tests {
             (x: 0.0, y: 0.0),
         ];
         let hull = linestring.concave_hull(2.0, 0.0);
+        assert_eq!(hull, correct_hull);
+    }
+
+    #[test]
+    fn test_identical_points() {
+        let coords = vec![
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: 1.0, y: 1.0 },
+        ];
+        let correct_hull = polygon![
+            (x: 1.0, y: 1.0),
+            (x: 1.0, y: 1.0),
+        ];
+        let hull = coords.concave_hull(2.0, 0.0);
         assert_eq!(hull, correct_hull);
     }
 }
