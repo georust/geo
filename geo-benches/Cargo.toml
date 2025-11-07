@@ -35,8 +35,6 @@ wkt = "0.14.0"
 name = "boolean_ops"
 path = "src/boolean_ops.rs"
 harness = false
-
-
 [[bench]]
 name = "area"
 path = "src/area.rs"
