@@ -2,7 +2,7 @@
 resolver = "2"
 members = [
   "geo",
-  "geo-bool-ops-benches",
+  "geo-benches",
   "geo-test-fixtures",
   "geo-traits",
   "geo-types",
