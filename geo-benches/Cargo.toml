@@ -10,34 +10,27 @@ edition = "2024"
 bench-foreign-booleanop = []
 
 [dependencies]
-geo = { path = "../geo" }
-geo-types = { path = "../geo-types" }
-log = "0.4.11"
-num-traits = "0.2"
-rstar = "0.12.0"
-wkt = "0.14.0"
-gt_prev = { version = "0.6.2", package = "geo-types" }
-rand = "0.8.0"
-rand_distr = "0.4.3"
-
-[dev-dependencies]
+anyhow = "1.0.57"
 approx = ">= 0.4.0, < 0.6.0"
 criterion = { version = "0.4", features = ["html_reports"] }
+geo = { path = "../geo" }
+geo-booleanop = "0.3.2"
 geo-test-fixtures = { path = "../geo-test-fixtures" }
+geo-types = { path = "../geo-types" }
+geojson = { version = "0.24.0", features = ["geo-types"] }
+glob = "0.3.0"
+gt_prev = { version = "0.6.2", package = "geo-types" }
 jts-test-runner = { path = "../jts-test-runner" }
+log = "0.4.11"
+num-traits = "0.2"
 pretty_env_logger = "0.4"
 rand = "0.8.0"
 rand_distr = "0.4.3"
-
-### boolean-ops test deps
-anyhow = "1.0.57"
+rstar = "0.12.0"
 serde = "1.0.137"
-serde_json = "1.0.81"
 serde_derive = "1.0.137"
-glob = "0.3.0"
-gt_prev = { version = "0.6.2", package = "geo-types" }
-geo-booleanop = "0.3.2"
-geojson = { version = "0.24.0", features = ["geo-types"] }
+serde_json = "1.0.81"
+wkt = "0.14.0"
 
 [[bench]]
 name = "boolean_ops"
