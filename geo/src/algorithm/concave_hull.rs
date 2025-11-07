@@ -237,26 +237,26 @@ struct CurrentHullEdge<T: GeoFloat + RTreeNum> {
     next_i: usize,
 }
 
-fn line_to_bbox_distance<T>(line: &Line<T>, aabb: &AABB<Coord<T>>) -> T
+fn line_to_bbox_distance<T>(line: &Line<T>, bbox: &AABB<Coord<T>>) -> T
 where
     T: GeoFloat + RTreeNum,
 {
     // Calculate the euclidean distance from a line to a bounding box.
     // This function is equivalent to `Euclidean.distance` between a `Rect` and a `Line`,
     // but is optimized for the R-tree depth-first search used here.
-    // Since lines are likely to be intersecting or contained within the bounding box, resulting 
+    // Since lines are likely to be intersecting or contained within the bounding box, resulting
     // in a distance of zero, calculate each seperately and return early if zero is found.
 
     // If either line endpoint is contained within the bbox, distance is zero
-    if aabb.contains_point(&line.start) || aabb.contains_point(&line.end) {
+    if bbox.contains_point(&line.start) || bbox.contains_point(&line.end) {
         return T::zero();
     }
 
     // If any distances are zero, then return as no further distance calculations needed
-    let c1 = coord! {x: aabb.lower().x, y: aabb.lower().y};
-    let c2 = coord! {x: aabb.lower().x, y: aabb.upper().y};
-    let c3 = coord! {x: aabb.upper().x, y: aabb.upper().y};
-    let c4 = coord! {x: aabb.upper().x, y: aabb.lower().y};
+    let c1 = coord! {x: bbox.lower().x, y: bbox.lower().y};
+    let c2 = coord! {x: bbox.lower().x, y: bbox.upper().y};
+    let c3 = coord! {x: bbox.upper().x, y: bbox.upper().y};
+    let c4 = coord! {x: bbox.upper().x, y: bbox.lower().y};
     let d1 = Euclidean.distance(line, &Line::new(c1, c4));
     if d1 == T::zero() {
         return d1;
@@ -385,7 +385,7 @@ fn order_concave_hull<T>(current_hull_edges: Vec<CurrentHullEdge<T>>) -> LineStr
 where
     T: GeoFloat,
 {
-    // Order the constituent concave hull lines and return as a `LineString`
+    // Order the constituent concave hull edges and return as a `LineString`
     let mut ordered_coords: Vec<Coord<T>> = vec![];
     let mut current_i = 0;
     ordered_coords.push(current_hull_edges[current_i].line.start);
@@ -435,18 +435,14 @@ where
     // Populate edge queue and current hull edges with convex hull edges
     let hull_length = convex_hull.lines().len();
     for (i, line) in convex_hull.lines().enumerate() {
-        current_hull_edges.push(CurrentHullEdge {
+        let edge = CurrentHullEdge {
             line,
             i,
             prev_i: if i == 0 { hull_length - 1 } else { i - 1 },
             next_i: if i == hull_length - 1 { 0 } else { i + 1 },
-        });
-        edge_queue.push_back(CurrentHullEdge {
-            line,
-            i,
-            prev_i: if i == 0 { hull_length - 1 } else { i - 1 },
-            next_i: if i == hull_length - 1 { 0 } else { i + 1 },
-        });
+        };
+        current_hull_edges.push(edge.clone());
+        edge_queue.push_back(edge);
 
         // Remove hull points from interior points
         if i == 0 {
@@ -510,7 +506,7 @@ where
                     // Push new end edge to current hull edges
                     current_hull_edges.push(end_hull_edge.clone());
 
-                    // Push new edges to queue
+                    // Push both new edges to queue
                     edge_queue.push_back(start_hull_edge);
                     edge_queue.push_back(end_hull_edge);
 
@@ -721,6 +717,33 @@ mod tests {
             (x: 1.0, y: 1.0),
         ];
         let hull = coords.concave_hull(2.0, 0.0);
+        assert_eq!(hull, correct_hull);
+    }
+
+    #[test]
+    fn test_four_drills() {
+        let coords = vec![
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 2.0, y: 1.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 3.0, y: 2.0 },
+            coord! { x: 4.0, y: 4.0 },
+            coord! { x: 2.0, y: 3.0 },
+            coord! { x: 0.0, y: 4.0 },
+            coord! { x: 1.0, y: 2.0 },
+        ];
+        let correct_hull = polygon![
+            (x: 4.0, y: 0.0),
+            (x: 3.0, y: 2.0),
+            (x: 4.0, y: 4.0),
+            (x: 2.0, y: 3.0),
+            (x: 0.0, y: 4.0),
+            (x: 1.0, y: 2.0),
+            (x: 0.0, y: 0.0),
+            (x: 2.0, y: 1.0),
+            (x: 4.0, y: 0.0),
+        ];
+        let hull = coords.concave_hull(0.0, 0.0);
         assert_eq!(hull, correct_hull);
     }
 }
