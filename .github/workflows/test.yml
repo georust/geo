@@ -39,6 +39,7 @@ jobs:
       - geo
       - geo_traits
       - geo_fuzz
+      - geo_benches
       - docs
     if: success()
     steps:
@@ -53,6 +54,7 @@ jobs:
       - geo
       - geo_traits
       - geo_fuzz
+      - geo_benches
       - docs
     if: failure()
     steps:
@@ -136,6 +138,25 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets
       - run: cargo test
+
+  geo_benches:
+    name: geo-benches
+    needs: set-matrix
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    defaults:
+      run:
+        working-directory: geo-benches
+    strategy:
+      matrix:
+        rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
+    container:
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --all-targets
 
   geo_fuzz:
     name: geo-fuzz

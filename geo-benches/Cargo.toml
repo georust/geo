@@ -1,0 +1,161 @@
+[package]
+name = "geo-benches"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[features]
+# If you want to bench against the `geo-booleanop` crate as a comparison, enable this feature.
+bench-foreign-booleanop = []
+
+[dependencies]
+anyhow = "1.0.57"
+approx = ">= 0.4.0, < 0.6.0"
+criterion = { version = "0.4", features = ["html_reports"] }
+geo = { path = "../geo" }
+geo-booleanop = "0.3.2"
+geo-test-fixtures = { path = "../geo-test-fixtures" }
+geo-types = { path = "../geo-types" }
+geojson = { version = "0.24.0", features = ["geo-types"] }
+glob = "0.3.0"
+gt_prev = { version = "0.6.2", package = "geo-types" }
+jts-test-runner = { path = "../jts-test-runner" }
+log = "0.4.11"
+num-traits = "0.2"
+pretty_env_logger = "0.4"
+rand = "0.8.0"
+rand_distr = "0.4.3"
+rstar = "0.12.0"
+serde = "1.0.137"
+serde_derive = "1.0.137"
+serde_json = "1.0.81"
+wkt = "0.14.0"
+
+[[bench]]
+name = "boolean_ops"
+path = "src/boolean_ops.rs"
+harness = false
+[[bench]]
+name = "area"
+path = "src/area.rs"
+harness = false
+
+[[bench]]
+name = "coordinate_position"
+path = "src/coordinate_position.rs"
+harness = false
+
+[[bench]]
+name = "contains"
+path = "src/contains.rs"
+harness = false
+
+[[bench]]
+name = "contains_properly"
+path = "src/contains_properly.rs"
+harness = false
+
+[[bench]]
+name = "convex_hull"
+path = "src/convex_hull.rs"
+harness = false
+
+[[bench]]
+name = "concave_hull"
+path = "src/concave_hull.rs"
+harness = false
+
+[[bench]]
+name = "intersection"
+path = "src/intersection.rs"
+harness = false
+
+[[bench]]
+name = "vincenty_distance"
+path = "src/vincenty_distance.rs"
+harness = false
+
+[[bench]]
+name = "geodesic_distance"
+path = "src/geodesic_distance.rs"
+harness = false
+
+[[bench]]
+name = "extremes"
+path = "src/extremes.rs"
+harness = false
+
+[[bench]]
+name = "euclidean_distance"
+path = "src/euclidean_distance.rs"
+harness = false
+
+[[bench]]
+name = "prepared_geometry"
+path = "src/prepared_geometry.rs"
+harness = false
+
+[[bench]]
+name = "rotate"
+path = "src/rotate.rs"
+harness = false
+
+[[bench]]
+name = "relate"
+path = "src/relate.rs"
+harness = false
+
+[[bench]]
+name = "simplify"
+path = "src/simplify.rs"
+harness = false
+
+[[bench]]
+name = "simplifyvw"
+path = "src/simplifyvw.rs"
+harness = false
+
+[[bench]]
+name = "frechet_distance"
+path = "src/frechet_distance.rs"
+harness = false
+
+[[bench]]
+name = "rand_line_crossings"
+path = "src/rand_line_crossings.rs"
+harness = false
+
+[[bench]]
+name = "winding_order"
+path = "src/winding_order.rs"
+harness = false
+
+[[bench]]
+name = "monotone_subdiv"
+path = "src/monotone_subdiv.rs"
+harness = false
+
+[[bench]]
+name = "triangulate"
+path = "src/triangulate.rs"
+harness = false
+
+[[bench]]
+name = "stitch"
+path = "src/stitch.rs"
+harness = false
+
+[[bench]]
+name = "sweep_line_intersection"
+path = "src/sweep_line_intersection.rs"
+harness = false
+
+[[bench]]
+name = "dbscan"
+path = "src/dbscan.rs"
+harness = false
+
+[[bench]]
+name = "kmeans"
+path = "src/kmeans.rs"
+harness = false

@@ -6,13 +6,9 @@ use geo::algorithm::{BooleanOps, Rotate};
 use rand::{Rng, thread_rng};
 use rand_distr::Standard;
 
-#[path = "../../geo/benches/utils/random.rs"]
-mod random;
-use random::Samples;
-
-#[path = "utils/bops.rs"]
-mod bops;
-use bops::convert_poly;
+use geo_benches::utils::bops::convert_poly;
+use geo_benches::utils::random;
+use geo_benches::utils::random::Samples;
 
 fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
     const SAMPLE_SIZE: usize = 16;
