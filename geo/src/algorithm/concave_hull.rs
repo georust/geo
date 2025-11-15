@@ -1,8 +1,8 @@
 use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    Coord, CoordNum, Distance, Euclidean, GeoFloat, Intersects, Length, Line, LineString,
-    MultiLineString, MultiPoint, MultiPolygon, Polygon, coord, point,
+    Contains, Coord, CoordNum, Distance, Euclidean, GeoFloat, Intersects, Length, Line, LineString,
+    MultiLineString, MultiPoint, MultiPolygon, Polygon, Triangle, coord, point,
 };
 use rstar::{AABB, Envelope, ParentNode, RTree, RTreeNode, RTreeNum};
 use std::{
@@ -38,6 +38,7 @@ use std::{
 ///    - Verify the candidate is closer to this edge than adjacent hull edges
 ///    - Verify that connecting to this point won't cause intersections with existing hull edges
 ///    - Continue searching until a valid candidate is found or no more points are within the `max_length`
+///    - Verify that adding this point won't cause any previously checked interior points to be excluded from the hull and if one is excluded use that point as the candidate
 /// 3. If a valid candidate is found:
 ///    - Create two new edges: start→candidate and candidate→end
 ///    - Verify at least one of the new edges is less than `max_length`
@@ -310,6 +311,28 @@ where
     true
 }
 
+fn find_excluded_point<T>(
+    start_line: Line<T>,
+    end_line: Line<T>,
+    previously_checked_points: &[Coord<T>],
+) -> Option<Coord<T>>
+where
+    T: GeoFloat,
+{
+    // Check previously checked interior points to see if any would lie outside the hull if the new lines were added.
+    // If so, return that point as the candidate to ensure all interior points remain within the hull.
+
+    // Create a triangle which represents the area which would be excluded from the hull
+    let triangle = Triangle::new(start_line.start, start_line.end, end_line.end);
+    for point in previously_checked_points {
+        // If the point is contained within the triangle, it would be outside the hull and so return it as the candidate
+        if triangle.contains(point) {
+            return Some(*point);
+        }
+    }
+    None
+}
+
 fn find_candidate<T>(
     hull_edge: &CurrentHullEdge<T>,
     max_length: &T,
@@ -328,6 +351,9 @@ where
         tree_node: RTreeNodeRef::Parent(interior_points_tree.root()),
         distance: T::zero(),
     });
+
+    // Keep track of nearest interior points which failed checks
+    let mut previously_checked_points: Vec<Coord<T>> = Vec::new();
 
     // Perform depth-first search through the R-tree
     while let Some(node) = queue.pop() {
@@ -364,17 +390,26 @@ where
                     || node.distance
                         >= Euclidean.distance(*leaf, &current_hull_edges[hull_edge.next_i].line)
                 {
+                    previously_checked_points.push(*leaf);
                     continue;
                 }
+
                 let start_line = Line::new(line.start, *leaf);
                 let end_line = Line::new(*leaf, line.end);
 
-                // Skip candidate point if it would cause intersections with hull lines
+                // Skip candidate point if it would cause intersections with hull lines and would cause any interior
+                // points to be outside the hull
                 if no_hull_intersections(&start_line, current_hull_tree)
                     && no_hull_intersections(&end_line, current_hull_tree)
                 {
+                    // Check if any of the previously checked interior points would lie outside the hull if the new lines 
+                    // were added and use that point as the candidate if so
+                    if let Some(point) = find_excluded_point(start_line, end_line, &previously_checked_points) {
+                        return Some(point);
+                    }
                     return Some(*leaf);
                 }
+                previously_checked_points.push(*leaf);
             }
         }
     }
