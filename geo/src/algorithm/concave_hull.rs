@@ -384,7 +384,7 @@ where
                 }
             }
             RTreeNodeRef::Leaf(leaf) => {
-                // Skip candidate points that are as close to adjacent hull lines
+                // Check if candidate point is further from adjacent hull lines
                 if node.distance
                     >= Euclidean.distance(*leaf, &current_hull_edges[hull_edge.prev_i].line)
                     || node.distance
@@ -397,8 +397,7 @@ where
                 let start_line = Line::new(line.start, *leaf);
                 let end_line = Line::new(*leaf, line.end);
 
-                // Skip candidate point if it would cause intersections with hull lines and would cause any interior
-                // points to be outside the hull
+                // Check if using candidate point would cause intersections with hull lines
                 if no_hull_intersections(&start_line, current_hull_tree)
                     && no_hull_intersections(&end_line, current_hull_tree)
                 {
@@ -780,5 +779,21 @@ mod tests {
         ];
         let hull = coords.concave_hull(0.0, 0.0);
         assert_eq!(hull, correct_hull);
+    }
+
+    #[test]
+    fn test_all_points_in_hull() {
+        let coords = vec![
+            coord! { x: 8.206, y: 7.705 },
+            coord! { x: 6.929, y: 6.919 },
+            coord! { x: 8.036, y: 8.394 },
+            coord! { x: 7.376, y: 1.512 },
+            coord! { x: 0.487, y: 1.839 },
+            coord! { x: 9.317, y: 8.696 },
+        ];
+        let hull = coords.concave_hull(2.0, 0.0);
+        for coord in coords.iter() {
+            assert!(hull.intersects(coord));
+        }
     }
 }
