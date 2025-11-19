@@ -1,5 +1,11 @@
 # Changes
 
+## UNRELEASED
+
+- Renamed features `use-rstar`, `use-rstar-0_8`, etc. to simply `rstar`, `rstar-0_8`, etc. (removing the `use-` prefix)
+  and deprecated the old spelling.
+  - <https://github.com/georust/geo/pull/1447>
+
 ## 0.7.17 - 2025-07-25
 
 - Add support to `wkt!` geometry creation macro for `LINE`, `RECT`, and `TRIANGLE` geometries.
