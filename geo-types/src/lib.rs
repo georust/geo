@@ -162,39 +162,57 @@ pub mod _alloc {
 // Some gymnastics to help migrate people off our old feature flag naming conventions
 #[allow(unused, non_camel_case_types, missing_debug_implementations)]
 mod deprecated_feature_flags {
-    #[deprecated(
-        since = "0.7.18",
-        note = "The `use-rstar` feature has been renamed to simply `rstar`. Use the `rstar` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.7.18",
+            note = "The `use-rstar` feature has been renamed to simply `rstar`. Use the `rstar` feature instead."
+        )
     )]
     pub struct UseRstar;
 
-    #[deprecated(
-        since = "0.7.18",
-        note = "The `use-rstar_0_8` feature has been renamed to simply `rstar_0_8`. Use the `rstar_0_8` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.7.18",
+            note = "The `use-rstar_0_8` feature has been renamed to simply `rstar_0_8`. Use the `rstar_0_8` feature instead."
+        )
     )]
     pub struct UseRstar_0_8;
 
-    #[deprecated(
-        since = "0.7.18",
-        note = "The `use-rstar_0_9` feature has been renamed to simply `rstar_0_9`. Use the `rstar_0_9` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.7.18",
+            note = "The `use-rstar_0_9` feature has been renamed to simply `rstar_0_9`. Use the `rstar_0_9` feature instead."
+        )
     )]
     pub struct UseRstar_0_9;
 
-    #[deprecated(
-        since = "0.7.18",
-        note = "The `use-rstar_0_10` feature has been renamed to simply `rstar_0_10`. Use the `rstar_0_10` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.7.18",
+            note = "The `use-rstar_0_10` feature has been renamed to simply `rstar_0_10`. Use the `rstar_0_10` feature instead."
+        )
     )]
     pub struct UseRstar_0_10;
 
-    #[deprecated(
-        since = "0.7.18",
-        note = "The `use-rstar_0_11` feature has been renamed to simply `rstar_0_11`. Use the `rstar_0_11` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.7.18",
+            note = "The `use-rstar_0_11` feature has been renamed to simply `rstar_0_11`. Use the `rstar_0_11` feature instead."
+        )
     )]
     pub struct UseRstar_0_11;
 
-    #[deprecated(
-        since = "0.7.18",
-        note = "The `use-rstar_0_12` feature has been renamed to simply `rstar_0_12`. Use the `rstar_0_12` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.7.18",
+            note = "The `use-rstar_0_12` feature has been renamed to simply `rstar_0_12`. Use the `rstar_0_12` feature instead."
+        )
     )]
     pub struct UseRstar_0_12;
 }

@@ -394,15 +394,21 @@ impl_geo_num_for_int!(isize);
 // Some gymnastics to help migrate people off our old feature flag naming conventions
 #[allow(unused)]
 mod deprecated_feature_flags {
-    #[deprecated(
-        since = "0.31.1",
-        note = "The `use-serde` feature has been renamed to simply `serde`. Use the `serde` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.31.1",
+            note = "The `use-serde` feature has been renamed to simply `serde`. Use the `serde` feature instead."
+        )
     )]
     pub struct UseSerde;
 
-    #[deprecated(
-        since = "0.31.1",
-        note = "The `use-proj` feature has been renamed to simply `proj`. Use the `proj` feature instead."
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.31.1",
+            note = "The `use-proj` feature has been renamed to simply `proj`. Use the `proj` feature instead."
+        )
     )]
     pub struct UseProj;
 }

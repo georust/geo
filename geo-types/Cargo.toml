@@ -29,6 +29,8 @@ use-rstar_0_9 = ["rstar_0_9"]
 use-rstar_0_10 = ["rstar_0_10"]
 use-rstar_0_11 = ["rstar_0_11"]
 use-rstar_0_12 = ["rstar_0_12"]
+# Only used to make `cargo clippy --all-features` happy
+__allow_deprecated_features = []
 
 [dependencies]
 rayon = { version = "1.10.0", optional = true }

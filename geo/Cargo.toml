@@ -21,6 +21,8 @@ multithreading = ["i_overlay/allow_multithreading", "geo-types/multithreading"]
 # Deprecated feature flags with "use-" prefix from the days before `dep:`
 use-proj = ["proj"]
 use-serde = ["serde"]
+# Only used to make `cargo clippy --all-features` happy
+__allow_deprecated_features = []
 
 [dependencies]
 earcutr = { version = "0.4.2", optional = true }
