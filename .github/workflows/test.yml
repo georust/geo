@@ -95,7 +95,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
-      - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F use-rstar_0_9,serde
+      - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F rstar_0_9,serde
       - run: cargo test --all-features
 
   geo:
@@ -117,7 +117,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
-      - run: cargo test --features "use-proj use-serde earcutr multithreading"
+      - run: cargo test --features "proj serde earcutr multithreading"
 
   geo_traits:
     name: geo-traits

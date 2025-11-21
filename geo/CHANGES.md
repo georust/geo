@@ -12,6 +12,9 @@
 - Add k-means clustering algorithm
 - POSSIBLY BREAKING: `minimum_rotated_rect` is about 1.3-2x faster, but might return slightly different results.
   - <https://github.com/georust/geo/pull/1446>
+- Renamed features `use-proj`, `use-serde` to simply `proj` and `serde` (removing the `use-` prefix)
+  and deprecated the old spelling.
+  - <https://github.com/georust/geo/pull/1447>
 
 ## 0.31.0 - 2025-09-01
 
