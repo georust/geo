@@ -14,6 +14,7 @@ edition = "2021"
 default = ["std"]
 std = ["approx?/std", "num-traits/std", "serde?/std"]
 multithreading = ["rayon"]
+serde = [ "dep:serde", "rstar_0_8?/serde", "rstar_0_9?/serde", "rstar_0_10?/serde", "rstar_0_11?/serde", "rstar_0_12?/serde"]
 
 rstar = ["rstar_0_8"]
 rstar_0_8 = ["dep:rstar_0_8", "approx"]
