@@ -508,3 +508,22 @@ impl<T: CoordNum> AsRef<Coord<T>> for Coord<T> {
         self
     }
 }
+#[cfg(test)]
+mod tests {
+    #[cfg(all(feature = "rstar_0_12", feature = "serde"))]
+    mod rstar_0_12_serde_tests {
+        use crate::{coord, Coord, Point};
+        use rstar_0_12::{Envelope, AABB};
+
+        #[test]
+        fn test_serde_integration() {
+            let envelope: AABB<Coord> =
+                AABB::from_corners(coord!(x: 1.0, y: 2.0), coord!(x: 3.0, y: 4.0));
+            assert!(envelope.contains_point(&coord!(x:2.0, y: 3.0)));
+            // This only tests that it compiles, not runtime behavior
+            fn assert_deserialize<'de, T: serde::Deserialize<'de>>() {}
+            assert_deserialize::<AABB<Coord>>();
+            assert_deserialize::<AABB<Point>>();
+        }
+    }
+}
