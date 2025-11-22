@@ -1,7 +1,7 @@
 use crate::convex_hull::qhull;
 use crate::utils::partial_min;
 use crate::{
-    Contains, Coord, CoordNum, Distance, Euclidean, GeoFloat, Intersects, Length, Line, LineString,
+    Contains, Coord, Distance, Euclidean, GeoFloat, Intersects, Length, Line, LineString,
     MultiLineString, MultiPoint, MultiPolygon, Polygon, Triangle, coord, point,
 };
 use rstar::{AABB, Envelope, ParentNode, RTree, RTreeNode, RTreeNum};
@@ -15,18 +15,18 @@ use std::{
 /// constructing edges such that the exterior of the polygon incorporates points that would
 /// be interior points in a convex hull.
 ///
-/// This implementation is a port of <https://github.com/mapbox/concaveman> which is based on ideas from
+/// This implementation is a port of Volodymyr Agafonkin's <https://github.com/mapbox/concaveman> which is based on ideas from
 /// the paper [A New Concave Hull Algorithm and Concaveness Measure for n-dimensional Datasets, 2012](https://jise.iis.sinica.edu.tw/JISESearch/fullText?pId=245&code=5A9B97538372AA1).
 ///
 /// # Arguments
-/// * `concavity` - A relative measure of how concave the hull should be. Lower values result in a more
-///   concave hull. Inifinity would result in a convex hull. 2.0 results in a relatively detailed shape.
-///
-/// * `length_threshold` - The minimum length of constituent hull edges. Edges shorter than this will not be
-///   drilled down any further. Set to 0.0 for no threshold.
+/// * `concave_hull_options` - Optional configuration for the concave hull algorithm:
+///   - `concavity` - A relative measure of how concave the hull should be. Lower values result in a more
+///     concave hull. Infinity would result in a convex hull. 2.0 results in a relatively detailed shape. (default: 2.0)
+///   - `length_threshold` - The minimum length of constituent hull edges. Edges shorter than this will not be
+///     drilled down any further. Set to 0.0 for no threshold. (default: 0.0)
 ///
 /// # Returns
-/// * A Polygon representing the concave hull of the geometry.
+/// * A `Polygon` representing a concave hull of the geometry.
 ///
 /// # Algorithm
 ///
@@ -55,6 +55,31 @@ use std::{
 /// // a collection of points
 /// let points: MultiPoint<_> = vec![
 ///     (0.0, 0.0),
+///     (3.0, 0.0),
+///     (1.0, 2.0),
+///     (0.0, 4.0),
+/// ].into();
+///
+/// let correct_hull = polygon![
+///     (x: 3.0, y: 0.0),
+///     (x: 1.0, y: 2.0),
+///     (x: 0.0, y: 4.0),
+///     (x: 0.0, y: 0.0),
+///     (x: 3.0, y: 0.0),
+/// ];
+///
+/// let hull = points.concave_hull();
+/// assert_eq!(hull, correct_hull);
+///
+/// ```
+/// `ConcaveHull` can also be used with custom options.
+/// ```
+/// use geo::{polygon, MultiPoint};
+/// use geo::{ConcaveHull, ConcaveHullOptions};
+///
+/// // a collection of points
+/// let points: MultiPoint<_> = vec![
+///     (0.0, 0.0),
 ///     (2.0, 0.0),
 ///     (1.5, 1.0),
 ///     (2.0, 2.0),
@@ -70,18 +95,27 @@ use std::{
 ///     (x: 2.0, y: 0.0),
 /// ];
 ///
-/// let hull = points.concave_hull(1.0, 0.0);
+/// let hull = points.concave_hull_with_options(ConcaveHullOptions {
+///     concavity: 1.0,
+///     length_threshold: 0.0,
+/// });
 /// assert_eq!(hull, correct_hull);
 /// ```
 pub trait ConcaveHull {
-    type Scalar: CoordNum;
+    type Scalar: GeoFloat + RTreeNum;
     /// Create a concave hull around the geometry set.
     ///
+    /// See the [module-level documentation](self) for details on the algorithm.
+    fn concave_hull(&self) -> Polygon<Self::Scalar> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+
+    /// Create a concave hull around the geometry set with specified options.
+    ///
     /// See the [module-level documentation](self) for details on the algorithm and parameters.
-    fn concave_hull(
+    fn concave_hull_with_options(
         &self,
-        concavity: Self::Scalar,
-        length_threshold: Self::Scalar,
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
     ) -> Polygon<Self::Scalar>;
 }
 
@@ -90,9 +124,15 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<T> {
+    fn concave_hull(&self) -> Polygon<T> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+    fn concave_hull_with_options(
+        &self,
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
+    ) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.iter().map(|point| point.0).collect();
-        concave_hull(&mut coords, concavity, length_threshold)
+        concave_hull_with_options(&mut coords, concave_hull_options)
     }
 }
 
@@ -102,13 +142,15 @@ where
 {
     type Scalar = T;
     /// Note that the concave hull may intersect with the interior of the original geometry boundaries.
-    fn concave_hull(
+    fn concave_hull(&self) -> Polygon<T> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+    fn concave_hull_with_options(
         &self,
-        concavity: Self::Scalar,
-        length_threshold: Self::Scalar,
-    ) -> Polygon<Self::Scalar> {
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
+    ) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.exterior().0.clone();
-        concave_hull(&mut coords, concavity, length_threshold)
+        concave_hull_with_options(&mut coords, concave_hull_options)
     }
 }
 
@@ -118,16 +160,18 @@ where
 {
     type Scalar = T;
     /// Note that the concave hull may intersect with the interior of the original geometry boundaries.
-    fn concave_hull(
+    fn concave_hull(&self) -> Polygon<T> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+    fn concave_hull_with_options(
         &self,
-        concavity: Self::Scalar,
-        length_threshold: Self::Scalar,
-    ) -> Polygon<Self::Scalar> {
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
+    ) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = Vec::new();
         for polygon in self.0.iter() {
             coords.extend(polygon.exterior().0.iter().skip(1));
         }
-        concave_hull(&mut coords, concavity, length_threshold)
+        concave_hull_with_options(&mut coords, concave_hull_options)
     }
 }
 
@@ -137,12 +181,15 @@ where
 {
     type Scalar = T;
     /// Note that the concave hull may intersect with the original geometry boundaries.
-    fn concave_hull(
+    fn concave_hull(&self) -> Polygon<T> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+    fn concave_hull_with_options(
         &self,
-        concavity: Self::Scalar,
-        length_threshold: Self::Scalar,
-    ) -> Polygon<Self::Scalar> {
-        concave_hull(&mut self.0.clone(), concavity, length_threshold)
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
+    ) -> Polygon<T> {
+        let mut coords: Vec<Coord<T>> = self.0.clone();
+        concave_hull_with_options(&mut coords, concave_hull_options)
     }
 }
 
@@ -152,9 +199,15 @@ where
 {
     type Scalar = T;
     /// Note that the concave hull may intersect with the original geometry boundaries.
-    fn concave_hull(&self, concavity: Self::Scalar, length_threshold: Self::Scalar) -> Polygon<T> {
+    fn concave_hull(&self) -> Polygon<T> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+    fn concave_hull_with_options(
+        &self,
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
+    ) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.iter().flat_map(|elem| elem.0.clone()).collect();
-        concave_hull(&mut coords, concavity, length_threshold)
+        concave_hull_with_options(&mut coords, concave_hull_options)
     }
 }
 
@@ -163,13 +216,15 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(
+    fn concave_hull(&self) -> Polygon<T> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+    fn concave_hull_with_options(
         &self,
-        concavity: Self::Scalar,
-        length_threshold: Self::Scalar,
-    ) -> Polygon<Self::Scalar> {
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
+    ) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.clone();
-        concave_hull(&mut coords, concavity, length_threshold)
+        concave_hull_with_options(&mut coords, concave_hull_options)
     }
 }
 
@@ -178,13 +233,51 @@ where
     T: GeoFloat + RTreeNum,
 {
     type Scalar = T;
-    fn concave_hull(
+    fn concave_hull(&self) -> Polygon<T> {
+        self.concave_hull_with_options(ConcaveHullOptions::default())
+    }
+    fn concave_hull_with_options(
         &self,
-        concavity: Self::Scalar,
-        length_threshold: Self::Scalar,
-    ) -> Polygon<Self::Scalar> {
+        concave_hull_options: ConcaveHullOptions<Self::Scalar>,
+    ) -> Polygon<T> {
         let mut coords: Vec<Coord<T>> = self.to_vec();
-        concave_hull(&mut coords, concavity, length_threshold)
+        concave_hull_with_options(&mut coords, concave_hull_options)
+    }
+}
+
+/// The options for creating a concave hull composed of `concavity` and `length_threshold`. See arguments in [ConcaveHull] for full details.
+pub struct ConcaveHullOptions<T>
+where
+    T: GeoFloat + RTreeNum,
+{
+    pub concavity: T,
+    pub length_threshold: T,
+}
+
+impl<T> Default for ConcaveHullOptions<T>
+where
+    T: GeoFloat + RTreeNum,
+{
+    fn default() -> Self {
+        Self {
+            concavity: T::from(2.0).unwrap(),
+            length_threshold: T::zero(),
+        }
+    }
+}
+
+impl<T> ConcaveHullOptions<T>
+where
+    T: GeoFloat + RTreeNum,
+{
+    pub fn concavity(mut self, concavity: T) -> Self {
+        self.concavity = concavity;
+        self
+    }
+
+    pub fn length_threshold(mut self, length_threshold: T) -> Self {
+        self.length_threshold = length_threshold;
+        self
     }
 }
 
@@ -401,9 +494,11 @@ where
                 if no_hull_intersections(&start_line, current_hull_tree)
                     && no_hull_intersections(&end_line, current_hull_tree)
                 {
-                    // Check if any of the previously checked interior points would lie outside the hull if the new lines 
+                    // Check if any of the previously checked interior points would lie outside the hull if the new lines
                     // were added and use that point as the candidate if so
-                    if let Some(point) = find_excluded_point(start_line, end_line, &previously_checked_points) {
+                    if let Some(point) =
+                        find_excluded_point(start_line, end_line, &previously_checked_points)
+                    {
                         return Some(point);
                     }
                     return Some(*leaf);
@@ -444,12 +539,15 @@ where
     }
 }
 
-fn concave_hull<T>(coords: &mut [Coord<T>], concavity: T, length_threshold: T) -> Polygon<T>
+fn concave_hull_with_options<T>(
+    coords: &mut [Coord<T>],
+    concave_hull_options: ConcaveHullOptions<T>,
+) -> Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
     // Ensure concavity is non-negative
-    let concavity: T = T::max(T::zero(), concavity);
+    let concavity: T = T::max(T::zero(), concave_hull_options.concavity);
 
     // Compute initial convex hull
     let convex_hull = qhull::quick_hull(coords);
@@ -490,7 +588,7 @@ where
         let length = Euclidean.length(&line);
 
         // Only consider drilling down if line length exceeds threshold
-        if length > length_threshold {
+        if length > concave_hull_options.length_threshold {
             // Calculate maximum length for new hull edges
             let max_length = length / concavity;
 
@@ -566,10 +664,10 @@ mod tests {
             coord! { x: 2.0, y: 2.0 },
             coord! { x: 0.0, y: 2.0 },
         ];
-        let hull_1 = coords.concave_hull(0.0, 0.0);
+        let hull_1 = coords.concave_hull_with_options(ConcaveHullOptions::default().concavity(1.0));
         assert_eq!(hull_1.exterior().0.len(), 6);
 
-        let hull_2 = coords.concave_hull(2.0, 0.0);
+        let hull_2 = coords.concave_hull();
         assert_eq!(hull_2.exterior().0.len(), 5);
     }
 
@@ -582,14 +680,17 @@ mod tests {
             coord! { x: 2.0, y: 2.0 },
             coord! { x: 0.0, y: 2.0 },
         ];
-        let hull = coords.concave_hull(1.0, 3.0);
+        let hull = coords.concave_hull_with_options(ConcaveHullOptions {
+            concavity: 1.0,
+            length_threshold: 3.0,
+        });
         assert_eq!(hull.exterior().0.len(), 5);
     }
 
     #[test]
     fn test_empty_coords() {
         let coords: Vec<Coord<f64>> = vec![];
-        let hull = coords.concave_hull(2.0, 0.0);
+        let hull = coords.concave_hull();
         assert!(hull.exterior().0.is_empty());
     }
 
@@ -597,7 +698,7 @@ mod tests {
     fn test_norway_mainland() {
         let norway = geo_test_fixtures::norway_main::<f64>();
         let correct_hull: LineString = geo_test_fixtures::norway_concave_hull::<f64>();
-        let hull = norway.concave_hull(2.0, 0.0);
+        let hull = norway.concave_hull();
         assert_eq!(hull.exterior(), &correct_hull);
     }
 
@@ -618,7 +719,7 @@ mod tests {
             (x: 0.0, y: 0.0),
             (x: 2.0, y: 0.0),
         ];
-        let hull = poly.concave_hull(1.0, 0.0);
+        let hull = poly.concave_hull_with_options(ConcaveHullOptions::default().concavity(1.0));
         assert_eq!(hull, correct_hull);
     }
 
@@ -641,7 +742,7 @@ mod tests {
             ],
         ]
         .into();
-        let hull = mp.concave_hull(2.0, 0.0);
+        let hull = mp.concave_hull();
         let correct_hull = polygon![
             (x: 4.0, y: 0.0),
             (x: 4.0, y: 5.0),
@@ -665,7 +766,7 @@ mod tests {
             (x: 3.0, y: 1.0),
             (x: 3.0, y: 2.0)
         ];
-        let hull = linestring.concave_hull(2.0, 0.0);
+        let hull = linestring.concave_hull();
         let correct_hull = polygon![
             (x: 4.0, y: 0.0),
             (x: 4.0, y: 4.0),
@@ -697,7 +798,7 @@ mod tests {
             (x: 0.0, y: 0.0),
             (x: 4.0, y: 0.0),
         ];
-        let hull = mls.concave_hull(2.0, 0.0);
+        let hull = mls.concave_hull();
         assert_eq!(hull, correct_hull);
     }
 
@@ -718,7 +819,7 @@ mod tests {
             (x: 0.0, y: 0.0),
             (x: 4.0, y: 0.0),
         ];
-        let hull = coords.concave_hull(2.0, 0.0);
+        let hull = coords.concave_hull();
         assert_eq!(hull, correct_hull);
     }
 
@@ -734,7 +835,7 @@ mod tests {
             (x: 6.0, y: 6.0),
             (x: 0.0, y: 0.0),
         ];
-        let hull = linestring.concave_hull(2.0, 0.0);
+        let hull = linestring.concave_hull();
         assert_eq!(hull, correct_hull);
     }
 
@@ -750,7 +851,7 @@ mod tests {
             (x: 1.0, y: 1.0),
             (x: 1.0, y: 1.0),
         ];
-        let hull = coords.concave_hull(2.0, 0.0);
+        let hull = coords.concave_hull();
         assert_eq!(hull, correct_hull);
     }
 
@@ -777,7 +878,7 @@ mod tests {
             (x: 2.0, y: 1.0),
             (x: 4.0, y: 0.0),
         ];
-        let hull = coords.concave_hull(0.0, 0.0);
+        let hull = coords.concave_hull_with_options(ConcaveHullOptions::default().concavity(0.0));
         assert_eq!(hull, correct_hull);
     }
 
@@ -791,7 +892,7 @@ mod tests {
             coord! { x: 0.487, y: 1.839 },
             coord! { x: 9.317, y: 8.696 },
         ];
-        let hull = coords.concave_hull(2.0, 0.0);
+        let hull = coords.concave_hull();
         for coord in coords.iter() {
             assert!(hull.intersects(coord));
         }
