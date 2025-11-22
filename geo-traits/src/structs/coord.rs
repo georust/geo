@@ -26,11 +26,11 @@ impl<T: Copy> Coord<T> {
         let y = coord.y();
 
         match coord.dim() {
-            Dimensions::Xyzm | Dimensions::Unknown(4) => Self {
+            Dimensions::Xy | Dimensions::Unknown(2) => Self {
                 x,
                 y,
-                z: coord.nth(2),
-                m: coord.nth(3),
+                z: None,
+                m: None,
             },
             Dimensions::Xyz | Dimensions::Unknown(3) => Self {
                 x,
@@ -44,13 +44,14 @@ impl<T: Copy> Coord<T> {
                 z: None,
                 m: coord.nth(2),
             },
-            Dimensions::Xy | Dimensions::Unknown(2) => Self {
+            // For >4 dimension of Unknown, we don't know how to handle it;
+            // we simply discard these extra dimensions.
+            Dimensions::Xyzm | Dimensions::Unknown(_) => Self {
                 x,
                 y,
-                z: None,
-                m: None,
+                z: coord.nth(2),
+                m: coord.nth(3),
             },
-            Dimensions::Unknown(_) => todo!(),
         }
     }
 
