@@ -16,7 +16,8 @@
   and deprecated the old spelling.
   - <https://github.com/georust/geo/pull/1447>
 - Update `ConcaveHull` algorithm with implementation of [mapbox/concaveman](https://github.com/mapbox/concaveman).
-  - BREAKING: The `concave_hull` method now requires a `length_threshold` parameter.
+  - BREAKING: The `concave_hull` method now has no `concavity` parameter.  
+  - Add `concave_hull_with_options` method which requires `ConcaveHullOptions` as a parameter with `concavity` and `length_threshold` options.
   - <https://github.com/georust/geo/pull/1442>
 
 ## 0.31.0 - 2025-09-01
