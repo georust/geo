@@ -8,6 +8,13 @@
 - Add DBSCAN clustering algorithm implementation
 - Add `distance_within` method with default impl for any geometry that implements `Distance`, with similar semantics to the PostGIS [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function
 - Add fast minimum 1D and 2D Euclidean distance algorithm for linearly separable geometries (#1424)
+- Add `ContainsProperly` trait to relate and as a standalone operation
+- Add k-means clustering algorithm
+- POSSIBLY BREAKING: `minimum_rotated_rect` is about 1.3-2x faster, but might return slightly different results.
+  - <https://github.com/georust/geo/pull/1446>
+- Renamed features `use-proj`, `use-serde` to simply `proj` and `serde` (removing the `use-` prefix)
+  and deprecated the old spelling.
+  - <https://github.com/georust/geo/pull/1447>
 
 ## 0.31.0 - 2025-09-01
 
@@ -50,7 +57,7 @@
 - BREAKING: Break up blanket implementation of `Intersects<LineString>` into specific traits
   - faster implementations for `Rect`, `Triangle`, `MultiPolygon`, `Polygon` intersects `LineString`
   - <https://github.com/georust/geo/pull/1379>
-- Added `Contains` implementation for all remaining geometries.  
+- Added `Contains` implementation for all remaining geometries.
 
 ## 0.30.0 - 2025-03-24
 

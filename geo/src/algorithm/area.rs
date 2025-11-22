@@ -17,26 +17,38 @@ where
         return T::zero();
     }
 
-    // Use a reasonable shift for the line-string coords
-    // to avoid numerical-errors when summing the
-    // determinants.
-    //
-    // Note: we can't use the `Centroid` trait as it
-    // requires `T: Float` and in fact computes area in the
-    // implementation. Another option is to use the average
-    // of the coordinates, but it is not fool-proof to
-    // divide by the length of the linestring (eg. a long
-    // line-string with T = u8)
-    let shift = linestring.0[0];
+    sum_line_determinants(&linestring.0)
+}
 
-    let mut tmp = T::zero();
-    for line in linestring.lines() {
-        use crate::MapCoords;
-        let line = line.map_coords(|c| c - shift);
-        tmp = tmp + line.determinant();
+/// Adds up the determinants of the lines between a series of `points` shifted by the first coordinate.
+///
+/// Each coordinate is shifted by subtracting the first coordinate,
+/// effectively translating the geometry so that the first coordinate becomes the origin.
+/// This helps to reduce numerical errors when summing the determinants for area calculations.
+///
+/// Note that we can't use the `Centroid` trait as it requires `T: Float` and in fact computes area in the
+/// implementation. Another option is to use the average of the coordinates, but it is not fool-proof to
+/// divide by the length of the linestring (eg. a long line-string with T = u8)
+fn sum_line_determinants<T: CoordNum>(points: &[Coord<T>]) -> T {
+    if points.len() <= 2 {
+        return T::zero();
     }
 
-    tmp
+    // NOTE: We can ignore the determinant of the first and last line (always zero after shifting)
+    let mut sum = T::zero();
+
+    let shift = points[0];
+    let mut prev = points[1] - shift;
+
+    for point in &points[2..] {
+        let shifted = *point - shift;
+        let line = Line::new(prev, shifted);
+
+        sum = sum + line.determinant();
+        prev = shifted;
+    }
+
+    sum
 }
 
 /// Signed and unsigned planar area of a geometry.
@@ -215,10 +227,7 @@ where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        self.to_lines()
-            .iter()
-            .fold(T::zero(), |total, line| total + line.determinant())
-            / (T::one() + T::one())
+        sum_line_determinants(&self.to_array()) / (T::one() + T::one())
     }
 
     fn unsigned_area(&self) -> T {
@@ -397,6 +406,47 @@ mod test {
         );
         // triangles are always ccw, thus positive
         assert_relative_eq!(triangle.signed_area(), 0.5);
+    }
+    #[test]
+    fn area_triangle_numerical_stability() {
+        let triangle = Triangle::<f64>::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.1, y: 10.0 },
+            coord! { x: 0.0, y: 20.0 },
+        );
+
+        let area = triangle.signed_area();
+
+        let shift = coord! { x: 1.5e8, y: 1.5e8 };
+
+        use crate::map_coords::MapCoords;
+        let triangle = triangle.map_coords(|c| c + shift);
+
+        let new_area = triangle.signed_area();
+        let err = (area - new_area).abs() / area;
+
+        assert!(err < 1e-2);
+    }
+    #[test]
+    fn area_triangle_same_as_polygon() {
+        let shift = coord! { x: 1.5e8, y: 1.5e8 };
+
+        use crate::map_coords::MapCoords;
+        let triangle = Triangle::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.1, y: 10.0 },
+            coord! { x: 0.0, y: 20.0 },
+        )
+        .map_coords(|c| c + shift);
+
+        let triangle_area: f64 = triangle.signed_area();
+
+        let polygon = triangle.to_polygon();
+        let polygon_area = polygon.signed_area();
+
+        let err = (polygon_area - triangle_area).abs() / polygon_area;
+
+        assert!(err < 1e-2);
     }
 
     #[test]

@@ -45,6 +45,9 @@ pub use concave_hull::ConcaveHull;
 pub mod contains;
 pub use contains::Contains;
 
+pub mod contains_properly;
+pub use contains_properly::ContainsProperly;
+
 /// Convert the type of a geometry’s coordinate value.
 pub mod convert;
 pub use convert::{Convert, TryConvert};
@@ -327,6 +330,10 @@ pub use outlier_detection::OutlierDetection;
 /// Cluster points using [DBSCAN](https://en.wikipedia.org/wiki/DBSCAN) (Density-Based Spatial Clustering of Applications with Noise)
 pub mod dbscan;
 pub use dbscan::Dbscan;
+
+/// Cluster points using [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering)
+pub mod kmeans;
+pub use kmeans::{KMeans, KMeansError, KMeansParams};
 
 /// Monotonic polygon subdivision
 pub mod monotone;

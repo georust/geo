@@ -8,6 +8,7 @@
 //! - Affine operations on geometries (scale, rotate, skew, translate)
 //! - Boolean operations on geometries (clip, union, difference, intersection, xor)
 //! - Buffer / offset operations on geometries
+//! - Clustering operations such as DBSCAN and _k_-means
 //! - Euclidean, as well as spherical, haversine and other non-planar length and distance calculations
 //! - Support for projecting and converting between coordinate reference systems using PROJ
 //! - IO using the `geojson` and `geozero` crates.
@@ -87,6 +88,7 @@
 //!
 //! - **[`OutlierDetection`]**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
 //! - **[`Dbscan`]**: Calculate point clusters using the DBSCAN algorithm
+//! - **[`KMeans`]**: Calculate point clusters using the k-means algorithm
 //!
 //! ## Simplification
 //!
@@ -202,10 +204,10 @@
 //!     - Enables [network grid] support for the [`proj` crate]
 //!     - After enabling this feature, [further configuration][proj crate file download] is required to use the network grid.
 //!     - ☐ Disabled by default
-//! - `use-proj`:
+//! - `proj`:
 //!     - Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
 //!     - ☐ Disabled by default
-//! - `use-serde`:
+//! - `serde`:
 //!     - Allows geometry types to be serialized and deserialized with [Serde]
 //!     - ☐ Disabled by default
 //! - `multithreading`:
@@ -246,7 +248,7 @@
 //! [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 //! [Serde]: https://serde.rs/
 
-#[cfg(feature = "use-serde")]
+#[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
 
@@ -388,6 +390,32 @@ impl_geo_num_for_int!(i32);
 impl_geo_num_for_int!(i64);
 impl_geo_num_for_int!(i128);
 impl_geo_num_for_int!(isize);
+
+// Some gymnastics to help migrate people off our old feature flag naming conventions
+#[allow(unused)]
+mod deprecated_feature_flags {
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.31.1",
+            note = "The `use-serde` feature has been renamed to simply `serde`. Use the `serde` feature instead."
+        )
+    )]
+    pub struct UseSerde;
+
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.31.1",
+            note = "The `use-proj` feature has been renamed to simply `proj`. Use the `proj` feature instead."
+        )
+    )]
+    pub struct UseProj;
+}
+#[cfg(feature = "use-proj")]
+pub use deprecated_feature_flags::UseProj;
+#[cfg(feature = "use-serde")]
+pub use deprecated_feature_flags::UseSerde;
 
 #[cfg(test)]
 mod tests {

@@ -17,10 +17,7 @@ use std::{
 };
 
 #[cfg(test)]
-#[path = "../benches/utils/bops.rs"]
-pub mod bops_utils;
-
-use bops_utils::*;
+use geo_benches::utils::bops::*;
 
 pub(super) fn init_log() {
     use pretty_env_logger::env_logger;

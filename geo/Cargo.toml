@@ -14,16 +14,21 @@ categories = ["science::geo"]
 
 [features]
 default = ["earcutr", "spade", "multithreading"]
-use-proj = ["proj"]
-proj-network = ["use-proj", "proj/network"]
-use-serde = ["serde", "geo-types/serde"]
+proj-network = ["proj", "proj/network"]
+serde = ["dep:serde", "geo-types/serde"]
 multithreading = ["i_overlay/allow_multithreading", "geo-types/multithreading"]
+
+# Deprecated feature flags with "use-" prefix from the days before `dep:`
+use-proj = ["proj"]
+use-serde = ["serde"]
+# Only used to make `cargo clippy --all-features` happy
+__allow_deprecated_features = []
 
 [dependencies]
 earcutr = { version = "0.4.2", optional = true }
 spade = { version = "2.10.0", optional = true }
 float_next_after = "1.0.0"
-geo-types = { version = "0.7.17", features = ["approx", "use-rstar_0_12"] }
+geo-types = { version = "0.7.17", features = ["approx", "rstar_0_12"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
 log = "0.4.11"
 num-traits = "0.2"
@@ -33,105 +38,11 @@ rstar = "0.12.0"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 i_overlay = { version = "4.0.0, < 4.1.0", default-features = false }
 sif-itree = "0.4.0"
+rand = "0.8.0"
 
 [dev-dependencies]
 approx = ">= 0.4.0, < 0.6.0"
-criterion = { version = "0.4", features = ["html_reports"] }
 geo-test-fixtures = { path = "../geo-test-fixtures" }
 jts-test-runner = { path = "../jts-test-runner" }
 pretty_env_logger = "0.4"
-rand = "0.8.0"
-rand_distr = "0.4.3"
 wkt = "0.14.0"
-
-[[bench]]
-name = "area"
-harness = false
-
-[[bench]]
-name = "coordinate_position"
-harness = false
-
-[[bench]]
-name = "contains"
-harness = false
-
-[[bench]]
-name = "convex_hull"
-harness = false
-
-[[bench]]
-name = "concave_hull"
-harness = false
-
-[[bench]]
-name = "intersection"
-harness = false
-
-[[bench]]
-name = "vincenty_distance"
-harness = false
-
-[[bench]]
-name = "geodesic_distance"
-harness = false
-
-[[bench]]
-name = "extremes"
-harness = false
-
-[[bench]]
-name = "euclidean_distance"
-harness = false
-
-[[bench]]
-name = "prepared_geometry"
-harness = false
-
-[[bench]]
-name = "rotate"
-harness = false
-
-[[bench]]
-name = "relate"
-harness = false
-
-[[bench]]
-name = "simplify"
-harness = false
-
-[[bench]]
-name = "simplifyvw"
-harness = false
-
-[[bench]]
-name = "frechet_distance"
-harness = false
-
-[[bench]]
-name = "rand_line_crossings"
-harness = false
-
-[[bench]]
-name = "winding_order"
-harness = false
-
-[[bench]]
-name = "monotone_subdiv"
-harness = false
-
-[[bench]]
-name = "triangulate"
-harness = false
-
-[[bench]]
-name = "stitch"
-harness = false
-
-[[bench]]
-name = "sweep_line_intersection"
-harness = false
-
-[[bench]]
-name = "dbscan"
-harness = false
