@@ -1,8 +1,9 @@
-use criterion::{Criterion, criterion_group, criterion_main};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use geo::PreparedGeometry;
 use geo::algorithm::{ContainsProperly, Convert, Relate};
-use geo::geometry::*;
 use geo::wkt;
+use geo::{coord, geometry::*};
+use std::iter::once;
 
 fn compare_simple_in_complex(c: &mut Criterion) {
     c.bench_function(
@@ -138,5 +139,60 @@ fn compare_poly_in_poly(c: &mut Criterion) {
     });
 }
 
+fn polygon_polygon_scaling(c: &mut Criterion) {
+    fn make_outer_poly(n: i32) -> Polygon<f64> {
+        let pts: LineString<f64> = LineString::new(
+            once(coord! {x:0,y:0})
+                .chain((1..n).map(|i: i32| coord! {x:i*5,y:5*(1+(1+i%2))}))
+                .chain(once(coord! {x:n,y:0}))
+                .collect(),
+        )
+        .convert();
+        Polygon::<f64>::new(pts, vec![])
+    }
+    fn make_inner_poly(n: i32) -> Polygon<f64> {
+        let pts: LineString<f64> = LineString::new(
+            once(coord! {x:1,y:1})
+                .chain((1..n).map(|i: i32| coord! {x:i,y:(1+i%2)}))
+                .chain(once(coord! {x:n-1,y:0}))
+                .collect(),
+        )
+        .convert();
+        Polygon::<f64>::new(pts, vec![])
+    }
+
+    {
+        // create two polygons, both of  of n+2 sides and no holes
+        let mut group = c.benchmark_group("contains_properly polygon polygon scaling");
+
+        // trait is faster for small polygons, but relate overtakes from around 700*700 boundary segment checks
+        for i in [10, 100, 200, 300, 400, 500, 600, 700, 800] {
+            group.throughput(Throughput::Elements(i as u64));
+
+            let inner_poly = make_inner_poly(i);
+            let outer_poly = make_outer_poly(i);
+
+            group.bench_with_input(
+                BenchmarkId::new("trait", i),
+                &(&outer_poly, &inner_poly),
+                |bencher, &(a, b)| {
+                    bencher.iter(|| a.contains_properly(b));
+                },
+            );
+
+            group.bench_with_input(
+                BenchmarkId::new("relate", i),
+                &(&outer_poly, &inner_poly),
+                |bencher, &(a, b)| {
+                    bencher.iter(|| a.relate(b).is_contains_properly());
+                },
+            );
+        }
+        group.finish();
+    }
+}
+
 criterion_group!(benches, compare_simple_in_complex, compare_poly_in_poly,);
-criterion_main!(benches);
+criterion_group!(benches_scaling, polygon_polygon_scaling);
+
+criterion_main!(benches, benches_scaling);

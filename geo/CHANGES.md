@@ -9,6 +9,8 @@
 - Add `distance_within` method with default impl for any geometry that implements `Distance`, with similar semantics to the PostGIS [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function
 - Add fast minimum 1D and 2D Euclidean distance algorithm for linearly separable geometries (#1424)
 - Add `ContainsProperly` trait to relate and as a standalone operation
+  - custom implementations for `Polygon` and `MultiPolygon`, faster than `Contains` until about 650 vertices in each polygon
+  - <https://github.com/georust/geo/pull/1457>
 - Add k-means clustering algorithm
 - POSSIBLY BREAKING: `minimum_rotated_rect` is about 1.3-2x faster, but might return slightly different results.
   - <https://github.com/georust/geo/pull/1446>
