@@ -70,7 +70,7 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: rustup component add rustfmt clippy
       - run: cargo fmt --all -- --check
@@ -91,7 +91,7 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
@@ -113,7 +113,7 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
@@ -134,7 +134,7 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets
       - run: cargo test
@@ -154,7 +154,7 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets
 
@@ -170,7 +170,7 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: cargo build --bins
 
@@ -183,6 +183,6 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
