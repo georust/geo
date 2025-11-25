@@ -5,6 +5,8 @@
 - Renamed features `use-rstar`, `use-rstar-0_8`, etc. to simply `rstar`, `rstar-0_8`, etc. (removing the `use-` prefix)
   and deprecated the old spelling.
   - <https://github.com/georust/geo/pull/1447>
+- You can now serialize `rstar::AABB<Point>` and `rstar::AABB<Coord>` when enabling the `rstar` and `serde` features.
+  - <https://github.com/georust/geo/pull/1450>
 
 ## 0.7.17 - 2025-07-25
 
