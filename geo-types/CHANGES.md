@@ -1,6 +1,6 @@
 # Changes
 
-## UNRELEASED
+## 0.7.18 - 2025-12-01
 
 - Renamed features `use-rstar`, `use-rstar-0_8`, etc. to simply `rstar`, `rstar-0_8`, etc. (removing the `use-` prefix)
   and deprecated the old spelling.
