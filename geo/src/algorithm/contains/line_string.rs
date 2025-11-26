@@ -1,5 +1,6 @@
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::algorithm::kernels::Kernel;
+use crate::dimensions::Dimensions;
 use crate::geometry::*;
 use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions, Intersects, Orientation};
 
@@ -124,7 +125,18 @@ where
         if self.is_empty() || rhs.is_empty() {
             return false;
         }
-        rhs.lines().all(|l| self.contains(&l))
+
+        // handle degenerate linestring case
+        if rhs.dimensions() == Dimensions::ZeroDimensional {
+            return self.contains(&rhs.0[0]);
+        }
+
+        // filter out zero-length segments
+        // it is known from != Dimensions::ZeroDimensional && !self.is_empty()
+        // that there must be at least one segment with non-zero length
+        rhs.lines()
+            .filter(|l| l.start != l.end)
+            .all(|l| self.contains(&l))
     }
 }
 
@@ -211,6 +223,33 @@ mod test {
     use crate::{Contains, Relate};
     use crate::{Convert, wkt};
     use crate::{Line, LineString, Validation};
+
+    #[test]
+    fn linestring_component_with_zero_length() {
+        let ls: LineString<f64> = wkt! {LINESTRING(0 0, 2 2)}.convert();
+
+        // these are valid geometries
+        let ls_start: LineString<f64> = wkt! {LINESTRING(0 0, 0 0,0 0, 1 1)}.convert();
+        let ls_end: LineString<f64> = wkt! {LINESTRING(0 0, 1 1,1 1,1 1)}.convert();
+        assert!(ls_start.is_valid());
+        assert!(ls_end.is_valid());
+
+        // these are invalid geometries but we handle degenerate geometries as points
+        let degen_start: LineString<f64> = wkt! {LINESTRING(0 0, 0 0)}.convert();
+        let degen_end: LineString<f64> = wkt! {LINESTRING(2 2, 2 2)}.convert();
+        assert!(!degen_start.is_valid());
+        assert!(!degen_end.is_valid());
+
+        assert!(ls.relate(&ls_start).is_contains());
+        assert!(ls.contains(&ls_start));
+        assert!(ls.relate(&ls_end).is_contains());
+        assert!(ls.contains(&ls_end));
+
+        assert!(!ls.contains(&degen_start));
+        assert!(!ls.relate(&degen_start).is_contains());
+        assert!(!ls.contains(&degen_end));
+        assert!(!ls.relate(&degen_end).is_contains());
+    }
 
     #[test]
     fn triangles() {
