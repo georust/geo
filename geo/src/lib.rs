@@ -115,6 +115,7 @@
 //!
 //! - **[`Contains`]**: Calculate if a geometry contains another
 //!   geometry
+//! - **[`Covers`]**: Calculate if a geometry covers another geometry
 //! - **[`CoordinatePosition`]**: Calculate
 //!   the position of a coordinate relative to a geometry
 //! - **[`HasDimensions`]**: Determine the dimensions of a geometry

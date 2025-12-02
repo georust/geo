@@ -56,6 +56,11 @@ path = "src/contains_properly.rs"
 harness = false
 
 [[bench]]
+name = "covers"
+path = "src/covers.rs"
+harness = false
+
+[[bench]]
 name = "convex_hull"
 path = "src/convex_hull.rs"
 harness = false
