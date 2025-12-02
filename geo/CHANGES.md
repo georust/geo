@@ -21,6 +21,9 @@
   - BREAKING: The `concave_hull` method now has no `concavity` parameter.  
   - Add `concave_hull_with_options` method which requires `ConcaveHullOptions` as a parameter with `concavity` and `length_threshold` options.
   - <https://github.com/georust/geo/pull/1442>
+- Add `Covers` trait to relate and as a standalone operation
+  - custom implementations for checking Geometries covered by `Rect`, `Triangle`, `Line`, `Point`, `Coord`
+  - custom implementations for checking Geometries covering `Point` and `MultiPoint`
 
 ## 0.31.0 - 2025-09-01
 

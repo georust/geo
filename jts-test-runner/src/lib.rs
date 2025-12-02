@@ -136,7 +136,7 @@ mod tests {
         //
         // We'll need to increase this number as more tests are added, but it should never be
         // decreased.
-        let expected_test_count: usize = 8735;
+        let expected_test_count: usize = 9307;
         let actual_test_count = runner.unexpected_failures().len() + runner.successes().len();
         match actual_test_count.cmp(&expected_test_count) {
             Ordering::Less => {
