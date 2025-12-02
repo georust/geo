@@ -39,7 +39,7 @@
 ///
 /// Much of this trait is currently implemented by delegating to the [`Relate`](crate::algorithm::Relate) trait - see
 /// [`IntersectionMatrix::is_contains_properly`](crate::algorithm::relate::IntersectionMatrix::is_contains_properly);
-/// [`ContainsProperly`] is faster when checking between `Polygon` and `MultiPolygon` when inputs are smaller than about 650 vertices, otherwise use `Relate.is_contains_properly`
+/// `ContainsProperly` is faster when checking between `Polygon` and `MultiPolygon` when inputs are smaller than about 650 vertices, otherwise use [`Relate::relate().is_contains_properly`](crate::algorithm::relate::IntersectionMatrix::is_contains_properly).
 pub trait ContainsProperly<Rhs = Self> {
     fn contains_properly(&self, rhs: &Rhs) -> bool;
 }

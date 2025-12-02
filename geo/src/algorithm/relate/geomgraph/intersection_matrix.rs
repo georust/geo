@@ -1,12 +1,13 @@
 use crate::{
-    GeoNum, GeometryCow, HasDimensions, coordinate_position::CoordPos, dimensions::Dimensions,
+    ContainsProperly, GeoNum, GeometryCow, HasDimensions, coordinate_position::CoordPos,
+    dimensions::Dimensions,
 };
 
 use crate::geometry_cow::GeometryCow::Point;
 use crate::relate::geomgraph::intersection_matrix::dimension_matcher::DimensionMatcher;
 use std::str::FromStr;
 
-/// Models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
+/// Output from [`Relate::relate`](trait.Relate.html) which models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
 ///
 /// DE-9IM matrix values (such as "212FF1FF2") specify the topological relationship between
 /// two [Geometries](struct.Geometry.html).
@@ -429,8 +430,7 @@ impl IntersectionMatrix {
     ///
     /// # Performance
     ///
-    /// [`ContainsProperly`](crate::algorithm::ContainsProperly) may be faster than this method for
-    /// some `Polygon` comparisons.
+    /// [`ContainsProperly`] is faster when checking between `Polygon` and `MultiPolygon` when inputs are smaller than about 650 vertices, otherwise use `IntersectionMatrix::is_contains_properly`
     #[allow(clippy::nonminimal_bool)]
     pub fn is_contains_properly(&self) -> bool {
         //  [T**FF*FF*]
