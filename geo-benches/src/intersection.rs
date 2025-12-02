@@ -2,6 +2,46 @@ use criterion::{Criterion, criterion_group, criterion_main};
 use geo::intersects::Intersects;
 use geo::{MultiPolygon, Triangle};
 
+fn line_rect_intersection(c: &mut Criterion) {
+    use geo::{Line, Rect, coord};
+
+    c.bench_function("Line intersects Rect (end intersect)", |bencher| {
+        let line = Line::new(coord! {x:0., y:0.}, coord! {x:10., y:10.});
+        let rect = Rect::new(coord! {x:0., y:0.}, coord! {x:10., y:10.});
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&line).intersects(criterion::black_box(&rect)));
+        });
+    });
+
+    c.bench_function("Line intersects Rect cross", |bencher| {
+        let line = Line::new(coord! {x:-1., y:5.}, coord! {x:11., y:16.});
+        let rect = Rect::new(coord! {x:0., y:0.}, coord! {x:10., y:10.});
+
+        bencher.iter(|| {
+            assert!(criterion::black_box(&line).intersects(criterion::black_box(&rect)));
+        });
+    });
+
+    c.bench_function("Line disjoint Rect bbox disjoint", |bencher| {
+        let line = Line::new(coord! {x:0., y:0.}, coord! {x:10., y:10.});
+        let rect = Rect::new(coord! {x:11., y:11.}, coord! {x:12., y:12.});
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&line).intersects(criterion::black_box(&rect)));
+        });
+    });
+
+    c.bench_function("Line disjoint Rect bbox overlap", |bencher| {
+        let line = Line::new(coord! {x:0., y:0.}, coord! {x:10., y:10.});
+        let rect = Rect::new(coord! {x:6., y:4.}, coord! {x:10., y:0.});
+
+        bencher.iter(|| {
+            assert!(!criterion::black_box(&line).intersects(criterion::black_box(&rect)));
+        });
+    });
+}
+
 fn multi_polygon_intersection(c: &mut Criterion) {
     let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
     let zone_polygons: MultiPolygon = geo_test_fixtures::nl_zones();
@@ -253,8 +293,10 @@ criterion_group! {
 }
 
 criterion_group! { bench_linestring_poly,linestring_polygon_intersection}
+criterion_group! { bench_line_rect_intersection,line_rect_intersection}
 
 criterion_main!(
+    bench_line_rect_intersection,
     bench_linestring_poly,
     bench_multi_polygons,
     bench_point_rect,
