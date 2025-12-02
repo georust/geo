@@ -12,7 +12,7 @@ use geo::algorithm::{
     BooleanOps, Contains, ContainsProperly, Covers, HasDimensions, Intersects, Relate, Within,
 };
 use geo::geometry::*;
-use geo::GeoNum;
+use geo::{ConvexHull, GeoNum};
 
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
@@ -292,60 +292,20 @@ impl TestRunner {
                     }
                 }
                 Operation::ConvexHull { subject, expected } => {
-                    use geo::prelude::ConvexHull;
-
-                    let actual_polygon = match subject {
-                        Geometry::MultiPoint(g) => g.convex_hull(),
-                        Geometry::Point(_g) => {
-                            debug!("ConvexHull not implemented for this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                        Geometry::Line(_g) => {
-                            debug!("ConvexHull not implemented for this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                        Geometry::LineString(_g) => {
-                            debug!("ConvexHull not implemented for this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                        Geometry::Polygon(g) => g.convex_hull(),
-                        Geometry::MultiLineString(_g) => {
-                            debug!("ConvexHull not implemented for this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                        Geometry::MultiPolygon(_g) => {
-                            debug!("ConvexHull not implemented for this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                        Geometry::GeometryCollection(_g) => {
-                            debug!("ConvexHull not implemented for this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                        Geometry::Rect(_g) => {
-                            debug!("ConvexHull not implemented for this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                        Geometry::Triangle(_g) => {
-                            debug!("ConvexHull doesn't support this geometry (yet?)");
-                            self.unsupported.push(test_case);
-                            continue;
-                        }
-                    };
+                    let actual_polygon = subject.convex_hull();
 
                     // JTS returns a variety of Geometry types depending on the convex hull
                     // whereas geo *always* returns a polygon.
-                    let expected = match expected {
-                        Geometry::LineString(ext) => Polygon::new(ext.clone(), vec![]),
+                    let expected_polygon = match expected {
+                        // Collinear
+                        Geometry::LineString(line) => Polygon::new(line.clone(), vec![]),
+                        // Single point
+                        Geometry::Point(p) => Polygon::new(LineString::new(vec![p.0, p.0]), vec![]),
+                        // Everything else
                         Geometry::Polygon(p) => p.clone(),
                         _ => {
-                            let error_description = format!("expected result for convex hull is not a polygon or a linestring: {expected:?}" );
+                            let error_description =
+                                format!("unhandled type of result for convex_hull: {expected:?}");
                             self.add_failure(TestFailure {
                                 test_case,
                                 error_description,
@@ -353,13 +313,16 @@ impl TestRunner {
                             continue;
                         }
                     };
-                    if actual_polygon.is_rotated_eq(&expected, |c1, c2| relative_eq!(c1, c2)) {
+                    assert_eq!(expected.dimensions(), actual_polygon.dimensions());
+                    if actual_polygon
+                        .is_rotated_eq(&expected_polygon, |c1, c2| relative_eq!(c1, c2))
+                    {
                         debug!("ConvexHull success: actual == expected");
                         self.successes.push(test_case);
                     } else {
                         debug!("ConvexHull failure: actual != expected");
                         let error_description =
-                            format!("expected {expected:?}, actual: {actual_polygon:?}");
+                            format!("expected {expected_polygon:?}, actual: {actual_polygon:?}");
                         self.add_failure(TestFailure {
                             test_case,
                             error_description,
