@@ -9,16 +9,177 @@ use std::str::FromStr;
 
 /// Output from [`Relate::relate`](trait.Relate.html) which models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
 ///
-/// DE-9IM matrix values (such as "212FF1FF2") specify the topological relationship between
-/// two [Geometries](struct.Geometry.html).
+/// Represented as 3x3 matrices, they express the topological relationships between the Interior, Boundary, and Exterior of two geometries.
 ///
-/// DE-9IM matrices are 3x3 matrices that represent the topological locations
-/// that occur in a geometry (Interior, Boundary, Exterior).
+/// Consider these partially overlapping geometries:
+/// ```rust
+/// # use geo::wkt;
+/// #
+/// let a = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0., 0. 0.)));
+/// let b = wkt!(LINESTRING(2. 2.,6. 2.));
+/// ```
 ///
-/// The indices are provided by the enum cases
-/// [CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside](CoordPos).
+/// <svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 8 6" width="100%" height="200" font-size="1px">
+///   <!-- blue square -->
+///   <rect x="0" y="0" width="4" height="4" fill="#8888FF" />
+///   <text x="0.25" y="1">A</text>
+///   <text x="5" y="1.8">B</text>
+///   <!-- yellow line sticking into the square -->
+///   <line x1="2" y1="2" x2="6" y2="2" stroke="#EEEE00" stroke-width="0.2" />
+/// </svg>
 ///
-/// The matrix entries represent the [Dimensions](enum.Dimension.html) of each intersection.
+/// Their intersection matrix looks like this:
+///
+/// ```rust
+/// # use geo::wkt;
+/// # use geo::relate::{Relate, IntersectionMatrix};
+/// # use std::str::FromStr;
+/// #
+/// # let a = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0., 0. 0.)));
+/// # let b = wkt!(LINESTRING(2. 2.,6. 2.));
+/// let intersection_matrix = a.relate(&b);
+/// ```
+///
+/// |     I.M.       | Interior B | Boundary B | Exterior B |
+/// |----------------|------------|------------|------------|
+/// | **Interior A** |  1 (line)  |  0 (point) |  2 (area)  |
+/// | **Boundary A** |  0 (point) |  empty     |  1 (line)  |
+/// | **Exterior A** |  1 (line)  |  0 (point) |  2 (area)  |
+///
+/// The indices of the matrix are expressed as the enum cases [CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside](CoordPos).
+/// The entries represent the [Dimensions](enum.Dimension.html) of the intersection (if any) at those positions.
+///
+/// # Examples
+///
+/// <svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 8 6" width="100%" height="200" font-size="1px">
+///   <!-- blue square -->
+///   <rect x="0" y="0" width="4" height="4" fill="#8888FF" />
+///   <text x="0.25" y="1">A</text>
+///   <text x="5" y="1.8">B</text>
+///   <!-- yellow line sticking into the square -->
+///   <line x1="2" y1="2" x2="6" y2="2" stroke="#FFFF11" stroke-width="0.2" />
+///
+///   <!-- green line showing overlap -->
+///   <line x1="2" y1="2" x2="4" y2="2" stroke="#006600" stroke-width="0.2" />
+/// </svg>
+///
+/// ```rust
+/// # use geo::wkt;
+/// # use geo::relate::{Relate, IntersectionMatrix};
+/// # use geo::coordinate_position::CoordPos;
+/// # use geo::dimensions::Dimensions;
+/// #
+/// # let a = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0., 0. 0.)));
+/// # let b = wkt!(LINESTRING(2. 2.,6. 2.));
+/// # let intersection_matrix = a.relate(&b);
+/// let intersection = intersection_matrix.get(
+///     // The interior of A...
+///     CoordPos::Inside,
+///     // ...and the interior of B...
+///     CoordPos::Inside
+/// );
+/// // ...intersect along a line.
+/// assert_eq!(intersection, Dimensions::OneDimensional); // lines have one dimension
+/// ```
+///
+/// <svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 8 6" width="100%" height="200" font-size="1px">
+///   <!-- blue square -->
+///   <rect x="0" y="0" width="4" height="4" fill="#8888FF" />
+///   <text x="0.25" y="1">A</text>
+///   <text x="5" y="1.8">B</text>
+///   <!-- yellow line sticking into the square -->
+///   <line x1="2" y1="2" x2="6" y2="2" stroke="#EEEE00" stroke-width="0.2" />
+///
+///   <!-- green dot showing overlap -->
+///   <circle cx="4" cy="2" r="0.3" stroke-width="0" fill="#006600" />
+/// </svg>
+///
+/// ```rust
+/// # use geo::wkt;
+/// # use geo::relate::{Relate, IntersectionMatrix};
+/// # use geo::coordinate_position::CoordPos;
+/// # use geo::dimensions::Dimensions;
+/// #
+/// # let a = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0., 0. 0.)));
+/// # let b = wkt!(LINESTRING(2. 2.,6. 2.));
+/// # let intersection_matrix = a.relate(&b);
+/// let intersection = intersection_matrix.get(
+///     // The boundary of A...
+///     CoordPos::OnBoundary,
+///     // ...and the interior of B...
+///     CoordPos::Inside
+/// );
+/// // ...intersect at a point.
+/// assert_eq!(intersection, Dimensions::ZeroDimensional); // points have zero dimension
+/// ```
+///
+/// <svg xmlns="http://www.w3.org/2000/svg" viewBox="-1 -1 8 6" width="100%" height="200" font-size="1px">
+///   <!-- blue square -->
+///   <rect x="0" y="0" width="4" height="4" fill="#8888FF" stroke-width="0.1" stroke="black" stroke-dasharray="0.15" />
+///   <text x="0.25" y="1">A</text>
+///   <text x="5" y="1.8">B</text>
+///   <!-- yellow line sticking into the square -->
+///   <line x1="2" y1="2" x2="6" y2="2" stroke="#EEEE00" stroke-width="0.2" />
+///   <circle cx="2" cy="2" r="0.3" stroke-width="0.1" stroke="black" stroke-dasharray="0.15" fill="none" />
+///   <circle cx="6" cy="2" r="0.3" stroke-width="0.1" stroke="black" stroke-dasharray="0.15" fill="none" />
+/// </svg>
+///
+/// ```rust
+/// # use geo::wkt;
+/// # use geo::relate::{Relate, IntersectionMatrix};
+/// # use geo::coordinate_position::CoordPos;
+/// # use geo::dimensions::Dimensions;
+/// #
+/// # let a = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0., 0. 0.)));
+/// # let b = wkt!(LINESTRING(2. 2.,6. 2.));
+/// # let intersection_matrix = a.relate(&b);
+/// let intersection = intersection_matrix.get(
+///    // The boundary of A...
+///    CoordPos::OnBoundary,
+///    // ...and the boundary of B...
+///    CoordPos::OnBoundary
+/// );
+/// // ...do not intersect.
+/// assert_eq!(intersection, Dimensions::Empty)
+/// ```
+///
+/// ## Predicates
+///
+/// Computing an `IntersectionMatrix` can be expensive, but once you have it, checking predicates is essentially free.
+///
+/// ```rust
+/// use geo::wkt;
+/// use geo::relate::Relate;
+///
+/// let a = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0., 0. 0.)));
+/// let b = wkt!(LINESTRING(2. 2.,6. 2.));
+/// // potentially expensive
+/// let intersection_matrix = a.relate(&b);
+/// // fast!
+/// assert!(intersection_matrix.is_intersects());
+/// // fast!
+/// assert!(intersection_matrix.is_crosses());
+/// // fast!
+/// assert!(!intersection_matrix.is_contains());
+/// ```
+///
+/// ## String representation
+///
+/// DE-9IM matrix values (such as `1020F1102`) are a concise way to specify the topological relationship between two geometries.
+///
+/// ```rust
+/// use geo::wkt;
+/// use geo::relate::{Relate, IntersectionMatrix};
+/// use std::str::FromStr;
+///
+/// let a = wkt!(POLYGON((0. 0.,0. 4.,4. 4.,4. 0., 0. 0.)));
+/// let b = wkt!(LINESTRING(2. 2.,6. 2.));
+/// let intersection_matrix = a.relate(&b);
+/// let expected = IntersectionMatrix::from_str("1020F1102").expect("valid DE-9IM specification");
+/// assert_eq!(intersection_matrix, expected)
+/// ```
+///
+/// # References
 ///
 /// For a description of the DE-9IM and the spatial predicates derived from it,
 /// see the following references:
