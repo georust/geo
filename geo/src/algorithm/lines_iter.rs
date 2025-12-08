@@ -71,6 +71,9 @@ impl<'a, T: CoordNum> LineStringIter<'a, T> {
     fn new(line_string: &'a LineString<T>) -> Self {
         Self(line_string.0.windows(2))
     }
+    pub(crate) fn new_from_coords(line_string: &'a [Coord<T>]) -> Self {
+        Self(line_string.windows(2))
+    }
 }
 
 impl<T: CoordNum> Iterator for LineStringIter<'_, T> {

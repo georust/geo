@@ -12,6 +12,10 @@ pub(crate) use sweep::SimpleSweep;
 mod builder;
 pub use builder::monotone_subdivision;
 
+pub(crate) mod chain;
+pub use chain::MonotoneChain;
+pub use chain::MonotoneChainIter;
+
 /// A multi-polygon represented as a collection of (disjoint) monotone polygons.
 ///
 /// This structure is optimized for point-in-polygon queries, and is typically

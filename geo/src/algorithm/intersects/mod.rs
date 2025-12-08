@@ -109,7 +109,7 @@ where
 }
 
 // A cheap bbox check to see if we can skip the more expensive intersection computation
-fn has_disjoint_bboxes<T, A, B>(a: &A, b: &B) -> bool
+pub(crate) fn has_disjoint_bboxes<T, A, B>(a: &A, b: &B) -> bool
 where
     T: CoordNum,
     A: BoundingRect<T>,
