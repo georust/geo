@@ -1,3 +1,4 @@
+use geo::monotone_chain::MonotoneChainGeometry;
 use std::collections::BTreeSet;
 use std::iter::once;
 
@@ -336,8 +337,26 @@ impl TestRunner {
                 } => {
                     let direct_actual = subject.intersects(clip);
                     let relate_actual = subject.relate(clip).is_intersects();
+                    let monotone_actual = {
+                        let subject_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(subject);
+                        let clip_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(clip);
+                        match (subject_mono, clip_mono) {
+                            (Ok(subject), Ok(clip)) => subject.intersects(&clip),
+                            (Ok(subject), Err(_)) => subject.intersects(clip),
+                            (Err(_), Ok(clip)) => subject.intersects(&clip),
+                            (Err(_), Err(_)) => subject.intersects(clip),
+                        }
+                    };
 
-                    if direct_actual != *expected {
+                    if monotone_actual != *expected {
+                        debug!("Intersects failure: monotone_actual != expected");
+                        let error_description =
+                            format!("expected {expected:?}, monotone_actual: {monotone_actual:?}",);
+                        self.add_failure(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else if direct_actual != *expected {
                         debug!("Intersects failure: direct_actual != expected");
                         let error_description =
                             format!("expected {expected:?}, direct_actual: {direct_actual:?}",);
@@ -395,9 +414,38 @@ impl TestRunner {
                             Box::new(|a: &Geometry, b: &Geometry| a.intersects(b)),
                         ),
                         (
+                            "intersects monotone",
+                            Box::new(IntersectionMatrix::is_intersects),
+                            Box::new(|a: &Geometry, b: &Geometry| {
+                                let a_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(a);
+                                let b_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(b);
+                                match (a_mono, b_mono) {
+                                    (Ok(a), Ok(b)) => a.intersects(&b),
+                                    (Ok(a), Err(_)) => a.intersects(b),
+                                    (Err(_), Ok(b)) => a.intersects(&b),
+                                    (Err(_), Err(_)) => a.intersects(b),
+                                }
+                            }),
+                        ),
+                        (
                             "contains_properly",
                             Box::new(IntersectionMatrix::is_contains_properly),
                             Box::new(|a: &Geometry, b: &Geometry| a.contains_properly(b)),
+                        ),
+                        (
+                            "contains_properly monotone",
+                            Box::new(IntersectionMatrix::is_contains_properly),
+                            Box::new(|a: &Geometry, b: &Geometry| {
+                                let a_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(a);
+                                let b_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(b);
+                                // 256 test cases here
+                                match (a_mono, b_mono) {
+                                    (Ok(a), Ok(b)) => a.contains_properly(&b),
+                                    (Ok(a), Err(_)) => a.contains_properly(b),
+                                    (Err(_), Ok(b)) => a.contains_properly(&b),
+                                    (Err(_), Err(_)) => a.contains_properly(b),
+                                }
+                            }),
                         ),
                         // add more here as required
                     ];

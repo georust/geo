@@ -1,5 +1,7 @@
+use crate::monotone_chain::geometry::*;
 use crate::{
-    Coord, CoordNum, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect, Triangle,
+    Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Polygon, Rect,
+    Triangle,
 };
 use core::slice;
 use std::fmt::Debug;
@@ -146,6 +148,41 @@ impl<'a, T: CoordNum + 'a> LinesIter<'a> for Triangle<T> {
     }
 }
 
+impl<'a: 'caller, 'caller, T: GeoNum> LinesIter<'caller> for MonotoneChainLineString<'a, T> {
+    type Scalar = T;
+    type Iter = LineStringIter<'caller, Self::Scalar>;
+
+    fn lines_iter(&'caller self) -> Self::Iter {
+        self.geometry().lines_iter()
+    }
+}
+
+impl<'a: 'caller, 'caller, T: GeoNum> LinesIter<'caller> for MonotoneChainMultiLineString<'a, T> {
+    type Scalar = T;
+    type Iter = MultiLineStringIter<'a, Self::Scalar>;
+
+    fn lines_iter(&'caller self) -> Self::Iter {
+        self.geometry().lines_iter()
+    }
+}
+
+impl<'a: 'caller, 'caller, T: GeoNum> LinesIter<'caller> for MonotoneChainPolygon<'a, T> {
+    type Scalar = T;
+    type Iter = PolygonIter<'a, Self::Scalar>;
+
+    fn lines_iter(&'caller self) -> Self::Iter {
+        self.geometry().lines_iter()
+    }
+}
+
+impl<'a: 'caller, 'caller, T: GeoNum> LinesIter<'caller> for MonotoneChainMultiPolygon<'a, T> {
+    type Scalar = T;
+    type Iter = MultiPolygonIter<'a, Self::Scalar>;
+
+    fn lines_iter(&'caller self) -> Self::Iter {
+        self.geometry().lines_iter()
+    }
+}
 /// Utility to transform `Iterator<LinesIter>` into `Iterator<Iterator<Line>>`.
 #[derive(Debug)]
 pub struct MapLinesIter<'a, Iter1: Iterator<Item = &'a Iter2>, Iter2: 'a + LinesIter<'a>>(Iter1);
