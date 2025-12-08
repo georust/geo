@@ -125,9 +125,9 @@ mod tests {
 
     #[test]
     fn test_exhaustive_compile_test() {
-         use geo_types::*;
+        use geo_types::*;
 
-         // data
+        // data
         let c = Coord { x: 0., y: 0. };
         let pt: Point = Point::new(0., 0.);
         let ls = line_string![(0., 0.).into(), (1., 1.).into()];
@@ -146,9 +146,9 @@ mod tests {
         let multi_point = MultiPoint::new(vec![pt]);
         let multi_poly = MultiPolygon::new(vec![poly.clone()]);
 
-        let mc:MonotoneChain<f64> = (&ls).into();
+        let mc: MonotoneChain<f64> = (&ls).into();
 
-         // forwards
+        // forwards
         let _ = mc.intersects(&c);
         let _ = mc.intersects(&pt);
         let _ = mc.intersects(&multi_point);
@@ -164,7 +164,7 @@ mod tests {
 
         let _ = mc.intersects(&geom);
         let _ = mc.intersects(&gc);
-        
+
         // backwards
         let _ = c.intersects(&mc);
         let _ = pt.intersects(&mc);
@@ -181,6 +181,5 @@ mod tests {
 
         let _ = geom.intersects(&mc);
         let _ = gc.intersects(&mc);
-
     }
 }
