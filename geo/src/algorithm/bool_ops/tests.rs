@@ -187,6 +187,75 @@ fn jts_test_overlay_la_1() {
     );
 }
 
+mod ioverlay_issues {
+    use super::super::BooleanOps;
+    use crate::{MultiPolygon, Polygon, wkt};
+
+    /// Test for iOverlay issue #27: holes sharing 2+ vertices create disconnected interiors
+    /// - iOverlay issue: https://github.com/iShape-Rust/iOverlay/issues/27
+    /// - geo issue: https://github.com/georust/geo/issues/1470
+    #[test]
+    fn test_ioverlay_issue_27_holes_sharing_vertices() {
+        // Create a 5x5 box and subtract two L-shaped holes that share vertices at (2,2) and (3,3)
+        //
+        //     0   1   2   3   4   5
+        //   5 ┌───────────────────┐
+        //     │                   │
+        //   4 │   ┌───────┐       │
+        //     │   │ ░   ░ │       │   Two L-shaped holes share vertices at (2,2) and (3,3)
+        //   3 │   │   ┌───●───┐   │
+        //     │   │ ░ │   │ ░ │   │   ░ = holes
+        //   2 │   └───●───┘   │   │
+        //     │       │ ░   ░ │   │   The shared edge disconnects the interior
+        //   1 │       └───────┘   │
+        //     │                   │
+        //   0 └───────────────────┘
+        //
+        // OGC Simple Feature Specification (ISO 19125-1) states:
+        // "The interior of every Surface is a connected point set."
+
+        let exterior: Polygon<f64> = wkt!(POLYGON((0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0)));
+
+        // Combined L-shaped holes using union of boxes (matches Python test)
+        let interior: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+            ((1.0 2.0, 2.0 2.0, 2.0 4.0, 1.0 4.0, 1.0 2.0)),
+            ((2.0 3.0, 3.0 3.0, 3.0 4.0, 2.0 4.0, 2.0 3.0)),
+            ((2.0 1.0, 4.0 1.0, 4.0 2.0, 2.0 2.0, 2.0 1.0)),
+            ((3.0 2.0, 4.0 2.0, 4.0 3.0, 3.0 3.0, 3.0 2.0))
+        ));
+
+        let result = exterior.difference(&interior);
+
+        // Expected area: 25 (box) - 3 (top L) - 3 (bottom L) = 19
+        use crate::algorithm::Area;
+        assert_relative_eq!(result.unsigned_area(), 19.0);
+
+        // The result should be OGC-valid.
+        // NOTE: This assertion passes but SHOULD fail. The `Validation` trait does not yet check
+        // for simply connected interiors (see geo/src/algorithm/validation/polygon.rs:13-14).
+        // When that check is implemented, this assertion will fail until iOverlay is fixed.
+        use crate::algorithm::Validation;
+        assert!(
+            result.is_valid(),
+            "Result is not OGC-valid: {:?}",
+            result.validation_errors()
+        );
+
+        // The key assertion: result should be split into 2 polygons to be OGC-valid
+        // If iOverlay produces 1 polygon with 2 holes sharing 2 vertices, the interior is disconnected
+        //
+        // Current behavior (expected to fail): result.0.len() == 1 with disconnected interior
+        // Correct behavior: result.0.len() >= 2 (split at pinch points)
+        assert!(
+            result.0.len() >= 2,
+            "Expected multiple polygons to maintain connected interiors. \
+             Got {} polygon(s). If 1 polygon with 2 holes sharing vertices (2,2) and (3,3), \
+             the interior is disconnected (OGC-invalid). See iOverlay issue #27.",
+            result.0.len()
+        );
+    }
+}
+
 mod gh_issues {
     use super::super::{BooleanOps, OpType};
     use crate::algorithm::Relate;
