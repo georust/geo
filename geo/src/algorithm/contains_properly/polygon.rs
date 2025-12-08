@@ -200,9 +200,9 @@ impl_contains_properly_from_relate!(MultiPolygon<T>, [Point<T>,MultiPoint<T>,Lin
 
 fn boundary_intersects<'a, T, G1, G2>(lhs: &'a G1, rhs: &'a G2) -> bool
 where
-    T: GeoNum,
-    G1: LinesIter<'a, Scalar = T>,
-    G2: LinesIter<'a, Scalar = T>,
+    T: GeoNum + 'a,
+    G1: LinesIter<'a, Scalar = T> + CoordsIter,
+    G2: LinesIter<'a, Scalar = T> + CoordsIter,
     Line<T>: Intersects<Line<T>>,
     Rect<T>: Intersects<Rect<T>>,
 {
