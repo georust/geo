@@ -198,8 +198,6 @@ impl_contains_properly_from_relate!(MultiPolygon<T>, [Point<T>,MultiPoint<T>,Lin
 // Util functions
 //------------------------------------------------------------------------------
 
-/// Return true if the boundary of lhs intersects any of the boundaries of rhs
-/// where lhs and rhs are both polygons/multipolygons
 fn boundary_intersects<'a, T, G1, G2>(lhs: &'a G1, rhs: &'a G2) -> bool
 where
     T: GeoNum,
@@ -224,7 +222,7 @@ where
 
 /// Given two non-empty polygons with no intersecting boundaries,
 /// Return true if first polygon completely contains second polygon
-fn polygon_polygon_inner_loop<T>(self_poly: &Polygon<T>, rhs_poly: &Polygon<T>) -> bool
+pub(crate) fn polygon_polygon_inner_loop<T>(self_poly: &Polygon<T>, rhs_poly: &Polygon<T>) -> bool
 where
     T: GeoNum,
 {

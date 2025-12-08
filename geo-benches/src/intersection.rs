@@ -1,6 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use geo::intersects::Intersects;
-use geo::{MultiPolygon, Triangle};
+use geo::{MonotoneChainPolygon, MultiPolygon, Triangle};
 
 fn line_rect_intersection(c: &mut Criterion) {
     use geo::{Line, Rect, coord};
@@ -46,7 +46,9 @@ fn multi_polygon_intersection(c: &mut Criterion) {
     let plot_polygons: MultiPolygon = geo_test_fixtures::nl_plots_wgs84();
     let zone_polygons: MultiPolygon = geo_test_fixtures::nl_zones();
 
-    c.bench_function("MultiPolygon intersects", |bencher| {
+    let mut group = c.benchmark_group("Intersects MultiPolygon");
+
+    group.bench_function("MultiPolygon intersects (Trait)", |bencher| {
         bencher.iter(|| {
             let mut intersects = 0;
             let mut non_intersects = 0;
@@ -65,6 +67,55 @@ fn multi_polygon_intersection(c: &mut Criterion) {
             assert_eq!(non_intersects, 27782);
         });
     });
+
+    group.bench_function("MultiPolygon intersects (Monotone prebuilt)", |bencher| {
+        bencher.iter(|| {
+            let mut intersects = 0;
+            let mut non_intersects = 0;
+
+            let a_line: Vec<MonotoneChainPolygon<'_, f64>> =
+                plot_polygons.iter().map(|x| x.into()).collect();
+            let b_line: Vec<MonotoneChainPolygon<'_, f64>> =
+                zone_polygons.iter().map(|x| x.into()).collect();
+
+            for a in &a_line {
+                for b in &b_line {
+                    if criterion::black_box(a.intersects(b)) {
+                        intersects += 1;
+                    } else {
+                        non_intersects += 1;
+                    }
+                }
+            }
+
+            assert_eq!(intersects, 974);
+            assert_eq!(non_intersects, 27782);
+        });
+    });
+
+    group.bench_function("MultiPolygon intersects (Monotone jit)", |bencher| {
+        bencher.iter(|| {
+            let mut intersects = 0;
+            let mut non_intersects = 0;
+
+            for a in &plot_polygons {
+                for b in &zone_polygons {
+                    let a: MonotoneChainPolygon<'_, f64> = criterion::black_box(a.into());
+                    let b: MonotoneChainPolygon<'_, f64> = criterion::black_box(b.into());
+
+                    if criterion::black_box(a.intersects(&b)) {
+                        intersects += 1;
+                    } else {
+                        non_intersects += 1;
+                    }
+                }
+            }
+
+            assert_eq!(intersects, 974);
+            assert_eq!(non_intersects, 27782);
+        });
+    });
+    group.finish();
 }
 
 fn rect_intersection(c: &mut Criterion) {
