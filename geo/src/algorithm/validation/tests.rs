@@ -12,191 +12,19 @@ mod simply_connected_interior {
     //! These tests verify that we correctly detect polygons with disconnected
     //! interiors, which can occur when:
     //! - Two holes share 2+ vertices (creating a "corridor")
-    //! - Multiple holes share single vertices in a pattern that disconnects the interior
+    //! - Three or more rings meet at a single vertex (creating a "pinch point")
+    //! - Rings form a cycle of single-vertex touches that encloses part of the interior
     //!
-    //! The checkerboard pattern is particularly useful for testing because it creates
-    //! geometries where 4 holes meet at single vertices, forming a grid pattern that
-    //! disconnects the interior even though no two holes share more than one vertex.
+    //! The checkerboard pattern is useful for testing cycle detection: each pair of
+    //! adjacent holes shares exactly one vertex, and these single-touch connections
+    //! form cycles in the ring adjacency graph, disconnecting the interior.
 
     use crate::algorithm::Validation;
     use crate::coord;
     use crate::geometry::{LineString, Polygon};
+    use geo_test_fixtures::checkerboard::{box_ring, create_checkerboard};
 
-    /// Create a box as a closed LineString (for use as exterior or hole).
-    fn box_ring(min_x: f64, min_y: f64, max_x: f64, max_y: f64) -> LineString<f64> {
-        LineString::new(vec![
-            coord! { x: min_x, y: min_y },
-            coord! { x: max_x, y: min_y },
-            coord! { x: max_x, y: max_y },
-            coord! { x: min_x, y: max_y },
-            coord! { x: min_x, y: min_y },
-        ])
-    }
-
-    /// Generate checkerboard hole positions for a given level.
-    ///
-    /// The pattern creates holes that share vertices at their corners:
-    /// ```text
-    ///     0   1   2   3   4   5   6   7
-    ///   7 ┌───────────────────────────┐
-    ///     │                           │
-    ///   6 │   ┌───┐   ┌───┐   ┌───┐   │
-    ///     │   │ ░ │   │ ░ │   │ ░ │   │
-    ///   5 │   └───●───●───●───●───┘   │
-    ///     │       │ ░ │   │ ░ │       │
-    ///   4 │   ┌───●───●───●───●───┐   │
-    ///     │   │ ░ │   │ ░ │   │ ░ │   │   ░ = holes
-    ///   3 │   └───●───●───●───●───┘   │   ● = shared vertices
-    ///     │       │ ░ │   │ ░ │       │
-    ///   2 │   ┌───●───●───●───●───┐   │
-    ///     │   │ ░ │   │ ░ │   │ ░ │   │
-    ///   1 │   └───┘   └───┘   └───┘   │
-    ///     │                           │
-    ///   0 └───────────────────────────┘
-    /// ```
-    fn checkerboard_holes_at_level(level: usize) -> Vec<LineString<f64>> {
-        let base_sz: f64 = 7.0;
-        let sz = base_sz.powi(level as i32);
-
-        let mut holes = Vec::new();
-
-        // Diagonal holes: (i, i) for i in 1..6
-        for i in 1..6 {
-            let fi = i as f64;
-            holes.push(box_ring(fi * sz, fi * sz, (fi + 1.0) * sz, (fi + 1.0) * sz));
-        }
-
-        // Off-diagonal holes above the diagonal
-        for i in 1..4 {
-            let fi = i as f64;
-            holes.push(box_ring(
-                fi * sz,
-                (fi + 2.0) * sz,
-                (fi + 1.0) * sz,
-                (fi + 3.0) * sz,
-            ));
-        }
-        for i in 1..2 {
-            let fi = i as f64;
-            holes.push(box_ring(
-                fi * sz,
-                (fi + 4.0) * sz,
-                (fi + 1.0) * sz,
-                (fi + 5.0) * sz,
-            ));
-        }
-
-        // Off-diagonal holes below the diagonal
-        for i in 1..4 {
-            let fi = i as f64;
-            holes.push(box_ring(
-                (fi + 2.0) * sz,
-                fi * sz,
-                (fi + 3.0) * sz,
-                (fi + 1.0) * sz,
-            ));
-        }
-        for i in 1..2 {
-            let fi = i as f64;
-            holes.push(box_ring(
-                (fi + 4.0) * sz,
-                fi * sz,
-                (fi + 5.0) * sz,
-                (fi + 1.0) * sz,
-            ));
-        }
-
-        holes
-    }
-
-    /// Translate a ring by an offset.
-    fn translate_ring(ring: &LineString<f64>, dx: f64, dy: f64) -> LineString<f64> {
-        LineString::new(
-            ring.coords()
-                .map(|c| coord! { x: c.x + dx, y: c.y + dy })
-                .collect(),
-        )
-    }
-
-    /// Create a checkerboard polygon with the given nesting level.
-    ///
-    /// - Level 0: Simple 7x7 checkerboard with 13 holes
-    /// - Level 1: 49x49 with level-0 checkerboard nested inside one of the "solid" squares
-    /// - Level 2: 343x343 with level-1 nested inside, etc.
-    ///
-    /// The Python implementation places nested checkerboards at offset (2*sz, 3*sz) where
-    /// sz is the size of the outer checkerboard's unit cell. This places the nested pattern
-    /// inside the solid square at grid position (2,3).
-    ///
-    /// Returns the polygon and its expected area.
-    fn create_checkerboard(level: usize) -> (Polygon<f64>, f64) {
-        let base_sz: f64 = 7.0;
-        let sz = base_sz.powi((level + 1) as i32);
-
-        let exterior = box_ring(0.0, 0.0, sz, sz);
-        let exterior_area = sz * sz;
-
-        let mut all_holes: Vec<LineString<f64>> = Vec::new();
-        let mut total_hole_area = 0.0;
-
-        // Start with level 0 holes at the outermost scale
-        // Then recursively add smaller checkerboards inside one of the "solid" squares
-        fn add_holes_recursive(
-            all_holes: &mut Vec<LineString<f64>>,
-            total_hole_area: &mut f64,
-            current_level: usize,
-            max_level: usize,
-            offset_x: f64,
-            offset_y: f64,
-            base_sz: f64,
-        ) {
-            // Size of unit cell at this level
-            let unit_sz = base_sz.powi((max_level - current_level) as i32);
-
-            // Add the 13 holes for this checkerboard level
-            let holes = checkerboard_holes_at_level(max_level - current_level);
-            let hole_area = unit_sz * unit_sz;
-
-            for hole in holes {
-                let translated = translate_ring(&hole, offset_x, offset_y);
-                all_holes.push(translated);
-                *total_hole_area += hole_area;
-            }
-
-            // If not at the innermost level, recurse into one of the solid squares
-            // The solid square at position (2, 3) in the 7x7 grid
-            if current_level < max_level {
-                let next_offset_x = offset_x + 2.0 * unit_sz;
-                let next_offset_y = offset_y + 3.0 * unit_sz;
-                add_holes_recursive(
-                    all_holes,
-                    total_hole_area,
-                    current_level + 1,
-                    max_level,
-                    next_offset_x,
-                    next_offset_y,
-                    base_sz,
-                );
-            }
-        }
-
-        add_holes_recursive(
-            &mut all_holes,
-            &mut total_hole_area,
-            0,
-            level,
-            0.0,
-            0.0,
-            base_sz,
-        );
-
-        let polygon = Polygon::new(exterior, all_holes);
-        let expected_area = exterior_area - total_hole_area;
-
-        (polygon, expected_area)
-    }
-
-    /// Test case: Two L-shaped holes sharing vertices at (2,2) and (3,3).
+    /// Two L-shaped holes sharing vertices at (2,2) and (3,3).
     ///
     /// This is the simplest case of disconnected interior - two holes that
     /// share exactly 2 vertices, creating a "corridor" between them.
@@ -232,13 +60,19 @@ mod simply_connected_interior {
 
         // The two holes share vertices at (2,2) and (3,3)
         // This disconnects the interior, making it OGC-invalid
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+
+        // Verify the error message includes the problematic coordinates
+        let error_msg = format!("{}", errors[0]);
         assert!(
-            !polygon.is_valid(),
-            "Polygon with two holes sharing 2 vertices should be invalid (disconnected interior)"
+            error_msg.contains("(2, 2)") || error_msg.contains("(3, 3)"),
+            "Error message should contain problematic coordinates: {}",
+            error_msg
         );
     }
 
-    /// Test case: Checkerboard level 0.
+    /// Checkerboard level 0.
     ///
     /// 13 holes arranged in a checkerboard pattern where multiple holes
     /// share single vertices at grid intersections.
@@ -260,13 +94,20 @@ mod simply_connected_interior {
         );
 
         // This should be invalid due to disconnected interior
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+
+        // The checkerboard has many shared vertices at grid intersections
+        // Verify error message contains coordinates (any grid intersection point)
+        let error_msg = format!("{}", errors[0]);
         assert!(
-            !polygon.is_valid(),
-            "Checkerboard level 0 should be invalid (disconnected interior)"
+            error_msg.contains("polygon interior is not simply connected"),
+            "Error message should indicate disconnected interior: {}",
+            error_msg
         );
     }
 
-    /// Test case: Checkerboard level 1.
+    /// Checkerboard level 1.
     ///
     /// Nested checkerboard with level-0 pattern inside one of the "filled" squares.
     #[test]
@@ -285,13 +126,19 @@ mod simply_connected_interior {
             actual_area
         );
 
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+
+        // Verify error message contains coordinates
+        let error_msg = format!("{}", errors[0]);
         assert!(
-            !polygon.is_valid(),
-            "Checkerboard level 1 should be invalid (disconnected interior)"
+            error_msg.contains("polygon interior is not simply connected"),
+            "Error message should indicate disconnected interior: {}",
+            error_msg
         );
     }
 
-    /// Test case: Valid polygon with holes that touch at single points.
+    /// Valid polygon with holes that touch at single points.
     ///
     /// Two holes sharing exactly ONE vertex is valid (interior remains connected).
     #[test]
@@ -311,7 +158,7 @@ mod simply_connected_interior {
         );
     }
 
-    /// Test case: Valid polygon with non-touching holes.
+    /// Valid polygon with non-touching holes.
     #[test]
     fn test_separate_holes_is_valid() {
         let exterior = box_ring(0.0, 0.0, 10.0, 10.0);
@@ -325,6 +172,359 @@ mod simply_connected_interior {
         assert!(
             polygon.is_valid(),
             "Polygon with separate non-touching holes should be valid"
+        );
+    }
+
+    /// Three triangular holes meeting at a single vertex (valid).
+    ///
+    /// When three holes share a single vertex but don't share any edges,
+    /// the interior can still be connected. This "wedge" pattern creates
+    /// three pie-slice holes meeting at the origin, but the interior regions
+    /// between them connect around the perimeter.
+    ///
+    /// ```text
+    ///              ● = shared vertex at origin A, B, C = triangular holes                                                                                                 
+    /// ████████████████████████████████████████████████████████████████████████████████████████████
+    /// █                                                                                          █
+    /// █                                                                                          █
+    /// █                                                                                          █
+    /// █                                                                                          █
+    /// █                       ███                                      ███                       █
+    /// █                      █████                                    ██ ██                      █
+    /// █                     ██   ██                                  ██   ██                     █
+    /// █                    ██     ██                                ██     ██                    █
+    /// █                   ██       ██                              ██       ██                   █
+    /// █                  ██         ██                            ██         ███                 █
+    /// █                ███           ██                          ██           ███                █
+    /// █               ██              ██                        ██             ███               █
+    /// █              ██                ██                      ██               ███              █
+    /// █             ███                 ██                    ██                  ██             █
+    /// █            ██                    ██                  ██                   ███            █
+    /// █           ██                      ███               ██                      ██           █
+    /// █          ██                         ██            ███                        ██          █
+    /// █         ██           A              ███          ██             B             ██         █
+    /// █        ██                            ███         ██                            ██        █
+    /// █       ██                               ██      ███                              ██       █
+    /// █      ██                                 ██    ██                                 ██      █
+    /// █     ██                                   ██  ██                                   ██     █
+    /// █    ██                                     █ █                                       █    █
+    /// █  ██████████████████████████████████████████●██████████████████████████████████████████   █
+    /// █                                           ███                                            █
+    /// █                                          ██ ██                                           █
+    /// █                                         ██   ██                                          █
+    /// █                                       ███     ██                                         █
+    /// █                                       ██       ██                                        █
+    /// █                                     ███         ███                                      █
+    /// █                                    ███           ███                                     █
+    /// █                                   ███             ███                                    █
+    /// █                                  ███               ███                                   █
+    /// █                                 ███                  ██                                  █
+    /// █                                ███                    ██                                 █
+    /// █                               ██                       ██                                █
+    /// █                              ██                         ██                               █
+    /// █                             ██            C              ██                              █
+    /// █                            ██                             ██                             █
+    /// █                           ██                               ██                            █
+    /// █                          ██                                 ██                           █
+    /// █                         ██                                   ██                          █
+    /// █                        ██                                     ██                         █
+    /// █                       █ ████████████████████████████████████████ █                       █
+    /// █                                                                                          █
+    /// █                                                                                          █
+    /// █                                                                                          █
+    /// ████████████████████████████████████████████████████████████████████████████████████████████
+    /// ```
+    #[test]
+    fn test_three_holes_meeting_at_vertex_valid() {
+        let exterior = box_ring(-1.1, -1.1, 1.1, 1.1);
+
+        // Three triangular holes meeting at origin (0, 0)
+        // These are the alternating "pie slices" from a 60-degree wedge pattern
+        let hole_a = LineString::new(vec![
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.5, y: 0.8660254037844386 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+        ]);
+        let hole_b = LineString::new(vec![
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: -1.0, y: 0.0 },
+            coord! { x: -0.5, y: 0.8660254037844386 },
+            coord! { x: 0.0, y: 0.0 },
+        ]);
+        let hole_c = LineString::new(vec![
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.5, y: -0.8660254037844386 },
+            coord! { x: -0.5, y: -0.8660254037844386 },
+            coord! { x: 0.0, y: 0.0 },
+        ]);
+
+        let polygon = Polygon::new(exterior, vec![hole_a, hole_b, hole_c]);
+
+        // Three holes meeting at one vertex is NOT automatically invalid
+        // The interior is still connected around the perimeter
+        assert!(
+            polygon.is_valid(),
+            "Polygon with 3 holes meeting at one vertex (wedge pattern) should be valid"
+        );
+    }
+
+    /// Four triangular holes forming a cycle through single touches.
+    ///
+    /// Each pair of holes shares exactly one vertex (no shared edges),
+    /// and together they form a cycle in the touch graph: A-B-C-D-A.
+    /// This encloses part of the interior, disconnecting it.
+    ///
+    /// ```text
+    ///              ● = shared vertices between holes A, B, C, D
+    /// ███████████████████████████████████████████████████████████████████████████████████████████████
+    /// ██                                                                                           ██
+    /// ██                                                                                           ██
+    /// ██                                                                                           ██
+    /// ██       ●███████████████████████████████████████████████████████████████████████████●       ██
+    /// ██       ██ ███                                                                 ███ ██       ██
+    /// ██       ███   ████                                                         █████  ███       ██
+    /// ██       ██ ██    █████                                                  ████    ██ ██       ██
+    /// ██       ██  ██      █████                     C                     █████      ███ ██       ██
+    /// ██       ██   ██         █████                                   █████         ███  ██       ██
+    /// ██       ██    ██            █████                           █████             ██   ██       ██
+    /// ██       ██     ██               █████                    █████               ██    ██       ██
+    /// ██       ██      ██                 █████             █████                  ██     ██       ██
+    /// ██       ██      ██                     █████      ████                     ██      ██       ██
+    /// ██       ██       ██                        ████████                       ██       ██       ██
+    /// ██       ██        ██                                                     ██        ██       ██
+    /// ██       ██         ██                                                   ██         ██       ██
+    /// ██       ██          ██                                                 ██          ██       ██
+    /// ██       ██           ██                                               ███          ██       ██
+    /// ██       ██            ██                                             ███           ██       ██
+    /// ██       ██             ██                                           ███            ██       ██
+    /// ██       ██              ██                                         ███             ██       ██
+    /// ██       ██               ██                                       ███              ██       ██
+    /// ██       ██                ██                                      ██               ██       ██
+    /// ██       ██                 █                                    ███                ██       ██
+    /// ██       ██      B          ██                                    █         D       ██       ██
+    /// ██       ██                ██                                      ██               ██       ██
+    /// ██       ██               ██                                       ██               ██       ██
+    /// ██       ██              ██                                         ██              ██       ██
+    /// ██       ██             ██                                           ██             ██       ██
+    /// ██       ██            ██                                             ██            ██       ██
+    /// ██       ██           ██                                               ██           ██       ██
+    /// ██       ██          ██                                                 ██          ██       ██
+    /// ██       ██         ██                                                   ██         ██       ██
+    /// ██       ██        ██                                                     ██        ██       ██
+    /// ██       ██       ███                       ███████                        ██       ██       ██
+    /// ██       ██      ███                    █████     █████                     ██      ██       ██
+    /// ██       ██     ███                  ████             █████                  ██     ██       ██
+    /// ██       ██     ██               █████                   █████                ██    ██       ██
+    /// ██       ██    ██            █████                           █████            ██    ██       ██
+    /// ██       ██   ██         ██████                                 ██████         ██   ██       ██
+    /// ██       ██  ██       █████                    A                    █████       ██  ██       ██
+    /// ██       ██ ██    █████                                                 █████    ██  █       ██
+    /// ██       ███   ████                                                         ████   ███       ██
+    /// ██       ██ ███                                                                 ███ ██       ██
+    /// ██       ●███████████████████████████████████████████████████████████████████████████●       ██
+    /// ██                                                                                           ██
+    /// ██                                                                                           ██
+    /// ██                                                                                           ██
+    /// ███████████████████████████████████████████████████████████████████████████████████████████████
+    /// ```
+    #[test]
+    fn test_four_holes_forming_cycle() {
+        let exterior = box_ring(-10.0, -10.0, 10.0, 10.0);
+
+        // Four triangular holes arranged in a cycle around the center
+        // Each adjacent pair shares exactly one corner vertex
+        // A: bottom - shares (-8,-8) with B, shares (8,-8) with D
+        let hole_a = LineString::new(vec![
+            coord! { x: -8.0, y: -8.0 },
+            coord! { x: 0.0, y: -4.0 },
+            coord! { x: 8.0, y: -8.0 },
+            coord! { x: -8.0, y: -8.0 },
+        ]);
+
+        // B: left - shares (-8,8) with C, shares (-8,-8) with A
+        let hole_b = LineString::new(vec![
+            coord! { x: -8.0, y: 8.0 },
+            coord! { x: -4.0, y: 0.0 },
+            coord! { x: -8.0, y: -8.0 },
+            coord! { x: -8.0, y: 8.0 },
+        ]);
+
+        // C: top - shares (8,8) with D, shares (-8,8) with B
+        let hole_c = LineString::new(vec![
+            coord! { x: 8.0, y: 8.0 },
+            coord! { x: 0.0, y: 4.0 },
+            coord! { x: -8.0, y: 8.0 },
+            coord! { x: 8.0, y: 8.0 },
+        ]);
+
+        // D: right - shares (8,-8) with A, shares (8,8) with C
+        let hole_d = LineString::new(vec![
+            coord! { x: 8.0, y: -8.0 },
+            coord! { x: 4.0, y: 0.0 },
+            coord! { x: 8.0, y: 8.0 },
+            coord! { x: 8.0, y: -8.0 },
+        ]);
+
+        let polygon = Polygon::new(exterior, vec![hole_a, hole_b, hole_c, hole_d]);
+
+        // The four holes form a cycle: A-B at (-8,-8), B-C at (-8,8), C-D at (8,8), D-A at (8,-8)
+        // This encloses the center region, disconnecting it from the corners
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+
+        // Verify the error message includes some of the cycle coordinates
+        let error_msg = format!("{}", errors[0]);
+        assert!(
+            error_msg.contains("(-8, -8)")
+                || error_msg.contains("(-8, 8)")
+                || error_msg.contains("(8, 8)")
+                || error_msg.contains("(8, -8)"),
+            "Error message should contain cycle coordinates: {}",
+            error_msg
+        );
+    }
+
+    /// Three triangular holes forming a cycle through distinct touch points.
+    ///
+    /// Each pair of holes shares exactly one vertex at a different coordinate,
+    /// forming a cycle: H0↔H1 at (10,5), H1↔H2 at (15,10), H2↔H0 at (5,10).
+    /// This disconnects the interior (the center triangle is isolated).
+    ///
+    /// ```text
+    ///     0      5      10      15      20
+    ///  15 ┌─────────────────────────────────┐
+    ///     │                                 │
+    ///     │                                 │
+    ///  10 │        ●───────────────●        │
+    ///     │       ╱  ╲           ╱  ╲       │
+    ///     │      ╱    ╲    H2   ╱    ╲      │
+    ///     │     ╱      ╲       ╱      ╲     │
+    ///     │    /        ╲     ╱        ╲    │
+    ///     │   /   H0     ╲   ╱   H1     ╲   │
+    ///     │  /            ╲ ╱            ╲  │
+    ///   5 │ ●──────────────●──────────────● │
+    ///     │             (10,5)              │
+    ///     │          shared vertex          │
+    ///     │                                 │
+    ///   0 └─────────────────────────────────┘
+    ///
+    /// ● = shared vertices: (10,5) between H0-H1-H2, (15,10) between H1-H2, (5,10) between H0-H2
+    /// ```
+    #[test]
+    fn test_three_holes_forming_triangle_cycle() {
+        let exterior = box_ring(0.0, 0.0, 20.0, 15.0);
+
+        // H0: bottom-left triangle
+        let hole_0 = LineString::new(vec![
+            coord! { x: 1.0, y: 5.0 },
+            coord! { x: 10.0, y: 5.0 },
+            coord! { x: 5.0, y: 10.0 },
+            coord! { x: 1.0, y: 5.0 },
+        ]);
+
+        // H1: bottom-right triangle
+        let hole_1 = LineString::new(vec![
+            coord! { x: 10.0, y: 5.0 },
+            coord! { x: 19.0, y: 5.0 },
+            coord! { x: 15.0, y: 10.0 },
+            coord! { x: 10.0, y: 5.0 },
+        ]);
+
+        // H2: top triangle (inverted, pointing down)
+        let hole_2 = LineString::new(vec![
+            coord! { x: 5.0, y: 10.0 },
+            coord! { x: 15.0, y: 10.0 },
+            coord! { x: 10.0, y: 5.0 },
+            coord! { x: 5.0, y: 10.0 },
+        ]);
+
+        let polygon = Polygon::new(exterior, vec![hole_0, hole_1, hole_2]);
+
+        // H0-H2 share (5,10) and (10,5), H1-H2 share (10,5) and (15,10), H0-H1 share (10,5)
+        // Multiple pairs share 2+ vertices → multiple disconnection errors
+        let errors = polygon.validation_errors();
+        assert!(
+            !errors.is_empty(),
+            "Should have at least one validation error"
+        );
+
+        // Verify at least one error message includes the shared coordinates
+        let all_errors: String = errors.iter().map(|e| format!("{}", e)).collect();
+        assert!(
+            all_errors.contains("(5, 10)")
+                || all_errors.contains("(10, 5)")
+                || all_errors.contains("(15, 10)"),
+            "Error messages should contain shared coordinates: {}",
+            all_errors
+        );
+    }
+
+    /// Two holes forming a chain with vertex-on-edge touches to exterior.
+    ///
+    /// Two triangular holes that:
+    /// - Touch each other at a shared vertex (10, 5)
+    /// - Each touches the exterior via vertex-on-edge (not at exterior vertices)
+    ///
+    /// ```text
+    ///     0      5      10      15      20
+    ///  15 ┌─────────────────────────────┐
+    ///     │                             │
+    ///     │                             │
+    ///  10 │      ╱╲             ╱╲      │
+    ///     │     ╱  ╲           ╱  ╲     │
+    ///     │    ╱    ╲         ╱    ╲    │
+    ///     │   ╱      ╲       ╱      ╲   │
+    ///     │  /        ╲     ╱        ╲  │
+    ///     │ /   H0     ╲   ╱   H1     ╲ │
+    ///     │/            ╲ ╱            ╲│
+    ///   5 ●──────────────●──────────────● (on edge)
+    ///     │           (10,5)            │
+    ///     │        shared vertex        │
+    ///     │                             │
+    ///   0 └─────────────────────────────┘
+    ///                    
+    ///
+    /// ● = touch points on exterior edges (not at vertices)
+    /// Chain: Exterior(0,5) → H0 → (10,5) → H1 → Exterior(20,5)
+    /// ```
+    #[test]
+    fn test_hole_chain_with_vertex_on_edge_touch() {
+        // Exterior: box from (0,0) to (20,15)
+        let exterior = box_ring(0.0, 0.0, 20.0, 15.0);
+
+        // H0: triangle touching exterior at (0,5) on left edge, sharing (10,5) with H1
+        let hole_0 = LineString::new(vec![
+            coord! { x: 0.0, y: 5.0 },
+            coord! { x: 10.0, y: 5.0 },
+            coord! { x: 5.0, y: 10.0 },
+            coord! { x: 0.0, y: 5.0 },
+        ]);
+
+        // H1: triangle touching exterior at (20,5) on right edge, sharing (10,5) with H0
+        let hole_1 = LineString::new(vec![
+            coord! { x: 10.0, y: 5.0 },
+            coord! { x: 20.0, y: 5.0 },
+            coord! { x: 15.0, y: 10.0 },
+            coord! { x: 10.0, y: 5.0 },
+        ]);
+
+        let polygon = Polygon::new(exterior, vec![hole_0, hole_1]);
+
+        // Chain: Exterior(0,5) → H0 → (10,5) → H1 → Exterior(20,5)
+        // Both (0,5) and (20,5) are on exterior edges (not at vertices)
+        // This forms a cycle through the exterior with distinct coordinates
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+
+        // Verify the error message includes the touch coordinates
+        let error_msg = format!("{}", errors[0]);
+        assert!(
+            error_msg.contains("(0, 5)")
+                || error_msg.contains("(10, 5)")
+                || error_msg.contains("(20, 5)"),
+            "Error message should contain touch coordinates: {}",
+            error_msg
         );
     }
 }
