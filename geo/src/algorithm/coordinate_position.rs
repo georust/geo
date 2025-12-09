@@ -190,11 +190,8 @@ where
             .to_lines()
             .map(|l| {
                 let orientation = T::Ker::orient2d(l.start, l.end, *coord);
-                if orientation == Orientation::Collinear
-                    && point_in_rect(*coord, l.start, l.end)
-                    && coord.x != l.end.x
-                {
-                    *boundary_count += 1;
+                if orientation == Orientation::Collinear && point_in_rect(*coord, l.start, l.end) {
+                    *boundary_count = 1;
                 }
                 orientation
             })

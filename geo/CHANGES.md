@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+- Fix `CoordinatePosition` for `Triangle` to correctly return `CoordPos::OnBoundary` for coordinates sharing the same x as two corners on the triangle.
+
 ## 0.32.0 - 2025-12-05
 
 - Move `PreparedGeometry` into a new `indexed` module intended to provide index-backed geometries. `relate::PreparedGeometry` has been deprecated.
