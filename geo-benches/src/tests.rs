@@ -81,8 +81,8 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
             let prev_p1 = convert_mpoly(&p1);
             let prev_p2 = convert_mpoly(&p2);
 
-            info!("p1: {p1:?}");
-            info!("p2: {p2:?}");
+            debug!("p1: {p1:?}");
+            debug!("p2: {p2:?}");
             fc.features
                 .into_iter()
                 .skip(2)
@@ -92,7 +92,7 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                     let ty = props["operation"]
                         .as_str()
                         .context("operation was not a string")?;
-                    info!("op: {ty} {p:?}");
+                    debug!("op: {ty} {p:?}");
 
                     let result = catch_unwind(|| {
                         let geoms = if ty == "intersection" {
@@ -109,7 +109,7 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                             error!("unexpected op: {ty}");
                             unreachable!()
                         };
-                        info!("ours: {geoms:?}");
+                        debug!("ours: {geoms:?}");
                         geoms
                     });
 
@@ -129,7 +129,7 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                             unreachable!()
                         };
                         let geoms = convert_back_mpoly(&geoms);
-                        info!("theirs: {geoms:?}");
+                        debug!("theirs: {geoms:?}");
                         format!("{geoms:?}")
                     });
                     let theirs = their_result.unwrap_or_else(|_e| {
@@ -142,14 +142,14 @@ fn generate_ds() -> Result<(), Box<dyn Error>> {
                             let diff = catch_unwind(|| p.difference(&our_geom));
                             let comment = match diff {
                                 Ok(diff) => {
-                                    info!("difference: {diff:?}");
+                                    debug!("difference: {diff:?}");
                                     if !diff.is_empty() {
-                                        info!("output was not identical:");
-                                        info!("\tours: {our_geom:?}");
-                                        info!("op: {ty} {p:?}");
+                                        debug!("output was not identical:");
+                                        debug!("\tours: {our_geom:?}");
+                                        debug!("op: {ty} {p:?}");
                                         let area = diff.unsigned_area();
                                         let err = area / p.unsigned_area();
-                                        info!("\trel. error = {err}");
+                                        debug!("\trel. error = {err}");
                                         format!("relerr: {err:.2}")
                                     } else {
                                         "identical".to_string()

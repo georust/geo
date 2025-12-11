@@ -60,7 +60,7 @@ fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display + Relati
         } else {
             let poly = Polygon::new(top, vec![]);
             sub_area = sub_area + twice_polygon_area(&poly);
-            info!("{}", poly.to_wkt());
+            debug!("{}", poly.to_wkt());
 
             let im = poly.relate(&input);
             assert!(im.is_within());

@@ -89,7 +89,7 @@ impl<T: GeoNum> Builder<T> {
         incoming.sort_by(|a, b| a.partial_cmp(b).unwrap());
         outgoing.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        info!(
+        debug!(
             "\n\nprocessing point {:?}, #in={}, #out={}",
             pt,
             incoming.len(),
