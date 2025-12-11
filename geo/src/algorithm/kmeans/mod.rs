@@ -1298,4 +1298,37 @@ mod tests {
             elongated_cluster_labels.len()
         );
     }
+
+    #[test]
+    fn test_kmeans_three_clusters_loop() {
+        let points = [
+            // Cluster 1
+            point!(x: 0.0, y: 0.0),
+            point!(x: 1.0, y: 0.0),
+            // Cluster 2
+            point!(x: 10.0, y: 10.0),
+            point!(x: 11.0, y: 10.0),
+            // Cluster 3
+            point!(x: 20.0, y: 20.0),
+            point!(x: 21.0, y: 20.0),
+        ];
+
+        let i = 194;
+        let params = KMeansParams::new(3).seed(i);
+        let labels = points.kmeans_with_params(params).unwrap();
+
+        // for i in 0..100_000 {
+        //     let params = KMeansParams::new(3).seed(i);
+        //     let labels = points.kmeans_with_params(params).unwrap();
+        // Each pair should be in the same cluster
+        assert_eq!(labels[0], labels[1], "failed at loop {}", i);
+        assert_eq!(labels[2], labels[3], "failed at loop {}", i);
+        assert_eq!(labels[4], labels[5], "failed at loop {}", i);
+
+        // All three pairs should be in different clusters
+        assert_ne!(labels[0], labels[2], "failed at loop {}", i);
+        assert_ne!(labels[2], labels[4], "failed at loop {}", i);
+        assert_ne!(labels[0], labels[4], "failed at loop {}", i);
+        // }
+    }
 }
