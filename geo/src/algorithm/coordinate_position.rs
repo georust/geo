@@ -192,7 +192,12 @@ where
                 let orientation = T::Ker::orient2d(l.start, l.end, *coord);
                 if orientation == Orientation::Collinear
                     && point_in_rect(*coord, l.start, l.end)
-                    && coord.x != l.end.x
+                    // If a coordinate falls *on* one of the triangle's vertices,
+                    // it will appear both as the `end` of one segment and the `start` of the next.
+                    // We only want to count one boundary crossing in that case,
+                    // so we ignore it if it falls on `l.end`,
+                    // knowing that we'll count it on some other segments `l.start`
+                    && *coord != l.end
                 {
                     *boundary_count += 1;
                 }
@@ -445,10 +450,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use geo_types::coord;
-
     use super::*;
-    use crate::{line_string, point, polygon};
+    use crate::{coord, line_string, point, polygon, wkt};
 
     #[test]
     fn test_empty_poly() {
@@ -709,8 +712,25 @@ mod test {
             CoordPos::OnBoundary
         );
         assert_eq!(
+            triangle.coordinate_position(&coord! { x: 5.0, y: 10.0 }),
+            CoordPos::OnBoundary
+        );
+        assert_eq!(
             triangle.coordinate_position(&coord! { x: 2.49, y: 5.0 }),
             CoordPos::Outside
+        );
+    }
+
+    #[test]
+    fn test_right_triangle() {
+        let triangle: Triangle = wkt!(TRIANGLE(0. 0.,10. 0.,10. 10.));
+        assert_eq!(
+            triangle.coordinate_position(&coord!(x: 0., y: 0.)),
+            CoordPos::OnBoundary
+        );
+        assert_eq!(
+            triangle.coordinate_position(&coord!(x: 10., y: 5.)),
+            CoordPos::OnBoundary
         );
     }
 
