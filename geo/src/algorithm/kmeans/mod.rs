@@ -1313,22 +1313,28 @@ mod tests {
             point!(x: 21.0, y: 20.0),
         ];
 
-        let i = 194;
-        let params = KMeansParams::new(3).seed(i);
-        let labels = points.kmeans_with_params(params).unwrap();
-
-        // for i in 0..100_000 {
-        //     let params = KMeansParams::new(3).seed(i);
-        //     let labels = points.kmeans_with_params(params).unwrap();
-        // Each pair should be in the same cluster
-        assert_eq!(labels[0], labels[1], "failed at loop {}", i);
-        assert_eq!(labels[2], labels[3], "failed at loop {}", i);
-        assert_eq!(labels[4], labels[5], "failed at loop {}", i);
-
-        // All three pairs should be in different clusters
-        assert_ne!(labels[0], labels[2], "failed at loop {}", i);
-        assert_ne!(labels[2], labels[4], "failed at loop {}", i);
-        assert_ne!(labels[0], labels[4], "failed at loop {}", i);
-        // }
+        let mut successes = 0;
+        for i in 0..100_000 {
+            let params = KMeansParams::new(3).seed(i);
+            let labels = points.kmeans_with_params(params).unwrap();
+            // Each pair should be in the same cluster
+            if labels[0] != labels[1] {
+                continue;
+            }
+            if labels[2] != labels[3] {
+                continue;
+            }
+            if labels[4] != labels[5] {
+                continue;
+            }
+            // All three pairs should be in different clusters
+            assert_ne!(labels[0], labels[2], "failed at loop {}", i);
+            assert_ne!(labels[2], labels[4], "failed at loop {}", i);
+            assert_ne!(labels[0], labels[4], "failed at loop {}", i);
+            successes += 1
+        }
+        // This value is arbitrary - kmeans is susceptible to initial conditions and may
+        // give bad results based on the luck of the initial centroid draws.
+        assert_eq!(successes, 99_397);
     }
 }
