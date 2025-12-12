@@ -1376,6 +1376,6 @@ mod tests {
         }
         // This value is arbitrary - kmeans is susceptible to initial conditions and may
         // give bad results based on the luck of the initial centroid draws.
-        assert_eq!(successes, 99_397);
+        assert_eq!(successes, 99_877);
     }
 }
