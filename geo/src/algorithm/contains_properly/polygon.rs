@@ -1,6 +1,7 @@
 use super::{ContainsProperly, impl_contains_properly_from_relate};
 use crate::coordinate_position::{CoordPos, CoordinatePosition, coord_pos_relative_to_ring};
 use crate::geometry::*;
+use crate::monotone::chain::MonotoneChainIter;
 use crate::{BoundingRect, CoordsIter, HasDimensions, Intersects, LinesIter};
 use crate::{GeoFloat, GeoNum};
 
@@ -200,14 +201,35 @@ impl_contains_properly_from_relate!(MultiPolygon<T>, [Point<T>,MultiPoint<T>,Lin
 
 /// Return true if the boundary of lhs intersects any of the boundaries of rhs
 /// where lhs and rhs are both polygons/multipolygons
+/// This is a short circuit version of boundary_intersects which doesn't use the monotone algorithm
+fn boundary_intersects_monotone<'a, T, G1, G2>(lhs: &'a G1, rhs: &'a G2) -> bool
+where
+    T: GeoNum + 'a,
+    G1: MonotoneChainIter<'a, T>,
+    G2: MonotoneChainIter<'a, T>,
+{
+    // use monotone when larger
+    let rhs_arr = rhs.chains().collect::<Vec<_>>();
+
+    lhs.chains()
+        .any(|lhs| rhs_arr.iter().any(|rhs| lhs.intersects(rhs)))
+}
+
 fn boundary_intersects<'a, T, G1, G2>(lhs: &'a G1, rhs: &'a G2) -> bool
 where
-    T: GeoNum,
-    G1: LinesIter<'a, Scalar = T>,
-    G2: LinesIter<'a, Scalar = T>,
+    T: GeoNum + 'a,
+    G1: MonotoneChainIter<'a, T> + LinesIter<'a, Scalar = T> + CoordsIter,
+    G2: MonotoneChainIter<'a, T> + LinesIter<'a, Scalar = T> + CoordsIter,
     Line<T>: Intersects<Line<T>>,
     Rect<T>: Intersects<Rect<T>>,
 {
+    // arbitrary threshold to use monotone
+    const THRESHOLD: usize = 20;
+
+    if lhs.coords_count() > THRESHOLD || rhs.coords_count() > THRESHOLD {
+        return boundary_intersects_monotone(lhs, rhs);
+    }
+
     let rhs_bbox_cache = rhs
         .lines_iter()
         .map(|l| (l, l.bounding_rect()))
