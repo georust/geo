@@ -41,6 +41,7 @@ jobs:
       - geo_fuzz
       - geo_benches
       - docs
+      - wasm_check
     if: success()
     steps:
       - name: Mark the job as a success
@@ -56,6 +57,7 @@ jobs:
       - geo_fuzz
       - geo_benches
       - docs
+      - wasm_check
     if: failure()
     steps:
       - name: Mark the job as a failure
@@ -186,3 +188,23 @@ jobs:
         uses: actions/checkout@v6
       - uses: Swatinem/rust-cache@v2
       - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+
+  wasm_check:
+    name: wasm check
+    needs: set-matrix
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    container:
+      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup target add wasm32-unknown-unknown
+      - name: Build geo-types for wasm32
+        run: cargo check -p geo-types --lib --target wasm32-unknown-unknown --no-default-features
+      - name: Build geo for wasm32
+        run: cargo check -p geo --lib --target wasm32-unknown-unknown --no-default-features
+      - name: Build geo-traits for wasm32
+        run: cargo check -p geo-traits --lib --target wasm32-unknown-unknown --no-default-features
+
