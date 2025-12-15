@@ -335,7 +335,9 @@ pub mod dbscan;
 pub use dbscan::Dbscan;
 
 /// Cluster points using [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering)
+#[cfg(feature = "rand")]
 pub mod kmeans;
+#[cfg(feature = "rand")]
 pub use kmeans::{KMeans, KMeansError, KMeansParams};
 
 /// Monotonic polygon subdivision

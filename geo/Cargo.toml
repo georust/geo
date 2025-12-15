@@ -13,11 +13,14 @@ rust-version = "1.85"
 categories = ["science::geo"]
 
 [features]
-default = ["earcutr", "spade", "multithreading"]
+default = ["rand", "earcutr", "spade", "multithreading"]
 proj-network = ["proj", "proj/network"]
 serde = ["dep:serde", "geo-types/serde"]
 multithreading = ["i_overlay/allow_multithreading", "geo-types/multithreading"]
-
+# Remove "rand" from the  default feature set for enviromnents without a concrete source of randmonness
+# for example targets like wasm*-unknown-unknown
+# This will disable algorithm/kmean
+rand = ["dep:rand"]
 # Deprecated feature flags with "use-" prefix from the days before `dep:`
 use-proj = ["proj"]
 use-serde = ["serde"]
