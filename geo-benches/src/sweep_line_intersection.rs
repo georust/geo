@@ -36,12 +36,12 @@ fn generate_random_lines(count: usize, density: f64, rng: &mut impl Rng) -> Vec<
     for _ in 0..count {
         // Generate random coordinates within a bounded area
         // Using a bounded area increases the likelihood of intersections
-        let x1 = rng.gen_range(-100.0..100.0);
-        let y1 = rng.gen_range(-100.0..100.0);
+        let x1 = rng.random_range(-100.0..100.0);
+        let y1 = rng.random_range(-100.0..100.0);
         let p1 = Point::new(x1, y1);
 
-        let length = 200.0 * density * rng.gen_range(0.0..1.0);
-        let p2 = Euclidean.destination(p1, rng.gen_range(0.0..360.0), length);
+        let length = 200.0 * density * rng.random_range(0.0..1.0);
+        let p2 = Euclidean.destination(p1, rng.random_range(0.0..360.0), length);
 
         lines.push(Line::new(p1, p2))
     }
@@ -131,10 +131,10 @@ fn bench_sparse_line_intersections(c: &mut Criterion) {
 }
 
 fn generate_random_line(rng: &mut impl Rng) -> Line<f64> {
-    let x1 = rng.gen_range(-100.0..100.0);
-    let y1 = rng.gen_range(-100.0..100.0);
-    let x2 = rng.gen_range(-100.0..100.0);
-    let y2 = rng.gen_range(-100.0..100.0);
+    let x1 = rng.random_range(-100.0..100.0);
+    let y1 = rng.random_range(-100.0..100.0);
+    let x2 = rng.random_range(-100.0..100.0);
+    let y2 = rng.random_range(-100.0..100.0);
     Line::from([(x1, y1), (x2, y2)])
 }
 
@@ -278,14 +278,14 @@ fn bench_realistic_patterns(c: &mut Criterion) {
         // Add "streets" (horizontal and vertical)
         for i in 0..grid_size {
             let pos = i as f64 * cell_size;
-            let wiggle = rng.gen_range(-1.0..1.0);
+            let wiggle = rng.random_range(-1.0..1.0);
 
             // Horizontal streets with some "curves"
             for j in 0..grid_size - 1 {
                 let x1 = j as f64 * cell_size;
                 let x2 = (j + 1) as f64 * cell_size;
-                let y1 = pos + wiggle + rng.gen_range(-0.5..0.5);
-                let y2 = pos + wiggle + rng.gen_range(-0.5..0.5);
+                let y1 = pos + wiggle + rng.random_range(-0.5..0.5);
+                let y2 = pos + wiggle + rng.random_range(-0.5..0.5);
                 lines.push(Line::from([(x1, y1), (x2, y2)]));
             }
 
@@ -293,8 +293,8 @@ fn bench_realistic_patterns(c: &mut Criterion) {
             for j in 0..grid_size - 1 {
                 let y1 = j as f64 * cell_size;
                 let y2 = (j + 1) as f64 * cell_size;
-                let x1 = pos + wiggle + rng.gen_range(-0.5..0.5);
-                let x2 = pos + wiggle + rng.gen_range(-0.5..0.5);
+                let x1 = pos + wiggle + rng.random_range(-0.5..0.5);
+                let x2 = pos + wiggle + rng.random_range(-0.5..0.5);
                 lines.push(Line::from([(x1, y1), (x2, y2)]));
             }
         }
@@ -324,9 +324,9 @@ fn bench_realistic_patterns(c: &mut Criterion) {
         let mut lines = Vec::with_capacity(num_polygons * sides_per_polygon);
 
         for i in 0..num_polygons {
-            let center_x = (i % 20) as f64 * 25.0 + rng.gen_range(-5.0..5.0);
-            let center_y = (i / 20) as f64 * 25.0 + rng.gen_range(-5.0..5.0);
-            let radius = rng.gen_range(5.0..15.0);
+            let center_x = (i % 20) as f64 * 25.0 + rng.random_range(-5.0..5.0);
+            let center_y = (i / 20) as f64 * 25.0 + rng.random_range(-5.0..5.0);
+            let radius = rng.random_range(5.0..15.0);
 
             // Create polygon edges
             for j in 0..sides_per_polygon {

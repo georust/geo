@@ -14,27 +14,27 @@ use wkt::ToWkt;
 
 #[path = "utils/random.rs"]
 mod random;
-use rand::thread_rng;
+use rand::rng;
 use random::*;
 
 fn criterion_benchmark_pt_in_poly(c: &mut Criterion) {
     let pt_samples = Samples::from_fn(512, || {
-        uniform_point(&mut thread_rng(), Rect::new((-1., -1.), (1., 1.)))
+        uniform_point(&mut rng(), Rect::new((-1., -1.), (1., 1.)))
     });
 
     for size in [16, 64, 512, 1024, 2048] {
         let mut grp = c.benchmark_group("rand pt-in-poly steppy-polygon (worst case)".to_string());
-        let poly = steppy_polygon(&mut thread_rng(), size);
+        let poly = steppy_polygon(&mut rng(), size);
         bench_pt_in_poly(&mut grp, poly, size, &pt_samples)
     }
     for size in [16, 64, 512, 1024, 2048] {
         let mut grp = c.benchmark_group("rand pt-in-poly steppy-polygon (best case)".to_string());
-        let poly = steppy_polygon(&mut thread_rng(), size).map_coords(|c| (c.y, c.x).into());
+        let poly = steppy_polygon(&mut rng(), size).map_coords(|c| (c.y, c.x).into());
         bench_pt_in_poly(&mut grp, poly, size, &pt_samples)
     }
     for size in [16, 64, 512, 1024, 2048] {
         let mut grp = c.benchmark_group("rand pt-in-poly circular-polygon".to_string());
-        let poly = circular_polygon(&mut thread_rng(), size);
+        let poly = circular_polygon(&mut rng(), size);
         bench_pt_in_poly(&mut grp, poly, size, &pt_samples)
     }
 }
@@ -91,18 +91,17 @@ fn bench_pt_in_poly<T, I>(
 fn criterion_benchmark_monotone_subdiv(c: &mut Criterion) {
     for size in [16, 64, 2048, 32000] {
         let mut grp = c.benchmark_group("monotone_subdiv steppy-polygon (worst case)".to_string());
-        let poly_fn = |size| steppy_polygon(&mut thread_rng(), size);
+        let poly_fn = |size| steppy_polygon(&mut rng(), size);
         bench_monotone_subdiv(&mut grp, poly_fn, size)
     }
     for size in [16, 64, 2048, 32000] {
         let mut grp = c.benchmark_group("monotone_subdiv steppy-polygon (best case)".to_string());
-        let poly_fn =
-            |size| steppy_polygon(&mut thread_rng(), size).map_coords(|c| (c.y, c.x).into());
+        let poly_fn = |size| steppy_polygon(&mut rng(), size).map_coords(|c| (c.y, c.x).into());
         bench_monotone_subdiv(&mut grp, poly_fn, size)
     }
     for size in [16, 64, 2048, 32000] {
         let mut grp = c.benchmark_group("monotone_subdiv circular-polygon".to_string());
-        let poly_fn = |size| circular_polygon(&mut thread_rng(), size);
+        let poly_fn = |size| circular_polygon(&mut rng(), size);
         bench_monotone_subdiv(&mut grp, poly_fn, size)
     }
 }

@@ -4,14 +4,20 @@ use geo::{Coord, CoordNum};
 
 use num_traits::Signed;
 use rand::Rng;
-use rand::distributions::uniform::SampleUniform;
+use rand::distr::uniform::SampleUniform;
 pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
     range: S,
     size: usize,
     rng: &mut R,
 ) -> Vec<Coord<S>> {
     (0..size)
-        .map(|_| (rng.gen_range(-range..=range), rng.gen_range(-range..=range)).into())
+        .map(|_| {
+            (
+                rng.random_range(-range..=range),
+                rng.random_range(-range..=range),
+            )
+                .into()
+        })
         .collect()
 }
 
@@ -33,7 +39,7 @@ fn criterion_benchmark(c: &mut Criterion) {
     });
 
     c.bench_function("convex hull with collinear random i64", |bencher| {
-        let mut points = uniform_points_in_range(10_000_i64, 1_000_000, &mut rand::thread_rng());
+        let mut points = uniform_points_in_range(10_000_i64, 1_000_000, &mut rand::rng());
         use geo::convex_hull::graham_hull;
         bencher.iter(|| {
             criterion::black_box(graham_hull(

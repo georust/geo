@@ -10,7 +10,7 @@ mod compare_impl;
 
 #[path = "utils/random.rs"]
 mod random;
-use rand::thread_rng;
+use rand::rng;
 use random::*;
 
 const NUMPOINTS: i32 = 1_000_000;
@@ -194,7 +194,7 @@ fn criterion_benchmark(c: &mut Criterion) {
         Coord { x: 5.57, y: 52.351 },
     );
     let points: Vec<Point<f64>> = (0..NUMPOINTS)
-        .map(|_| Point(uniform_point(&mut thread_rng(), bounds)))
+        .map(|_| Point(uniform_point(&mut rng(), bounds)))
         .collect();
     let multi_point = MultiPoint::new(points);
 

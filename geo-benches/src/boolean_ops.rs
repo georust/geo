@@ -3,8 +3,8 @@ use std::f64::consts::PI;
 use criterion::{measurement::Measurement, *};
 use geo::algorithm::{BooleanOps, Rotate};
 
-use rand::{Rng, thread_rng};
-use rand_distr::Standard;
+use rand::{Rng, rng};
+use rand_distr::StandardUniform;
 
 use geo_benches::utils::bops::convert_poly;
 use geo_benches::utils::random;
@@ -18,12 +18,12 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
     (8..14).for_each(|scale| {
         let steps = 1 << scale;
         let polys = Samples::from_fn(SAMPLE_SIZE, || {
-            let poly1 = random::steppy_polygon(thread_rng(), steps);
-            let angle: f64 = thread_rng().sample::<f64, _>(Standard) * PI * 2.0;
+            let poly1 = random::steppy_polygon(rng(), steps);
+            let angle: f64 = rng().sample::<f64, _>(StandardUniform) * PI * 2.0;
             let poly1 = poly1.rotate_around_point(angle, poly1.exterior().0[0].into());
 
-            let poly2 = random::circular_polygon(thread_rng(), steps);
-            let angle: f64 = thread_rng().sample::<f64, _>(Standard) * PI * 2.0;
+            let poly2 = random::circular_polygon(rng(), steps);
+            let angle: f64 = rng().sample::<f64, _>(StandardUniform) * PI * 2.0;
             let poly2 = poly2.rotate_around_point(angle, poly2.exterior().0[0].into());
 
             let cp1 = convert_poly(&poly1);
