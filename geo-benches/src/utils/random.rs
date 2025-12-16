@@ -4,8 +4,8 @@ use std::f64::consts::PI;
 use geo::algorithm::{BoundingRect, ConcaveHull, ConvexHull, MapCoords, Rotate};
 use geo::geometry::*;
 
-use rand::{Rng, thread_rng};
-use rand_distr::{Distribution, Normal, Standard};
+use rand::{Rng, rng};
+use rand_distr::{Distribution, Normal, StandardUniform};
 
 // TODO: @rmanoka wonders if: it would be nice to provide these
 // random-geom-samplers as `Distribution::sample` implementations directly. But
@@ -15,7 +15,7 @@ use rand_distr::{Distribution, Normal, Standard};
 
 #[inline]
 pub fn uniform_point<R: Rng>(rng: &mut R, bounds: Rect<f64>) -> Coord<f64> {
-    let coords: [f64; 2] = rng.sample(Standard);
+    let coords: [f64; 2] = rng.sample(StandardUniform);
     let dims = bounds.max() - bounds.min();
     Coord {
         x: bounds.min().x + dims.x * coords[0],
@@ -32,7 +32,7 @@ pub fn uniform_line<R: Rng>(rng: &mut R, bounds: Rect<f64>) -> Line<f64> {
 pub fn uniform_line_with_length<R: Rng>(rng: &mut R, bounds: Rect<f64>, length: f64) -> Line<f64> {
     let start = uniform_point(rng, bounds);
     let line = Line::new(start, start + (length, 0.).into());
-    let angle = rng.sample::<f64, _>(Standard) * 2. * PI;
+    let angle = rng.sample::<f64, _>(StandardUniform) * 2. * PI;
     line.rotate_around_point(angle, start.into())
 }
 
@@ -42,8 +42,8 @@ pub fn scaled_generator(dims: Coord<f64>, scale: usize) -> impl Fn() -> Line<f64
     let shift_bounds = Rect::new([0., 0.].into(), dims - (dims / scaling));
 
     move || {
-        let shift = uniform_point(&mut thread_rng(), shift_bounds);
-        uniform_line(&mut thread_rng(), bounds).map_coords(|mut c| {
+        let shift = uniform_point(&mut rng(), shift_bounds);
+        uniform_line(&mut rng(), bounds).map_coords(|mut c| {
             c.x += shift.x;
             c.y += shift.y;
             c
@@ -84,13 +84,13 @@ pub fn steppy_polygon<R: Rng>(mut rng: R, steps: usize) -> Polygon<f64> {
 
     ring.push((0.0, 0.0).into());
     (0..steps).for_each(|_| {
-        let x: f64 = rng.sample::<f64, _>(Standard);
+        let x: f64 = rng.sample::<f64, _>(StandardUniform);
         y += y_step;
         ring.push((x, y).into());
     });
     ring.push((x_shift, y).into());
     (0..steps).for_each(|_| {
-        let x: f64 = rng.sample::<f64, _>(Standard);
+        let x: f64 = rng.sample::<f64, _>(StandardUniform);
         y -= y_step;
         // y += normal.sample(&mut rng);
         ring.push((x_shift + x, y).into());

@@ -1,5 +1,5 @@
 use crate::GeoFloat;
-use rand::distributions::WeightedError;
+use rand::distr::weighted::Error;
 
 /// Errors that can occur during k-means++ initialisation
 #[derive(Debug, Clone, PartialEq)]
@@ -33,7 +33,7 @@ pub enum KMeansInitError {
     /// typically because all weights sum to zero or contain invalid values.
     WeightedDistributionFailed {
         /// The underlying error from rand's WeightedIndex
-        error: WeightedError,
+        error: Error,
     },
 }
 

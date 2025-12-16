@@ -138,7 +138,7 @@ use crate::{Centroid, GeoFloat, MultiPoint, Point};
 
 use rand::Rng;
 use rand::SeedableRng;
-use rand::distributions::WeightedIndex;
+use rand::distr::weighted::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::rngs::StdRng;
 
@@ -574,13 +574,13 @@ where
     let n = points.len();
     let mut rng = match seed {
         Some(s) => StdRng::seed_from_u64(s),
-        None => StdRng::from_entropy(),
+        None => StdRng::from_os_rng(),
     };
     let mut centroids = Vec::with_capacity(k);
 
     // Choose first centroid uniformly at random
     // this would panic if n is set to 0, but we handle that case in kmeans_impl
-    let first_idx = rng.gen_range(0..n);
+    let first_idx = rng.random_range(0..n);
     centroids.push(points[first_idx]);
 
     // Choose remaining centroids using D² weighting: probability proportional to

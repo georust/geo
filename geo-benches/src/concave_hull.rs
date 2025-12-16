@@ -4,7 +4,7 @@ use geo::{Coord, CoordNum};
 
 use num_traits::Signed;
 use rand::Rng;
-use rand::distributions::uniform::SampleUniform;
+use rand::distr::uniform::SampleUniform;
 
 pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
     range: S,
@@ -12,7 +12,13 @@ pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
     rng: &mut R,
 ) -> Vec<Coord<S>> {
     (0..size)
-        .map(|_| (rng.gen_range(-range..=range), rng.gen_range(-range..=range)).into())
+        .map(|_| {
+            (
+                rng.random_range(-range..=range),
+                rng.random_range(-range..=range),
+            )
+                .into()
+        })
         .collect()
 }
 
