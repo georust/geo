@@ -40,7 +40,20 @@ i_overlay = { version = "4.0.0, < 4.1.0", default-features = false }
 sif-itree = "0.4.0"
 rand = "0.9.2"
 
-[target.'cfg(target_arch = "wasm32")'.dependencies]
+# `rand` crate doesn't integrate with wasm-unknown-unknown directly
+# Instead they recommend that users create an explicit dependency on getrandom, and enable wasm-js support
+#
+# `rand` maintainers recommend that each application does this to fix their build;
+# However, if the version of getrandom ever rev's, all out users builds will break again.
+#
+# Instead, we require a specific version of getrandom, and use it to manually seed the RNG,
+# rather than relying on the suggested "back door/unstable" configuration.
+#
+# The failure mode here, if `random` revs their version of `getrandom` is a duplicate dependency, rather than
+# a broken build, until we update our getrandom dep.
+#
+# See https://github.com/georust/geo/pull/1478
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 getrandom = { version = "0.3.4", features = ["wasm_js"] }
 
 [dev-dependencies]

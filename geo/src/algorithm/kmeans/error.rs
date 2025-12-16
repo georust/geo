@@ -120,6 +120,10 @@ pub enum KMeansError<T: GeoFloat> {
         /// Number of points that changed clusters in the final iteration
         changed_assignments: usize,
     },
+
+    #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+    /// Error when initializing randomness
+    GetRandom(getrandom::Error),
 }
 
 impl<T: GeoFloat> std::fmt::Display for KMeansError<T> {
@@ -167,6 +171,8 @@ impl<T: GeoFloat> std::fmt::Display for KMeansError<T> {
                     iterations, shift_f64, tol_f64, changed_assignments
                 )
             }
+            #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+            KMeansError::GetRandom(err) => err.fmt(f),
         }
     }
 }
