@@ -457,6 +457,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::algorithm::Convert;
     use crate::{coord, line_string, point, polygon, wkt};
 
     #[test]
@@ -583,62 +584,64 @@ mod test {
         assert_eq!(c1.coordinate_position(&c2), CoordPos::Outside);
     }
 
-    #[test]
-    fn test_simple_line_string() {
-        let line_string =
-            line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 2.0, y: 0.0), (x: 3.0, y: 0.0)];
+    mod line_string {
+        use super::*;
+        #[test]
+        fn test_simple_line_string() {
+            let line_string: LineString = wkt!(LINESTRING(0 0,1 1,2 0,3 0)).convert();
 
-        let start = Coord::zero();
-        assert_eq!(
-            line_string.coordinate_position(&start),
-            CoordPos::OnBoundary
-        );
+            let start = Coord::zero();
+            assert_eq!(
+                line_string.coordinate_position(&start),
+                CoordPos::OnBoundary
+            );
 
-        let midpoint = coord! { x: 0.5, y: 0.5 };
-        assert_eq!(line_string.coordinate_position(&midpoint), CoordPos::Inside);
+            let midpoint = coord! { x: 0.5, y: 0.5 };
+            assert_eq!(line_string.coordinate_position(&midpoint), CoordPos::Inside);
 
-        let vertex = coord! { x: 2.0, y: 0.0 };
-        assert_eq!(line_string.coordinate_position(&vertex), CoordPos::Inside);
+            let vertex = coord! { x: 2.0, y: 0.0 };
+            assert_eq!(line_string.coordinate_position(&vertex), CoordPos::Inside);
 
-        let end = coord! { x: 3.0, y: 0.0 };
-        assert_eq!(line_string.coordinate_position(&end), CoordPos::OnBoundary);
+            let end = coord! { x: 3.0, y: 0.0 };
+            assert_eq!(line_string.coordinate_position(&end), CoordPos::OnBoundary);
 
-        let outside = coord! { x: 3.0, y: 1.0 };
-        assert_eq!(line_string.coordinate_position(&outside), CoordPos::Outside);
-    }
+            let outside = coord! { x: 3.0, y: 1.0 };
+            assert_eq!(line_string.coordinate_position(&outside), CoordPos::Outside);
+        }
 
-    #[test]
-    fn test_degenerate_line_strings() {
-        let line_string = line_string![(x: 0.0, y: 0.0), (x: 0.0, y: 0.0)];
+        #[test]
+        fn test_degenerate_line_strings() {
+            let line_string: LineString = wkt!(LINESTRING(0 0,0 0)).convert();
 
-        let start = Coord::zero();
-        assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
+            let start = Coord::zero();
+            assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
 
-        let line_string = line_string![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0)];
+            let line_string = line_string![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0)];
 
-        let start = Coord::zero();
-        assert_eq!(
-            line_string.coordinate_position(&start),
-            CoordPos::OnBoundary
-        );
-    }
+            let start = Coord::zero();
+            assert_eq!(
+                line_string.coordinate_position(&start),
+                CoordPos::OnBoundary
+            );
+        }
 
-    #[test]
-    fn test_closed_line_string() {
-        let line_string = line_string![(x: 0.0, y: 0.0), (x: 1.0, y: 1.0), (x: 2.0, y: 0.0), (x: 3.0, y: 2.0), (x: 0.0, y: 2.0), (x: 0.0, y: 0.0)];
+        #[test]
+        fn test_closed_line_string() {
+            let line_string: LineString = wkt!(LINESTRING(0 0,1 1,2 0,3 2,0 2,0 0)).convert();
 
-        // sanity check
-        assert!(line_string.is_closed());
+            // sanity check
+            assert!(line_string.is_closed());
 
-        // closed line strings have no boundary
-        let start = Coord::zero();
-        assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
+            // closed line strings have no boundary
+            let start = Coord::zero();
+            assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
 
-        let midpoint = coord! { x: 0.5, y: 0.5 };
-        assert_eq!(line_string.coordinate_position(&midpoint), CoordPos::Inside);
+            let midpoint = coord! { x: 0.5, y: 0.5 };
+            assert_eq!(line_string.coordinate_position(&midpoint), CoordPos::Inside);
 
-        let outside = coord! { x: 3.0, y: 1.0 };
-        assert_eq!(line_string.coordinate_position(&outside), CoordPos::Outside);
+            let outside = coord! { x: 3.0, y: 1.0 };
+            assert_eq!(line_string.coordinate_position(&outside), CoordPos::Outside);
+        }
     }
 
     #[test]
