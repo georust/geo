@@ -1,6 +1,9 @@
 # Web App 
 
+
 ## Reference Design
+
+![The application](images/LandingPageImage.png)
 
 Best practises for interfacing from the browser in to RUST code 
 are in a state of flux.

@@ -1,13 +1,26 @@
 <!doctype html>
 <html lang="en">
     <head>
-        <title>Geo: Cluster Demo</title>
         <meta charset="utf-8" />
         <meta
             name="description"
             content="A geo web application where geo is used to compute clustering"
         />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Geo: Cluster Demo</title>
+        <style>
+            figure {
+                text-align: center;
+            }
+            canvas {
+                display: block;
+                margin: 0 auto;
+                border: 1px solid black;
+            }
+            figcaption {
+                margin-top: 10px;
+            }
+        </style>
     </head>
 
     <body>
@@ -18,9 +31,14 @@
                 enable javascript in your browser.
             </h2>
         </noscript>
-        <figure style="style="display:flex; justify-content: center; align-items: center">
-                <canvas id="cluster" width="200" height="200" style="border: 2px solid black; display: block"></canvas>
-                <figurecaption><strong>A Set of points divided into two clusters "blue" and "green"</strong></figurecaption>
+        <figure>
+            <canvas id="cluster" width="200" height="200"></canvas>
+            <figcaption>
+                <strong
+                    >A set of points divided into two clusters "blue" and
+                    "green"</strong
+                >
+            </figcaption>
         </figure>
 
         <p>
@@ -40,9 +58,9 @@
                 The application is created in the form specific type of of a
                 rust library. The crate-type MUST be set in the [lib] section of
                 the Cargo.toml file as follows
-                <ul style="list-style-type: none;">
+                <ul style="list-style-type: none">
                     <li><strong>[lib]</strong></li>
-                    <li><strong></string>crate-type = ["cdylib", "rlib"]</strong></li>
+                    <li><strong>crate-type = ["cdylib", "rlib"]</strong></li>
                 </ul>
             </li>
             <li>
@@ -58,12 +76,23 @@
             </li>
         </ol>
         <h2>Source of randomness</h2>
-        <p>k-means was chosen for the refernce design because it exposes a issue obtaining a source of randomness.</p>
-        <p>The source of randomness is derived from calls the browser sandbox environment</p>
         <p>
-            This reference design is state of the art, which unfortunatly includes the use of a subtle workaround.
+            k-means was chosen for the reference design because it exposes a
+            issue obtaining a source of randomness.
         </p>
-        <p> Even though this application (the "geo-web-app" rust library ) does not directly use the "getrandom" crate, a shaddow definition MUST be included to add a feature the actual inclusion of getrandom
+        <p>
+            The source of randomness is derived from calls to the browser's
+            sandbox environment
+        </p>
+        <p>
+            This reference design is state of the art, which unfortunately
+            includes the use of a subtle workaround.
+        </p>
+        <p>
+            Even though this application (the "geo-web-app" rust library ) does
+            not directly use the "getrandom" crate, a shaddow definition MUST be
+            included to add a feature the actual inclusion of getrandom which is
+            located here.
         </p>
         <p>geo-web-app -> geo -> rand -> getrandom</p>
         <script type="module" src="./index.js"></script>
