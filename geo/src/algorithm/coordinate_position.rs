@@ -137,19 +137,25 @@ where
         is_inside: &mut bool,
         boundary_count: &mut usize,
     ) {
-        if self.0.len() < 2 {
-            debug_assert!(false, "invalid line string with less than 2 coords");
-            return;
-        }
-
-        if self.0.len() == 2 {
-            // line string with two coords is just a line
-            Line::new(self.0[0], self.0[1]).calculate_coordinate_position(
-                coord,
-                is_inside,
-                boundary_count,
-            );
-            return;
+        match self.0.len() {
+            0 => {
+                warn!("invalid line string with 0 coords");
+                return;
+            }
+            1 => {
+                warn!("invalid line string with only 1 coord");
+                // degenerate LineString handled like a Point
+                return self[0].calculate_coordinate_position(coord, is_inside, boundary_count);
+            }
+            2 => {
+                // LineString with two coords is just a Line
+                return Line::new(self.0[0], self.0[1]).calculate_coordinate_position(
+                    coord,
+                    is_inside,
+                    boundary_count,
+                );
+            }
+            _ => {}
         }
 
         // optimization: return early if there's no chance of an intersection
