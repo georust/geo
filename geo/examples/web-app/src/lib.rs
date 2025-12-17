@@ -22,23 +22,23 @@ pub fn compute_clusters() -> JsValue {
     let labels = points.kmeans(2).unwrap();
     info!("Computation complete");
 
-    let _ = info!("{labels:?}");
+    info!("{labels:?}");
     // Two clusters should be found
     let cluster_0 = labels
         .iter()
         .zip(points.0.iter())
         .filter(|(index, _)| **index == 0)
-        .map(|(i, p)| [p.x(), p.y()])
+        .map(|(_, p)| [p.x(), p.y()])
         .collect::<Vec<_>>();
     let cluster_1 = labels
         .iter()
         .zip(points.0.iter())
         .filter(|(index, _)| **index == 1)
-        .map(|(i, p)| [p.x(), p.y()])
+        .map(|(_, p)| [p.x(), p.y()])
         .collect::<Vec<_>>();
 
-    let _ = info!("{cluster_0:?}");
-    let _ = info!("{cluster_1:?}");
+    info!("{cluster_0:?}");
+    info!("{cluster_1:?}");
 
     serde_wasm_bindgen::to_value(&vec![cluster_0, cluster_1]).unwrap()
 }

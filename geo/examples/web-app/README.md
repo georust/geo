@@ -7,7 +7,15 @@ are in a state of flux.
 
 The application details the extra build steps than are neede to package a rust application for the web.
 
-install node, npm then run
+Prerequists
+install [npm]( <https://docs.npmjs.com/downloading-and-installing-node-js-and-npm>)
+install [webpack](<https://webpack.js.org/>)
+```bash
+cd geo/geo/examples/web-app
+npm install
+```
+
+To see the web page run 
 
 ```bash
 cd geo/geo/examples/web-app
