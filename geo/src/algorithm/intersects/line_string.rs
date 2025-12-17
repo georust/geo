@@ -13,6 +13,11 @@ macro_rules! intersects_line_string_impl {
                 if has_disjoint_bboxes(self, rhs) {
                     return false;
                 }
+                // degenerate linestring treated as point
+                if self.0.len() == 1 {
+                    return self.0[0].intersects(rhs);
+                }
+
                 self.lines().any(|l| l.intersects(rhs))
             }
         }
@@ -85,6 +90,21 @@ where
 mod test {
     use super::*;
     use crate::wkt;
+
+    #[test]
+    fn test_degenerate_linestring() {
+        let pt: Point<f64> = wkt! {POINT(1 1)}.convert();
+        let poly: Polygon<f64> = wkt! {RECT(0 0, 1 1)}.to_polygon().convert();
+        let ls1: LineString<f64> = wkt! {LINESTRING(1 1)}.convert();
+        let ls2: LineString<f64> = wkt! {LINESTRING(1 1, 1 1)}.convert();
+
+        assert_eq!(ls1.intersects(&pt), ls1.relate(&pt).is_intersects());
+        assert_eq!(ls2.intersects(&pt), ls2.relate(&pt).is_intersects());
+        assert!(ls1.intersects(&poly));
+        // TODO: uncomment when relate is fixed, this currently panics
+        // assert_eq!(ls1.intersects(&poly), ls1.relate(&poly).is_intersects());
+        assert_eq!(ls2.intersects(&poly), ls2.relate(&poly).is_intersects());
+    }
 
     #[test]
     fn test_linestring_inside_polygon() {
