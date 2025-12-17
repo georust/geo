@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix `CoordinatePosition` for `LineString` to handle dimensionally collapsed input  e.g. `LINESTRING(0 0)` is treated like `POINT(0 0)`.
+  - <https://github.com/georust/geo/pull/1483>
 - Fix `CoordinatePosition` for `Triangle` to correctly return `CoordPos::OnBoundary` for coordinate within vertical segment.
 
 ## 0.32.0 - 2025-12-05

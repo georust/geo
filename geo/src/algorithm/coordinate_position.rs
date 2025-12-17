@@ -611,16 +611,28 @@ mod test {
 
         #[test]
         fn test_degenerate_line_strings() {
-            let line_string: LineString = wkt!(LINESTRING(0 0,0 0)).convert();
+            let origin = Coord::zero();
 
-            let start = Coord::zero();
-            assert_eq!(line_string.coordinate_position(&start), CoordPos::Inside);
-
-            let line_string = line_string![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0)];
-
-            let start = Coord::zero();
             assert_eq!(
-                line_string.coordinate_position(&start),
+                wkt!(LINESTRING EMPTY).coordinate_position(&origin),
+                CoordPos::Outside
+            );
+
+            // Handled as a Point
+            assert_eq!(
+                wkt!(LINESTRING(0. 0.)).coordinate_position(&origin),
+                CoordPos::Inside
+            );
+
+            // Handled as a Point
+            assert_eq!(
+                wkt!(LINESTRING(0. 0.,0. 0.)).coordinate_position(&origin),
+                CoordPos::Inside
+            );
+
+            // Not actually degenerate, but handled specially as a LINE
+            assert_eq!(
+                wkt!(LINESTRING(0. 0.,2. 0.)).coordinate_position(&origin),
                 CoordPos::OnBoundary
             );
         }
