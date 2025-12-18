@@ -101,8 +101,7 @@ mod test {
         assert_eq!(ls1.intersects(&pt), ls1.relate(&pt).is_intersects());
         assert_eq!(ls2.intersects(&pt), ls2.relate(&pt).is_intersects());
         assert!(ls1.intersects(&poly));
-        // TODO: uncomment when relate is fixed, this currently panics
-        // assert_eq!(ls1.intersects(&poly), ls1.relate(&poly).is_intersects());
+        assert_eq!(ls1.intersects(&poly), ls1.relate(&poly).is_intersects());
         assert_eq!(ls2.intersects(&poly), ls2.relate(&poly).is_intersects());
     }
 
