@@ -68,7 +68,19 @@ where
     }
 }
 
-intersects_line_string_impl!(area: Rect<T>);
+impl<T> Intersects<Rect<T>> for LineString<T>
+where
+    T: GeoNum,
+{
+    fn intersects(&self, rhs: &Rect<T>) -> bool {
+        if has_disjoint_bboxes(self, rhs) {
+            return false;
+        }
+        // splitting into `Line` intersects `Rect`
+        self.lines_iter().any(|ln| ln.intersects(rhs))
+    }
+}
+
 intersects_line_string_impl!(area: Triangle<T>);
 
 // Blanket implementation from LineString<T>

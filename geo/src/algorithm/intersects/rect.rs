@@ -23,17 +23,51 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rhs: &Line<T>) -> bool {
-        let lb = self.min();
-        let rt = self.max();
-        let lt = Coord::from((lb.x, rt.y));
-        let rb = Coord::from((rt.x, lb.y));
-        // If either rhs.{start,end} lies inside Rect, then true
-        self.intersects(&rhs.start)
-            || self.intersects(&rhs.end)
-            || Line::new(lt, rt).intersects(rhs)
-            || Line::new(rt, rb).intersects(rhs)
-            || Line::new(lb, rb).intersects(rhs)
-            || Line::new(lt, lb).intersects(rhs)
+        if !self.intersects(&rhs.bounding_rect()) {
+            return false;
+        }
+
+        /*
+        o3--o2
+        |    |
+        |    |
+        o0--o1
+        check if `rhs` line extended to infinity crosses any of the 4 edges of the `Rect`
+        */
+
+        let c0 = self.min();
+        let c1 = coord! {x: self.max().x, y: self.min().y};
+
+        let o0 = T::Ker::orient2d(rhs.start, rhs.end, c0);
+        let o1 = T::Ker::orient2d(rhs.start, rhs.end, c1);
+        if o0 != o1 {
+            return true;
+        }
+
+        let c2 = self.max();
+        let o2 = T::Ker::orient2d(rhs.start, rhs.end, c2);
+        if o0 != o2 {
+            // equivalent to o1 != o2
+            return true;
+        }
+
+        let c3 = coord! {x: self.min().x, y: self.max().y};
+        let o3 = T::Ker::orient2d(rhs.start, rhs.end, c3);
+        if o0 != o3 {
+            // equivalent to o2 != o3
+            return true;
+        }
+
+        // safe to use n-1 comparisons because we know that if there is a different orientation,
+        // then there must be at least two edges along which the orientation of its points is different
+        debug_assert!(o3 == o0);
+
+        // At this point we know all the orientations are equal and that the bounding boxes overlap.
+        // The only ways there could be an intersection is if
+        // 1. `self` (Rect) has degenerated to a line, and `rhs` (Line) is on that line.
+        // 2. `self` (Rect) has degenerated to a point, and lies on `rhs` (Line).
+        // 3. `rhs` (Line) is degenerated to a point.
+        o0 == Orientation::Collinear
     }
 }
 
@@ -118,8 +152,50 @@ where
 }
 
 #[cfg(test)]
+mod test_line {
+    use super::*;
+    use crate::wkt;
+
+    #[test]
+    fn test_overlap_bbox_no_overlap() {
+        let rect = wkt! {RECT(6 4, 10 0)};
+        let line = wkt! {LINE(0 0, 10 10)};
+
+        assert!(!rect.intersects(&line));
+    }
+
+    #[test]
+    fn test_degen_line() {
+        let rect = wkt! {RECT(0 0, 10 10)};
+        let line = wkt! {LINE(0 0, 0 0)};
+
+        assert!(rect.intersects(&line));
+    }
+
+    #[test]
+    fn test_degen_rect() {
+        let rect_pt = wkt! {RECT(0 0, 0 10)};
+        let rect_line1 = wkt! {RECT(0 0, 0 10)};
+        let rect_line2 = wkt! {RECT(0 0, 10 0)};
+        let line = wkt! {LINE(0 0, 10 0)};
+
+        assert!(rect_pt.intersects(&line));
+        assert!(rect_line1.intersects(&line));
+        assert!(rect_line2.intersects(&line));
+    }
+}
+
+#[cfg(test)]
 mod test_triangle {
     use super::*;
+
+    #[test]
+    fn test_rhs_degenerate_line() {
+        let s: Rect<f64> = Rect::new((0, 0), (0, 0)).convert();
+        let l = Line::new(coord! {x: 0.0, y: 0.0}, coord! { x: 0.0, y: 0.0 });
+
+        assert!(s.intersects(&l));
+    }
 
     #[test]
     fn test_disjoint() {
