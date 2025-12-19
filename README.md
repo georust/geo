@@ -66,6 +66,16 @@ assert_eq!(
 );
 ```
 
+## Web Applications
+
+When targetting for the browser (ie target="wasm*-unknown-unknown"), selecting a source of randomness is troublesome. This is how to include the geo library for the web.
+
+```toml
+geo = { path ="0.32", features =  [ "earcutr", "spade", "multithreading"], default-features = false }
+```
+
+The rand crate is no longer a dependant and the functionality associated the kmeans module is removed.
+
 ## Contributing
 
 Contributions are welcome! Have a look at the [issues](https://github.com/georust/geo/issues), and open a pull request if you'd like to add an algorithm or some functionality.
