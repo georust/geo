@@ -442,6 +442,7 @@ fn check_ring_touches_disconnect_interior<F: GeoFloat>(
 mod tests {
     use super::*;
     use crate::algorithm::validation::{assert_valid, assert_validation_errors};
+    use crate::coord;
     use crate::wkt;
 
     #[test]
@@ -496,17 +497,17 @@ mod tests {
 
         // When rings share a line segment, they share multiple vertices,
         // which also disconnects the interior
-        let errors = polygon.validation_errors();
-        assert_eq!(errors.len(), 2);
-        assert_eq!(
-            errors[0],
-            InvalidPolygon::IntersectingRingsOnALine(RingRole::Interior(0), RingRole::Interior(1))
+        assert_validation_errors!(
+            &polygon,
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(RingRole::Interior(0), RingRole::Interior(1)),
+                // The shared vertices are (2,1) and (3,2) which disconnect the interior
+                InvalidPolygon::InteriorNotSimplyConnected(vec![
+                    coord! { x: 2., y: 1. },
+                    coord! { x: 3., y: 2. },
+                ]),
+            ]
         );
-        // The shared vertices are (2,1) and (3,2) - check that we get InteriorNotSimplyConnected
-        assert!(matches!(
-            &errors[1],
-            InvalidPolygon::InteriorNotSimplyConnected(coords) if coords.len() >= 2
-        ));
     }
 
     #[test]
@@ -522,17 +523,17 @@ mod tests {
             )
         );
 
-        let errors = polygon.validation_errors();
-        assert_eq!(errors.len(), 2);
-        assert_eq!(
-            errors[0],
-            InvalidPolygon::IntersectingRingsOnAnArea(RingRole::Interior(0), RingRole::Interior(1))
+        assert_validation_errors!(
+            &polygon,
+            vec![
+                InvalidPolygon::IntersectingRingsOnAnArea(RingRole::Interior(0), RingRole::Interior(1)),
+                // The shared vertices are (2,1) and (3,2) which disconnect the interior
+                InvalidPolygon::InteriorNotSimplyConnected(vec![
+                    coord! { x: 2., y: 1. },
+                    coord! { x: 3., y: 2. },
+                ]),
+            ]
         );
-        // The shared vertices are (2,1) and (3,2) - check that we get InteriorNotSimplyConnected
-        assert!(matches!(
-            &errors[1],
-            InvalidPolygon::InteriorNotSimplyConnected(coords) if coords.len() >= 2
-        ));
     }
 
     #[test]
@@ -550,17 +551,17 @@ mod tests {
             )
         );
 
-        let errors = polygon.validation_errors();
-        assert_eq!(errors.len(), 2);
-        assert_eq!(
-            errors[0],
-            InvalidPolygon::IntersectingRingsOnALine(RingRole::Exterior, RingRole::Interior(0))
+        assert_validation_errors!(
+            &polygon,
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(RingRole::Exterior, RingRole::Interior(0)),
+                // The shared vertices are (0,1) and (0,2) which disconnect the interior
+                InvalidPolygon::InteriorNotSimplyConnected(vec![
+                    coord! { x: 0., y: 1. },
+                    coord! { x: 0., y: 2. },
+                ]),
+            ]
         );
-        // The shared vertices are (0,1) and (0,2) - check that we get InteriorNotSimplyConnected
-        assert!(matches!(
-            &errors[1],
-            InvalidPolygon::InteriorNotSimplyConnected(coords) if coords.len() >= 2
-        ));
     }
 
     #[test]
