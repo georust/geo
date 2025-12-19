@@ -25,6 +25,7 @@
 //!   0 └───────────────────────────┘
 //! ```
 
+use geo::Translate;
 use geo_types::{coord, LineString, Polygon};
 
 /// Create a box as a closed LineString (for use as exterior or hole).
@@ -97,15 +98,6 @@ pub fn checkerboard_holes_at_level(level: usize) -> Vec<LineString<f64>> {
     holes
 }
 
-/// Translate a ring by an offset.
-pub fn translate_ring(ring: &LineString<f64>, dx: f64, dy: f64) -> LineString<f64> {
-    LineString::new(
-        ring.coords()
-            .map(|c| coord! { x: c.x + dx, y: c.y + dy })
-            .collect(),
-    )
-}
-
 /// Create a checkerboard polygon with the given nesting level.
 ///
 /// - Level 0: Simple 7x7 checkerboard with 13 holes
@@ -146,8 +138,7 @@ pub fn create_checkerboard(level: usize) -> (Polygon<f64>, f64) {
         let hole_area = unit_sz * unit_sz;
 
         for hole in holes {
-            let translated = translate_ring(&hole, offset_x, offset_y);
-            all_holes.push(translated);
+            all_holes.push(hole.translate(offset_x, offset_y));
             *total_hole_area += hole_area;
         }
 
