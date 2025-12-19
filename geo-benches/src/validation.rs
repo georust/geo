@@ -1,80 +1,12 @@
 //! Benchmarks for polygon validation, focusing on:
 //! - Checkerboard patterns (stress test simply-connected interior detection)
-//! - Complex geometries from real-world datasets
+//! - Simple and real-world polygon geometries
 
 use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
 use geo::algorithm::Validation;
 use geo::coord;
-use geo::geometry::{Geometry, LineString, Polygon};
+use geo::geometry::{LineString, Polygon};
 use geo_test_fixtures::checkerboard::create_checkerboard_polygon;
-use geojson::GeoJson;
-use std::convert::TryInto;
-use std::fs;
-use std::path::PathBuf;
-
-/// Load benchmark geometries from the validate.geojson fixture.
-/// Returns a vector of (name, polygon) tuples.
-fn load_benchmark_geometries() -> Vec<(String, Polygon<f64>)> {
-    let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    path.push("fixtures/rust-geo-booleanop-fixtures/benchmarks/validate.geojson");
-
-    let data = match fs::read_to_string(&path) {
-        Ok(d) => d,
-        Err(e) => {
-            eprintln!(
-                "Warning: Could not read {}: {}, skipping validation benchmarks",
-                path.display(),
-                e
-            );
-            return vec![];
-        }
-    };
-
-    let geojson: GeoJson = match data.parse() {
-        Ok(g) => g,
-        Err(e) => {
-            eprintln!(
-                "Warning: Could not parse GeoJSON: {}, skipping validation benchmarks",
-                e
-            );
-            return vec![];
-        }
-    };
-
-    let mut results = Vec::new();
-
-    if let GeoJson::FeatureCollection(fc) = geojson {
-        for (idx, feature) in fc.features.into_iter().enumerate().take(20) {
-            if let Some(geom) = feature.geometry {
-                let geo_geom: Result<Geometry<f64>, _> = geom.try_into();
-                if let Ok(Geometry::MultiPolygon(mp)) = geo_geom {
-                    // Extract individual polygons from the MultiPolygon
-                    for (poly_idx, poly) in mp.0.into_iter().enumerate() {
-                        let num_coords: usize = poly.exterior().coords().count()
-                            + poly
-                                .interiors()
-                                .iter()
-                                .map(|r| r.coords().count())
-                                .sum::<usize>();
-                        let name = format!("feat_{}_poly_{}_{}_coords", idx, poly_idx, num_coords);
-                        results.push((name, poly));
-                    }
-                } else if let Ok(Geometry::Polygon(poly)) = geo_geom {
-                    let num_coords: usize = poly.exterior().coords().count()
-                        + poly
-                            .interiors()
-                            .iter()
-                            .map(|r| r.coords().count())
-                            .sum::<usize>();
-                    let name = format!("feat_{}_{}_coords", idx, num_coords);
-                    results.push((name, poly));
-                }
-            }
-        }
-    }
-
-    results
-}
 
 /// Create a simple valid polygon for baseline comparison.
 fn create_simple_polygon(size: usize) -> Polygon<f64> {
@@ -114,13 +46,23 @@ fn validation_benchmark(c: &mut Criterion) {
         );
     }
 
-    // Benchmark complex geometries from fixture file
-    let fixture_polys = load_benchmark_geometries();
-    for (name, poly) in fixture_polys.iter().take(15) {
-        group.bench_with_input(BenchmarkId::new("fixture", name), poly, |b, p| {
-            b.iter(|| criterion::black_box(p.is_valid()))
-        });
-    }
+    // Benchmark real-world geometries from fixtures
+    let east_baton_rouge: Polygon<f64> = geo_test_fixtures::east_baton_rouge();
+    group.bench_with_input(
+        BenchmarkId::new("fixture", "east_baton_rouge"),
+        &east_baton_rouge,
+        |b, poly| b.iter(|| criterion::black_box(poly.is_valid())),
+    );
+
+    let nl_zones = geo_test_fixtures::nl_zones::<f64>();
+    group.bench_with_input(BenchmarkId::new("fixture", "nl_zones"), &nl_zones, |b, mp| {
+        b.iter(|| criterion::black_box(mp.is_valid()))
+    });
+
+    let nl_plots = geo_test_fixtures::nl_plots_wgs84::<f64>();
+    group.bench_with_input(BenchmarkId::new("fixture", "nl_plots"), &nl_plots, |b, mp| {
+        b.iter(|| criterion::black_box(mp.is_valid()))
+    });
 
     group.finish();
 }
