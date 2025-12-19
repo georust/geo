@@ -1,38 +1,42 @@
 use console_log::init_with_level;
-use geo::KMeans;
-use geo::{point, MultiPoint};
-use log::{info, Level};
+use geo::MultiPoint;
+use geo::{KMeans, Point};
+use log::{Level, info};
+use rand::Rng;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 /// Mininal kmeans app.
 pub fn compute_clusters() -> JsValue {
     let _ = init_with_level(Level::Debug);
+    let mut rng = rand::rng();
 
-    let points = MultiPoint::new(vec![
-        point!(x: 25.0_f64, y: 25.0_f64),
-        point!(x: 35.0_f64, y: 25.0_f64),
-        point!(x: 25.0_f64, y: 35.0_f64),
-        point!(x: 100.0, y: 100.0_f64),
-        point!(x: 110.0_f64, y: 100.0_f64),
-        point!(x: 100.0_f64, y: 110.0_f64),
-    ]);
+    let points = (0..75)
+        .map(|_| {
+            Point::new(
+                rng.random_range(5..=195) as f32,
+                rng.random_range(5..=195) as f32,
+            )
+        })
+        .collect::<Vec<Point<f32>>>();
+
+    let mp = MultiPoint::new(points);
 
     info!("Starting computation");
-    let labels = points.kmeans(2).unwrap();
+    let labels = mp.kmeans(2).unwrap();
     info!("Computation complete");
 
     info!("{labels:?}");
     // Two clusters should be found
     let cluster_0 = labels
         .iter()
-        .zip(points.0.iter())
+        .zip(mp.0.iter())
         .filter(|(index, _)| **index == 0)
         .map(|(_, p)| [p.x(), p.y()])
         .collect::<Vec<_>>();
     let cluster_1 = labels
         .iter()
-        .zip(points.0.iter())
+        .zip(mp.0.iter())
         .filter(|(index, _)| **index == 1)
         .map(|(_, p)| [p.x(), p.y()])
         .collect::<Vec<_>>();
