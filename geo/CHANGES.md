@@ -8,8 +8,7 @@
 
 ## 0.32.0 - 2025-12-05
 
-- Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
-- Performance: Polygon validation now uses `PreparedGeometry` to cache R-tree structures, improving validation speed by 26-45% for polygons with many holes.
+- Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior. Polygon validation now uses `PreparedGeometry` to cache R-tree structures for interior/exterior containment checks, improving validation speed for polygons with many holes.
 - Move `PreparedGeometry` into a new `indexed` module intended to provide index-backed geometries. `relate::PreparedGeometry` has been deprecated.
 - Use an interval tree for faster (Multi)Point in MultiPolygon checks
 - LOF algorithm efficiency improvements due to caching kth distance
