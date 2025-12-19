@@ -1,7 +1,7 @@
 use console_log::init_with_level;
 use geo::MultiPoint;
 use geo::{KMeans, Point};
-use log::{Level, info};
+use log::{info, Level};
 use rand::Rng;
 use wasm_bindgen::prelude::*;
 
