@@ -574,6 +574,30 @@ where
     let n = points.len();
     let mut rng = match seed {
         Some(s) => StdRng::seed_from_u64(s),
+        #[cfg(all(target_arch = "wasm32", target_os = "unknown"))]
+        None => {
+            // `rand` crate doesn't integrate with wasm-unknown-unknown directly
+            // Instead they recommend that users create an explicit dependency on getrandom, and enable wasm-js support
+            //
+            // `rand` maintainers recommend that each application does this to fix their build;
+            // However, if the version of getrandom ever rev's, all out users builds will break again.
+            //
+            // Instead, we require a specific version of getrandom, and use it to manually seed the RNG,
+            // rather than relying on the suggested "back door/unstable" configuration.
+            //
+            // The failure mode here, if `random` revs their version of `getrandom` is a duplicate dependency, rather than
+            // a broken build, until we update our getrandom dep.
+            //
+            // See https://github.com/georust/geo/pull/1478
+            //
+            // Note: because we currently happen to require the same version of the `getrandom` crate
+            // as the `rand` crate does, we could simply call `StdRng::from_os_rng()`,
+            // but it would break as soon as `rand` started using a semver incompatible version of `getrandom`.
+            let mut seed = [0u8; 32];
+            getrandom::fill(&mut seed).map_err(KMeansError::GetRandom)?;
+            StdRng::from_seed(seed)
+        }
+        #[cfg(not(all(target_arch = "wasm32", target_os = "unknown")))]
         None => StdRng::from_os_rng(),
     };
     let mut centroids = Vec::with_capacity(k);
