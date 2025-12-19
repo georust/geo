@@ -1,7 +1,7 @@
 use super::{CoordIndex, RingRole, Validation, utils};
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
-use crate::relate::geomgraph::{Edge, GeometryGraph};
+use crate::relate::geomgraph::GeometryGraph;
 use crate::{Coord, GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
 
 use std::cell::RefCell;
@@ -239,60 +239,89 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
         return None;
     }
 
-    // Build ring-pair touch map from edge intersections
-    // Two edges that meet at a point will both have an EdgeIntersection at that coordinate
-    let mut ring_pair_touch_coords: HashMap<(usize, usize), HashSet<(u64, u64)>> = HashMap::new();
+    // Collect all intersection points with their edge index and whether they're a vertex.
+    // A "touch" requires at least one ring to have the point as a vertex.
+    struct IntersectionInfo<F: GeoFloat> {
+        coord: Coord<F>,
+        edge_idx: usize,
+        is_vertex: bool,
+    }
 
-    // Collect vertex coordinates from each edge for filtering
-    // We only care about intersections where at least one ring has the point as a vertex
-    // (i.e., touches), not crossing intersections in the middle of both segments
-    let edge_vertices: Vec<HashSet<(u64, u64)>> = edges
-        .iter()
-        .map(|edge: &std::rc::Rc<RefCell<Edge<F>>>| {
-            let edge = RefCell::borrow(edge);
-            edge.coords()
-                .iter()
-                .filter_map(|c| coord_to_bits(c))
-                .collect()
-        })
-        .collect();
+    let mut all_intersections: Vec<IntersectionInfo<F>> = Vec::new();
 
-    // Collect all intersection coordinates from each edge
-    let edge_intersections: Vec<Vec<(u64, u64)>> = edges
-        .iter()
-        .map(|edge: &std::rc::Rc<RefCell<Edge<F>>>| {
-            let edge = RefCell::borrow(edge);
-            edge.edge_intersections()
-                .iter()
-                .filter_map(|ei| coord_to_bits(&ei.coordinate()))
-                .collect()
-        })
-        .collect();
+    for (edge_idx, edge) in edges.iter().enumerate() {
+        let edge = RefCell::borrow(edge);
 
-    // For each pair of edges, find shared intersection coordinates
-    // but only if at least one edge has this point as an actual vertex
-    // This filters out pure crossing intersections (mid-segment on both edges)
-    for (i, intersections_i) in edge_intersections.iter().enumerate() {
-        let set_i: HashSet<_> = intersections_i.iter().copied().collect();
+        // Collect edge intersection coordinates
+        for ei in edge.edge_intersections() {
+            let coord = ei.coordinate();
+            // Check if this intersection point is also a vertex of this edge
+            let is_vertex = edge.coords().iter().any(|v| *v == coord);
+            all_intersections.push(IntersectionInfo {
+                coord,
+                edge_idx,
+                is_vertex,
+            });
+        }
+    }
 
-        for (j, intersections_j) in edge_intersections.iter().enumerate().skip(i + 1) {
-            // Find common intersection coordinates between edges i and j
-            for coord_bits in intersections_j {
-                if set_i.contains(coord_bits) {
-                    // Only include if at least one edge has this as a vertex
-                    // A "touch" means a vertex of one ring lies on another ring
-                    // A "cross" means both edges are intersected mid-segment
-                    let is_vertex_i = edge_vertices[i].contains(coord_bits);
-                    let is_vertex_j = edge_vertices[j].contains(coord_bits);
-                    if is_vertex_i || is_vertex_j {
-                        ring_pair_touch_coords
-                            .entry((i, j))
-                            .or_default()
-                            .insert(*coord_bits);
+    // Sort by (coordinate, edge_idx) using total_cmp for consistent ordering.
+    // Sorting by edge_idx within each coordinate group enables efficient deduplication.
+    all_intersections.sort_by(|a, b| {
+        a.coord
+            .x
+            .total_cmp(&b.coord.x)
+            .then_with(|| a.coord.y.total_cmp(&b.coord.y))
+            .then_with(|| a.edge_idx.cmp(&b.edge_idx))
+    });
+
+    // Group consecutive coordinates that are equal and build the ring-pair touch map
+    let mut ring_pair_touch_coords: HashMap<(usize, usize), Vec<Coord<F>>> = HashMap::new();
+
+    let mut i = 0;
+    while i < all_intersections.len() {
+        let current_coord = all_intersections[i].coord;
+
+        // Find all entries with the same coordinate
+        let mut j = i + 1;
+        while j < all_intersections.len() && all_intersections[j].coord == current_coord {
+            j += 1;
+        }
+
+        // Group spans from i to j (exclusive), sorted by edge_idx within the group
+        let group = &all_intersections[i..j];
+
+        // Collect unique edges and track if any is a vertex
+        // Since sorted by edge_idx, we can detect duplicates by comparing adjacent entries
+        let mut unique_edges: Vec<(usize, bool)> = Vec::new();
+        for info in group {
+            if let Some(last) = unique_edges.last_mut() {
+                if last.0 == info.edge_idx {
+                    // Same edge - merge is_vertex flags
+                    last.1 = last.1 || info.is_vertex;
+                    continue;
+                }
+            }
+            unique_edges.push((info.edge_idx, info.is_vertex));
+        }
+
+        // Need at least 2 distinct edges meeting at this point
+        if unique_edges.len() >= 2 {
+            // Check if at least one edge has this as a vertex
+            let has_vertex = unique_edges.iter().any(|(_, is_v)| *is_v);
+
+            if has_vertex {
+                // Record this touch point for each pair of distinct edges
+                for (idx_a, &(edge_a, _)) in unique_edges.iter().enumerate() {
+                    for &(edge_b, _) in unique_edges.iter().skip(idx_a + 1) {
+                        let key = (edge_a, edge_b); // Already sorted since edges are sorted
+                        ring_pair_touch_coords.entry(key).or_default().push(current_coord);
                     }
                 }
             }
         }
+
+        i = j;
     }
 
     // Check for disconnection using the touch point data
@@ -304,32 +333,32 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
 /// The interior is disconnected if:
 /// 1. Any two rings share 2+ distinct touch coordinates
 /// 2. Rings form a cycle in the touch graph through distinct coordinates
-fn check_ring_touches_disconnect_interior(
-    ring_pair_touch_coords: &HashMap<(usize, usize), HashSet<(u64, u64)>>,
+fn check_ring_touches_disconnect_interior<F: GeoFloat>(
+    ring_pair_touch_coords: &HashMap<(usize, usize), Vec<Coord<F>>>,
     num_rings: usize,
 ) -> Option<Vec<Coord<f64>>> {
-    // Helper to convert bits back to Coord
-    let bits_to_coord = |(x_bits, y_bits): (u64, u64)| Coord {
-        x: f64::from_bits(x_bits),
-        y: f64::from_bits(y_bits),
-    };
-
     // Check 1: Any two rings sharing 2+ distinct touch coordinates → disconnected
     for coords in ring_pair_touch_coords.values() {
         if coords.len() >= 2 {
-            let problem_coords: Vec<Coord<f64>> =
-                coords.iter().map(|c| bits_to_coord(*c)).collect();
+            let problem_coords: Vec<Coord<f64>> = coords
+                .iter()
+                .map(|c| Coord {
+                    x: c.x.to_f64().unwrap_or(f64::NAN),
+                    y: c.y.to_f64().unwrap_or(f64::NAN),
+                })
+                .collect();
             return Some(problem_coords);
         }
     }
 
     // Check 2: Cycle detection in the touch graph
+    // Build adjacency list for rings connected by exactly one touch point
     let mut adjacency: Vec<HashSet<usize>> = vec![HashSet::new(); num_rings];
-    let mut edge_coords: HashMap<(usize, usize), (u64, u64)> = HashMap::new();
+    let mut edge_coords: HashMap<(usize, usize), Coord<F>> = HashMap::new();
 
     for (&(i, j), coords) in ring_pair_touch_coords {
         if coords.len() == 1 {
-            let coord = *coords.iter().next().unwrap();
+            let coord = coords[0];
             adjacency[i].insert(j);
             adjacency[j].insert(i);
             edge_coords.insert((i, j), coord);
@@ -345,15 +374,25 @@ fn check_ring_touches_disconnect_interior(
             continue;
         }
 
-        let mut stack = vec![(start, None::<usize>, None::<(u64, u64)>)];
-        let mut node_entry_coord: HashMap<usize, (u64, u64)> = HashMap::new();
+        let mut stack = vec![(start, None::<usize>, None::<Coord<F>>)];
+        let mut node_entry_coord: HashMap<usize, Coord<F>> = HashMap::new();
 
         while let Some((node, parent, entry_coord)) = stack.pop() {
             if visited[node] {
                 if let Some(entry) = entry_coord {
                     if let Some(&prev_entry) = node_entry_coord.get(&node) {
+                        // Check if the coordinates are different (using ==)
                         if entry != prev_entry {
-                            return Some(vec![bits_to_coord(entry), bits_to_coord(prev_entry)]);
+                            return Some(vec![
+                                Coord {
+                                    x: entry.x.to_f64().unwrap_or(f64::NAN),
+                                    y: entry.y.to_f64().unwrap_or(f64::NAN),
+                                },
+                                Coord {
+                                    x: prev_entry.x.to_f64().unwrap_or(f64::NAN),
+                                    y: prev_entry.y.to_f64().unwrap_or(f64::NAN),
+                                },
+                            ]);
                         }
                     }
                 }
@@ -377,8 +416,14 @@ fn check_ring_touches_disconnect_interior(
                         if let Some(&neighbor_entry) = node_entry_coord.get(&neighbor) {
                             if coord != neighbor_entry {
                                 return Some(vec![
-                                    bits_to_coord(coord),
-                                    bits_to_coord(neighbor_entry),
+                                    Coord {
+                                        x: coord.x.to_f64().unwrap_or(f64::NAN),
+                                        y: coord.y.to_f64().unwrap_or(f64::NAN),
+                                    },
+                                    Coord {
+                                        x: neighbor_entry.x.to_f64().unwrap_or(f64::NAN),
+                                        y: neighbor_entry.y.to_f64().unwrap_or(f64::NAN),
+                                    },
                                 ]);
                             }
                         }
@@ -391,15 +436,6 @@ fn check_ring_touches_disconnect_interior(
     }
 
     None
-}
-
-/// Convert a coordinate to bit representation for exact matching.
-#[inline]
-fn coord_to_bits<F: GeoFloat>(coord: &Coord<F>) -> Option<(u64, u64)> {
-    match (coord.x.to_f64(), coord.y.to_f64()) {
-        (Some(x), Some(y)) => Some((x.to_bits(), y.to_bits())),
-        _ => None,
-    }
 }
 
 #[cfg(test)]
