@@ -154,6 +154,20 @@ where
             .map(triangulation_to_triangles)
     }
 
+    /// same as `unconstrained_triangulation`, but returns Spade's triangulation result directly
+    fn unconstrained_triangulation_raw(
+        &'a self,
+    ) -> TriangulationResult<DelaunayTriangulation<Point2<T>>> {
+        let points = self.coords();
+        points.into_iter().map(to_spade_point).try_fold(
+            DelaunayTriangulation::<Point2<T>>::new(),
+            |mut tris, p| {
+                tris.insert(p).map_err(TriangulationError::SpadeError)?;
+                Ok(tris)
+            },
+        )
+    }
+
     /// returns triangulation that's based on the points of the geometric object and also
     /// incorporates the lines of the input geometry
     ///
@@ -226,6 +240,27 @@ where
                 },
             )
             .map(triangulation_to_triangles)
+    }
+    /// Same as `constrained_outer_triangulation` but returns Spade's triangulation directly
+    fn constrained_outer_triangulation_raw(
+        &'a self,
+        config: SpadeTriangulationConfig<T>,
+    ) -> TriangulationResult<ConstrainedDelaunayTriangulation<Point2<T>>> {
+        let lines = self.lines();
+        let lines = Self::cleanup_lines(lines, config.snap_radius)?;
+        lines.into_iter().map(to_spade_line).try_fold(
+            ConstrainedDelaunayTriangulation::<Point2<T>>::new(),
+            |mut cdt, [start, end]| {
+                let start = cdt.insert(start).map_err(TriangulationError::SpadeError)?;
+                let end = cdt.insert(end).map_err(TriangulationError::SpadeError)?;
+                // safety check (to prevent panic) whether we can add the line
+                if !cdt.can_add_constraint(start, end) {
+                    return Err(TriangulationError::ConstraintFailure);
+                }
+                cdt.add_constraint(start, end);
+                Ok(cdt)
+            },
+        )
     }
 
     /// returns triangulation that's based on the points of the geometric object and also

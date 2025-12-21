@@ -1,4 +1,5 @@
 use geo_types::{Coord, Line, Point, Triangle};
+use rstar::{RTree, RTreeNum};
 use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };
@@ -54,8 +55,8 @@ pub type TriangulationResult<T> = Result<T, TriangulationError>;
 
 // ======= Float trait ========
 
-pub trait SpadeTriangulationFloat: GeoFloat + SpadeNum {}
-impl<T: GeoFloat + SpadeNum> SpadeTriangulationFloat for T {}
+pub trait SpadeTriangulationFloat: GeoFloat + SpadeNum + RTreeNum {}
+impl<T: GeoFloat + SpadeNum + RTreeNum> SpadeTriangulationFloat for T {}
 
 // ======= Triangulation trait =========
 
@@ -149,7 +150,7 @@ where
             .map(triangulation_to_triangles)
     }
 
-    /// Same as `unconstrained_triangulation`, but returns Spade's triangulation result directly.
+    /// same as `unconstrained_triangulation`, but returns Spade's triangulation result directly
     fn unconstrained_triangulation_raw(
         &'a self,
     ) -> TriangulationResult<DelaunayTriangulation<Point2<T>>> {
@@ -169,13 +170,13 @@ where
         &'a self,
         tolerance: T,
     ) -> TriangulationResult<DelaunayTriangulation<Point2<T>>> {
-        let mut known_coords: Vec<Coord<T>> = vec![];
+        let mut known_coords: RTree<Coord<T>> = RTree::new();
         // Snap points to nearby known coordinates within tolerance
         for coord in self.coords() {
             snap_or_register_point(coord, &mut known_coords, tolerance);
         }
         // Insert deduplicated points into triangulation
-        known_coords.into_iter().map(to_spade_point).try_fold(
+        known_coords.iter().copied().map(to_spade_point).try_fold(
             DelaunayTriangulation::<Point2<T>>::new(),
             |mut tris, p| {
                 tris.insert(p).map_err(TriangulationError::SpadeError)?;
@@ -451,7 +452,7 @@ where
 
 fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
     mut lines: Vec<Line<T>>,
-    mut known_points: Vec<Coord<T>>,
+    mut known_points: RTree<Coord<T>>,
     snap_radius: T,
 ) -> Result<Vec<Line<T>>, TriangulationError> {
     // Rule 2 of "Power of 10" rules (NASA)
@@ -579,7 +580,7 @@ fn split_lines<T: SpadeTriangulationFloat>(
 fn cleanup_filter_lines<T: SpadeTriangulationFloat>(
     lines_need_check: Vec<Line<T>>,
     existing_lines: &[Line<T>],
-    known_points: &mut Vec<Coord<T>>,
+    known_points: &mut RTree<Coord<T>>,
     snap_radius: T,
 ) -> Vec<Line<T>> {
     lines_need_check
@@ -595,29 +596,23 @@ fn cleanup_filter_lines<T: SpadeTriangulationFloat>(
         .collect::<Vec<_>>()
 }
 
-/// snap point to the nearest existing point if it's close enough
+/// Snap point to the nearest existing point if it's close enough.
 ///
-/// snap_radius can be configured via the third parameter of this function
+/// Uses an R-tree for O(log n) nearest-neighbour lookup instead of O(n) linear scan,
+/// which is critical for performance with large point sets.
 fn snap_or_register_point<T: SpadeTriangulationFloat>(
     point: Coord<T>,
-    known_points: &mut Vec<Coord<T>>,
+    known_points: &mut RTree<Coord<T>>,
     snap_radius: T,
 ) -> Coord<T> {
     known_points
-        .iter()
-        // find closest
-        .min_by(|a, b| {
-            Euclidean
-                .distance(**a, point)
-                .partial_cmp(&Euclidean.distance(**b, point))
-                .expect("Couldn't compare coordinate distances")
-        })
-        // only snap if closest is within epsilon range
+        .nearest_neighbor(&point)
+        // only snap if closest is within snap radius
         .filter(|nearest_point| Euclidean.distance(**nearest_point, point) < snap_radius)
         .cloned()
         // otherwise register and use input point
         .unwrap_or_else(|| {
-            known_points.push(point);
+            known_points.insert(point);
             point
         })
 }
@@ -626,8 +621,8 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
 fn preprocess_lines<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
     snap_radius: T,
-) -> (Vec<Coord<T>>, Vec<Line<T>>) {
-    let mut known_coords: Vec<Coord<T>> = vec![];
+) -> (RTree<Coord<T>>, Vec<Line<T>>) {
+    let mut known_coords: RTree<Coord<T>> = RTree::new();
     let capacity = lines.len();
     let lines = lines
         .into_iter()
