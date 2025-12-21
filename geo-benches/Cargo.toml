@@ -164,3 +164,8 @@ harness = false
 name = "kmeans"
 path = "src/kmeans.rs"
 harness = false
+
+[[bench]]
+name = "voronoi"
+path = "src/voronoi.rs"
+harness = false
