@@ -311,6 +311,12 @@ pub use vincenty_distance::VincentyDistance;
 pub mod vincenty_length;
 pub use vincenty_length::VincentyLength;
 
+/// Produce the [Voronoi Diagram](https://en.wikipedia.org/wiki/Voronoi_diagram) of an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation).
+#[cfg(feature = "spade")]
+pub mod voronoi;
+#[cfg(feature = "spade")]
+pub use voronoi::{Voronoi, VoronoiClip, VoronoiError, VoronoiParams};
+
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
 pub use winding_order::Winding;

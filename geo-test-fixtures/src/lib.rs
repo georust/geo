@@ -1,6 +1,6 @@
 use std::{path::PathBuf, str::FromStr};
 
-use geo_types::{LineString, MultiPolygon, Point, Polygon};
+use geo_types::{LineString, MultiPoint, MultiPolygon, Point, Polygon};
 use wkt::{TryFromWkt, WktFloat};
 
 pub fn louisiana<T>() -> LineString<T>
@@ -160,6 +160,29 @@ where
     T: WktFloat + Default + FromStr,
 {
     MultiPolygon::try_from_wkt_reader(file(name)).unwrap()
+}
+
+pub fn multi_point<T>(name: &str) -> MultiPoint<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    MultiPoint::try_from_wkt_reader(file(name)).unwrap()
+}
+
+/// 104 UK cities used for Voronoi diagram testing
+pub fn uk_cities<T>() -> MultiPoint<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    multi_point("voronoi/uk_cities.wkt")
+}
+
+/// 151 post box locations in Islington, London used for Voronoi diagram testing
+pub fn islington_post_boxes<T>() -> MultiPoint<T>
+where
+    T: WktFloat + Default + FromStr,
+{
+    multi_point("voronoi/islington.wkt")
 }
 
 pub fn file(name: &str) -> std::fs::File {
