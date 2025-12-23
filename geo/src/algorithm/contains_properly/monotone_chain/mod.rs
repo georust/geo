@@ -1,8 +1,12 @@
 //! Implements `ContainsProperly` for [`MonotoneChain`] backed geometries
 //! Falls back to `ContainsProperly` if no monotone chain based implementation is available
 
-use crate::MonotoneChains;
-use crate::{GeoNum, Intersects};
+use crate::coordinate_position::{CoordPos, CoordinatePosition};
+use crate::monotone_chain::coord_pos_relative_to_ring;
+use crate::{
+    ContainsProperly, Coord, GeoNum, HasDimensions, Intersects, LinesIter, MonotoneChainPolygon,
+    MonotoneChains,
+};
 
 macro_rules! impl_contains_properly_target_monotone {
     ($target:ty,  [$($for:ty),*]) => {
@@ -49,6 +53,15 @@ mod multilinestring;
 mod multipolygon;
 mod polygon;
 
+impl<'a, T: GeoNum> ContainsProperly<Coord<T>> for MonotoneChainPolygon<'a, T> {
+    fn contains_properly(&self, rhs: &Coord<T>) -> bool {
+        if self.is_empty() {
+            return false;
+        }
+        self.coordinate_position(rhs) == CoordPos::Inside
+    }
+}
+
 /// Return true if the boundary of lhs intersects any of the boundaries of rhs
 /// where lhs and rhs are both polygons/multipolygons
 /// This is a short circuit version of boundary_intersects which doesn't use the monotone algorithm
@@ -63,6 +76,62 @@ where
 
     lhs.chains()
         .any(|lhs| rhs_arr.iter().any(|rhs| lhs.intersects(*rhs)))
+}
+
+/// Given two non-empty polygons with no intersecting boundaries,
+/// Return true if first polygon completely contains second polygon
+pub(crate) fn polygon_polygon_inner_loop<T>(
+    self_poly: &MonotoneChainPolygon<'_, T>,
+    rhs_poly: &MonotoneChainPolygon<'_, T>,
+) -> bool
+where
+    T: GeoNum,
+{
+    debug_assert!(!self_poly.is_empty() && !rhs_poly.is_empty());
+    debug_assert!(
+        self_poly
+            .lines_iter()
+            .flat_map(|s| rhs_poly.lines_iter().map(move |s2| (s, s2)))
+            .all(|(s, s2)| !s.intersects(&s2))
+    );
+
+    let Some(rhs_ext_coord) = rhs_poly.exterior().geometry().0.first() else {
+        return false;
+    };
+
+    if !self_poly.contains_properly(rhs_ext_coord) {
+        // is disjoint
+        return false;
+    }
+
+    // if there exits a self_hole which is not inside a rhs_hole
+    // then there must be some point of rhs which does not lie on the interior of self
+    // and hence self does not contains_properly rhs
+    for self_hole in self_poly.interiors() {
+        // empty hole is always covered
+        let Some(self_hole_first_coord) = self_hole.geometry().0.first() else {
+            continue;
+        };
+
+        // hole outside of RHS does not affect intersection
+        if coord_pos_relative_to_ring(*self_hole_first_coord, rhs_poly.exterior())
+            != CoordPos::Inside
+        {
+            continue;
+        }
+
+        // if any RHS point is inside self_hole, then we fail the contains_properly test
+        // since all rings are either concentric or disjoint, we can check using representative point
+        let self_hole_pt_in_rhs_hole = rhs_poly
+            .interiors()
+            .iter()
+            .map(|rhs_ring| coord_pos_relative_to_ring(*self_hole_first_coord, rhs_ring))
+            .any(|pos| pos == CoordPos::Inside);
+        if !self_hole_pt_in_rhs_hole {
+            return false;
+        }
+    }
+    true
 }
 
 #[cfg(test)]

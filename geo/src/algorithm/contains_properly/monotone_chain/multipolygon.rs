@@ -1,7 +1,9 @@
 //! Implements `ContainsProperly` for MonotoneChainPolygon and MonotoneChainMultiPolygon
 
 use super::boundary_intersects;
-use crate::algorithm::contains_properly::polygon_polygon_inner_loop;
+use crate::algorithm::contains_properly::polygon::polygon_polygon_inner_loop;
+
+// use crate::contains_properly::polygon_polygon_inner_loop;
 use crate::monotone_chain::geometry::*;
 use crate::{ContainsProperly, GeoNum, HasDimensions};
 use geo_types::geometry::*;
@@ -25,8 +27,7 @@ impl<'a, T: GeoNum> ContainsProperly<MonotoneChainPolygon<'a, T>>
         };
 
         let mut self_candidates = self
-            .geometry()
-            .0
+            .components()
             .iter()
             .filter(|poly| poly.contains_properly(rhs_ext_coord));
 
@@ -45,7 +46,7 @@ impl<'a, T: GeoNum> ContainsProperly<MonotoneChainPolygon<'a, T>>
             return false;
         };
 
-        polygon_polygon_inner_loop(self_candidate, rhs.geometry())
+        polygon_polygon_inner_loop(self_candidate.geometry(), rhs.geometry())
     }
 }
 
@@ -69,13 +70,14 @@ impl<'a, T: GeoNum> ContainsProperly<MonotoneChainMultiPolygon<'a, T>>
         // all rings are concentric or disjoint
 
         // every rhs_poly must be covered by at some self_poly to return true
-        for rhs_poly in rhs.geometry().0.iter().filter(|poly| !poly.is_empty()) {
+        for rhs_poly in rhs.components().iter().filter(|poly| !poly.is_empty()) {
             let rhs_poly_covered = self
-                .geometry()
-                .0
+                .components()
                 .iter()
                 .filter(|poly| !poly.is_empty())
-                .any(|self_poly| polygon_polygon_inner_loop(self_poly, rhs_poly));
+                .any(|self_poly| {
+                    polygon_polygon_inner_loop(self_poly.geometry(), rhs_poly.geometry())
+                });
 
             if !rhs_poly_covered {
                 return false;
@@ -105,7 +107,6 @@ impl_contains_properly_target_monotone!(MonotoneChainPolygon<'a, T>, [
 ]);
 
 impl_contains_properly_for_monotone!(MonotoneChainPolygon<'a, T>, [
-    Coord<T>,
     Point<T>,
     MultiPoint<T>,
 

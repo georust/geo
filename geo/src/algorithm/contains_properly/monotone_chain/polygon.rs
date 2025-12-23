@@ -1,5 +1,4 @@
-use super::boundary_intersects;
-use crate::algorithm::contains_properly::polygon_polygon_inner_loop;
+use super::{boundary_intersects, polygon_polygon_inner_loop};
 use crate::monotone_chain::geometry::*;
 use crate::{ContainsProperly, GeoNum, HasDimensions};
 use geo_types::geometry::*;
@@ -18,7 +17,7 @@ impl<'a, T: GeoNum> ContainsProperly<MonotoneChainPolygon<'a, T>> for MonotoneCh
         }
         // established that pairwise relation between any two rings is either concentric or disjoint
 
-        polygon_polygon_inner_loop(self.geometry(), rhs.geometry())
+        polygon_polygon_inner_loop(self, rhs)
     }
 }
 
@@ -37,10 +36,10 @@ impl<'a, T: GeoNum> ContainsProperly<MonotoneChainMultiPolygon<'a, T>>
         }
         // all rings are concentric or disjoint
 
-        rhs.geometry()
+        rhs.components()
             .iter()
             .filter(|poly| !poly.is_empty())
-            .all(|rhs_poly| polygon_polygon_inner_loop(self.geometry(), rhs_poly))
+            .all(|rhs_poly| polygon_polygon_inner_loop(self, rhs_poly))
     }
 }
 

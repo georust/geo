@@ -49,10 +49,9 @@ mod geometry;
 mod geometry_collection;
 mod line;
 mod line_string;
+mod monotone_chain;
 mod point;
 mod polygon;
-pub(crate) use polygon::polygon_polygon_inner_loop;
-mod monotone_chain;
 mod rect;
 mod triangle;
 
