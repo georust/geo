@@ -223,7 +223,7 @@ pub mod orient;
 pub use orient::Orient;
 
 /// Coordinate projections and transformations using the current stable version of [PROJ](http://proj.org).
-#[cfg(feature = "use-proj")]
+#[cfg(feature = "proj")]
 pub mod proj;
 
 /// Relate two geometries based on DE-9IM
@@ -264,9 +264,9 @@ pub(crate) mod stitch;
 pub use stitch::StitchTriangles;
 
 /// Transform a geometry using PROJ.
-#[cfg(feature = "use-proj")]
+#[cfg(feature = "proj")]
 pub mod transform;
-#[cfg(feature = "use-proj")]
+#[cfg(feature = "proj")]
 pub use transform::Transform;
 
 /// Translate a `Geometry` along the given offsets.

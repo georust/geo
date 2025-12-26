@@ -180,7 +180,7 @@
 //! - **[`Buffer`]**: Create a new geometry whose boundary is offset the specified distance from the input.
 //! - **[`Centroid`]**: Calculate the centroid of a geometry
 //! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm
-//! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
+//! - **[`proj`]**: Project geometries with the `proj` crate (requires the `proj` feature)
 //! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments
 //! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance
 //! - **[`Transform`]**: Transform a geometry using Proj
