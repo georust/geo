@@ -61,36 +61,43 @@ impl<T: GeoFloat + SpadeNum> SpadeTriangulationFloat for T {}
 
 pub type Triangles<T> = Vec<Triangle<T>>;
 
-// seal the trait that needs to be implemented for TriangulateDelaunay to be implemented. This is done
-// so that we don't leak these weird methods on the public interface.
+// Sealed traits for triangulation requirements. Split into two:
+// - UnconstrainedRequirementTrait: only needs coords (for point collections)
+// - ConstrainedRequirementTrait: needs coords + lines + contains (for polygons etc.)
 mod private {
     use super::*;
 
     pub(crate) type CoordsIter<'a, T> = Box<dyn Iterator<Item = Coord<T>> + 'a>;
 
-    pub trait TriangulationRequirementTrait<'a, T>
+    /// Requirement trait for unconstrained triangulation: only needs coordinates
+    pub trait UnconstrainedRequirementTrait<'a, T>
     where
         T: SpadeTriangulationFloat,
     {
-        /// collect all the lines that are relevant for triangulations from the geometric object that
-        /// should be triangulated.
-        ///
-        /// intersecting lines are allowed
-        fn lines(&'a self) -> Vec<Line<T>>;
-        /// collect all the coords that are relevant for triangulations from the geometric object that
-        /// should be triangulated
+        /// Collect all coords from the geometry
         fn coords(&'a self) -> CoordsIter<'a, T>;
-        /// define a predicate that decides if a point is inside of the object (used for constrained triangulation)
+    }
+
+    /// Requirement trait for constrained triangulation: needs coords, lines, and containment
+    pub trait ConstrainedRequirementTrait<'a, T>: UnconstrainedRequirementTrait<'a, T>
+    where
+        T: SpadeTriangulationFloat,
+    {
+        /// Collect all lines from the geometry (intersecting lines are allowed)
+        fn lines(&'a self) -> Vec<Line<T>>;
+
+        /// Check if a point is inside the geometry (used for constrained triangulation)
         fn contains_point(&'a self, p: Point<T>) -> bool;
 
-        // processing of the lines that prepare the lines for triangulation.
+        // Processing of the lines that prepare the lines for triangulation.
         //
-        // `spade` has the general limitation that constraint lines cannot intersect or else it
-        // will panic. This is why we need to manually split up the lines into smaller parts at the
-        // intersection point
+        // Spade has the limitation that constraint lines cannot intersect or else it
+        // will panic. This is why we need to manually split up the lines into smaller
+        // parts at the intersection point.
         //
-        // there's also a preprocessing step which tries to minimize the risk of failure of the algo
-        // through edge cases (thin/flat triangles are prevented as much as possible & lines are deduped, ...)
+        // There's also a preprocessing step which tries to minimize the risk of failure
+        // through edge cases (thin/flat triangles are prevented as much as possible,
+        // lines are deduped, etc.)
         fn cleanup_lines(lines: Vec<Line<T>>, snap_radius: T) -> TriangulationResult<Vec<Line<T>>> {
             let (known_coords, lines) = preprocess_lines(lines, snap_radius);
             prepare_intersection_contraint(lines, known_coords, snap_radius)
@@ -98,45 +105,38 @@ mod private {
     }
 }
 
-/// Triangulate polygons using a [Delaunay
-/// Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
+/// Unconstrained Delaunay triangulation for geometries that provide coordinates.
 ///
-/// This trait contains both constrained and unconstrained triangulation methods. To read more
-/// about the differences of these methods also consult [this
-/// page](https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation)
-pub trait TriangulateDelaunay<'a, T>: private::TriangulationRequirementTrait<'a, T>
+/// This trait provides triangulation methods that only require point coordinates,
+/// making it suitable for point collections like `MultiPoint`, `Vec<Point>`, etc.
+///
+/// For constrained triangulation methods that respect geometry boundaries,
+/// see [`TriangulateDelaunay`].
+pub trait TriangulateDelaunayUnconstrained<'a, T>:
+    private::UnconstrainedRequirementTrait<'a, T>
 where
     T: SpadeTriangulationFloat,
 {
-    /// returns a triangulation that's solely based on the points of the geometric object
+    /// Returns a triangulation based solely on the points of the geometric object.
     ///
-    /// The triangulation is guaranteed to be Delaunay
+    /// The triangulation is guaranteed to be Delaunay.
     ///
     /// Note that the lines of the triangulation don't necessarily follow the lines of the input
-    /// geometry. If you wish to achieve that take a look at the `constrained_triangulation` and the
-    /// `constrained_outer_triangulation` functions.
+    /// geometry. If you wish to achieve that, see [`TriangulateDelaunay::constrained_triangulation`]
+    /// and [`TriangulateDelaunay::constrained_outer_triangulation`].
     ///
     /// ```rust
-    /// use geo::TriangulateDelaunay;
-    /// use geo::{Polygon, LineString, Coord};
-    /// let u_shape = Polygon::new(
-    ///     LineString::new(vec![
-    ///         Coord { x: 0.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 0.0 },
-    ///         Coord { x: 1.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 1.0 },
-    ///         Coord { x: 2.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 0.0 },
-    ///         Coord { x: 3.0, y: 3.0 },
-    ///         Coord { x: 0.0, y: 3.0 },
-    ///     ]),
-    ///     vec![],
-    /// );
-    /// let unconstrained_triangulation = u_shape.unconstrained_triangulation().unwrap();
-    /// let num_triangles = unconstrained_triangulation.len();
-    /// assert_eq!(num_triangles, 8);
-    /// ```
+    /// use geo::TriangulateDelaunayUnconstrained;
+    /// use geo::{MultiPoint, Point};
     ///
+    /// let points = MultiPoint::new(vec![
+    ///     Point::new(0.0, 0.0),
+    ///     Point::new(1.0, 0.0),
+    ///     Point::new(0.5, 1.0),
+    /// ]);
+    /// let triangulation = points.unconstrained_triangulation().unwrap();
+    /// assert_eq!(triangulation.len(), 1);
+    /// ```
     fn unconstrained_triangulation(&'a self) -> TriangulationResult<Triangles<T>> {
         let points = self.coords();
         points
@@ -149,10 +149,56 @@ where
             .map(triangulation_to_triangles)
     }
 
-    /// returns triangulation that's based on the points of the geometric object and also
-    /// incorporates the lines of the input geometry
+    /// Same as `unconstrained_triangulation`, but returns Spade's triangulation result directly.
+    fn unconstrained_triangulation_raw(
+        &'a self,
+    ) -> TriangulationResult<DelaunayTriangulation<Point2<T>>> {
+        let points = self.coords();
+        points.into_iter().map(to_spade_point).try_fold(
+            DelaunayTriangulation::<Point2<T>>::new(),
+            |mut tris, p| {
+                tris.insert(p).map_err(TriangulationError::SpadeError)?;
+                Ok(tris)
+            },
+        )
+    }
+
+    /// same as `unconstrained_triangulation_raw`, but with a tolerance parameter for snapping
+    /// nearby points together before triangulation
+    fn unconstrained_triangulation_raw_with_tolerance(
+        &'a self,
+        tolerance: T,
+    ) -> TriangulationResult<DelaunayTriangulation<Point2<T>>> {
+        let mut known_coords: Vec<Coord<T>> = vec![];
+        // Snap points to nearby known coordinates within tolerance
+        for coord in self.coords() {
+            snap_or_register_point(coord, &mut known_coords, tolerance);
+        }
+        // Insert deduplicated points into triangulation
+        known_coords.into_iter().map(to_spade_point).try_fold(
+            DelaunayTriangulation::<Point2<T>>::new(),
+            |mut tris, p| {
+                tris.insert(p).map_err(TriangulationError::SpadeError)?;
+                Ok(tris)
+            },
+        )
+    }
+}
+
+/// Triangulate polygons using a [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation)
+///
+/// This trait extends [`TriangulateDelaunayUnconstrained`] with constrained triangulation methods
+/// that respect geometry boundaries. To read more about the differences between constrained and
+/// unconstrained methods, see the [Wikipedia article on constrained Delaunay triangulation](https://en.wikipedia.org/wiki/Constrained_Delaunay_triangulation).
+pub trait TriangulateDelaunay<'a, T>:
+    TriangulateDelaunayUnconstrained<'a, T> + private::ConstrainedRequirementTrait<'a, T>
+where
+    T: SpadeTriangulationFloat,
+{
+    /// Returns triangulation that's based on the points of the geometric object and also
+    /// incorporates the lines of the input geometry.
     ///
-    /// The triangulation is not guaranteed to be Delaunay because of the constraint lines
+    /// The triangulation is not guaranteed to be Delaunay because of the constraint lines.
     ///
     /// This outer triangulation also contains triangles that are not included in the input
     /// geometry if it wasn't convex. Here's an example:
@@ -223,10 +269,32 @@ where
             .map(triangulation_to_triangles)
     }
 
-    /// returns triangulation that's based on the points of the geometric object and also
-    /// incorporates the lines of the input geometry
+    /// Same as `constrained_outer_triangulation` but returns Spade's triangulation directly
+    fn constrained_outer_triangulation_raw(
+        &'a self,
+        config: DelaunayTriangulationConfig<T>,
+    ) -> TriangulationResult<ConstrainedDelaunayTriangulation<Point2<T>>> {
+        let lines = self.lines();
+        let lines = Self::cleanup_lines(lines, config.snap_radius)?;
+        lines.into_iter().map(to_spade_line).try_fold(
+            ConstrainedDelaunayTriangulation::<Point2<T>>::new(),
+            |mut cdt, [start, end]| {
+                let start = cdt.insert(start).map_err(TriangulationError::SpadeError)?;
+                let end = cdt.insert(end).map_err(TriangulationError::SpadeError)?;
+                // safety check (to prevent panic) whether we can add the line
+                if !cdt.can_add_constraint(start, end) {
+                    return Err(TriangulationError::ConstraintFailure);
+                }
+                cdt.add_constraint(start, end);
+                Ok(cdt)
+            },
+        )
+    }
+
+    /// Returns triangulation that's based on the points of the geometric object and also
+    /// incorporates the lines of the input geometry.
     ///
-    /// The triangulation is not guaranteed to be Delaunay because of the constraint lines
+    /// The triangulation is not guaranteed to be Delaunay because of the constraint lines.
     ///
     /// This triangulation only contains triangles that are included in the input geometry.
     /// Here's an example:
@@ -304,24 +372,40 @@ where
 
 // ========== Triangulation trait impls ============
 
-// everything that satisfies the requirement methods automatically implements the triangulation
-impl<'a, T, G> TriangulateDelaunay<'a, T> for G
+// Blanket impl: anything with UnconstrainedRequirementTrait gets TriangulateDelaunayUnconstrained
+impl<'a, T, G> TriangulateDelaunayUnconstrained<'a, T> for G
 where
     T: SpadeTriangulationFloat,
-    G: private::TriangulationRequirementTrait<'a, T>,
+    G: private::UnconstrainedRequirementTrait<'a, T>,
 {
 }
 
-impl<'a, 'l, T, G> private::TriangulationRequirementTrait<'a, T> for G
+// Blanket impl: anything with ConstrainedRequirementTrait gets TriangulateDelaunay
+impl<'a, T, G> TriangulateDelaunay<'a, T> for G
+where
+    T: SpadeTriangulationFloat,
+    G: private::ConstrainedRequirementTrait<'a, T>,
+{
+}
+
+// Impl UnconstrainedRequirementTrait for types with CoordsIter
+impl<'a, T, G> private::UnconstrainedRequirementTrait<'a, T> for G
+where
+    T: SpadeTriangulationFloat,
+    G: CoordsIter<Scalar = T>,
+{
+    fn coords(&'a self) -> private::CoordsIter<'a, T> {
+        Box::new(self.coords_iter())
+    }
+}
+
+// Impl ConstrainedRequirementTrait for types with LinesIter + CoordsIter + Contains
+impl<'a, 'l, T, G> private::ConstrainedRequirementTrait<'a, T> for G
 where
     'a: 'l,
     T: SpadeTriangulationFloat,
     G: LinesIter<'l, Scalar = T> + CoordsIter<Scalar = T> + Contains<Point<T>>,
 {
-    fn coords(&'a self) -> private::CoordsIter<'a, T> {
-        Box::new(self.coords_iter())
-    }
-
     fn lines(&'a self) -> Vec<Line<T>> {
         self.lines_iter().collect()
     }
@@ -331,10 +415,8 @@ where
     }
 }
 
-// it would be cool to impl the trait for GS: AsRef<[G]> but I wasn't able to get this to compile
-// (yet)
-
-impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for Vec<G>
+// Vec<G> where G has constrained triangulation
+impl<'a, T, G> private::UnconstrainedRequirementTrait<'a, T> for Vec<G>
 where
     T: SpadeTriangulationFloat + 'a,
     G: TriangulateDelaunay<'a, T>,
@@ -342,7 +424,13 @@ where
     fn coords(&'a self) -> private::CoordsIter<'a, T> {
         Box::new(self.iter().flat_map(|g| g.coords()))
     }
+}
 
+impl<'a, T, G> private::ConstrainedRequirementTrait<'a, T> for Vec<G>
+where
+    T: SpadeTriangulationFloat + 'a,
+    G: TriangulateDelaunay<'a, T>,
+{
     fn lines(&'a self) -> Vec<Line<T>> {
         self.iter().flat_map(|g| g.lines()).collect::<Vec<_>>()
     }
@@ -352,23 +440,12 @@ where
     }
 }
 
-impl<'a, T, G> private::TriangulationRequirementTrait<'a, T> for &[G]
-where
-    T: SpadeTriangulationFloat + 'a,
-    G: TriangulateDelaunay<'a, T>,
-{
-    fn coords(&'a self) -> private::CoordsIter<'a, T> {
-        Box::new(self.iter().flat_map(|g| g.coords()))
-    }
+// Note: &[G] impls are omitted because &[Coord] implements CoordsIter, which would
+// conflict with &[G] where G: TriangulateDelaunay. Users can use Vec<G> instead.
 
-    fn lines(&'a self) -> Vec<Line<T>> {
-        self.iter().flat_map(|g| g.lines()).collect::<Vec<_>>()
-    }
-
-    fn contains_point(&'a self, p: Point<T>) -> bool {
-        self.iter().any(|g| g.contains_point(p))
-    }
-}
+// Note: Point collections like MultiPoint, Point, and &[Coord] get
+// TriangulateDelaunayUnconstrained automatically via the blanket impl for CoordsIter.
+// They don't implement LinesIter + Contains, so they don't get TriangulateDelaunay.
 
 // ========== Triangulation trait impl helpers ============
 
@@ -783,5 +860,32 @@ mod spade_triangulation {
                 });
             assert_num_triangles(&constrained_triangulation, 6);
         }
+    }
+
+    #[test]
+    fn multipoint_triangulates_unconstrained() {
+        use super::TriangulateDelaunayUnconstrained;
+        use geo_types::MultiPoint;
+
+        let points = MultiPoint::new(vec![
+            Point::new(0.0, 0.0),
+            Point::new(1.0, 0.0),
+            Point::new(0.5, 1.0),
+            Point::new(0.5, 0.5),
+        ]);
+
+        let triangulation = points.unconstrained_triangulation();
+        // 4 points with one inside the triangle formed by the others produce 3 triangles
+        assert_num_triangles(&triangulation, 3);
+    }
+
+    #[test]
+    fn point_triangulates_unconstrained() {
+        use super::TriangulateDelaunayUnconstrained;
+
+        // Single point produces no triangles (need at least 3 points)
+        let point = Point::new(0.0, 0.0);
+        let triangulation = point.unconstrained_triangulation();
+        assert_num_triangles(&triangulation, 0);
     }
 }
