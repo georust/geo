@@ -284,6 +284,7 @@ fn criterion_benchmark(c: &mut Criterion) {
                         inside += 1
                     }
                 }
+                criterion::black_box(inside);
             });
         },
     );
