@@ -1,8 +1,8 @@
 //! # Advanced Example: Fallible Geometry coordinate conversion using `PROJ`
 //!
-#![cfg_attr(feature = "use-proj", doc = "```")]
-#![cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
-//! // activate the [use-proj] feature in cargo.toml in order to access proj functions
+#![cfg_attr(feature = "proj", doc = "```")]
+#![cfg_attr(not(feature = "proj"), doc = "```ignore")]
+//! // activate the [proj] feature in cargo.toml in order to access proj functions
 //! use approx::assert_relative_eq;
 //! use geo::{Coord, Point};
 //! use geo::MapCoords;
@@ -93,10 +93,10 @@ pub trait MapCoords<T, NT> {
     ///
     /// ## Advanced Example: Geometry coordinate conversion using `PROJ`
     ///
-    #[cfg_attr(feature = "use-proj", doc = "```")]
-    #[cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
+    #[cfg_attr(feature = "proj", doc = "```")]
+    #[cfg_attr(not(feature = "proj"), doc = "```ignore")]
     /// use approx::assert_relative_eq;
-    /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
+    /// // activate the [proj] feature in cargo.toml in order to access proj functions
     /// use geo::{Coord, Point};
     /// use geo::map_coords::MapCoords;
     /// use proj::{Coord as ProjCoord, Proj, ProjError};
@@ -941,7 +941,7 @@ mod test {
         assert_relative_eq!(p2.y(), 2f32);
     }
 
-    #[cfg(feature = "use-proj")]
+    #[cfg(feature = "proj")]
     #[test]
     fn test_fallible_proj() {
         use proj::{Proj, ProjError};
