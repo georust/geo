@@ -186,8 +186,8 @@ where
 }
 
 /// **Note.** The implementation is a straight-forward
-/// summation of the signed areas of the individual
-/// polygons. In particular, `unsigned_area` is not
+/// summation of the signed or unsigned areas of the individual
+/// polygons. In particular, `signed_area` is not
 /// necessarily the sum of the `unsigned_area` of the
 /// constituent polygons unless they are all oriented the
 /// same.
@@ -204,7 +204,7 @@ where
     fn unsigned_area(&self) -> T {
         self.0
             .iter()
-            .fold(T::zero(), |total, next| total + next.signed_area().abs())
+            .fold(T::zero(), |total, next| total + next.unsigned_area())
     }
 }
 
