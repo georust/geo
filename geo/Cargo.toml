@@ -17,6 +17,7 @@ default = ["earcutr", "spade", "multithreading"]
 proj-network = ["proj", "proj/network"]
 serde = ["dep:serde", "geo-types/serde"]
 multithreading = ["i_overlay/allow_multithreading", "geo-types/multithreading"]
+spade = ["dep:spade", "geo-types/spade_2"]
 
 # Deprecated feature flags with "use-" prefix from the days before `dep:`
 use-proj = ["proj"]

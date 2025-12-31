@@ -1,7 +1,5 @@
 use geo_types::{Coord, Line, Point, Triangle};
-use spade::{
-    ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
-};
+use spade::{ConstrainedDelaunayTriangulation, DelaunayTriangulation, SpadeNum, Triangulation};
 
 use crate::{Centroid, Contains};
 use crate::{
@@ -141,11 +139,13 @@ where
         let points = self.coords();
         points
             .into_iter()
-            .map(to_spade_point)
-            .try_fold(DelaunayTriangulation::<Point2<T>>::new(), |mut tris, p| {
-                tris.insert(p).map_err(TriangulationError::SpadeError)?;
-                Ok(tris)
-            })
+            .try_fold(
+                DelaunayTriangulation::<Coord<T>>::new(),
+                |mut tris, coord| {
+                    tris.insert(coord).map_err(TriangulationError::SpadeError)?;
+                    Ok(tris)
+                },
+            )
             .map(triangulation_to_triangles)
     }
 }
@@ -217,12 +217,15 @@ where
         let lines = Self::cleanup_lines(lines, config.snap_radius)?;
         lines
             .into_iter()
-            .map(to_spade_line)
             .try_fold(
-                ConstrainedDelaunayTriangulation::<Point2<T>>::new(),
-                |mut cdt, [start, end]| {
-                    let start = cdt.insert(start).map_err(TriangulationError::SpadeError)?;
-                    let end = cdt.insert(end).map_err(TriangulationError::SpadeError)?;
+                ConstrainedDelaunayTriangulation::<Coord<T>>::new(),
+                |mut cdt, line| {
+                    let start = cdt
+                        .insert(line.start)
+                        .map_err(TriangulationError::SpadeError)?;
+                    let end = cdt
+                        .insert(line.end)
+                        .map_err(TriangulationError::SpadeError)?;
                     // safety check (to prevent panic) whether we can add the line
                     if !cdt.can_add_constraint(start, end) {
                         return Err(TriangulationError::ConstraintFailure);
@@ -302,14 +305,15 @@ where
 /// conversion from spade triangulation back to geo triangles
 fn triangulation_to_triangles<T, F>(triangulation: T) -> Triangles<F>
 where
-    T: Triangulation<Vertex = Point2<F>>,
+    T: Triangulation<Vertex = Coord<F>>,
     F: SpadeTriangulationFloat,
 {
     triangulation
         .inner_faces()
-        .map(|face| face.positions())
-        .map(|points| points.map(|p| Coord::<F> { x: p.x, y: p.y }))
-        .map(Triangle::from)
+        .map(|face| {
+            let [v0, v1, v2] = face.vertices();
+            Triangle::new(*v0.data(), *v1.data(), *v2.data())
+        })
         .collect::<Vec<_>>()
 }
 
@@ -618,16 +622,6 @@ fn preprocess_lines<T: SpadeTriangulationFloat>(
             lines
         });
     (known_coords, lines)
-}
-
-/// converts Line to something somewhat similar in the spade world
-fn to_spade_line<T: SpadeTriangulationFloat>(line: Line<T>) -> [Point2<T>; 2] {
-    [to_spade_point(line.start), to_spade_point(line.end)]
-}
-
-/// converts Coord to something somewhat similar in the spade world
-fn to_spade_point<T: SpadeTriangulationFloat>(coord: Coord<T>) -> Point2<T> {
-    Point2::new(coord.x, coord.y)
 }
 
 #[cfg(test)]

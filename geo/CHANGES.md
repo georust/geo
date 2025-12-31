@@ -7,6 +7,8 @@
 - Fix `CoordinatePosition` for `Triangle` to correctly return `CoordPos::OnBoundary` for coordinate within vertical segment.
 - Split `TriangulateDelaunay` trait to support Point collections in addition to existing geometries
   - <https://github.com/georust/geo/pull/1486>
+- Use Coord as DelaunayTriangulation vertex type
+  - <https://github.com/georust/geo/pull/1490>
 
 ## 0.32.0 - 2025-12-05
 
