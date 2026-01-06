@@ -17,10 +17,6 @@ default = ["rand", "earcutr", "spade", "multithreading"]
 proj-network = ["proj", "proj/network"]
 serde = ["dep:serde", "geo-types/serde"]
 multithreading = ["i_overlay/allow_multithreading", "geo-types/multithreading"]
-# Remove "rand" from the  default feature set for enviromnents without a concrete source of randmonness
-# for example targets like wasm*-unknown-unknown
-# This will disable algorithm/kmean
-rand = ["dep:rand"]
 # Deprecated feature flags with "use-" prefix from the days before `dep:`
 use-proj = ["proj"]
 use-serde = ["serde"]
@@ -41,6 +37,9 @@ rstar = "0.12.0"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 i_overlay = { version = "4.0.0, < 4.1.0", default-features = false }
 sif-itree = "0.4.0"
+# The rand feature is troublesome for enviromnents without a concrete source of randmonness like wasm*-unknown-unknown
+# See README#Web Applications
+# rand is required for algorithm/kmean
 rand = { version = "0.9.2", optional = true}
 
 [dev-dependencies]

@@ -68,13 +68,20 @@ assert_eq!(
 
 ## Web Applications
 
-When targetting for the browser (ie target="wasm*-unknown-unknown"), selecting a source of randomness is troublesome. This is how to include the geo library for the web.
+When targeting for the browser (ie target="wasm*-unknown-unknown"), selecting a source of randomness is troublesome. 
 
-```toml
-geo = { path ="0.32", features =  [ "earcutr", "spade", "multithreading"], default-features = false }
+You must either explicitly require `getrandom` in your application crate like this:
 ```
+geo = { version = "<VERSION>" }
+getrandom = { version = "0.3.4", features = ["wasm_js"] }
+```
+This is the suggested solution from the maintainers of the `rand` crate for wasm*-unknown-unknown users.
+See https://github.com/rust-random/rand/issues/1694 for context.
 
-The rand crate is no longer a dependant and the functionality associated the kmeans module is removed.
+Alternatively you can disable geo's optional `rand` feature:
+```toml
+geo = { version ="<VERSION>", features =  [ "earcutr", "spade", "multithreading"], default-features = false }
+```
 
 ## Contributing
 
