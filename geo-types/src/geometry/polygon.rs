@@ -6,7 +6,7 @@ use num_traits::{Float, Signed};
 /// A bounded two-dimensional area.
 ///
 /// A `Polygon`’s outer boundary (_exterior ring_) is represented by a
-/// [`LineString`]. It may contain zero or more holes (_interior rings_), also
+/// [`LineString`](LineString). It may contain zero or more holes (_interior rings_), also
 /// represented by `LineString`s.
 ///
 /// A `Polygon` can be created with the [`Polygon::new`] constructor or the [`polygon!`][`crate::polygon!`] macro.
@@ -25,7 +25,7 @@ use num_traits::{Float, Signed};
 /// # Validity
 ///
 /// - The exterior and interior rings must be valid
-///   `LinearRing`s (see [`LineString`]).
+///   `LinearRing`s (see [`LineString`](LineString)).
 ///
 /// - No two rings in the boundary may cross, and may
 ///   intersect at a `Point` only as a tangent. In other
@@ -61,8 +61,6 @@ use num_traits::{Float, Signed};
 /// If a `LineString`’s first and last `Coord` have different values, a
 /// new `Coord` will be appended to the `LineString` with a value equal to
 /// the first `Coord`.
-///
-/// [`LineString`]: line_string/struct.LineString.html
 #[derive(Eq, PartialEq, Clone, Hash)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 pub struct Polygon<T: CoordNum = f64> {
