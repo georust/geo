@@ -193,11 +193,15 @@ where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        self.0.iter.map(|polygon| polygon.signed_area()).sum()
+        self.0
+            .iter()
+            .fold(T::zero(), |total, next| total + next.signed_area())
     }
 
     fn unsigned_area(&self) -> T {
-        self.0.iter.map(|polygon| polygon.unsigned_area()).sum()
+        self.0
+            .iter()
+            .fold(T::zero(), |total, next| total + next.unsigned_area())
     }
 }
 
