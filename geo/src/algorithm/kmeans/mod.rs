@@ -181,10 +181,30 @@ impl<T: GeoFloat> KMeansParams<T> {
     /// - max_iter: 300
     /// - tolerance: 0.0001
     /// - No max_radius constraint
+    ///
+    /// This function is not available on WASM targets
+    #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
     pub fn new(k: usize) -> Self {
+        let mut s = Self::new_with_seed(k, 42);
+        s.seed = None;
+        s
+    }
+
+    /// Create new k-means parameters with the specified number of clusters with an explicit random seed.
+    ///
+    /// The seed can either be a constant to get identical values across executions or it can be
+    /// a random value.
+    ///
+    /// Uses default values for optional parameters:
+    /// - max_iter: 300
+    /// - tolerance: 0.0001
+    /// - No max_radius constraint
+    ///
+    /// Prefer using this function if you want to support WASM targets
+    pub fn new_with_seed(k: usize, seed: u64) -> Self {
         Self {
             k,
-            seed: None,
+            seed: Some(seed),
             max_iter: 300, // same as scikit-learn
             tolerance: T::from(0.0001).expect("tolerance must be representable in float type"),
             max_radius: None,
@@ -246,8 +266,30 @@ where
     /// Returns `KMeansError::MaxIterationsReached` if max_iter is reached before convergence.
     ///
     /// See the [module-level documentation](self) for details on the algorithm and parameters.
+    ///
+    /// This function is only supported on non-WASM targets. Prefer using [kmeans_with_seed](Self::kmeans_with_seed)
+    /// on WASM targets instead.
+    #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
     fn kmeans(&self, k: usize) -> Result<Vec<usize>, KMeansError<T>> {
         self.kmeans_with_params(KMeansParams::new(k))
+    }
+
+    /// Perform _k_-means clustering on the points.
+    ///
+    /// Returns a vector of cluster assignments, one for each input point.
+    /// Each element is a cluster ID in the range `0..k`.
+    ///
+    /// To specify configuration options, use [`kmeans_with_params`](Self::kmeans_with_params).
+    ///
+    /// # Errors
+    ///
+    /// Returns `KMeansError::InvalidK` if `k` is 0 or greater than the number of points.
+    /// Returns `KMeansError::EmptyCluster` if a cluster becomes empty and cannot be recovered.
+    /// Returns `KMeansError::MaxIterationsReached` if max_iter is reached before convergence.
+    ///
+    /// See the [module-level documentation](self) for details on the algorithm and parameters.
+    fn kmeans_with_seed(&self, k: usize, seed: u64) -> Result<Vec<usize>, KMeansError<T>> {
+        self.kmeans_with_params(KMeansParams::new_with_seed(k, seed))
     }
 
     /// Perform _k_-means clustering with specific configuration options.
@@ -293,6 +335,7 @@ struct KMeansConfig<T: GeoFloat> {
     max_split_depth: usize,
 }
 
+#[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
 impl<T: GeoFloat> Default for KMeansConfig<T> {
     fn default() -> Self {
         Self {
@@ -574,7 +617,12 @@ where
     let n = points.len();
     let mut rng = match seed {
         Some(s) => StdRng::seed_from_u64(s),
+        #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
         None => StdRng::from_os_rng(),
+        #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+        None => unreachable!(
+            "Geo only allows to construct KMeans with an explicit seed on WASM targets"
+        ),
     };
     let mut centroids = Vec::with_capacity(k);
 
@@ -883,9 +931,18 @@ where
 
         if max_dist > max_radius {
             let params = if let Some(s) = seed {
-                KMeansParams::new(2).seed(s)
+                KMeansParams::new_with_seed(2, s)
             } else {
-                KMeansParams::new(2)
+                #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
+                {
+                    KMeansParams::new(2)
+                }
+                #[cfg(all(target_family = "wasm", target_os = "unknown"))]
+                {
+                    unreachable!(
+                        "Geo only supports KMeansParams with an explicit seed on WASM Targets"
+                    )
+                }
             };
             let sub_assignments = kmeans_impl(&multipoint.0, params)?;
 
