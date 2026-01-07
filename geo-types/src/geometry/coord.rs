@@ -503,6 +503,18 @@ where
     }
 }
 
+#[cfg(feature = "spade_2")]
+impl<T> ::spade_2::HasPosition for Coord<T>
+where
+    T: crate::CoordNum + ::spade_2::SpadeNum,
+{
+    type Scalar = T;
+
+    fn position(&self) -> ::spade_2::Point2<T> {
+        ::spade_2::Point2::new(self.x, self.y)
+    }
+}
+
 impl<T: CoordNum> AsRef<Coord<T>> for Coord<T> {
     fn as_ref(&self) -> &Coord<T> {
         self

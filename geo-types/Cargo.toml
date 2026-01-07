@@ -44,6 +44,7 @@ rstar_0_10 = { package = "rstar", version = "0.10", optional = true }
 rstar_0_11 = { package = "rstar", version = "0.11", optional = true }
 rstar_0_12 = { package = "rstar", version = "0.12", optional = true }
 serde = { version = "1", optional = true, default-features = false, features = ["alloc", "derive"] }
+spade_2 = { package = "spade", version = "2", optional = true }
 
 [dev-dependencies]
 approx = ">= 0.4.0, < 0.6.0"
