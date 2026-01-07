@@ -1,10 +1,10 @@
 use std::cmp::Ordering;
 
-use crate::geometry::*;
 use crate::intersects::{point_in_rect, value_in_between};
 use crate::kernels::*;
 use crate::{BoundingRect, HasDimensions, Intersects};
 use crate::{GeoNum, GeometryCow};
+use crate::{MonotoneChainPolygon, geometry::*};
 
 /// The position of a `Coord` relative to a `Geometry`
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
@@ -391,6 +391,46 @@ impl<T: GeoNum> CoordinatePosition for GeometryCow<'_, T> {
             coord: &Coord<T>,
             is_inside: &mut bool,
             boundary_count: &mut usize) -> ();
+    }
+}
+
+impl<T> CoordinatePosition for MonotoneChainPolygon<'_, T>
+where
+    T: GeoNum,
+{
+    type Scalar = T;
+    fn calculate_coordinate_position(
+        &self,
+        coord: &Coord<T>,
+        is_inside: &mut bool,
+        boundary_count: &mut usize,
+    ) {
+        if self.is_empty() {
+            return;
+        }
+
+        match crate::monotone_chain::coord_pos_relative_to_ring(*coord, self.exterior()) {
+            CoordPos::Outside => {}
+            CoordPos::OnBoundary => {
+                *boundary_count += 1;
+            }
+            CoordPos::Inside => {
+                for hole in self.interiors() {
+                    match crate::monotone_chain::coord_pos_relative_to_ring(*coord, hole) {
+                        CoordPos::Outside => {}
+                        CoordPos::OnBoundary => {
+                            *boundary_count += 1;
+                            return;
+                        }
+                        CoordPos::Inside => {
+                            return;
+                        }
+                    }
+                }
+                // the coord is *outside* the interior holes, so it's *inside* the polygon
+                *is_inside = true;
+            }
+        }
     }
 }
 

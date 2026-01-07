@@ -49,6 +49,7 @@ mod geometry;
 mod geometry_collection;
 mod line;
 mod line_string;
+mod monotone_chain;
 mod point;
 mod polygon;
 mod rect;
