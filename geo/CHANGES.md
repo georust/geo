@@ -9,6 +9,8 @@
   - <https://github.com/georust/geo/pull/1486>
 - Use Coord as DelaunayTriangulation vertex type
   - <https://github.com/georust/geo/pull/1490>
+- Add Voronoi diagram generation functionality
+  - <https://github.com/georust/geo/pull/1487>
 
 ## 0.32.0 - 2025-12-05
 
