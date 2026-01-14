@@ -34,32 +34,40 @@ impl<'a, T: GeoNum> Intersects<MonotoneChainMultiPolygon<'a, T>>
     }
 }
 
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Coord<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Point<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, MultiPoint<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Line<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, LineString<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, MultiLineString<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Polygon<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, MultiPolygon<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Rect<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Triangle<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Geometry<T>);
-delegate_intersects_impl!(MonotoneChainLineString<'a, T>, GeometryCollection<T>);
-
 // commented out if they are implemented by blanket impl in main `Intersects` trait
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Coord<T>);
 symmetric_intersects_impl!(Coord<T>, MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Point<T>);
 // symmetric_intersects_impl!(Point<T>,MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, MultiPoint<T>);
 // symmetric_intersects_impl!(MultiPoint<T>,MonotoneChainLineString<'a, T>);
 
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Line<T>);
 symmetric_intersects_impl!(Line<T>, MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, LineString<T>);
 symmetric_intersects_impl!(LineString<T>, MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, MultiLineString<T>);
 // symmetric_intersects_impl!(MultiLineString<T>,MonotoneChainLineString<'a, T>);
 
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Polygon<T>);
 symmetric_intersects_impl!(Polygon<T>, MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, MultiPolygon<T>);
 // symmetric_intersects_impl!(MultiPolygon<T>,MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Rect<T>);
 symmetric_intersects_impl!(Rect<T>, MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Triangle<T>);
 symmetric_intersects_impl!(Triangle<T>, MonotoneChainLineString<'a, T>);
 
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, Geometry<T>);
 // symmetric_intersects_impl!(Geometry<T>,MonotoneChainLineString<'a, T>);
+
+delegate_intersects_impl!(MonotoneChainLineString<'a, T>, GeometryCollection<T>);
 // symmetric_intersects_impl!(GeometryCollection<T>,MonotoneChainLineString<'a, T>);

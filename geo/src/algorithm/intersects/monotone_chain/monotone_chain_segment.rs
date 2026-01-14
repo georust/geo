@@ -14,6 +14,8 @@ macro_rules! intersects_MonotoneChainSegment {
             T: GeoNum,
         {
             fn intersects(&self, rhs: &$k) -> bool {
+                // PERF: this recursivee function recalculates the
+                //  bounding box of rhs on each loop
                 if has_disjoint_bboxes(self, rhs) {
                     return false;
                 }
@@ -23,7 +25,7 @@ macro_rules! intersects_MonotoneChainSegment {
                     0 => false,
                     1 => self.ls()[0].intersects(rhs),
                     2 => {
-                        // TODO: One potential speed optimization here is to use specialized function
+                        // PERF: One potential speed optimization here is to use specialized function
                         // with pre-requisite of bounding box intersection.
                         // e.g. Line intersect Line could become just the orientation checks
                         Line::<T>::new(self.ls()[0], self.ls()[1]).intersects(rhs)
@@ -74,7 +76,7 @@ where
         }
         // handle base case
         if self.ls().len() == 2 && rhs.ls().len() == 2 {
-            //TODO: optimize this to skip construction and bounding box check
+            //PERF: optimize this to skip construction and bounding box check
             return Line::<T>::new(self.ls()[0], self.ls()[1])
                 .intersects(&Line::<T>::new(rhs.ls()[0], rhs.ls()[1]));
         }
@@ -93,17 +95,17 @@ where
 
 // commented out if they are implemented by blanket impl in main `Intersects` trait
 symmetric_intersects_impl!(Coord<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(Point<T>,MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(MultiPoint<T>,MonotoneChainSegment<'a, T>);
+// symmetric_intersects_impl!(Point<T>, MonotoneChainSegment<'a, T>);
+// symmetric_intersects_impl!(MultiPoint<T>, MonotoneChainSegment<'a, T>);
 
 symmetric_intersects_impl!(Line<T>, MonotoneChainSegment<'a, T>);
 symmetric_intersects_impl!(LineString<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(MultiLineString<T>,MonotoneChainSegment<'a, T>);
+// symmetric_intersects_impl!(MultiLineString<T>, MonotoneChainSegment<'a, T>);
 
 symmetric_intersects_impl!(Polygon<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(MultiPolygon<T>,MonotoneChainSegment<'a, T>);
+// symmetric_intersects_impl!(MultiPolygon<T>, MonotoneChainSegment<'a, T>);
 symmetric_intersects_impl!(Rect<T>, MonotoneChainSegment<'a, T>);
 symmetric_intersects_impl!(Triangle<T>, MonotoneChainSegment<'a, T>);
 
-// symmetric_intersects_impl!(Geometry<T>,MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(GeometryCollection<T>,MonotoneChainSegment<'a, T>);
+// symmetric_intersects_impl!(Geometry<T>, MonotoneChainSegment<'a, T>);
+// symmetric_intersects_impl!(GeometryCollection<T>, MonotoneChainSegment<'a, T>);

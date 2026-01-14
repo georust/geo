@@ -3,7 +3,7 @@ use super::segment::MonotoneChainSegmentFactory;
 use crate::{BoundingRect, CoordNum, GeoNum, LineString, Rect};
 
 /// A [`MonotoneChain`] is a primitive which represents a collection of segments,
-/// each of which is a monotonic sequence of [`crate::Coord<T>`]
+/// each of which is a monotonic sequence of [`Coord<T>`](crate::Coord)
 ///
 /// This primitive is not be constructed directly, it is created when building a geometry backed by [`MonotoneChain`]
 #[derive(Debug, Clone)]
@@ -29,6 +29,7 @@ impl<'a, T: GeoNum> From<&'a LineString<T>> for MonotoneChain<'a, T> {
     }
 }
 
+// This is here because instead of with the trait because `bounding_rect` is a private field
 impl<'a, T: GeoNum> BoundingRect<T> for MonotoneChain<'a, T> {
     type Output = Option<Rect<T>>;
 

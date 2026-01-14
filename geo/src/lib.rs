@@ -36,14 +36,6 @@
 //! The preceding types are reexported from the [`geo-types`] crate. Consider using that crate
 //! if you only need access to these types and no other `geo` functionality.
 //!
-//! ## Monotone Chain backed geometries
-//! - see [`monotone_chain`] for deeper explanation
-//! - **[`MonotoneChainLineString`]**: A [`LineString`] backed by [`MonotoneChain`]
-//! - **[`MonotoneChainMultiLineString`]**: A [`MultiLineString`] backed by [`MonotoneChain`]
-//! - **[`MonotoneChainPolygon`]**: A [`Polygon`] backed by [`MonotoneChain`]
-//! - **[`MonotoneChainMultiPolygon`]**: A [`MultiPolygon`] backed by [`MonotoneChain`]
-//! - **[`MonotoneChainGeometry`]**: An enumeration of all monotone chain-backed geometry types
-//!
 //! ## Semantics
 //!
 //! The geospatial types provided here aim to adhere to the [OpenGIS Simple feature access][OGC-SFA]
@@ -195,6 +187,17 @@
 //! - **[`Transform`]**: Transform a geometry using Proj
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
 //! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
+//!
+//! # Indexed Geometries
+//!
+//! ## Monotone Chain backed geometries
+//! - **[`MonotoneChainLineString`]**: A [`LineString`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainMultiLineString`]**: A [`MultiLineString`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainPolygon`]**: A [`Polygon`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainMultiPolygon`]**: A [`MultiPolygon`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainGeometry`]**: An enumeration of all monotone chain-backed geometry types
+//! - provides fast [`ContainsProperly`] methods between themselves and [`Intersects`] with other geometries
+//! - see [`monotone_chain`] for deeper explanation on the concepts behind this
 //!
 //! # Spatial Indexing
 //!

@@ -2,7 +2,6 @@ use super::boundary_intersects;
 use crate::algorithm::contains_properly::polygon_polygon_inner_loop;
 use crate::monotone_chain::geometry::*;
 use crate::{ContainsProperly, GeoNum, HasDimensions};
-use geo_types::geometry::*;
 
 impl<'a, T: GeoNum> ContainsProperly<MonotoneChainPolygon<'a, T>> for MonotoneChainPolygon<'a, T> {
     fn contains_properly(&self, rhs: &MonotoneChainPolygon<'a, T>) -> bool {
@@ -43,43 +42,3 @@ impl<'a, T: GeoNum> ContainsProperly<MonotoneChainMultiPolygon<'a, T>>
             .all(|rhs_poly| polygon_polygon_inner_loop(self.geometry(), rhs_poly))
     }
 }
-
-impl_contains_properly_target_monotone!(MonotoneChainMultiPolygon<'a, T>, [
-    Coord<T>,
-    Point<T>,
-    MultiPoint<T>,
-
-    Line<T>,
-    LineString<T>,
-    MultiLineString<T>,
-
-    Polygon<T>,
-    MultiPolygon<T>,
-    Rect<T>,
-    Triangle<T>,
-
-    // Geometry<T>,
-    GeometryCollection<T>
-]);
-
-impl_contains_properly_for_monotone!(MonotoneChainMultiPolygon<'a, T>, [
-    Coord<T>,
-    Point<T>,
-    MultiPoint<T>,
-
-    Line<T>,
-    LineString<T>,
-    MultiLineString<T>,
-
-    Polygon<T>,
-    MultiPolygon<T>,
-    Rect<T>,
-    Triangle<T>,
-
-    Geometry<T>,
-    GeometryCollection<T>,
-
-    MonotoneChainGeometry<'a, T>,
-    MonotoneChainLineString<'a, T>,
-    MonotoneChainMultiLineString<'a, T>
-]);
