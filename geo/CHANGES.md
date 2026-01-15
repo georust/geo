@@ -9,6 +9,11 @@
   - <https://github.com/georust/geo/pull/1486>
 - Use Coord as DelaunayTriangulation vertex type
   - <https://github.com/georust/geo/pull/1490>
+- Add `MonotoneChain`-backed geometry types
+  - Variant of `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon` which are backed by Monotone Chains
+  - Preprocessing cost to construct these types, but provide a significant performance boost for intersects and contains_properly checks
+  - <https://github.com/georust/geo/issues/1466>
+  - <https://github.com/georust/geo/pull/1467>
 
 ## 0.32.0 - 2025-12-05
 
