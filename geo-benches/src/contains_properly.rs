@@ -1,9 +1,76 @@
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use geo::PreparedGeometry;
-use geo::algorithm::{ContainsProperly, Convert, Relate};
+use geo::algorithm::{Contains, ContainsProperly, Convert, Relate};
 use geo::wkt;
 use geo::{coord, geometry::*};
 use std::iter::once;
+
+fn coord_in_line(c: &mut Criterion) {
+    {
+        let mut group = c.benchmark_group("multipoint");
+        let line = Line::new(coord! {x:10.,y:10.}, coord! {x:0.,y:0.});
+        let point: MultiPoint<f64> = MultiPoint::new(
+            std::iter::successors(Some((0.1, 0.1)), |(x, y)| Some((x + 0.1, y + 0.1)))
+                .take_while(|(x, _y)| *x < 10.0)
+                .map(|(x, y)| Point::new(x, y))
+                .collect::<Vec<_>>(),
+        );
+
+        group.bench_function("contains multipoint (Trait)", |bencher| {
+            bencher.iter(|| {
+                assert!(criterion::black_box(&line).contains(criterion::black_box(&point)));
+            });
+        });
+        group.bench_function("contains_properly multipoint (Trait)", |bencher| {
+            bencher.iter(|| {
+                assert!(
+                    criterion::black_box(&line).contains_properly(criterion::black_box(&point))
+                );
+            });
+        });
+        group.finish();
+    }
+    {
+        let mut group = c.benchmark_group("mid");
+        let line = Line::new(coord! {x:0.,y:0.}, coord! {x:10.,y:10.});
+        let c = coord! {x:5.,y:5.};
+        let point = Point::new(5., 5.);
+
+        group.bench_function("contains pt (Trait)", |bencher| {
+            bencher.iter(|| {
+                assert!(criterion::black_box(&line).contains(criterion::black_box(&c)));
+            });
+        });
+        group.bench_function("contains_properly pt (Trait)", |bencher| {
+            bencher.iter(|| {
+                assert!(
+                    criterion::black_box(&line).contains_properly(criterion::black_box(&point))
+                );
+            });
+        });
+        group.finish();
+    }
+    {
+        let mut group = c.benchmark_group("end");
+        let line = Line::new(coord! {x:0.,y:0.}, coord! {x:10.,y:10.});
+        let c = coord! {x:5.,y:5.};
+        let point = Point::new(5., 5.);
+
+        group.bench_function("contains pt (Trait)", |bencher| {
+            bencher.iter(|| {
+                assert!(criterion::black_box(&line).contains(criterion::black_box(&c)));
+            });
+        });
+        group.bench_function("contains_properly pt (Trait)", |bencher| {
+            bencher.iter(|| {
+                assert!(
+                    criterion::black_box(&line).contains_properly(criterion::black_box(&point))
+                );
+            });
+        });
+        group.finish();
+    }
+}
 
 fn compare_simple_in_complex(c: &mut Criterion) {
     c.bench_function(
@@ -192,7 +259,12 @@ fn polygon_polygon_scaling(c: &mut Criterion) {
     }
 }
 
-criterion_group!(benches, compare_simple_in_complex, compare_poly_in_poly,);
+criterion_group!(
+    benches,
+    compare_simple_in_complex,
+    compare_poly_in_poly,
+    coord_in_line
+);
 criterion_group!(benches_scaling, polygon_polygon_scaling);
 
 criterion_main!(benches, benches_scaling);
