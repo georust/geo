@@ -217,21 +217,21 @@ mod test {
     fn polygon() {
         let polygon = wkt! { POLYGON((1.0 2.0)) };
         assert_eq!(polygon.exterior().0.len(), 1);
-        assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.exterior()[0], coord! { x: 1.0, y: 2.0 });
 
         let polygon = wkt! { POLYGON((1.0 2.0,3.0 4.0)) };
         // Note: an extra coord is added to close the linestring
         assert_eq!(polygon.exterior().0.len(), 3);
-        assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
-        assert_eq!(polygon.exterior().0[1], coord! { x: 3.0, y: 4.0 });
-        assert_eq!(polygon.exterior().0[2], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.exterior()[0], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.exterior()[1], coord! { x: 3.0, y: 4.0 });
+        assert_eq!(polygon.exterior()[2], coord! { x: 1.0, y: 2.0 });
 
         let polygon = wkt! { POLYGON((1.0 2.0), (1.1 2.1)) };
         assert_eq!(polygon.exterior().0.len(), 1);
         assert_eq!(polygon.interiors().len(), 1);
 
-        assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
-        assert_eq!(polygon.interiors()[0].0[0], coord! { x: 1.1, y: 2.1 });
+        assert_eq!(polygon.exterior()[0], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.interiors()[0][0], coord! { x: 1.1, y: 2.1 });
 
         let polygon = wkt! { POLYGON((1.0 2.0,3.0 4.0), (1.1 2.1,3.1 4.1), (1.2 2.2,3.2 4.2)) };
         assert_eq!(polygon.exterior().0.len(), 3);
@@ -270,14 +270,14 @@ mod test {
     fn multi_line_string() {
         let multi_line_string = wkt! { MULTILINESTRING ((1.0 2.0,3.0 4.0)) };
         assert_eq!(multi_line_string.0.len(), 1);
-        assert_eq!(multi_line_string.0[0].0[1], coord! { x: 3.0, y: 4.0 });
+        assert_eq!(multi_line_string[0][1], coord! { x: 3.0, y: 4.0 });
         let multi_line_string = wkt! { MULTILINESTRING ((1.0 2.0,3.0 4.0),(5.0 6.0,7.0 8.0)) };
         assert_eq!(multi_line_string.0.len(), 2);
-        assert_eq!(multi_line_string.0[1].0[1], coord! { x: 7.0, y: 8.0 });
+        assert_eq!(multi_line_string[1][1], coord! { x: 7.0, y: 8.0 });
 
         let multi_line_string = wkt! { MULTILINESTRING ((1.0 2.0,3.0 4.0),EMPTY) };
         assert_eq!(multi_line_string.0.len(), 2);
-        assert_eq!(multi_line_string.0[1].0.len(), 0);
+        assert_eq!(multi_line_string[1].0.len(), 0);
     }
 
     #[test]
@@ -293,22 +293,16 @@ mod test {
     fn multi_line_polygon() {
         let multi_polygon = wkt! { MULTIPOLYGON (((1.0 2.0))) };
         assert_eq!(multi_polygon.0.len(), 1);
-        assert_eq!(multi_polygon.0[0].exterior().0[0], coord! { x: 1.0, y: 2.0});
+        assert_eq!(multi_polygon[0].exterior()[0], coord! { x: 1.0, y: 2.0});
 
         let multi_polygon = wkt! { MULTIPOLYGON (((1.0 2.0,3.0 4.0), (1.1 2.1,3.1 4.1), (1.2 2.2,3.2 4.2)),((1.0 2.0))) };
         assert_eq!(multi_polygon.0.len(), 2);
-        assert_eq!(
-            multi_polygon.0[0].interiors()[1].0[0],
-            coord! { x: 1.2, y: 2.2}
-        );
+        assert_eq!(multi_polygon[0].interiors()[1][0], coord! { x: 1.2, y: 2.2});
 
         let multi_polygon = wkt! { MULTIPOLYGON (((1.0 2.0,3.0 4.0), (1.1 2.1,3.1 4.1), (1.2 2.2,3.2 4.2)), EMPTY) };
         assert_eq!(multi_polygon.0.len(), 2);
-        assert_eq!(
-            multi_polygon.0[0].interiors()[1].0[0],
-            coord! { x: 1.2, y: 2.2}
-        );
-        assert!(multi_polygon.0[1].exterior().0.is_empty());
+        assert_eq!(multi_polygon[0].interiors()[1][0], coord! { x: 1.2, y: 2.2});
+        assert!(multi_polygon[1].exterior().0.is_empty());
     }
 
     #[test]
@@ -338,7 +332,7 @@ mod test {
                 geometry = geometry_collection[1]
             ),
         };
-        assert_eq!(line_string.0[1], coord! {x: 20.0, y: 20.0 });
+        assert_eq!(line_string[1], coord! {x: 20.0, y: 20.0 });
     }
 
     #[test]

@@ -292,7 +292,7 @@ mod tests {
     #[test]
     fn polygon_with_point_on_interior_ring() {
         let poly = holy_polygon();
-        let p = poly.interiors()[0].0[3];
+        let p = poly.interiors()[0][3];
         let should_be = Closest::Intersection(p.into());
 
         let got = poly.closest_point(&p.into());
