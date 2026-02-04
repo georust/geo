@@ -708,9 +708,17 @@ fn calculate_vertex_intercepts<F: GeoFloat>(
     perpendicular_slope: F,
     use_x_intercept: bool,
 ) -> Vec<ProjectedVertex<F>> {
-    // Skip the last coordinate as it duplicates the first in closed polygon rings.
+    // If this is a closed ring (polygon exterior/interior), skip the duplicate closing vertex.
+    // For open LineStrings, we must include the last vertex; otherwise the fast path can miss
+    // the true nearest neighbour.
     // We maintain the original index for later segment construction.
-    coords[..coords.len().saturating_sub(1)]
+    let is_closed = coords.first() == coords.last();
+    let coords = if is_closed {
+        &coords[..coords.len().saturating_sub(1)]
+    } else {
+        coords
+    };
+    coords
         .iter()
         .enumerate()
         .map(|(idx, &coord)| {
@@ -854,6 +862,7 @@ mod test {
         let zero_dist = line_segment_distance(p1, p1, p2);
         assert_relative_eq!(zero_dist, 0.0);
     }
+
     #[test]
     // Point to Polygon, outside point
     fn point_polygon_distance_outside_test() {
@@ -1337,6 +1346,28 @@ mod test {
         let line = Line::from([(0.0, 0.0), (0.0, 2.0)]);
         let ls: LineString<_> = vec![(3.0, 0.0), (1.0, 1.0), (3.0, 2.0)].into();
         assert_relative_eq!(Euclidean.distance(&ls, &line), 1.0);
+    }
+
+    #[test]
+    fn test_linestring_linestring_distance() {
+        let ls1: LineString<f64> =
+            LineString::from(vec![(-13.242, 2.942), (-27.982, -18.803), (-6.811, -4.642)]);
+        let ls2: LineString<f64> = LineString::from(vec![
+            (18.297, 31.208),
+            (29.368, 30.533),
+            (26.45, 0.543),
+            (14.711, -1.764),
+        ]);
+
+        let rect_a = ls1.bounding_rect().unwrap();
+        let rect_b = ls2.bounding_rect().unwrap();
+        let x_separated = rect_a.max().x < rect_b.min().x || rect_b.max().x < rect_a.min().x;
+        let y_separated = rect_a.max().y < rect_b.min().y || rect_b.max().y < rect_a.min().y;
+        assert!(x_separated || y_separated);
+
+        let expected = 21.713575661323034_f64;
+        let d = Euclidean.distance(&ls1, &ls2);
+        assert_relative_eq!(d, expected, epsilon = 1e-12);
     }
 
     #[test]
