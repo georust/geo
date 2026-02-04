@@ -71,7 +71,7 @@ pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     ///
     /// assert_eq!(mp.0.len(), 1);
     ///
-    /// let poly = mp.0[0].clone();
+    /// let poly = mp[0].clone();
     /// // 4 coords + 1 duplicate for closed-ness
     /// assert_eq!(poly.exterior().0.len(), 4 + 1);
     ///
@@ -559,7 +559,7 @@ mod polygon_stitching_tests {
             .unwrap();
 
         assert_eq!(result.0.len(), 1);
-        assert_eq!(result.0[0].interiors().len(), 1);
+        assert_eq!(result[0].interiors().len(), 1);
     }
 
     #[test]
@@ -584,7 +584,7 @@ mod polygon_stitching_tests {
             .unwrap();
 
         assert_eq!(result.0.len(), 1);
-        assert_eq!(result.0[0].interiors().len(), 1);
+        assert_eq!(result[0].interiors().len(), 1);
     }
 
     #[test]
@@ -609,6 +609,6 @@ mod polygon_stitching_tests {
             .unwrap();
 
         assert_eq!(result.0.len(), 2);
-        assert_eq!(result.0[0].interiors().len(), 0);
+        assert_eq!(result[0].interiors().len(), 0);
     }
 }

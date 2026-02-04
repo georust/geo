@@ -4,6 +4,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 
 use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
+use core::slice::SliceIndex;
 #[cfg(feature = "multithreading")]
 use rayon::prelude::*;
 
@@ -123,6 +125,20 @@ impl<T: CoordNum> MultiPolygon<T> {
 
     pub fn iter_mut(&mut self) -> impl Iterator<Item = &mut Polygon<T>> {
         self.0.iter_mut()
+    }
+}
+
+impl<T: CoordNum, I: SliceIndex<[Polygon<T>]>> Index<I> for MultiPolygon<T> {
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &I::Output {
+        self.0.index(index)
+    }
+}
+
+impl<T: CoordNum, I: SliceIndex<[Polygon<T>]>> IndexMut<I> for MultiPolygon<T> {
+    fn index_mut(&mut self, index: I) -> &mut I::Output {
+        self.0.index_mut(index)
     }
 }
 
@@ -369,5 +385,38 @@ mod test {
         let empty = MultiPolygon::<f64>::empty();
         let empty_2 = wkt! { MULTIPOLYGON EMPTY };
         assert_eq!(empty, empty_2);
+    }
+
+    #[test]
+    fn test_indexing() {
+        let mut mp = wkt! { MULTIPOLYGON(((0. 0., 1. 0., 1. 1., 0. 0.)), ((2. 2., 3. 2., 3. 3., 2. 2.)), ((4. 4., 5. 4., 5. 5., 4. 4.))) };
+
+        // Index
+        assert_eq!(mp[0], wkt! { POLYGON((0. 0., 1. 0., 1. 1., 0. 0.)) });
+        assert_eq!(mp[1], wkt! { POLYGON((2. 2., 3. 2., 3. 3., 2. 2.)) });
+
+        // IndexMut
+        mp[1] = wkt! { POLYGON((100. 100., 101. 100., 101. 101., 100. 100.)) };
+        assert_eq!(
+            mp[1],
+            wkt! { POLYGON((100. 100., 101. 100., 101. 101., 100. 100.)) }
+        );
+
+        // Range
+        assert_eq!(
+            mp[0..2],
+            [
+                wkt! { POLYGON((0. 0., 1. 0., 1. 1., 0. 0.)) },
+                wkt! { POLYGON((100. 100., 101. 100., 101. 101., 100. 100.)) }
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_indexing_out_of_bounds() {
+        let mp =
+            wkt! { MULTIPOLYGON(((0. 0., 1. 0., 1. 1., 0. 0.)), ((2. 2., 3. 2., 3. 3., 2. 2.))) };
+        let _ = mp[2];
     }
 }

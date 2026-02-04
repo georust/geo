@@ -4,6 +4,8 @@ use alloc::vec;
 use alloc::vec::Vec;
 #[cfg(any(feature = "approx", test))]
 use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
+use core::slice::SliceIndex;
 #[cfg(feature = "multithreading")]
 use rayon::prelude::*;
 
@@ -151,6 +153,20 @@ impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiLineSt
 
     fn into_par_iter(self) -> Self::Iter {
         self.0.par_iter_mut()
+    }
+}
+
+impl<T: CoordNum, I: SliceIndex<[LineString<T>]>> Index<I> for MultiLineString<T> {
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &I::Output {
+        self.0.index(index)
+    }
+}
+
+impl<T: CoordNum, I: SliceIndex<[LineString<T>]>> IndexMut<I> for MultiLineString<T> {
+    fn index_mut(&mut self, index: I) -> &mut I::Output {
+        self.0.index_mut(index)
     }
 }
 
@@ -343,5 +359,34 @@ mod test {
         let empty = MultiLineString::<f64>::empty();
         let empty_2 = wkt! { MULTILINESTRING EMPTY };
         assert_eq!(empty, empty_2);
+    }
+
+    #[test]
+    fn test_indexing() {
+        let mut mls = wkt! { MULTILINESTRING((0. 0., 1. 1.), (2. 2., 3. 3.), (4. 4., 5. 5.)) };
+
+        // Index
+        assert_eq!(mls[0], wkt! { LINESTRING(0. 0., 1. 1.) });
+        assert_eq!(mls[1], wkt! { LINESTRING(2. 2., 3. 3.) });
+
+        // IndexMut
+        mls[1] = wkt! { LINESTRING(100. 100., 101. 101.) };
+        assert_eq!(mls[1], wkt! { LINESTRING(100. 100., 101. 101.) });
+
+        // Range
+        assert_eq!(
+            mls[0..2],
+            [
+                wkt! { LINESTRING(0. 0., 1. 1.) },
+                wkt! { LINESTRING(100. 100., 101. 101.) }
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_indexing_out_of_bounds() {
+        let mls = wkt! { MULTILINESTRING((0. 0., 1. 1.), (2. 2., 3. 3.)) };
+        let _ = mls[2];
     }
 }
