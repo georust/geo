@@ -11,6 +11,7 @@ mod compare_impl;
 #[path = "utils/random.rs"]
 mod random;
 use rand::rng;
+use rand::seq::SliceRandom;
 use random::*;
 
 const NUMPOINTS: i32 = 1_000_000;
@@ -332,20 +333,23 @@ fn bench_line_contains_multi_point(c: &mut Criterion) {
 
 fn bench_multipoint_contains_multipoint(c: &mut Criterion) {
     {
+        // base case
         let mut base: Vec<Point> = (0..10000)
             .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
             .collect();
-        let comp = base.clone();
+        let mut comp = base.clone();
+        base.push(point! {x: f64::from(10000), y: f64::from(10000)});
 
-        base.reverse();
-        base.push(point! {x: f64::from(1000), y: f64::from(1000)});
+        let rng = &mut rand::rng();
+        base.shuffle(rng);
+        comp.shuffle(rng);
 
         let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
         let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
 
         trait_vs_relate!(
             c,
-            "Line contains 1000 MultiPoint",
+            "MultiPoint contains 1000 MultiPoint",
             base,
             comp,
             Contains::contains,
@@ -353,23 +357,52 @@ fn bench_multipoint_contains_multipoint(c: &mut Criterion) {
             true
         );
     }
-
     {
-        // best case where the point is at the end of the sorted lists
-        let base: Vec<Point> = (0..10000)
+        // best case where the other has more unique points than self
+        let mut base: Vec<Point> = (0..10000)
             .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
             .collect();
         let mut comp = base.clone();
+        comp.push(point! {x: f64::from(10000), y: f64::from(10000)});
 
-        comp.reverse();
-        comp.push(point! {x: f64::from(1000), y: f64::from(1000)});
+        let rng = &mut rand::rng();
+        base.shuffle(rng);
+        comp.shuffle(rng);
 
         let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
         let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
 
         trait_vs_relate!(
             c,
-            "Line not contains 1000 MultiPoint worst case",
+            "MultiPoint contains 1000 MultiPoint short circuit",
+            base,
+            comp,
+            Contains::contains,
+            IntersectionMatrix::is_contains,
+            false
+        );
+    }
+
+    {
+        // worst case where the point is at the end of the sorted lists
+        let mut base: Vec<Point> = (0..10000)
+            .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
+            .collect();
+        let mut comp = base.clone();
+
+        // keep the total count same
+        comp[0] = point! {x: f64::from(10000), y: f64::from(10000)};
+
+        let rng = &mut rand::rng();
+        base.shuffle(rng);
+        comp.shuffle(rng);
+
+        let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
+        let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
+
+        trait_vs_relate!(
+            c,
+            "MultiPoint not contains 1000 MultiPoint worst case",
             base,
             comp,
             Contains::contains,
@@ -380,13 +413,15 @@ fn bench_multipoint_contains_multipoint(c: &mut Criterion) {
 
     {
         // best case where the point is at the start of the sorted lists
-        let base: Vec<Point> = (0..10000)
+        let mut base: Vec<Point> = (0..10000)
             .map(|val| point! {x: f64::from(val)/10., y: f64::from(val)/10.})
             .collect();
         let mut comp = base.clone();
+        comp[0] = point! {x: f64::from(-1000), y: f64::from(-1000)};
 
-        comp.reverse();
-        comp.push(point! {x: f64::from(-1000), y: f64::from(-1000)});
+        let rng = &mut rand::rng();
+        base.shuffle(rng);
+        comp.shuffle(rng);
 
         let base: MultiPoint<f64> = geo::MultiPoint::new(base).convert();
         let comp: MultiPoint<f64> = geo::MultiPoint::new(comp).convert();
