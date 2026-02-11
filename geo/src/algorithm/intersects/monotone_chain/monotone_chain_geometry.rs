@@ -31,20 +31,3 @@ symmetric_intersects_impl!(
     MonotoneChainMultiPolygon<'a, T>,
     MonotoneChainGeometry<'a, T>
 );
-
-// commented out if they are implemented by blanket impl in main `Intersects` trait
-symmetric_intersects_impl!(Coord<T>, MonotoneChainGeometry<'a, T>);
-// symmetric_intersects_impl!(Point<T>,MonotoneChainGeometry<'a, T>);
-// symmetric_intersects_impl!(MultiPoint<T>,MonotoneChainGeometry<'a, T>);
-
-symmetric_intersects_impl!(Line<T>, MonotoneChainGeometry<'a, T>);
-symmetric_intersects_impl!(LineString<T>, MonotoneChainGeometry<'a, T>);
-// symmetric_intersects_impl!(MultiLineString<T>,MonotoneChainGeometry<'a, T>);
-
-symmetric_intersects_impl!(Polygon<T>, MonotoneChainGeometry<'a, T>);
-// symmetric_intersects_impl!(MultiPolygon<T>,MonotoneChainGeometry<'a, T>);
-symmetric_intersects_impl!(Rect<T>, MonotoneChainGeometry<'a, T>);
-symmetric_intersects_impl!(Triangle<T>, MonotoneChainGeometry<'a, T>);
-
-// symmetric_intersects_impl!(Geometry<T>,MonotoneChainGeometry<'a, T>);
-// symmetric_intersects_impl!(GeometryCollection<T>,MonotoneChainGeometry<'a, T>);

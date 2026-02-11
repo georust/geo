@@ -47,17 +47,10 @@ macro_rules! intersects_MonotoneChainSegment {
 }
 
 intersects_MonotoneChainSegment!(Coord<T>);
-intersects_MonotoneChainSegment!(Point<T>);
-intersects_MonotoneChainSegment!(MultiPoint<T>);
+symmetric_intersects_impl!(Coord<T>, MonotoneChainSegment<'a, T>);
+
 intersects_MonotoneChainSegment!(Line<T>);
-intersects_MonotoneChainSegment!(LineString<T>);
-intersects_MonotoneChainSegment!(MultiLineString<T>);
-intersects_MonotoneChainSegment!(Polygon<T>);
-intersects_MonotoneChainSegment!(MultiPolygon<T>);
-intersects_MonotoneChainSegment!(Rect<T>);
-intersects_MonotoneChainSegment!(Triangle<T>);
-intersects_MonotoneChainSegment!(Geometry<T>);
-intersects_MonotoneChainSegment!(GeometryCollection<T>);
+symmetric_intersects_impl!(Line<T>, MonotoneChainSegment<'a, T>);
 
 impl<'a, T> Intersects<MonotoneChainSegment<'a, T>> for MonotoneChainSegment<'a, T>
 where
@@ -92,20 +85,3 @@ where
         }
     }
 }
-
-// commented out if they are implemented by blanket impl in main `Intersects` trait
-symmetric_intersects_impl!(Coord<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(Point<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(MultiPoint<T>, MonotoneChainSegment<'a, T>);
-
-symmetric_intersects_impl!(Line<T>, MonotoneChainSegment<'a, T>);
-symmetric_intersects_impl!(LineString<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(MultiLineString<T>, MonotoneChainSegment<'a, T>);
-
-symmetric_intersects_impl!(Polygon<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(MultiPolygon<T>, MonotoneChainSegment<'a, T>);
-symmetric_intersects_impl!(Rect<T>, MonotoneChainSegment<'a, T>);
-symmetric_intersects_impl!(Triangle<T>, MonotoneChainSegment<'a, T>);
-
-// symmetric_intersects_impl!(Geometry<T>, MonotoneChainSegment<'a, T>);
-// symmetric_intersects_impl!(GeometryCollection<T>, MonotoneChainSegment<'a, T>);
