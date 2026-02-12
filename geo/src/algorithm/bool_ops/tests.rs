@@ -410,3 +410,73 @@ mod gh_issues {
         // The goal is just to get here without panic
     }
 }
+
+mod ogc_compliance {
+    use super::*;
+
+    #[test]
+    fn test_disconnected_interior_split() {
+        // iOverlay ocg_tests test_0: Two L-shaped holes share vertices at
+        // (2,2) and (3,3), disconnecting the interior. OGC mode splits
+        // this into 2 valid polygons.
+        let square: Polygon<f64> =
+            wkt!(POLYGON((0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0)));
+        let l_shapes: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+            ((1.0 2.0, 1.0 4.0, 3.0 4.0, 3.0 3.0, 2.0 3.0, 2.0 2.0, 1.0 2.0)),
+            ((2.0 1.0, 2.0 2.0, 3.0 2.0, 3.0 3.0, 4.0 3.0, 4.0 1.0, 2.0 1.0))
+        ));
+
+        let result = square.difference(&l_shapes);
+
+        assert_eq!(result.0.len(), 2, "OGC: disconnected interior must be split into 2 polygons");
+
+        let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+            (
+                (0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0),
+                (1.0 2.0, 1.0 4.0, 3.0 4.0, 3.0 3.0, 4.0 3.0, 4.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0)
+            ),
+            ((2.0 2.0, 3.0 2.0, 3.0 3.0, 2.0 3.0, 2.0 2.0))
+        ));
+        let im = result.relate(&expected);
+        assert!(
+            im.is_equal_topo(),
+            "result: {}, expected: {}",
+            result.to_wkt(),
+            expected.to_wkt(),
+        );
+    }
+
+    #[test]
+    fn test_proper_holes_touching_boundary() {
+        // iOverlay ocg_tests test_6: U-shaped polygon with two small
+        // square holes touching the inner boundary. OGC mode produces
+        // proper interior rings (1 polygon, 3 contours).
+        let u_shape: Polygon<f64> = wkt!(POLYGON((
+            0.0 0.0, 5.0 0.0, 5.0 3.0, 3.0 3.0,
+            3.0 2.0, 2.0 2.0, 2.0 3.0, 0.0 3.0, 0.0 0.0
+        )));
+        let squares: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+            ((1.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0, 1.0 1.0)),
+            ((3.0 1.0, 4.0 1.0, 4.0 2.0, 3.0 2.0, 3.0 1.0))
+        ));
+
+        let result = u_shape.difference(&squares);
+
+        assert_eq!(result.0.len(), 1, "result should be a single polygon");
+        let poly = &result.0[0];
+        assert_eq!(poly.interiors().len(), 2, "polygon should have 2 holes");
+
+        let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON((
+            (0.0 0.0, 5.0 0.0, 5.0 3.0, 3.0 3.0, 3.0 2.0, 2.0 2.0, 2.0 3.0, 0.0 3.0, 0.0 0.0),
+            (1.0 1.0, 1.0 2.0, 2.0 2.0, 2.0 1.0, 1.0 1.0),
+            (3.0 1.0, 3.0 2.0, 4.0 2.0, 4.0 1.0, 3.0 1.0)
+        )));
+        let im = result.relate(&expected);
+        assert!(
+            im.is_equal_topo(),
+            "result: {}, expected: {}",
+            result.to_wkt(),
+            expected.to_wkt(),
+        );
+    }
+}
