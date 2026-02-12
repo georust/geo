@@ -221,10 +221,8 @@ fn edge_index_to_ring_role(edge_idx: usize) -> RingRole {
 
 /// Check that the polygon interior is simply connected using the GeometryGraph.
 ///
-/// Extracts touch-point information from the pre-computed GeometryGraph, whose
-/// R-tree intersection detection runs in O((n + k) log n) rather than O(V^2).
-///
-/// The interior is disconnected when rings touch in a way that creates separate
+/// Extracts touch-point information from the pre-computed GeometryGraph. The
+/// interior is disconnected when rings touch in a way that creates separate
 /// regions. This occurs when:
 /// - Two rings share 2+ touch points at different coordinates
 /// - Rings form a cycle through distinct single touch points
@@ -238,8 +236,6 @@ fn edge_index_to_ring_role(edge_idx: usize) -> RingRole {
 /// Ring pairs in `skip_pairs` are excluded (they already have intersection
 /// errors reported by the caller).
 ///
-/// Reference: OGC Simple Feature Specification (ISO 19125-1), section 6.1.11.1.
-///
 /// Returns `None` if the interior is simply connected, or `Some((edge_a, edge_b))`
 /// identifying the ring pair that causes disconnection.
 fn check_interior_simply_connected_from_graph<F: GeoFloat>(
@@ -247,7 +243,6 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
     skip_pairs: &HashSet<(usize, usize)>,
 ) -> Option<(usize, usize)> {
     let edges = graph.edges();
-
     if edges.len() < 2 {
         return None;
     }
@@ -260,12 +255,12 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
     }
 
     let mut all_intersections: Vec<IntersectionInfo<F>> = Vec::new();
-
     for (edge_idx, edge) in edges.iter().enumerate() {
         let edge = RefCell::borrow(edge);
+        let coords = edge.coords();
         for ei in edge.edge_intersections() {
             let coord = ei.coordinate();
-            let is_vertex = edge.coords().contains(&coord);
+            let is_vertex = coords.contains(&coord);
             all_intersections.push(IntersectionInfo {
                 coord,
                 edge_idx,
@@ -286,24 +281,24 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
     // Group all intersections sharing the same coordinate and build the
     // ring-pair touch map, skipping pairs the caller already reported.
     let mut ring_pair_touch_coords: HashMap<(usize, usize), Vec<Coord<F>>> = HashMap::new();
-
+    let mut unique_edges: Vec<(usize, bool)> = Vec::new();
     let mut i = 0;
     while i < all_intersections.len() {
         let current_coord = all_intersections[i].coord;
 
+        // Find the range of intersections sharing this coordinate.
         let mut j = i + 1;
         while j < all_intersections.len() && all_intersections[j].coord == current_coord {
             j += 1;
         }
-
         let group = &all_intersections[i..j];
 
         // Deduplicate edges within the group, merging vertex flags.
-        let mut unique_edges: Vec<(usize, bool)> = Vec::new();
+        unique_edges.clear();
         for info in group {
             if let Some(last) = unique_edges.last_mut() {
                 if last.0 == info.edge_idx {
-                    last.1 = last.1 || info.is_vertex;
+                    last.1 |= info.is_vertex;
                     continue;
                 }
             }
@@ -316,7 +311,10 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
                 for &(edge_b, _) in unique_edges.iter().skip(idx_a + 1) {
                     let key = (edge_a, edge_b);
                     if !skip_pairs.contains(&key) {
-                        ring_pair_touch_coords.entry(key).or_default().push(current_coord);
+                        ring_pair_touch_coords
+                            .entry(key)
+                            .or_default()
+                            .push(current_coord);
                     }
                 }
             }
@@ -347,73 +345,59 @@ fn check_ring_touches_disconnect_interior<F: GeoFloat>(
     }
 
     // Case 2: cycle detection in the single-touch adjacency graph.
-    let mut adjacency: Vec<HashSet<usize>> = vec![HashSet::new(); num_rings];
+    // Keys from ring_pair_touch_coords are already canonical (i < j).
+    let mut adjacency: Vec<Vec<usize>> = vec![Vec::new(); num_rings];
     let mut edge_coords: HashMap<(usize, usize), Coord<F>> = HashMap::new();
-
     for (&(i, j), coords) in ring_pair_touch_coords {
         if coords.len() == 1 {
-            let coord = coords[0];
-            adjacency[i].insert(j);
-            adjacency[j].insert(i);
-            edge_coords.insert((i, j), coord);
-            edge_coords.insert((j, i), coord);
+            adjacency[i].push(j);
+            adjacency[j].push(i);
+            edge_coords.insert((i, j), coords[0]);
         }
     }
 
     // DFS to find a cycle through DISTINCT coordinates (a same-coordinate
     // cycle doesn't enclose area and is therefore harmless).
     let mut visited = vec![false; num_rings];
-
     for start in 0..num_rings {
         if visited[start] || adjacency[start].is_empty() {
             continue;
         }
-
         // (node, parent, coord used to enter node)
-        let mut stack: Vec<(usize, Option<usize>, Option<Coord<F>>)> =
-            vec![(start, None, None)];
+        let mut stack: Vec<(usize, Option<usize>, Option<Coord<F>>)> = vec![(start, None, None)];
         let mut node_entry_coord: HashMap<usize, Coord<F>> = HashMap::new();
-
         while let Some((node, parent, entry_coord)) = stack.pop() {
             if visited[node] {
-                if let Some(entry) = entry_coord {
-                    if let Some(&prev_entry) = node_entry_coord.get(&node) {
-                        if entry != prev_entry {
-                            // Cycle through distinct coordinates — find
-                            // the responsible ring pair from the back-edge.
-                            if let Some(p) = parent {
-                                let (a, b) = if p < node { (p, node) } else { (node, p) };
-                                return Some((a, b));
-                            }
-                        }
+                // A second path reached this node. If the two paths used
+                // distinct coordinates, the cycle encloses interior area.
+                // This is needed because the start node has no entry_coord,
+                // so back-edges TO the start can't be caught below.
+                if let (Some(coord), Some(&prev)) =
+                    (entry_coord, node_entry_coord.get(&node))
+                {
+                    if coord != prev {
+                        let p = parent.expect("entry_coord implies a parent");
+                        return Some((node.min(p), node.max(p)));
                     }
                 }
                 continue;
             }
-
             visited[node] = true;
             if let Some(coord) = entry_coord {
                 node_entry_coord.insert(node, coord);
             }
-
             for &neighbor in &adjacency[node] {
                 if Some(neighbor) == parent {
                     continue;
                 }
-
-                let edge_coord = edge_coords.get(&(node, neighbor)).copied();
-
+                let canonical_key = (node.min(neighbor), node.max(neighbor));
+                let edge_coord = edge_coords.get(&canonical_key).copied();
                 if visited[neighbor] {
-                    if let Some(coord) = edge_coord {
-                        if let Some(&neighbor_entry) = node_entry_coord.get(&neighbor) {
-                            if coord != neighbor_entry {
-                                let (a, b) = if node < neighbor {
-                                    (node, neighbor)
-                                } else {
-                                    (neighbor, node)
-                                };
-                                return Some((a, b));
-                            }
+                    if let (Some(coord), Some(&neighbor_entry)) =
+                        (edge_coord, node_entry_coord.get(&neighbor))
+                    {
+                        if coord != neighbor_entry {
+                            return Some(canonical_key);
                         }
                     }
                 } else {
