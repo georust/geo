@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features (ISO 19125-1, section 6.1.11.1) and matches PostGIS behavior.
 - Polygon validation now uses `PreparedGeometry` to cache R-tree structures for interior/exterior containment checks, improving validation speed for polygons with many holes.
   - <https://github.com/georust/geo/pull/1501>
 - Update `i_overlay` to 4.4 and enable OGC-compliant polygon extraction for all boolean operations, fixing cases where holes sharing vertices produced invalid geometry.

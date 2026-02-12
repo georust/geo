@@ -1,8 +1,11 @@
 use super::{CoordIndex, RingRole, Validation, utils};
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
-use crate::{GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
+use crate::relate::geomgraph::GeometryGraph;
+use crate::{Coord, GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
 
+use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 
 /// A [`Polygon`] must follow these rules to be valid:
@@ -10,9 +13,7 @@ use std::fmt;
 /// - [x] boundary rings do not cross
 /// - [x] boundary rings may touch at points but only as a tangent (i.e. not in a line)
 /// - [x] interior rings are contained in the exterior ring
-/// - [ ] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
-///
-/// Note: the simple connectivity of the interior is not checked by this implementation.
+/// - [x] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidPolygon {
     /// A ring must have at least 4 points to be valid. Note that, in order to close the ring, the first and final points will be identical.
@@ -27,6 +28,16 @@ pub enum InvalidPolygon {
     IntersectingRingsOnALine(RingRole, RingRole),
     /// A valid polygon's rings must not intersect one another. In this case, the intersection is 2-dimensional.
     IntersectingRingsOnAnArea(RingRole, RingRole),
+    /// The polygon interior is not simply connected because rings touch in a way that
+    /// disconnects the interior into multiple regions.
+    ///
+    /// Per OGC Simple Feature Specification (ISO 19125-1), section 6.1.11.1:
+    /// "The interior of every Surface is a connected point set."
+    ///
+    /// This can occur when:
+    /// - Two rings share two or more vertices (creating a "corridor" that cuts through the interior)
+    /// - Rings form a cycle of single-vertex touches that encloses part of the interior
+    InteriorNotSimplyConnected(RingRole, RingRole),
 }
 
 impl fmt::Display for InvalidPolygon {
@@ -49,6 +60,12 @@ impl fmt::Display for InvalidPolygon {
             }
             InvalidPolygon::IntersectingRingsOnAnArea(ring_1, ring_2) => {
                 write!(f, "{ring_1} and {ring_2} intersect on an area")
+            }
+            InvalidPolygon::InteriorNotSimplyConnected(ring_1, ring_2) => {
+                write!(
+                    f,
+                    "{ring_1} and {ring_2} touch in a way that disconnects the polygon interior"
+                )
             }
         }
     }
@@ -110,8 +127,14 @@ impl<F: GeoFloat> Validation for Polygon<F> {
         let polygon_exterior = Polygon::new(self.exterior().clone(), vec![]);
         let prepared_exterior = PreparedGeometry::from(&polygon_exterior);
 
+        // Track ring pairs that already have intersection errors so the
+        // simply-connected check can skip them (avoids duplicate reporting).
+        // Keys use GeometryGraph edge indices: 0 = exterior, N = interior N-1.
+        let mut errored_edge_pairs: HashSet<(usize, usize)> = HashSet::new();
+
         for (interior_1_idx, interior_1) in self.interiors().iter().enumerate() {
             let ring_role_1 = RingRole::Interior(interior_1_idx);
+            let edge_idx_1 = interior_1_idx + 1;
             if interior_1.is_empty() {
                 continue;
             }
@@ -130,6 +153,7 @@ impl<F: GeoFloat> Validation for Polygon<F> {
             if exterior_vs_interior.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
                 == Dimensions::OneDimensional
             {
+                errored_edge_pairs.insert((0, edge_idx_1));
                 handle_validation_error(InvalidPolygon::IntersectingRingsOnALine(
                     RingRole::Exterior,
                     ring_role_1,
@@ -140,6 +164,7 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 self.interiors().iter().enumerate().skip(interior_1_idx + 1)
             {
                 let ring_role_2 = RingRole::Interior(interior_2_idx);
+                let edge_idx_2 = interior_2_idx + 1;
                 if interior_2.is_empty() {
                     continue;
                 }
@@ -150,6 +175,7 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 if intersection_matrix.get(CoordPos::Inside, CoordPos::Inside)
                     == Dimensions::TwoDimensional
                 {
+                    errored_edge_pairs.insert((edge_idx_1, edge_idx_2));
                     handle_validation_error(InvalidPolygon::IntersectingRingsOnAnArea(
                         ring_role_1,
                         ring_role_2,
@@ -158,6 +184,7 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 if intersection_matrix.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
                     == Dimensions::OneDimensional
                 {
+                    errored_edge_pairs.insert((edge_idx_1, edge_idx_2));
                     handle_validation_error(InvalidPolygon::IntersectingRingsOnALine(
                         ring_role_1,
                         ring_role_2,
@@ -165,8 +192,238 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 }
             }
         }
+
+        // Check that the interior is simply connected.
+        let prepared_polygon = PreparedGeometry::from(self);
+        if let Some((edge_a, edge_b)) = check_interior_simply_connected_from_graph(
+            &prepared_polygon.geometry_graph,
+            &errored_edge_pairs,
+        ) {
+            let role_a = edge_index_to_ring_role(edge_a);
+            let role_b = edge_index_to_ring_role(edge_b);
+            handle_validation_error(InvalidPolygon::InteriorNotSimplyConnected(role_a, role_b))?;
+        }
+
         Ok(())
     }
+}
+
+/// Convert a GeometryGraph edge index to a [`RingRole`].
+///
+/// Edge 0 is the exterior ring; edge N (N >= 1) is interior ring N-1.
+fn edge_index_to_ring_role(edge_idx: usize) -> RingRole {
+    if edge_idx == 0 {
+        RingRole::Exterior
+    } else {
+        RingRole::Interior(edge_idx - 1)
+    }
+}
+
+/// Check that the polygon interior is simply connected using the GeometryGraph.
+///
+/// Extracts touch-point information from the pre-computed GeometryGraph, whose
+/// R-tree intersection detection runs in O((n + k) log n) rather than O(V^2).
+///
+/// The interior is disconnected when rings touch in a way that creates separate
+/// regions. This occurs when:
+/// - Two rings share 2+ touch points at different coordinates
+/// - Rings form a cycle through distinct single touch points
+///   (graph-theoretically: the ring adjacency graph has a cycle whose edges
+///   correspond to distinct coordinates, meaning the cycle encloses area)
+///
+/// Multiple rings meeting at a *single* coordinate does NOT disconnect
+/// the interior — the connected regions can still reach each other around
+/// the shared point.
+///
+/// Ring pairs in `skip_pairs` are excluded (they already have intersection
+/// errors reported by the caller).
+///
+/// Reference: OGC Simple Feature Specification (ISO 19125-1), section 6.1.11.1.
+///
+/// Returns `None` if the interior is simply connected, or `Some((edge_a, edge_b))`
+/// identifying the ring pair that causes disconnection.
+fn check_interior_simply_connected_from_graph<F: GeoFloat>(
+    graph: &GeometryGraph<F>,
+    skip_pairs: &HashSet<(usize, usize)>,
+) -> Option<(usize, usize)> {
+    let edges = graph.edges();
+
+    if edges.len() < 2 {
+        return None;
+    }
+
+    // Collect all intersection points with their edge index and vertex status.
+    struct IntersectionInfo<F: GeoFloat> {
+        coord: Coord<F>,
+        edge_idx: usize,
+        is_vertex: bool,
+    }
+
+    let mut all_intersections: Vec<IntersectionInfo<F>> = Vec::new();
+
+    for (edge_idx, edge) in edges.iter().enumerate() {
+        let edge = RefCell::borrow(edge);
+        for ei in edge.edge_intersections() {
+            let coord = ei.coordinate();
+            let is_vertex = edge.coords().contains(&coord);
+            all_intersections.push(IntersectionInfo {
+                coord,
+                edge_idx,
+                is_vertex,
+            });
+        }
+    }
+
+    // Sort by (coordinate, edge_idx) using total_cmp for consistent ordering.
+    all_intersections.sort_by(|a, b| {
+        a.coord
+            .x
+            .total_cmp(&b.coord.x)
+            .then_with(|| a.coord.y.total_cmp(&b.coord.y))
+            .then_with(|| a.edge_idx.cmp(&b.edge_idx))
+    });
+
+    // Group all intersections sharing the same coordinate and build the
+    // ring-pair touch map, skipping pairs the caller already reported.
+    let mut ring_pair_touch_coords: HashMap<(usize, usize), Vec<Coord<F>>> = HashMap::new();
+
+    let mut i = 0;
+    while i < all_intersections.len() {
+        let current_coord = all_intersections[i].coord;
+
+        let mut j = i + 1;
+        while j < all_intersections.len() && all_intersections[j].coord == current_coord {
+            j += 1;
+        }
+
+        let group = &all_intersections[i..j];
+
+        // Deduplicate edges within the group, merging vertex flags.
+        let mut unique_edges: Vec<(usize, bool)> = Vec::new();
+        for info in group {
+            if let Some(last) = unique_edges.last_mut() {
+                if last.0 == info.edge_idx {
+                    last.1 = last.1 || info.is_vertex;
+                    continue;
+                }
+            }
+            unique_edges.push((info.edge_idx, info.is_vertex));
+        }
+
+        // A "touch" requires 2+ distinct edges, at least one having the point as a vertex.
+        if unique_edges.len() >= 2 && unique_edges.iter().any(|(_, is_v)| *is_v) {
+            for (idx_a, &(edge_a, _)) in unique_edges.iter().enumerate() {
+                for &(edge_b, _) in unique_edges.iter().skip(idx_a + 1) {
+                    let key = (edge_a, edge_b);
+                    if !skip_pairs.contains(&key) {
+                        ring_pair_touch_coords.entry(key).or_default().push(current_coord);
+                    }
+                }
+            }
+        }
+
+        i = j;
+    }
+
+    check_ring_touches_disconnect_interior(&ring_pair_touch_coords, edges.len())
+}
+
+/// Check if ring touch points disconnect the interior.
+///
+/// Returns `Some((edge_a, edge_b))` if:
+/// 1. Any two rings share 2+ distinct touch coordinates, OR
+/// 2. Rings form a cycle in the touch graph through distinct coordinates
+///    (each edge in the cycle connects via a different coordinate, so the
+///    cycle encloses interior area).
+fn check_ring_touches_disconnect_interior<F: GeoFloat>(
+    ring_pair_touch_coords: &HashMap<(usize, usize), Vec<Coord<F>>>,
+    num_rings: usize,
+) -> Option<(usize, usize)> {
+    // Case 1: any pair sharing 2+ distinct touch coordinates → disconnected
+    for (&(edge_a, edge_b), coords) in ring_pair_touch_coords {
+        if coords.len() >= 2 {
+            return Some((edge_a, edge_b));
+        }
+    }
+
+    // Case 2: cycle detection in the single-touch adjacency graph.
+    let mut adjacency: Vec<HashSet<usize>> = vec![HashSet::new(); num_rings];
+    let mut edge_coords: HashMap<(usize, usize), Coord<F>> = HashMap::new();
+
+    for (&(i, j), coords) in ring_pair_touch_coords {
+        if coords.len() == 1 {
+            let coord = coords[0];
+            adjacency[i].insert(j);
+            adjacency[j].insert(i);
+            edge_coords.insert((i, j), coord);
+            edge_coords.insert((j, i), coord);
+        }
+    }
+
+    // DFS to find a cycle through DISTINCT coordinates (a same-coordinate
+    // cycle doesn't enclose area and is therefore harmless).
+    let mut visited = vec![false; num_rings];
+
+    for start in 0..num_rings {
+        if visited[start] || adjacency[start].is_empty() {
+            continue;
+        }
+
+        // (node, parent, coord used to enter node)
+        let mut stack: Vec<(usize, Option<usize>, Option<Coord<F>>)> =
+            vec![(start, None, None)];
+        let mut node_entry_coord: HashMap<usize, Coord<F>> = HashMap::new();
+
+        while let Some((node, parent, entry_coord)) = stack.pop() {
+            if visited[node] {
+                if let Some(entry) = entry_coord {
+                    if let Some(&prev_entry) = node_entry_coord.get(&node) {
+                        if entry != prev_entry {
+                            // Cycle through distinct coordinates — find
+                            // the responsible ring pair from the back-edge.
+                            if let Some(p) = parent {
+                                let (a, b) = if p < node { (p, node) } else { (node, p) };
+                                return Some((a, b));
+                            }
+                        }
+                    }
+                }
+                continue;
+            }
+
+            visited[node] = true;
+            if let Some(coord) = entry_coord {
+                node_entry_coord.insert(node, coord);
+            }
+
+            for &neighbor in &adjacency[node] {
+                if Some(neighbor) == parent {
+                    continue;
+                }
+
+                let edge_coord = edge_coords.get(&(node, neighbor)).copied();
+
+                if visited[neighbor] {
+                    if let Some(coord) = edge_coord {
+                        if let Some(&neighbor_entry) = node_entry_coord.get(&neighbor) {
+                            if coord != neighbor_entry {
+                                let (a, b) = if node < neighbor {
+                                    (node, neighbor)
+                                } else {
+                                    (neighbor, node)
+                                };
+                                return Some((a, b));
+                            }
+                        }
+                    }
+                } else {
+                    stack.push((neighbor, Some(node), edge_coord));
+                }
+            }
+        }
+    }
+
+    None
 }
 
 #[cfg(test)]
