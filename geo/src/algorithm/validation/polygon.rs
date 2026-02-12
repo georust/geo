@@ -5,7 +5,7 @@ use crate::relate::geomgraph::GeometryGraph;
 use crate::{Coord, GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
 
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fmt;
 
 /// A [`Polygon`] must follow these rules to be valid:
@@ -278,9 +278,12 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
             .then_with(|| a.edge_idx.cmp(&b.edge_idx))
     });
 
-    // Group all intersections sharing the same coordinate and build the
-    // ring-pair touch map, skipping pairs the caller already reported.
-    let mut ring_pair_touch_coords: HashMap<(usize, usize), Vec<Coord<F>>> = HashMap::new();
+    // Group all intersections sharing the same coordinate and build:
+    // - coord_edges: (coord, edge_a, edge_b) for each touch, used by cycle detection
+    // - ring_pair_seen: if a pair is seen a second time, it shares 2+ touch
+    //   points at different coordinates, which always disconnects the interior
+    let mut coord_edges: Vec<(Coord<F>, usize, usize)> = Vec::new();
+    let mut ring_pair_seen: HashSet<(usize, usize)> = HashSet::new();
     let mut unique_edges: Vec<(usize, bool)> = Vec::new();
     let mut i = 0;
     while i < all_intersections.len() {
@@ -293,7 +296,9 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
         }
         let group = &all_intersections[i..j];
 
-        // Deduplicate edges within the group, merging vertex flags.
+        // Deduplicate edges within the group. The same edge can appear multiple
+        // times with different vertex flags, so we merge them to ensure we only
+        // count distinct edges and know if any of them is a vertex.
         unique_edges.clear();
         for info in group {
             if let Some(last) = unique_edges.last_mut() {
@@ -305,16 +310,17 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
             unique_edges.push((info.edge_idx, info.is_vertex));
         }
 
-        // A "touch" requires 2+ distinct edges, at least one having the point as a vertex.
+        // A "touch" requires 2+ distinct edges, at least one having the point
+        // as a vertex. Skip pairs the caller already reported as intersecting.
         if unique_edges.len() >= 2 && unique_edges.iter().any(|(_, is_v)| *is_v) {
             for (idx_a, &(edge_a, _)) in unique_edges.iter().enumerate() {
                 for &(edge_b, _) in unique_edges.iter().skip(idx_a + 1) {
                     let key = (edge_a, edge_b);
                     if !skip_pairs.contains(&key) {
-                        ring_pair_touch_coords
-                            .entry(key)
-                            .or_default()
-                            .push(current_coord);
+                        if !ring_pair_seen.insert(key) {
+                            return Some(key);
+                        }
+                        coord_edges.push((current_coord, edge_a, edge_b));
                     }
                 }
             }
@@ -323,91 +329,107 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
         i = j;
     }
 
-    check_ring_touches_disconnect_interior(&ring_pair_touch_coords, edges.len())
+    check_ring_touches_disconnect_interior(&mut coord_edges, edges.len())
 }
 
-/// Check if ring touch points disconnect the interior.
+/// Detect cycles through distinct coordinates in the ring touch graph.
 ///
-/// Returns `Some((edge_a, edge_b))` if:
-/// 1. Any two rings share 2+ distinct touch coordinates, OR
-/// 2. Rings form a cycle in the touch graph through distinct coordinates
-///    (each edge in the cycle connects via a different coordinate, so the
-///    cycle encloses interior area).
+/// Each entry in `coord_edges` is `(coord, ring_a, ring_b)` representing a
+/// single-touch between two rings at the given coordinate. The caller has
+/// already handled the case where any pair shares 2+ touch points.
+///
+/// A cycle of ring touches only disconnects the interior if the cycle passes
+/// through at least two distinct coordinates (enclosing area). A cycle where
+/// every edge shares the same coordinate — e.g. three holes all meeting at
+/// one point — does not enclose any area and is harmless.
+///
+/// To distinguish these cases, edges are sorted and grouped by coordinate,
+/// then processed with two Union-Find structures:
+///
+/// - **Global UF**: accumulates connectivity across all coordinate groups
+///   processed so far. "Are these two rings connected by ANY path of touches?"
+/// - **Local UF**: reset for each coordinate group. "Are these two rings
+///   connected through touches at THIS coordinate only?"
+///
+/// For each edge `(u, v)` in the current coordinate group:
+/// - `!global.connected(u, v)`: first connection between these components — no
+///   cycle at all. **Safe.**
+/// - `global.connected(u, v) && local.connected(u, v)`: the rings are already
+///   connected within this coordinate group — a same-coordinate cycle. **Safe.**
+/// - `global.connected(u, v) && !local.connected(u, v)`: the rings are
+///   reachable through a previously processed (different) coordinate, but not
+///   through this one — closing a multi-coordinate cycle. **Invalid.**
 fn check_ring_touches_disconnect_interior<F: GeoFloat>(
-    ring_pair_touch_coords: &HashMap<(usize, usize), Vec<Coord<F>>>,
+    coord_edges: &mut [(Coord<F>, usize, usize)],
     num_rings: usize,
 ) -> Option<(usize, usize)> {
-    // Case 1: any pair sharing 2+ distinct touch coordinates → disconnected
-    for (&(edge_a, edge_b), coords) in ring_pair_touch_coords {
-        if coords.len() >= 2 {
-            return Some((edge_a, edge_b));
-        }
-    }
+    coord_edges.sort_by(|a, b| {
+        a.0.x
+            .total_cmp(&b.0.x)
+            .then_with(|| a.0.y.total_cmp(&b.0.y))
+    });
 
-    // Case 2: cycle detection in the single-touch adjacency graph.
-    // Keys from ring_pair_touch_coords are already canonical (i < j).
-    let mut adjacency: Vec<Vec<usize>> = vec![Vec::new(); num_rings];
-    let mut edge_coords: HashMap<(usize, usize), Coord<F>> = HashMap::new();
-    for (&(i, j), coords) in ring_pair_touch_coords {
-        if coords.len() == 1 {
-            adjacency[i].push(j);
-            adjacency[j].push(i);
-            edge_coords.insert((i, j), coords[0]);
+    let mut global = UnionFind::new(num_rings);
+    let mut group_start = 0;
+    while group_start < coord_edges.len() {
+        let mut group_end = group_start + 1;
+        while group_end < coord_edges.len()
+            && coord_edges[group_end].0 == coord_edges[group_start].0
+        {
+            group_end += 1;
         }
-    }
 
-    // DFS to find a cycle through DISTINCT coordinates (a same-coordinate
-    // cycle doesn't enclose area and is therefore harmless).
-    let mut visited = vec![false; num_rings];
-    for start in 0..num_rings {
-        if visited[start] || adjacency[start].is_empty() {
-            continue;
+        let mut local = UnionFind::new(num_rings);
+        for &(_, u, v) in &coord_edges[group_start..group_end] {
+            if global.find(u) == global.find(v) && local.find(u) != local.find(v) {
+                return Some((u.min(v), u.max(v)));
+            }
+            global.union(u, v);
+            local.union(u, v);
         }
-        // (node, parent, coord used to enter node)
-        let mut stack: Vec<(usize, Option<usize>, Option<Coord<F>>)> = vec![(start, None, None)];
-        let mut node_entry_coord: HashMap<usize, Coord<F>> = HashMap::new();
-        while let Some((node, parent, entry_coord)) = stack.pop() {
-            if visited[node] {
-                // A second path reached this node. If the two paths used
-                // distinct coordinates, the cycle encloses interior area.
-                // This is needed because the start node has no entry_coord,
-                // so back-edges TO the start can't be caught below.
-                if let (Some(coord), Some(&prev)) =
-                    (entry_coord, node_entry_coord.get(&node))
-                {
-                    if coord != prev {
-                        let p = parent.expect("entry_coord implies a parent");
-                        return Some((node.min(p), node.max(p)));
-                    }
-                }
-                continue;
-            }
-            visited[node] = true;
-            if let Some(coord) = entry_coord {
-                node_entry_coord.insert(node, coord);
-            }
-            for &neighbor in &adjacency[node] {
-                if Some(neighbor) == parent {
-                    continue;
-                }
-                let canonical_key = (node.min(neighbor), node.max(neighbor));
-                let edge_coord = edge_coords.get(&canonical_key).copied();
-                if visited[neighbor] {
-                    if let (Some(coord), Some(&neighbor_entry)) =
-                        (edge_coord, node_entry_coord.get(&neighbor))
-                    {
-                        if coord != neighbor_entry {
-                            return Some(canonical_key);
-                        }
-                    }
-                } else {
-                    stack.push((neighbor, Some(node), edge_coord));
-                }
-            }
-        }
+
+        group_start = group_end;
     }
 
     None
+}
+
+struct UnionFind {
+    parent: Vec<usize>,
+    rank: Vec<usize>,
+}
+
+impl UnionFind {
+    fn new(n: usize) -> Self {
+        Self {
+            parent: (0..n).collect(),
+            rank: vec![0; n],
+        }
+    }
+
+    fn find(&mut self, mut x: usize) -> usize {
+        while self.parent[x] != x {
+            self.parent[x] = self.parent[self.parent[x]];
+            x = self.parent[x];
+        }
+        x
+    }
+
+    fn union(&mut self, x: usize, y: usize) {
+        let rx = self.find(x);
+        let ry = self.find(y);
+        if rx == ry {
+            return;
+        }
+        if self.rank[rx] < self.rank[ry] {
+            self.parent[rx] = ry;
+        } else if self.rank[rx] > self.rank[ry] {
+            self.parent[ry] = rx;
+        } else {
+            self.parent[ry] = rx;
+            self.rank[rx] += 1;
+        }
+    }
 }
 
 #[cfg(test)]
