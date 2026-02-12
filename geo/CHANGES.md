@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Polygon validation now uses `PreparedGeometry` to cache R-tree structures for interior/exterior containment checks, improving validation speed for polygons with many holes.
+  - <https://github.com/georust/geo/pull/1501>
+- Update `i_overlay` to 4.4 and enable OGC-compliant polygon extraction for all boolean operations, fixing cases where holes sharing vertices produced invalid geometry.
+  - <https://github.com/georust/geo/pull/1500>
 - Fix `CoordinatePosition` for `LineString` to handle dimensionally collapsed input  e.g. `LINESTRING(0 0)` is treated like `POINT(0 0)`.
   - <https://github.com/georust/geo/pull/1483>
 - Fix `CoordinatePosition` for `Triangle` to correctly return `CoordPos::OnBoundary` for coordinate within vertical segment.

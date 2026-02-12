@@ -541,7 +541,7 @@ mod tests {
             coord!(x:  3.0, y:  0.0).into(),
             coord!(x: -1.0, y:  2.0).into(),
         ];
-        let style = BufferStyle::new(2.0).line_cap(LineCap::Custom(arrow_cap));
+        let style = BufferStyle::new(2.0).line_cap(LineCap::Custom(arrow_cap.into()));
         let actual = line_string.buffer_with_style(style);
         let expected_output = wkt! {
             MULTIPOLYGON(((-6.0 0.0,2.0 -4.0,0.0 -2.0,10.0 -2.0,10.3901806473732 -1.9615705609321594,10.765366852283478 -1.8477590680122375,11.111140459775925 -1.6629392206668854,11.414213567972183 -1.4142135679721832,11.662939220666885 -1.1111404597759247,11.847759068012238 -0.7653668522834778,11.96157056093216 -0.39018064737319946,12.0 0.0,12.0 10.0,14.0 8.0,10.0 16.0,6.0 8.0,8.0 10.0,8.0 2.0,0.0 2.0,2.0 4.0,-6.0 0.0)))
@@ -708,7 +708,7 @@ mod tests {
             coord!(x:  3.0, y:  0.0).into(),
             coord!(x: -1.0, y:  2.0).into(),
         ];
-        let style = BufferStyle::new(2.0).line_cap(LineCap::Custom(arrow_cap));
+        let style = BufferStyle::new(2.0).line_cap(LineCap::Custom(arrow_cap.into()));
         let actual = point.buffer_with_style(style);
         let expected_output = wkt! {
             POLYGON EMPTY
