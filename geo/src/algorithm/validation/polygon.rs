@@ -1,7 +1,7 @@
 use super::{CoordIndex, RingRole, Validation, utils};
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
-use crate::{GeoFloat, HasDimensions, Polygon, Relate};
+use crate::{GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
 
 use std::fmt;
 
@@ -99,14 +99,23 @@ impl<F: GeoFloat> Validation for Polygon<F> {
             }
         }
 
+        // Skip interior checks if there are no non-empty interiors
+        let has_interiors = self.interiors().iter().any(|ring| !ring.is_empty());
+        if !has_interiors {
+            return Ok(());
+        }
+
+        // Use PreparedGeometry for the exterior to cache its R-tree, avoiding
+        // graph reconstruction for each interior containment check.
         let polygon_exterior = Polygon::new(self.exterior().clone(), vec![]);
+        let prepared_exterior = PreparedGeometry::from(&polygon_exterior);
 
         for (interior_1_idx, interior_1) in self.interiors().iter().enumerate() {
             let ring_role_1 = RingRole::Interior(interior_1_idx);
             if interior_1.is_empty() {
                 continue;
             }
-            let exterior_vs_interior = polygon_exterior.relate(interior_1);
+            let exterior_vs_interior = prepared_exterior.relate(interior_1);
 
             if !exterior_vs_interior.is_contains() {
                 handle_validation_error(InvalidPolygon::InteriorRingNotContainedInExteriorRing(
@@ -115,7 +124,6 @@ impl<F: GeoFloat> Validation for Polygon<F> {
             }
 
             // Interior ring and exterior ring may only touch at point (not as a line)
-            // and not cross
             if exterior_vs_interior.get(CoordPos::OnBoundary, CoordPos::Inside)
                 == Dimensions::OneDimensional
             {
@@ -125,15 +133,19 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 ))?;
             }
 
-            // PERF: consider using PreparedGeometry
             let interior_1_as_poly = Polygon::new(interior_1.clone(), vec![]);
+            let prepared_interior_1 = PreparedGeometry::from(&interior_1_as_poly);
 
             for (interior_2_idx, interior_2) in
                 self.interiors().iter().enumerate().skip(interior_1_idx + 1)
             {
                 let ring_role_2 = RingRole::Interior(interior_2_idx);
+                if interior_2.is_empty() {
+                    continue;
+                }
+
                 let interior_2_as_poly = Polygon::new(interior_2.clone(), vec![]);
-                let intersection_matrix = interior_1_as_poly.relate(&interior_2_as_poly);
+                let intersection_matrix = prepared_interior_1.relate(&interior_2_as_poly);
 
                 if intersection_matrix.get(CoordPos::Inside, CoordPos::Inside)
                     == Dimensions::TwoDimensional
