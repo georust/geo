@@ -419,8 +419,7 @@ mod ogc_compliance {
         // iOverlay ocg_tests test_0: Two L-shaped holes share vertices at
         // (2,2) and (3,3), disconnecting the interior. OGC mode splits
         // this into 2 valid polygons.
-        let square: Polygon<f64> =
-            wkt!(POLYGON((0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0)));
+        let square: Polygon<f64> = wkt!(POLYGON((0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0)));
         let l_shapes: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
             ((1.0 2.0, 1.0 4.0, 3.0 4.0, 3.0 3.0, 2.0 3.0, 2.0 2.0, 1.0 2.0)),
             ((2.0 1.0, 2.0 2.0, 3.0 2.0, 3.0 3.0, 4.0 3.0, 4.0 1.0, 2.0 1.0))
@@ -428,7 +427,11 @@ mod ogc_compliance {
 
         let result = square.difference(&l_shapes);
 
-        assert_eq!(result.0.len(), 2, "OGC: disconnected interior must be split into 2 polygons");
+        assert_eq!(
+            result.0.len(),
+            2,
+            "OGC: disconnected interior must be split into 2 polygons"
+        );
 
         let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
             (

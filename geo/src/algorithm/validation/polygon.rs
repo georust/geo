@@ -115,7 +115,10 @@ impl<F: GeoFloat> Validation for Polygon<F> {
             if interior_1.is_empty() {
                 continue;
             }
-            let exterior_vs_interior = prepared_exterior.relate(interior_1);
+
+            let interior_1_as_poly = Polygon::new(interior_1.clone(), vec![]);
+            let prepared_interior_1 = PreparedGeometry::from(&interior_1_as_poly);
+            let exterior_vs_interior = prepared_exterior.relate(&prepared_interior_1);
 
             if !exterior_vs_interior.is_contains() {
                 handle_validation_error(InvalidPolygon::InteriorRingNotContainedInExteriorRing(
@@ -124,7 +127,7 @@ impl<F: GeoFloat> Validation for Polygon<F> {
             }
 
             // Interior ring and exterior ring may only touch at point (not as a line)
-            if exterior_vs_interior.get(CoordPos::OnBoundary, CoordPos::Inside)
+            if exterior_vs_interior.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
                 == Dimensions::OneDimensional
             {
                 handle_validation_error(InvalidPolygon::IntersectingRingsOnALine(
@@ -132,9 +135,6 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                     ring_role_1,
                 ))?;
             }
-
-            let interior_1_as_poly = Polygon::new(interior_1.clone(), vec![]);
-            let prepared_interior_1 = PreparedGeometry::from(&interior_1_as_poly);
 
             for (interior_2_idx, interior_2) in
                 self.interiors().iter().enumerate().skip(interior_1_idx + 1)
