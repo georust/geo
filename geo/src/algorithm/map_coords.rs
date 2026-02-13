@@ -795,8 +795,8 @@ mod test {
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2 = line1.map_coords(|Coord { x, y }| (x + 10., y - 100.).into());
-        assert_relative_eq!(line2.0[0], Coord::from((10., -100.)), epsilon = 1e-6);
-        assert_relative_eq!(line2.0[1], Coord::from((11., -98.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[0], Coord::from((10., -100.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[1], Coord::from((11., -98.)), epsilon = 1e-6);
     }
 
     #[test]
@@ -885,7 +885,7 @@ mod test {
         let mp2 = mp.map_coords(|Coord { x, y }| (x * 2., y + 100.).into());
         assert_eq!(mp2.0.len(), 2);
         assert_relative_eq!(
-            mp2.0[0],
+            mp2[0],
             polygon![
                 (x: 0., y: 100.),
                 (x: 20., y: 100.),
@@ -895,7 +895,7 @@ mod test {
             ],
         );
         assert_relative_eq!(
-            mp2.0[1],
+            mp2[1],
             polygon![
                 exterior: [
                     (x: 22., y: 111.),

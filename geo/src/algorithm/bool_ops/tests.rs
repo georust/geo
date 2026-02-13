@@ -406,7 +406,7 @@ mod gh_issues {
             assert!(im.is_equal_topo());
         }
         assert_eq!(c.0.len(), 2);
-        assert!(crate::Area::unsigned_area(&c.0[1]) < 1e-5);
+        assert!(crate::Area::unsigned_area(&c[1]) < 1e-5);
         // The goal is just to get here without panic
     }
 }
