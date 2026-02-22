@@ -344,6 +344,10 @@ pub use outlier_detection::OutlierDetection;
 pub mod dbscan;
 pub use dbscan::Dbscan;
 
+/// Cluster points using [HDBSCAN](https://en.wikipedia.org/wiki/HDBSCAN) (Hierarchical Density-Based Spatial Clustering of Applications with Noise)
+pub mod hdbscan;
+pub use hdbscan::{Hdbscan, HdbscanResult};
+
 /// Cluster points using [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering)
 pub mod kmeans;
 pub use kmeans::{KMeans, KMeansError, KMeansParams};

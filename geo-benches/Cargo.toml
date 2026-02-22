@@ -174,3 +174,8 @@ harness = false
 name = "ball_tree"
 path = "src/ball_tree.rs"
 harness = false
+
+[[bench]]
+name = "hdbscan"
+path = "src/hdbscan.rs"
+harness = false
