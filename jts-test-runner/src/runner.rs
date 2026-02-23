@@ -1,3 +1,4 @@
+use geo::monotone_chain::MonotoneChainGeometry;
 use std::collections::BTreeSet;
 use std::iter::once;
 
@@ -336,8 +337,24 @@ impl TestRunner {
                 } => {
                     let direct_actual = subject.intersects(clip);
                     let relate_actual = subject.relate(clip).is_intersects();
+                    let monotone_actual = {
+                        let subject_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(subject);
+                        let clip_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(clip);
+                        match (subject_mono, clip_mono) {
+                            (Ok(subject), Ok(clip)) => subject.intersects(&clip),
+                            _ => direct_actual,
+                        }
+                    };
 
-                    if direct_actual != *expected {
+                    if monotone_actual != *expected {
+                        debug!("Intersects failure: monotone_actual != expected");
+                        let error_description =
+                            format!("expected {expected:?}, monotone_actual: {monotone_actual:?}",);
+                        self.add_failure(TestFailure {
+                            test_case,
+                            error_description,
+                        });
+                    } else if direct_actual != *expected {
                         debug!("Intersects failure: direct_actual != expected");
                         let error_description =
                             format!("expected {expected:?}, direct_actual: {direct_actual:?}",);
@@ -395,9 +412,68 @@ impl TestRunner {
                             Box::new(|a: &Geometry, b: &Geometry| a.intersects(b)),
                         ),
                         (
+                            "intersects monotone",
+                            Box::new(IntersectionMatrix::is_intersects),
+                            Box::new(|a: &Geometry, b: &Geometry| {
+                                let a_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(a);
+                                let b_mono = TryInto::<MonotoneChainGeometry<f64>>::try_into(b);
+                                match (a_mono, b_mono) {
+                                    (Ok(a), Ok(b)) => a.intersects(&b),
+                                    _ => a.intersects(b),
+                                }
+                            }),
+                        ),
+                        (
                             "contains_properly",
                             Box::new(IntersectionMatrix::is_contains_properly),
                             Box::new(|a: &Geometry, b: &Geometry| a.contains_properly(b)),
+                        ),
+                        (
+                            "contains_properly monotone",
+                            Box::new(IntersectionMatrix::is_contains_properly),
+                            Box::new(|a: &Geometry, b: &Geometry| {
+                                let Some(a_mono) =
+                                    TryInto::<MonotoneChainGeometry<f64>>::try_into(a).ok()
+                                else {
+                                    return a.contains_properly(b);
+                                };
+                                let Some(b_mono) =
+                                    TryInto::<MonotoneChainGeometry<f64>>::try_into(b).ok()
+                                else {
+                                    return a.contains_properly(b);
+                                };
+
+                                match (a_mono, b_mono) {
+                                    (_, MonotoneChainGeometry::LineString(_)) => {
+                                        a.contains_properly(b)
+                                    }
+                                    (_, MonotoneChainGeometry::MultiLineString(_)) => {
+                                        a.contains_properly(b)
+                                    }
+                                    (MonotoneChainGeometry::LineString(_), _) => {
+                                        a.contains_properly(b)
+                                    }
+                                    (MonotoneChainGeometry::MultiLineString(_), _) => {
+                                        a.contains_properly(b)
+                                    }
+                                    (
+                                        MonotoneChainGeometry::Polygon(a),
+                                        MonotoneChainGeometry::Polygon(b),
+                                    ) => a.contains_properly(&b),
+                                    (
+                                        MonotoneChainGeometry::Polygon(a),
+                                        MonotoneChainGeometry::MultiPolygon(b),
+                                    ) => a.contains_properly(&b),
+                                    (
+                                        MonotoneChainGeometry::MultiPolygon(a),
+                                        MonotoneChainGeometry::Polygon(b),
+                                    ) => a.contains_properly(&b),
+                                    (
+                                        MonotoneChainGeometry::MultiPolygon(a),
+                                        MonotoneChainGeometry::MultiPolygon(b),
+                                    ) => a.contains_properly(&b),
+                                }
+                            }),
                         ),
                         // add more here as required
                     ];

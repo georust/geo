@@ -1,5 +1,7 @@
 use crate::utils::{partial_max, partial_min};
-use crate::{CoordNum, GeometryCow, coord, geometry::*};
+use crate::{
+    CoordNum, GeoNum, GeometryCow, MonotoneChains, coord, geometry::*, monotone_chain::geometry::*,
+};
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.
@@ -193,6 +195,85 @@ where
                 (Some(r1), Some(r2)) => Some(bounding_rect_merge(r1, r2)),
             }
         })
+    }
+}
+
+impl<'a, T> BoundingRect<T> for MonotoneChainLineString<'a, T>
+where
+    T: GeoNum,
+{
+    type Output = Option<Rect<T>>;
+    fn bounding_rect(&self) -> Self::Output {
+        self.chain().bounding_rect()
+    }
+}
+
+impl<'a, T> BoundingRect<T> for MonotoneChainMultiLineString<'a, T>
+where
+    T: GeoNum,
+{
+    type Output = Option<Rect<T>>;
+    fn bounding_rect(&self) -> Self::Output {
+        self.components().iter().fold(None, |acc, next| {
+            let next_bounding_rect = next.bounding_rect();
+
+            match (acc, next_bounding_rect) {
+                (None, None) => None,
+                (Some(r), None) | (None, Some(r)) => Some(r),
+                (Some(r1), Some(r2)) => Some(bounding_rect_merge(r1, r2)),
+            }
+        })
+    }
+}
+
+impl<'a, T> BoundingRect<T> for MonotoneChainPolygon<'a, T>
+where
+    T: GeoNum,
+{
+    type Output = Option<Rect<T>>;
+    fn bounding_rect(&self) -> Self::Output {
+        self.chains().fold(None, |acc, next| {
+            let next_bounding_rect = next.bounding_rect();
+
+            match (acc, next_bounding_rect) {
+                (None, None) => None,
+                (Some(r), None) | (None, Some(r)) => Some(r),
+                (Some(r1), Some(r2)) => Some(bounding_rect_merge(r1, r2)),
+            }
+        })
+    }
+}
+
+impl<'a, T> BoundingRect<T> for MonotoneChainMultiPolygon<'a, T>
+where
+    T: GeoNum,
+{
+    type Output = Option<Rect<T>>;
+    fn bounding_rect(&self) -> Self::Output {
+        self.components().iter().fold(None, |acc, next| {
+            let next_bounding_rect = next.bounding_rect();
+
+            match (acc, next_bounding_rect) {
+                (None, None) => None,
+                (Some(r), None) | (None, Some(r)) => Some(r),
+                (Some(r1), Some(r2)) => Some(bounding_rect_merge(r1, r2)),
+            }
+        })
+    }
+}
+
+impl<'a, T> BoundingRect<T> for MonotoneChainGeometry<'a, T>
+where
+    T: GeoNum,
+{
+    type Output = Option<Rect<T>>;
+    fn bounding_rect(&self) -> Self::Output {
+        match self {
+            MonotoneChainGeometry::LineString(a) => a.bounding_rect(),
+            MonotoneChainGeometry::MultiLineString(a) => a.bounding_rect(),
+            MonotoneChainGeometry::Polygon(a) => a.bounding_rect(),
+            MonotoneChainGeometry::MultiPolygon(a) => a.bounding_rect(),
+        }
     }
 }
 

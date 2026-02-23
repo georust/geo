@@ -1,5 +1,6 @@
 use crate::Orientation::Collinear;
 use crate::geometry::*;
+use crate::monotone_chain::geometry::*;
 use crate::{CoordNum, GeoNum, GeometryCow};
 
 /// Geometries can have 0, 1, or two dimensions. Or, in the case of an [`empty`](#is_empty)
@@ -437,6 +438,54 @@ impl<C: GeoNum> HasDimensions for Triangle<C> {
             Dimensions::OneDimensional => Dimensions::ZeroDimensional,
             Dimensions::TwoDimensional => Dimensions::OneDimensional,
         }
+    }
+}
+
+impl<'a, C: GeoNum> HasDimensions for MonotoneChainLineString<'a, C> {
+    fn is_empty(&self) -> bool {
+        self.geometry().is_empty()
+    }
+    fn dimensions(&self) -> Dimensions {
+        self.geometry().dimensions()
+    }
+    fn boundary_dimensions(&self) -> Dimensions {
+        self.geometry().boundary_dimensions()
+    }
+}
+
+impl<'a, C: GeoNum> HasDimensions for MonotoneChainMultiLineString<'a, C> {
+    fn is_empty(&self) -> bool {
+        self.geometry().is_empty()
+    }
+    fn dimensions(&self) -> Dimensions {
+        self.geometry().dimensions()
+    }
+    fn boundary_dimensions(&self) -> Dimensions {
+        self.geometry().boundary_dimensions()
+    }
+}
+
+impl<'a, C: GeoNum> HasDimensions for MonotoneChainPolygon<'a, C> {
+    fn is_empty(&self) -> bool {
+        self.geometry().is_empty()
+    }
+    fn dimensions(&self) -> Dimensions {
+        self.geometry().dimensions()
+    }
+    fn boundary_dimensions(&self) -> Dimensions {
+        self.geometry().boundary_dimensions()
+    }
+}
+
+impl<'a, C: GeoNum> HasDimensions for MonotoneChainMultiPolygon<'a, C> {
+    fn is_empty(&self) -> bool {
+        self.geometry().is_empty()
+    }
+    fn dimensions(&self) -> Dimensions {
+        self.geometry().dimensions()
+    }
+    fn boundary_dimensions(&self) -> Dimensions {
+        self.geometry().boundary_dimensions()
     }
 }
 
