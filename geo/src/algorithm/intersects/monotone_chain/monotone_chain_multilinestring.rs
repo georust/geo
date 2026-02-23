@@ -1,5 +1,4 @@
 use crate::MonotoneChains;
-use crate::geometry::*;
 use crate::monotone_chain::geometry::*;
 use crate::{GeoNum, HasDimensions, Intersects};
 

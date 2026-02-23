@@ -24,7 +24,7 @@ pub use geometry::{
 
 // iterators
 mod chain_iter;
-pub use chain_iter::{MonotoneChainIter, MonotoneChains};
+pub use chain_iter::MonotoneChains;
 
 // debug utils
 mod util;

@@ -19,20 +19,6 @@ macro_rules! symmetric_intersects_impl {
     };
 }
 
-// delegate the monotone chain backed geometry intersects to the base geometry
-macro_rules! delegate_intersects_impl {
-    ($t:ty, $k:ty) => {
-        impl<'a, T> $crate::Intersects<$k> for $t
-        where
-            T: GeoNum,
-        {
-            fn intersects(&self, rhs: &$k) -> bool {
-                self.geometry().intersects(rhs)
-            }
-        }
-    };
-}
-
 macro_rules! chains_intersects_impl {
     ($t:ty, $k:ty) => {
         impl<'a, T> $crate::Intersects<$k> for $t
@@ -84,22 +70,11 @@ mod tests {
 
     #[test]
     fn test_exhaustive_compile_test() {
-        // data
-        let c: Coord<i32> = Coord { x: 0, y: 0 };
-        let pt: Point<i32> = wkt!(POINT(0 0)).convert();
-        let mpt: MultiPoint<i32> = wkt!(MULTIPOINT(0 0)).convert();
-
         let ls: LineString<i32> = wkt!(LINESTRING(0 0,1 1)).convert();
         let multi_ls: MultiLineString<i32> = wkt!(MULTILINESTRING((0 0,1 1))).convert();
-        let ln: Line<i32> = wkt!(LINE(0 0,1 1)).convert();
 
         let poly: Polygon<i32> = wkt! { POLYGON((0 0,1 1,1 0,0 0)) }.convert();
         let multi_poly: MultiPolygon<i32> = wkt! { MULTIPOLYGON(((0 0,1 1,1 0,0 0))) }.convert();
-        let rect: Rect<i32> = wkt! { RECT(10 20,30 10) }.convert();
-        let tri: Triangle<i32> = wkt! { TRIANGLE(0 0,10 20,20 -10) }.convert();
-
-        let geom: Geometry<i32> = Geometry::Point(pt);
-        let gc: GeometryCollection<i32> = GeometryCollection::new_from(vec![geom.clone()]);
 
         let m_ls: MonotoneChainLineString<i32> = (&ls).into();
         let m_mls: MonotoneChainMultiLineString<i32> = (&multi_ls).into();
