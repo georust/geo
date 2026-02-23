@@ -1,7 +1,7 @@
 use crate::geometry::*;
 use crate::intersects::has_disjoint_bboxes;
 use crate::monotone_chain::{MonotoneChain, MonotoneChainSegment};
-use crate::{BoundingRect, GeoNum, Intersects};
+use crate::{GeoNum, Intersects};
 
 impl<'a, T> Intersects<Coord<T>> for MonotoneChain<'a, T>
 where

@@ -350,8 +350,8 @@ pub use monotone::{MonoPoly, MonotonicPolygons, monotone_subdivision};
 
 pub mod monotone_chain;
 pub use monotone_chain::{
-    MonotoneChain, MonotoneChainGeometry, MonotoneChainIter, MonotoneChainLineString,
-    MonotoneChainMultiLineString, MonotoneChainMultiPolygon, MonotoneChainPolygon, MonotoneChains,
+    MonotoneChain, MonotoneChainGeometry, MonotoneChainLineString, MonotoneChainMultiLineString,
+    MonotoneChainMultiPolygon, MonotoneChainPolygon, MonotoneChains,
 };
 
 /// Rhumb-line-related algorithms and utils
