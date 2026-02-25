@@ -13,6 +13,7 @@
   - <https://github.com/georust/geo/pull/1487>
 - Fix Euclidean distance fast path for open `LineString`s to consider the last vertex (avoids incorrect `LineString`-to-`LineString` distances for separable geometries).
   - <https://github.com/georust/geo/pull/1499>
+- Bump `float_next_after` dependency to 2.0.0
 
 ## 0.32.0 - 2025-12-05
 
