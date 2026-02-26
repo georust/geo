@@ -79,48 +79,43 @@ impl<'a, T: GeoNum> Iterator for MonotoneChainSegmentFactory<'a, T> {
             return None;
         }
 
-        // edge case when there is only one point
-        if self.position == self.coords.len() - 1 {
-            self.position = self.coords.len();
+        let segment_start = self.position;
 
-            return Some(MonotoneChainSegment::<T>::new(
-                &self.coords[self.coords.len() - 1..self.coords.len()],
-            ));
-        }
+        let mut slope_x = Ordering::Equal;
+        let mut slope_y = Ordering::Equal;
+        for (segment_length, line) in self.coords[segment_start..].windows(2).enumerate() {
+            let coord = line[0];
+            let next_coord = line[1];
 
-        let c_low = self.position;
+            let next_slope_x = next_coord.x.total_cmp(&coord.x);
+            let next_slope_y = next_coord.y.total_cmp(&coord.y);
 
-        let mut dx = self.coords[c_low + 1].x.total_cmp(&self.coords[c_low].x);
-        let mut dy = self.coords[c_low + 1].y.total_cmp(&self.coords[c_low].y);
+            fn is_monotonic(previous_slope: &mut Ordering, next_slope: Ordering) -> bool {
+                if next_slope == Ordering::Equal {
+                    return true;
+                }
+                match std::mem::replace(previous_slope, next_slope) {
+                    Ordering::Equal => true,
+                    old_slope => old_slope == next_slope,
+                }
+            }
 
-        for i in (c_low + 2)..self.coords.len() {
-            let c0_i = i - 1;
-            let c1_i = i;
-            let c0 = self.coords[c0_i];
-            let c1 = self.coords[c1_i];
-
-            let cmpx = c1.x.total_cmp(&c0.x);
-            let cmpy = c1.y.total_cmp(&c0.y);
-
-            let monotonic_x = (dx == Ordering::Equal) || (dx == cmpx) || (cmpx == Ordering::Equal);
-            let monotonic_y = (dy == Ordering::Equal) || (dy == cmpy) || (cmpy == Ordering::Equal);
-
-            if monotonic_x && monotonic_y {
-                // c1 extends the current segment
-                dx = if dx == Ordering::Equal { cmpx } else { dx };
-                dy = if dy == Ordering::Equal { cmpy } else { dy };
-            } else {
-                // c0 is the inclusive start of a next segment
-                // c1 is the exclusive end of the current segment
-                self.position = c0_i;
-                return Some(MonotoneChainSegment::<T>::new(&self.coords[c_low..c1_i]));
+            if !is_monotonic(&mut slope_x, next_slope_x)
+                || !is_monotonic(&mut slope_y, next_slope_y)
+            {
+                // `coord` is the end of this segment
+                // `next_coord` is the start of the next segment
+                self.position += segment_length;
+                return Some(MonotoneChainSegment::<T>::new(
+                    &self.coords[segment_start..=self.position],
+                ));
             }
         }
 
         // close off the last segment
         self.position = self.coords.len();
         Some(MonotoneChainSegment::<T>::new(
-            &self.coords[c_low..self.coords.len()],
+            &self.coords[segment_start..],
         ))
     }
 }
