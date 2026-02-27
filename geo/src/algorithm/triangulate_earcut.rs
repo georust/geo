@@ -22,14 +22,14 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// assert_eq!(
     ///     vec![
     ///         Triangle(
-    ///             coord! { x: 0., y: 10. }, // NW
-    ///             coord! { x: 10., y: 10. }, // NE
+    ///             coord! { x: 0., y: 0. }, // SW
     ///             coord! { x: 10., y: 0. }, // SE
+    ///             coord! { x: 10., y: 10. }, // NE
     ///         ),
     ///         Triangle(
-    ///             coord! { x: 10., y: 0. }, // SE
-    ///             coord! { x: 0., y: 0. }, // SW
+    ///             coord! { x: 10., y: 10. }, // NE
     ///             coord! { x: 0., y: 10. }, // NW
+    ///             coord! { x: 0., y: 0. }, // SW
     ///         ),
     ///     ],
     ///     triangles,
@@ -56,18 +56,18 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///
     /// assert_eq!(
     ///     Some(Triangle(
-    ///             coord! { x: 0., y: 10. }, // NW
-    ///             coord! { x: 10., y: 10. }, // NE
-    ///             coord! { x: 10., y: 0. }, // SE
+    ///         coord! { x: 0., y: 0. }, // SW
+    ///         coord! { x: 10., y: 0. }, // SE
+    ///         coord! { x: 10., y: 10. }, // NE
     ///     )),
     ///     triangles_iter.next(),
     /// );
     ///
     /// assert_eq!(
     ///     Some(Triangle(
-    ///         coord! { x: 10., y: 0. }, // SE
-    ///         coord! { x: 0., y: 0. }, // SW
+    ///         coord! { x: 10., y: 10. }, // NE
     ///         coord! { x: 0., y: 10. }, // NW
+    ///         coord! { x: 0., y: 0. }, // SW
     ///     )),
     ///     triangles_iter.next(),
     /// );
@@ -107,11 +107,10 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///             10., 0., // SE
     ///             10., 10., // NE
     ///             0., 10., // NW
-    ///             0., 0., // SW
     ///         ],
     ///         triangle_indices: vec![
-    ///             3, 0, 1, // NW-SW-SE
-    ///             1, 2, 3, // SE-NE-NW
+    ///             2, 3, 0, // NE-NW-SW
+    ///             0, 1, 2, // SW-SE-NE
     ///         ],
     ///     },
     ///     triangles_raw,
