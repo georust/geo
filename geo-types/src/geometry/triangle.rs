@@ -13,16 +13,31 @@ use core::cmp::Ordering;
 pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
 
 impl<T: CoordNum> Triangle<T> {
-    /// Instantiate Self from the raw content value
+    /// Instantiate Self from the raw content value, enforcing CCW winding order.
+    ///
+    /// If the vertices are given in clockwise order they will be reversed to
+    /// ensure counter-clockwise winding. Degenerate triangles (collinear or
+    /// identical vertices) are stored as-is.
     pub fn new(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
         // determine cross product of input points. NB: non-robust
         let orientation = Point::from(v1).cross_prod(v2.into(), v3.into());
         match orientation.partial_cmp(&T::zero()) {
             Some(Ordering::Greater) => Self(v1, v2, v3),
             Some(Ordering::Less) => Self(v3, v2, v1),
-            // we told you not to do this!
+            // degenerate: collinear or identical — store as-is
             _ => Self(v1, v2, v3),
         }
+    }
+
+    /// Create a [`Triangle`] without normalising the winding order.
+    ///
+    /// Use this when the caller has already verified CCW winding, or when the
+    /// calling code does not depend on a particular winding order (e.g. inside
+    /// tight loops where the orientation check would be wasteful).
+    ///
+    /// Unlike [`Triangle::new`], vertices are stored in the order given.
+    pub fn unchecked_winding(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
+        Self(v1, v2, v3)
     }
 
     pub fn to_array(&self) -> [Coord<T>; 3] {
@@ -69,7 +84,7 @@ impl<T: CoordNum> Triangle<T> {
 
 impl<IC: Into<Coord<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
     fn from(array: [IC; 3]) -> Self {
-        Self(array[0].into(), array[1].into(), array[2].into())
+        Self::new(array[0].into(), array[1].into(), array[2].into())
     }
 }
 
