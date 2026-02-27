@@ -152,7 +152,7 @@ impl<T: CoordFloat> Iterator for Iter<T> {
         let triangle_index_1 = self.0.triangle_indices.pop()?;
         let triangle_index_2 = self.0.triangle_indices.pop()?;
         let triangle_index_3 = self.0.triangle_indices.pop()?;
-        Some(Triangle(
+        Some(Triangle::new(
             self.triangle_index_to_coord(triangle_index_1),
             self.triangle_index_to_coord(triangle_index_2),
             self.triangle_index_to_coord(triangle_index_3),
@@ -206,7 +206,7 @@ fn flat_line_string_coords_2<T: CoordFloat>(
 #[cfg(test)]
 mod test {
     use super::TriangulateEarcut;
-    use crate::{Triangle, coord, polygon};
+    use crate::{polygon, wkt};
 
     #[test]
     fn test_triangle() {
@@ -219,14 +219,7 @@ mod test {
 
         let triangles = triangle_polygon.earcut_triangles();
 
-        assert_eq!(
-            &[Triangle(
-                coord! { x: 10.0, y: 0.0 },
-                coord! { x: 0.0, y: 0.0 },
-                coord! { x: 10.0, y: 10.0 },
-            ),][..],
-            triangles,
-        );
+        assert_eq!(&[wkt!(TRIANGLE(10.0 0.0,0.0 0.0,10.0 10.0))][..], triangles,);
     }
 
     #[test]
@@ -244,18 +237,10 @@ mod test {
 
         assert_eq!(
             &[
-                Triangle(
-                    coord! { x: 10.0, y: 0.0 },
-                    coord! { x: 0.0, y: 0.0 },
-                    coord! { x: 0.0, y: 10.0 },
-                ),
-                Triangle(
-                    coord! { x: 0.0, y: 10.0 },
-                    coord! { x: 10.0, y: 10.0 },
-                    coord! { x: 10.0, y: 0.0 },
-                ),
+                wkt!(TRIANGLE(10.0 0.0,10.0 10.0,0.0 10.0)),
+                wkt!(TRIANGLE(0.0 10.0,0.0 0.0,10.0 0.0))
             ][..],
-            triangles,
+            &triangles,
         );
     }
 }
