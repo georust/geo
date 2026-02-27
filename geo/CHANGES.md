@@ -14,6 +14,9 @@
 - Fix Euclidean distance fast path for open `LineString`s to consider the last vertex (avoids incorrect `LineString`-to-`LineString` distances for separable geometries).
   - <https://github.com/georust/geo/pull/1499>
 - Update `earcutr` dependency to 0.5.0
+- POSSIBLY BREAKING: `Triangle`s returned by `earcut_triangles` are now oriented CCW.
+- POSSIBLY BREAKING: `earcut_triangles_raw` now omits the redundant "closing" coordinate from `vertices`.
+  It wasn't referenced by the `triangle_indices` cut by earcutr, but you may notice a different triangulation for a given input.
 
 ## 0.32.0 - 2025-12-05
 
