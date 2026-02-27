@@ -243,24 +243,23 @@ impl<C: Cross + Clone> Sweep<C> {
                     cb_seg = seg.overlap();
                 }
 
-                if !self.is_simple {
-                    if let (Some(prev), Some(next)) = (prev, next) {
-                        let prev_geom = prev.geom();
-                        let next_geom = next.geom();
-                        if let Some(adj_intersection) = prev_geom.intersect_line_ordered(&next_geom)
-                        {
-                            // 1. Split prev_segment, and extra splits to storage
-                            let first = prev
-                                .adjust_one_segment(adj_intersection, |e| self.events.push(e))
-                                .is_none();
-                            let second = next
-                                .adjust_one_segment(adj_intersection, |e| self.events.push(e))
-                                .is_none();
-                            debug_assert!(
-                                first && second,
-                                "adjacent segments @ removal can't overlap!"
-                            );
-                        }
+                if !self.is_simple
+                    && let (Some(prev), Some(next)) = (prev, next)
+                {
+                    let prev_geom = prev.geom();
+                    let next_geom = next.geom();
+                    if let Some(adj_intersection) = prev_geom.intersect_line_ordered(&next_geom) {
+                        // 1. Split prev_segment, and extra splits to storage
+                        let first = prev
+                            .adjust_one_segment(adj_intersection, |e| self.events.push(e))
+                            .is_none();
+                        let second = next
+                            .adjust_one_segment(adj_intersection, |e| self.events.push(e))
+                            .is_none();
+                        debug_assert!(
+                            first && second,
+                            "adjacent segments @ removal can't overlap!"
+                        );
                     }
                 }
             }
