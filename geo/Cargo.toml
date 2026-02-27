@@ -9,7 +9,7 @@ readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 autobenches = true
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.88"
 categories = ["science::geo"]
 
 [features]

@@ -116,12 +116,11 @@ where
     B: BoundingRect<T>,
 {
     let mut disjoint_bbox = false;
-    if let Some(a_bbox) = a.bounding_rect().into() {
-        if let Some(b_bbox) = b.bounding_rect().into() {
-            if !a_bbox.intersects(&b_bbox) {
-                disjoint_bbox = true;
-            }
-        }
+    if let Some(a_bbox) = a.bounding_rect().into()
+        && let Some(b_bbox) = b.bounding_rect().into()
+        && !a_bbox.intersects(&b_bbox)
+    {
+        disjoint_bbox = true;
     }
     disjoint_bbox
 }
