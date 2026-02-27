@@ -1,5 +1,10 @@
 # Changes
 
+## UNRELEASED
+
+- FIX: &geo_types::Triangle returned the incorrect vertices for TriangleTrait
+  - <https://github.com/georust/geo/pull/1509>
+
 ## 0.3.0 - 2025-05-08
 
 - BREAKING: All traits now extend `GeometryTrait`.
