@@ -12,6 +12,8 @@ edition = "2021"
 
 [features]
 default = ["geo-types"]
+# Provides a set of basic structs that implement the traits
+structs = []
 
 [dependencies]
 geo-types = { version = "0.7.17", optional = true }
