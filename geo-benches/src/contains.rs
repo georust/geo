@@ -172,7 +172,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     {
         let ls_1: LineString<f64> = geo_test_fixtures::poly1();
-        let ls_2 = LineString::new(ls_1.0[1..].to_vec());
+        let ls_2 = LineString::new(ls_1[1..].to_vec());
 
         trait_vs_relate!(
             c,

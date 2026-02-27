@@ -4,6 +4,14 @@
 
 - Implement Spade HasPosition for Coord
   - <https://github.com/georust/geo/pull/1490>
+- Implement Index and Range accessors for LineString, MultiPoint, MultiLineString, MultiPolygon, and GeometryCollection
+  ```rust
+  let multi_point = wkt!(MULTIPOINT(0 0,1 1,2 2,3 3));
+  let point = multi_point[1];
+  let three_points = multi_point[0..3];
+  // panics!
+  let no_point = multi_point[4]
+  ```
 
 ## 0.7.18 - 2025-12-01
 
