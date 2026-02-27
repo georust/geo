@@ -22,7 +22,7 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          echo 'rust-versions=["1.85", "1.88", "1.89"]' >> $GITHUB_OUTPUT
+          echo 'rust-versions=["1.88", "1.92", "1.93"]' >> $GITHUB_OUTPUT
           echo "proj-version=9.6.2" >> $GITHUB_OUTPUT
 
   # The `ci-result` job doesn't actually test anything - it just aggregates the
