@@ -281,8 +281,9 @@ pub fn unary_union<'a, B: BooleanOps + 'a>(
         FillRule::Negative
     };
 
-    let shapes = FloatOverlay::with_subj_custom(&subject, OverlayOptions::ogc(), Default::default())
-        .overlay(OverlayRule::Subject, fill_rule);
+    let shapes =
+        FloatOverlay::with_subj_custom(&subject, OverlayOptions::ogc(), Default::default())
+            .overlay(OverlayRule::Subject, fill_rule);
     multi_polygon_from_shapes(shapes)
 }
 
