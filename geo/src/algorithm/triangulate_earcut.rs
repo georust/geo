@@ -243,4 +243,42 @@ mod test {
             &triangles,
         );
     }
+
+    #[test]
+    fn test_square_raw() {
+        let square_polygon = wkt!(POLYGON(
+            (0. 0.,10. 0., 10. 10., 0. 10.)
+        ));
+
+        let triangles = square_polygon.earcut_triangles_raw();
+        assert_eq!(
+            triangles.vertices,
+            vec![0., 0., 10., 0., 10., 10., 0., 10., 0., 0.,] // exterior (closed)
+        );
+        assert_eq!(triangles.triangle_indices, vec![3, 0, 1, 1, 2, 3]);
+    }
+
+    #[test]
+    fn test_square_with_hole_raw() {
+        let poly_with_hole = wkt!(POLYGON(
+            (0. 0.,10. 0., 10. 10., 0. 10.),
+            (2. 2., 8. 2., 8. 8., 2. 8.)
+        ));
+
+        let triangles = poly_with_hole.earcut_triangles_raw();
+
+        assert_eq!(
+            triangles.vertices,
+            vec![
+                0., 0., 10., 0., 10., 10., 0., 10., 0., 0., // exterior (closed)
+                2., 2., 8., 2., 8., 8., 2., 8., 2., 2., // interior hole (closed)
+            ]
+        );
+        assert_eq!(
+            triangles.triangle_indices,
+            vec![
+                0, 9, 8, 6, 9, 0, 3, 0, 8, 6, 0, 1, 2, 3, 8, 7, 6, 1, 2, 8, 7, 7, 1, 2
+            ]
+        );
+    }
 }
