@@ -62,11 +62,11 @@ impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
     }
 
     fn second(&self) -> Self::CoordType<'_> {
-        &self.0
+        &self.1
     }
 
     fn third(&self) -> Self::CoordType<'_> {
-        &self.0
+        &self.2
     }
 }
 
