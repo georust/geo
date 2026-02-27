@@ -179,12 +179,12 @@ fn polygon_to_earcutr_input<T: CoordFloat>(polygon: &crate::Polygon<T>) -> Earcu
     let mut interior_indexes = Vec::with_capacity(polygon.interiors().len());
     debug_assert!(polygon.exterior().0.len() >= 4);
 
-    flat_line_string_coords_2(polygon.exterior(), &mut vertices);
+    flatten_ring(polygon.exterior(), &mut vertices);
 
     for interior in polygon.interiors() {
         debug_assert!(interior.0.len() >= 4);
         interior_indexes.push(vertices.len() / 2);
-        flat_line_string_coords_2(interior, &mut vertices);
+        flatten_ring(interior, &mut vertices);
     }
 
     EarcutrInput {
@@ -193,11 +193,14 @@ fn polygon_to_earcutr_input<T: CoordFloat>(polygon: &crate::Polygon<T>) -> Earcu
     }
 }
 
-fn flat_line_string_coords_2<T: CoordFloat>(
-    line_string: &crate::LineString<T>,
-    vertices: &mut Vec<T>,
-) {
-    for coord in &line_string.0 {
+fn flatten_ring<T: CoordFloat>(line_string: &crate::LineString<T>, vertices: &mut Vec<T>) {
+    if line_string.0.is_empty() {
+        return;
+    }
+    debug_assert!(line_string.is_closed(), "Only suitable for polygon rings");
+    // skip final (redundant) coord for closed line_string to match
+    // earcutr's expected input
+    for coord in &line_string.0[0..line_string.0.len() - 1] {
         vertices.push(coord.x);
         vertices.push(coord.y);
     }
@@ -219,7 +222,7 @@ mod test {
 
         let triangles = triangle_polygon.earcut_triangles();
 
-        assert_eq!(&[wkt!(TRIANGLE(10.0 0.0,0.0 0.0,10.0 10.0))][..], triangles,);
+        assert_eq!(&[wkt!(TRIANGLE(10.0 0.0,10.0 10.0,0.0 0.0))][..], triangles,);
     }
 
     #[test]
@@ -237,8 +240,8 @@ mod test {
 
         assert_eq!(
             &[
-                wkt!(TRIANGLE(10.0 0.0,10.0 10.0,0.0 10.0)),
-                wkt!(TRIANGLE(0.0 10.0,0.0 0.0,10.0 0.0))
+                wkt!(TRIANGLE(10.0 10.0,0.0 10.0,0.0 0.0)),
+                wkt!(TRIANGLE(0.0 0.0,10.0 0.0,10.0 10.0))
             ][..],
             &triangles,
         );
@@ -253,9 +256,9 @@ mod test {
         let triangles = square_polygon.earcut_triangles_raw();
         assert_eq!(
             triangles.vertices,
-            vec![0., 0., 10., 0., 10., 10., 0., 10., 0., 0.,] // exterior (closed)
+            vec![0., 0., 10., 0., 10., 10., 0., 10.] // exterior
         );
-        assert_eq!(triangles.triangle_indices, vec![3, 0, 1, 1, 2, 3]);
+        assert_eq!(triangles.triangle_indices, vec![2, 3, 0, 0, 1, 2]);
     }
 
     #[test]
@@ -270,14 +273,14 @@ mod test {
         assert_eq!(
             triangles.vertices,
             vec![
-                0., 0., 10., 0., 10., 10., 0., 10., 0., 0., // exterior (closed)
-                2., 2., 8., 2., 8., 8., 2., 8., 2., 2., // interior hole (closed)
+                0., 0., 10., 0., 10., 10., 0., 10., // exterior
+                2., 2., 8., 2., 8., 8., 2., 8., // interior hole
             ]
         );
         assert_eq!(
             triangles.triangle_indices,
             vec![
-                0, 9, 8, 6, 9, 0, 3, 0, 8, 6, 0, 1, 2, 3, 8, 7, 6, 1, 2, 8, 7, 7, 1, 2
+                3, 0, 7, 4, 7, 0, 2, 3, 7, 5, 4, 0, 2, 7, 6, 5, 0, 1, 1, 2, 6, 6, 5, 1
             ]
         );
     }
