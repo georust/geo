@@ -276,9 +276,9 @@ pub use translate::Translate;
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
 ///
 /// Requires the `"earcutr"` feature.
-#[cfg(feature = "earcutr")]
+#[cfg(feature = "earcut")]
 pub mod triangulate_earcut;
-#[cfg(feature = "earcutr")]
+#[cfg(feature = "earcut")]
 pub use triangulate_earcut::TriangulateEarcut;
 
 /// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.

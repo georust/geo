@@ -589,26 +589,19 @@ mod polygon_stitching_tests {
 
     #[test]
     fn outer_banana_doesnt_produce_hole() {
-        let poly = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 4.0, y: 0.0 },
-                Coord { x: 3.0, y: -2.0 },
-                Coord { x: 5.0, y: -2.0 },
-                Coord { x: 4.0, y: 0.0 },
-                Coord { x: 8.0, y: 0.0 },
-                Coord { x: 4.0, y: 4.0 },
-            ]),
-            vec![],
-        );
-
+        let poly =
+            wkt!(POLYGON((0.0 0.0,4.0 0.0,3.0 -2.0,5.0 -2.0,4.0 0.0,8.0 0.0,4.0 4.0,0.0 0.0)));
         let result = [poly]
             .map(|p| p.earcut_triangles())
             .concat()
             .stitch_triangulation()
             .unwrap();
-
-        assert_eq!(result.0.len(), 2);
+        dbg!(&result);
+        assert_eq!(result.0.len(), 1);
+        use crate::algorithm::Validation;
+        // This is currently failing with:
+        // SelfIntersection
+        result.0[0].check_validation().unwrap();
         assert_eq!(result.0[0].interiors().len(), 0);
     }
 }
