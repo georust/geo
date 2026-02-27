@@ -16,6 +16,9 @@
 - Bump `float_next_after` dependency to 2.0.0
 - Bump geo MSRV to 1.88
 - Update `earcutr` dependency to 0.5.0
+- POSSIBLY BREAKING: `Triangle`s returned by `earcut_triangles` are now oriented CCW.
+- POSSIBLY BREAKING: `earcut_triangles_raw` now omits the redundant "closing" coordinate from `vertices`.
+  It wasn't referenced by the `triangle_indices` cut by earcutr, but you may notice a different triangulation for a given input.
 
 ## 0.32.0 - 2025-12-05
 
