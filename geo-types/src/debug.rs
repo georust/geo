@@ -96,7 +96,7 @@ impl<T: CoordNum> Debug for Rect<T> {
 impl<T: CoordNum> Debug for Triangle<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "TRIANGLE")?;
-        write_coord_seq(f, [self.0, self.1, self.2].iter())
+        write_coord_seq(f, [self.v1(), self.v2(), self.v3()].iter())
     }
 }
 

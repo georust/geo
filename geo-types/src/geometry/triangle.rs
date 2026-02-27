@@ -153,13 +153,13 @@ mod approx_integration {
             epsilon: Self::Epsilon,
             max_relative: Self::Epsilon,
         ) -> bool {
-            if !self.0.relative_eq(&other.0, epsilon, max_relative) {
+            if !self.v1().relative_eq(&other.v1(), epsilon, max_relative) {
                 return false;
             }
-            if !self.1.relative_eq(&other.1, epsilon, max_relative) {
+            if !self.v2().relative_eq(&other.v2(), epsilon, max_relative) {
                 return false;
             }
-            if !self.2.relative_eq(&other.2, epsilon, max_relative) {
+            if !self.v3().relative_eq(&other.v3(), epsilon, max_relative) {
                 return false;
             }
 
@@ -193,13 +193,13 @@ mod approx_integration {
         /// ```
         #[inline]
         fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-            if !self.0.abs_diff_eq(&other.0, epsilon) {
+            if !self.v1().abs_diff_eq(&other.v1(), epsilon) {
                 return false;
             }
-            if !self.1.abs_diff_eq(&other.1, epsilon) {
+            if !self.v2().abs_diff_eq(&other.v2(), epsilon) {
                 return false;
             }
-            if !self.2.abs_diff_eq(&other.2, epsilon) {
+            if !self.v3().abs_diff_eq(&other.v3(), epsilon) {
                 return false;
             }
 
@@ -216,13 +216,13 @@ mod approx_integration {
         }
 
         fn ulps_eq(&self, other: &Self, epsilon: Self::Epsilon, max_ulps: u32) -> bool {
-            if !self.0.ulps_eq(&other.0, epsilon, max_ulps) {
+            if !self.v1().ulps_eq(&other.v1(), epsilon, max_ulps) {
                 return false;
             }
-            if !self.1.ulps_eq(&other.1, epsilon, max_ulps) {
+            if !self.v2().ulps_eq(&other.v2(), epsilon, max_ulps) {
                 return false;
             }
-            if !self.2.ulps_eq(&other.2, epsilon, max_ulps) {
+            if !self.v3().ulps_eq(&other.v3(), epsilon, max_ulps) {
                 return false;
             }
             true
