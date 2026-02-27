@@ -20,11 +20,11 @@ fn run_complex<T: Measurement>(c: &mut Criterion<T>) {
         let polys = Samples::from_fn(SAMPLE_SIZE, || {
             let poly1 = random::steppy_polygon(rng(), steps);
             let angle: f64 = rng().sample::<f64, _>(StandardUniform) * PI * 2.0;
-            let poly1 = poly1.rotate_around_point(angle, poly1.exterior().0[0].into());
+            let poly1 = poly1.rotate_around_point(angle, poly1.exterior()[0].into());
 
             let poly2 = random::circular_polygon(rng(), steps);
             let angle: f64 = rng().sample::<f64, _>(StandardUniform) * PI * 2.0;
-            let poly2 = poly2.rotate_around_point(angle, poly2.exterior().0[0].into());
+            let poly2 = poly2.rotate_around_point(angle, poly2.exterior()[0].into());
 
             let cp1 = convert_poly(&poly1);
             let cp2 = convert_poly(&poly2);

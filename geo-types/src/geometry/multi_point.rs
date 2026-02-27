@@ -3,6 +3,8 @@ use crate::{CoordNum, Point};
 use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
+use core::ops::{Index, IndexMut};
+use core::slice::SliceIndex;
 #[cfg(feature = "multithreading")]
 use rayon::prelude::*;
 
@@ -111,6 +113,20 @@ impl<'a, T: CoordNum + Send + Sync> IntoParallelIterator for &'a mut MultiPoint<
 
     fn into_par_iter(self) -> Self::Iter {
         self.0.par_iter_mut()
+    }
+}
+
+impl<T: CoordNum, I: SliceIndex<[Point<T>]>> Index<I> for MultiPoint<T> {
+    type Output = I::Output;
+
+    fn index(&self, index: I) -> &I::Output {
+        self.0.index(index)
+    }
+}
+
+impl<T: CoordNum, I: SliceIndex<[Point<T>]>> IndexMut<I> for MultiPoint<T> {
+    fn index_mut(&mut self, index: I) -> &mut I::Output {
+        self.0.index_mut(index)
     }
 }
 
@@ -302,13 +318,13 @@ mod test {
         let multi = wkt! { MULTIPOINT(0. 0.,10. 10.) };
 
         let mut multi_x = multi.clone();
-        *multi_x.0[0].x_mut() += delta;
+        *multi_x[0].x_mut() += delta;
 
         assert!(multi.relative_eq(&multi_x, 1e-2, 1e-2));
         assert!(multi.relative_ne(&multi_x, 1e-12, 1e-12));
 
         let mut multi_y = multi.clone();
-        *multi_y.0[0].y_mut() += delta;
+        *multi_y[0].y_mut() += delta;
         assert!(multi.relative_eq(&multi_y, 1e-2, 1e-2));
         assert!(multi.relative_ne(&multi_y, 1e-12, 1e-12));
 
@@ -328,12 +344,12 @@ mod test {
         let multi = wkt! { MULTIPOINT(0. 0.,10. 10.) };
 
         let mut multi_x = multi.clone();
-        *multi_x.0[0].x_mut() += delta;
+        *multi_x[0].x_mut() += delta;
         assert!(multi.abs_diff_eq(&multi_x, 1e-2));
         assert!(multi.abs_diff_ne(&multi_x, 1e-12));
 
         let mut multi_y = multi.clone();
-        *multi_y.0[0].y_mut() += delta;
+        *multi_y[0].y_mut() += delta;
         assert!(multi.abs_diff_eq(&multi_y, 1e-2));
         assert!(multi.abs_diff_ne(&multi_y, 1e-12));
 
@@ -351,5 +367,31 @@ mod test {
         let empty = MultiPoint::<f64>::empty();
         let empty_2 = wkt! { MULTIPOINT EMPTY };
         assert_eq!(empty, empty_2);
+    }
+
+    #[test]
+    fn test_indexing() {
+        let mut mp = wkt! { MULTIPOINT(0. 0., 1. 1., 2. 2.) };
+
+        // Index
+        assert_eq!(mp[0], point! { x: 0., y: 0. });
+        assert_eq!(mp[1], point! { x: 1., y: 1. });
+
+        // IndexMut
+        mp[1] = point! { x: 100., y: 100. };
+        assert_eq!(mp[1], point! { x: 100., y: 100. });
+
+        // Range
+        assert_eq!(
+            mp[0..2],
+            [point! { x: 0., y: 0. }, point! { x: 100., y: 100. }]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_indexing_out_of_bounds() {
+        let mp = wkt! { MULTIPOINT(0. 0., 1. 1.) };
+        let _ = mp[2];
     }
 }

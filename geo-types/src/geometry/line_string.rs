@@ -3,6 +3,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
+use core::slice::SliceIndex;
 
 /// An ordered collection of [`Coord`]s, representing a path between locations.
 /// To be valid, a `LineString` must be empty, or have two or more coords.
@@ -418,16 +419,16 @@ impl<'a, T: CoordNum> IntoIterator for &'a mut LineString<T> {
     }
 }
 
-impl<T: CoordNum> Index<usize> for LineString<T> {
-    type Output = Coord<T>;
+impl<T: CoordNum, I: SliceIndex<[Coord<T>]>> Index<I> for LineString<T> {
+    type Output = I::Output;
 
-    fn index(&self, index: usize) -> &Coord<T> {
+    fn index(&self, index: I) -> &I::Output {
         self.0.index(index)
     }
 }
 
-impl<T: CoordNum> IndexMut<usize> for LineString<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Coord<T> {
+impl<T: CoordNum, I: SliceIndex<[Coord<T>]>> IndexMut<I> for LineString<T> {
+    fn index_mut(&mut self, index: I) -> &mut I::Output {
         self.0.index_mut(index)
     }
 }
@@ -697,5 +698,31 @@ mod test {
         let empty = LineString::<f64>::empty();
         let empty_2 = wkt! { LINESTRING EMPTY };
         assert_eq!(empty, empty_2);
+    }
+
+    #[test]
+    fn test_indexing() {
+        let mut ls = wkt! { LINESTRING(0. 0., 1. 1., 2. 2.) };
+
+        // Index
+        assert_eq!(ls[0], coord! { x: 0., y: 0. });
+        assert_eq!(ls[1], coord! { x: 1., y: 1. });
+
+        // IndexMut
+        ls[1] = coord! { x: 100., y: 100. };
+        assert_eq!(ls[1], coord! { x: 100., y: 100. });
+
+        // Range
+        assert_eq!(
+            ls[0..2],
+            [coord! { x: 0., y: 0. }, coord! { x: 100., y: 100. }]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_indexing_out_of_bounds() {
+        let ls = wkt! { LINESTRING(0. 0., 1. 1.) };
+        let _ = ls[2];
     }
 }

@@ -4,6 +4,7 @@ use alloc::vec;
 use alloc::vec::Vec;
 use core::iter::FromIterator;
 use core::ops::{Index, IndexMut};
+use core::slice::SliceIndex;
 
 /// A collection of [`Geometry`](enum.Geometry.html) types.
 ///
@@ -136,16 +137,16 @@ impl<T: CoordNum, IG: Into<Geometry<T>>> FromIterator<IG> for GeometryCollection
     }
 }
 
-impl<T: CoordNum> Index<usize> for GeometryCollection<T> {
-    type Output = Geometry<T>;
+impl<T: CoordNum, I: SliceIndex<[Geometry<T>]>> Index<I> for GeometryCollection<T> {
+    type Output = I::Output;
 
-    fn index(&self, index: usize) -> &Geometry<T> {
+    fn index(&self, index: I) -> &I::Output {
         self.0.index(index)
     }
 }
 
-impl<T: CoordNum> IndexMut<usize> for GeometryCollection<T> {
-    fn index_mut(&mut self, index: usize) -> &mut Geometry<T> {
+impl<T: CoordNum, I: SliceIndex<[Geometry<T>]>> IndexMut<I> for GeometryCollection<T> {
+    fn index_mut(&mut self, index: I) -> &mut I::Output {
         self.0.index_mut(index)
     }
 }
@@ -353,7 +354,7 @@ mod approx_integration {
 mod tests {
     use alloc::vec;
 
-    use crate::{wkt, GeometryCollection, Point};
+    use crate::{point, wkt, GeometryCollection, Point};
 
     #[test]
     fn from_vec() {
@@ -367,5 +368,34 @@ mod tests {
         let empty = GeometryCollection::<f64>::empty();
         let empty_2 = wkt! { GEOMETRYCOLLECTION EMPTY };
         assert_eq!(empty, empty_2);
+    }
+
+    #[test]
+    fn test_indexing() {
+        let mut gc = wkt! { GEOMETRYCOLLECTION(POINT(0. 0.), POINT(1. 1.), POINT(2. 2.)) };
+
+        // Index
+        assert_eq!(gc[0], point! { x: 0., y: 0. }.into());
+        assert_eq!(gc[1], point! { x: 1., y: 1. }.into());
+
+        // IndexMut
+        gc[1] = point! { x: 100., y: 100. }.into();
+        assert_eq!(gc[1], point! { x: 100., y: 100. }.into());
+
+        // Range
+        assert_eq!(
+            gc[0..2],
+            [
+                point! { x: 0., y: 0. }.into(),
+                point! { x: 100., y: 100. }.into()
+            ]
+        );
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_indexing_out_of_bounds() {
+        let gc = wkt! { GEOMETRYCOLLECTION(POINT(0. 0.), POINT(1. 1.)) };
+        let _ = gc[2];
     }
 }
