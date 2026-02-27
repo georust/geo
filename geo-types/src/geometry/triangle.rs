@@ -10,14 +10,30 @@ use core::cmp::Ordering;
 /// Irrespective of input order the resulting geometry has ccw order and its vertices are yielded in ccw order by iterators
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
+pub struct Triangle<T: CoordNum = f64>(
+    #[deprecated(
+        since = "0.7.19",
+        note = "Use Triangle::new for construction and triangle.v1() to retrieve the value."
+    )]
+    pub Coord<T>,
+    #[deprecated(
+        since = "0.7.19",
+        note = "Use Triangle::new for construction and triangle.v2() to retrieve the value."
+    )]
+    pub Coord<T>,
+    #[deprecated(
+        since = "0.7.19",
+        note = "Use Triangle::new for construction and triangle.v3() to retrieve the value."
+    )]
+    pub Coord<T>,
+);
 
+#[allow(deprecated)]
 impl<T: CoordNum> Triangle<T> {
-    /// Instantiate Self from the raw content value, enforcing CCW winding order.
+    /// Create a new [`Triangle`], enforcing default (counter clockwise) winding order.
     ///
-    /// If the vertices are given in clockwise order they will be reversed to
-    /// ensure counter-clockwise winding. Degenerate triangles (collinear or
-    /// identical vertices) are stored as-is.
+    /// If the vertices are given in clockwise order, they will be reversed.
+    /// Degenerate triangles (collinear or identical vertices) are stored as-is.
     pub fn new(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
         // determine cross product of input points. NB: non-robust
         let orientation = Point::from(v1).cross_prod(v2.into(), v3.into());
@@ -38,6 +54,21 @@ impl<T: CoordNum> Triangle<T> {
     /// Unlike [`Triangle::new`], vertices are stored in the order given.
     pub fn unchecked_winding(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
         Self(v1, v2, v3)
+    }
+
+    /// Return the first vertex of this triangle.
+    pub fn v1(&self) -> Coord<T> {
+        self.0
+    }
+
+    /// Return the second vertex of this triangle.
+    pub fn v2(&self) -> Coord<T> {
+        self.1
+    }
+
+    /// Return the third vertex of this triangle.
+    pub fn v3(&self) -> Coord<T> {
+        self.2
     }
 
     pub fn to_array(&self) -> [Coord<T>; 3] {
