@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add doctest to `Contains` showing 1D vs 2D containment semantics
+  - <https://github.com/georust/geo/pull/NNNN>
 - Fix `CoordinatePosition` for `LineString` to handle dimensionally collapsed input  e.g. `LINESTRING(0 0)` is treated like `POINT(0 0)`.
   - <https://github.com/georust/geo/pull/1483>
 - Fix `CoordinatePosition` for `Triangle` to correctly return `CoordPos::OnBoundary` for coordinate within vertical segment.

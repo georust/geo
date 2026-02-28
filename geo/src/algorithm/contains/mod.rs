@@ -33,6 +33,39 @@
 /// assert!(polygon.contains(&point!(x: 1., y: 1.)));
 /// ```
 ///
+/// Because a [`LineString`] is one-dimensional, it can only
+/// contain other geometry that lies along its path. A closed ring
+/// does not contain geometry in the region it encloses. Converting
+/// to a [`Polygon`] creates a two-dimensional interior:
+///
+/// ```
+/// use geo::Contains;
+/// use geo::{line_string, Polygon};
+///
+/// let ring = line_string![
+///     (x: 0., y: 0.),
+///     (x: 2., y: 0.),
+///     (x: 2., y: 2.),
+///     (x: 0., y: 2.),
+///     (x: 0., y: 0.),
+/// ];
+///
+/// let inner = line_string![
+///     (x: 0.5, y: 0.5),
+///     (x: 1.5, y: 0.5),
+///     (x: 1.5, y: 1.5),
+///     (x: 0.5, y: 1.5),
+///     (x: 0.5, y: 0.5),
+/// ];
+///
+/// // A LineString doesn't contain geometry within the region it encloses
+/// assert!(!ring.contains(&inner));
+///
+/// // A Polygon has a two-dimensional interior and does
+/// let polygon = Polygon::new(ring, vec![]);
+/// assert!(polygon.contains(&inner));
+/// ```
+///
 /// # Performance Note
 ///
 /// The `MultiPolygon.contains(&MultiPoint)` containment check has been optimised for large geometries.
