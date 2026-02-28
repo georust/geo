@@ -180,6 +180,10 @@ pub use intersects::Intersects;
 pub mod is_convex;
 pub use is_convex::IsConvex;
 
+/// Find upper and lower tangent from a point to a convex hull
+pub mod jarvis_binary_search;
+pub use jarvis_binary_search::JarvisBinarySearch;
+
 /// Calculate concave hull using k-nearest algorithm
 pub mod k_nearest_concave_hull;
 pub use k_nearest_concave_hull::KNearestConcaveHull;
