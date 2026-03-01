@@ -13,7 +13,7 @@ pub use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
 use i_overlay::float::clip::FloatClip;
 use i_overlay::float::overlay::FloatOverlay;
-use i_overlay::float::single::SingleFloatOverlay;
+use i_overlay::float::overlay::OverlayOptions;
 use i_overlay::string::clip::ClipRule;
 
 /// Boolean Operations on geometry.
@@ -96,7 +96,13 @@ pub trait BooleanOps {
     ) -> MultiPolygon<Self::Scalar> {
         let subject = self.rings().map(ring_to_shape_path).collect::<Vec<_>>();
         let clip = other.rings().map(ring_to_shape_path).collect::<Vec<_>>();
-        let shapes = subject.overlay(&clip, op.into(), fill_rule);
+        let shapes = FloatOverlay::with_subj_and_clip_custom(
+            &subject,
+            &clip,
+            OverlayOptions::ogc(),
+            Default::default(),
+        )
+        .overlay(op.into(), fill_rule);
         multi_polygon_from_shapes(shapes)
     }
 
@@ -275,7 +281,9 @@ pub fn unary_union<'a, B: BooleanOps + 'a>(
         FillRule::Negative
     };
 
-    let shapes = FloatOverlay::with_subj(&subject).overlay(OverlayRule::Subject, fill_rule);
+    let shapes =
+        FloatOverlay::with_subj_custom(&subject, OverlayOptions::ogc(), Default::default())
+            .overlay(OverlayRule::Subject, fill_rule);
     multi_polygon_from_shapes(shapes)
 }
 
