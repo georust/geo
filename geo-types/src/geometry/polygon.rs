@@ -535,7 +535,7 @@ impl<T: CoordNum> From<Rect<T>> for Polygon<T> {
 
 impl<T: CoordNum> From<Triangle<T>> for Polygon<T> {
     fn from(t: Triangle<T>) -> Self {
-        Polygon::new(vec![t.0, t.1, t.2, t.0].into(), Vec::new())
+        t.to_polygon()
     }
 }
 

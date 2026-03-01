@@ -10,19 +10,65 @@ use core::cmp::Ordering;
 /// Irrespective of input order the resulting geometry has ccw order and its vertices are yielded in ccw order by iterators
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-pub struct Triangle<T: CoordNum = f64>(pub Coord<T>, pub Coord<T>, pub Coord<T>);
+pub struct Triangle<T: CoordNum = f64>(
+    #[deprecated(
+        since = "0.7.19",
+        note = "Use Triangle::new for construction and triangle.v1() to retrieve the value."
+    )]
+    pub Coord<T>,
+    #[deprecated(
+        since = "0.7.19",
+        note = "Use Triangle::new for construction and triangle.v2() to retrieve the value."
+    )]
+    pub Coord<T>,
+    #[deprecated(
+        since = "0.7.19",
+        note = "Use Triangle::new for construction and triangle.v3() to retrieve the value."
+    )]
+    pub Coord<T>,
+);
 
+#[allow(deprecated)]
 impl<T: CoordNum> Triangle<T> {
-    /// Instantiate Self from the raw content value
+    /// Create a new [`Triangle`], enforcing default (counter clockwise) winding order.
+    ///
+    /// If the vertices are given in clockwise order, they will be reversed.
+    /// Degenerate triangles (collinear or identical vertices) are stored as-is.
     pub fn new(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
         // determine cross product of input points. NB: non-robust
         let orientation = Point::from(v1).cross_prod(v2.into(), v3.into());
         match orientation.partial_cmp(&T::zero()) {
             Some(Ordering::Greater) => Self(v1, v2, v3),
             Some(Ordering::Less) => Self(v3, v2, v1),
-            // we told you not to do this!
+            // degenerate: collinear or identical — store as-is
             _ => Self(v1, v2, v3),
         }
+    }
+
+    /// Create a [`Triangle`] without normalising the winding order.
+    ///
+    /// Use this when the caller has already verified CCW winding, or when the
+    /// calling code does not depend on a particular winding order (e.g. inside
+    /// tight loops where the orientation check would be wasteful).
+    ///
+    /// Unlike [`Triangle::new`], vertices are stored in the order given.
+    pub fn unchecked_winding(v1: Coord<T>, v2: Coord<T>, v3: Coord<T>) -> Self {
+        Self(v1, v2, v3)
+    }
+
+    /// Return the first vertex of this triangle.
+    pub fn v1(&self) -> Coord<T> {
+        self.0
+    }
+
+    /// Return the second vertex of this triangle.
+    pub fn v2(&self) -> Coord<T> {
+        self.1
+    }
+
+    /// Return the third vertex of this triangle.
+    pub fn v3(&self) -> Coord<T> {
+        self.2
     }
 
     pub fn to_array(&self) -> [Coord<T>; 3] {
@@ -69,7 +115,7 @@ impl<T: CoordNum> Triangle<T> {
 
 impl<IC: Into<Coord<T>> + Copy, T: CoordNum> From<[IC; 3]> for Triangle<T> {
     fn from(array: [IC; 3]) -> Self {
-        Self(array[0].into(), array[1].into(), array[2].into())
+        Self::new(array[0].into(), array[1].into(), array[2].into())
     }
 }
 
@@ -107,13 +153,13 @@ mod approx_integration {
             epsilon: Self::Epsilon,
             max_relative: Self::Epsilon,
         ) -> bool {
-            if !self.0.relative_eq(&other.0, epsilon, max_relative) {
+            if !self.v1().relative_eq(&other.v1(), epsilon, max_relative) {
                 return false;
             }
-            if !self.1.relative_eq(&other.1, epsilon, max_relative) {
+            if !self.v2().relative_eq(&other.v2(), epsilon, max_relative) {
                 return false;
             }
-            if !self.2.relative_eq(&other.2, epsilon, max_relative) {
+            if !self.v3().relative_eq(&other.v3(), epsilon, max_relative) {
                 return false;
             }
 
@@ -147,13 +193,13 @@ mod approx_integration {
         /// ```
         #[inline]
         fn abs_diff_eq(&self, other: &Self, epsilon: Self::Epsilon) -> bool {
-            if !self.0.abs_diff_eq(&other.0, epsilon) {
+            if !self.v1().abs_diff_eq(&other.v1(), epsilon) {
                 return false;
             }
-            if !self.1.abs_diff_eq(&other.1, epsilon) {
+            if !self.v2().abs_diff_eq(&other.v2(), epsilon) {
                 return false;
             }
-            if !self.2.abs_diff_eq(&other.2, epsilon) {
+            if !self.v3().abs_diff_eq(&other.v3(), epsilon) {
                 return false;
             }
 
@@ -170,13 +216,13 @@ mod approx_integration {
         }
 
         fn ulps_eq(&self, other: &Self, epsilon: Self::Epsilon, max_ulps: u32) -> bool {
-            if !self.0.ulps_eq(&other.0, epsilon, max_ulps) {
+            if !self.v1().ulps_eq(&other.v1(), epsilon, max_ulps) {
                 return false;
             }
-            if !self.1.ulps_eq(&other.1, epsilon, max_ulps) {
+            if !self.v2().ulps_eq(&other.v2(), epsilon, max_ulps) {
                 return false;
             }
-            if !self.2.ulps_eq(&other.2, epsilon, max_ulps) {
+            if !self.v3().ulps_eq(&other.v3(), epsilon, max_ulps) {
                 return false;
             }
             true

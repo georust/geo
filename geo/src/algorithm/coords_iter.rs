@@ -415,9 +415,9 @@ impl<T: CoordNum> CoordsIter for Triangle<T> {
     type Scalar = T;
 
     fn coords_iter(&self) -> Self::Iter<'_> {
-        iter::once(self.0)
-            .chain(iter::once(self.1))
-            .chain(iter::once(self.2))
+        iter::once(self.v1())
+            .chain(iter::once(self.v2()))
+            .chain(iter::once(self.v3()))
     }
 
     /// Return the number of coordinates in the `Triangle`.

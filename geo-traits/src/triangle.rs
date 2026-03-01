@@ -31,6 +31,7 @@ pub trait TriangleTrait: Sized + GeometryTrait {
 }
 
 #[cfg(feature = "geo-types")]
+#[allow(deprecated)]
 impl<T: CoordNum> TriangleTrait for Triangle<T> {
     type CoordType<'a>
         = &'a Coord<Self::T>
@@ -51,6 +52,7 @@ impl<T: CoordNum> TriangleTrait for Triangle<T> {
 }
 
 #[cfg(feature = "geo-types")]
+#[allow(deprecated)]
 impl<'a, T: CoordNum> TriangleTrait for &'a Triangle<T> {
     type CoordType<'b>
         = &'a Coord<Self::T>
