@@ -566,19 +566,20 @@ impl<T: GeoFloat> CentroidOperation<T> {
 
     fn add_triangle(&mut self, triangle: &Triangle<T>) {
         match triangle.dimensions() {
-            ZeroDimensional => self.add_coord(triangle.0),
+            ZeroDimensional => self.add_coord(triangle.v1()),
             OneDimensional => {
                 // Degenerate triangle is a line, treat it the same way we treat flat
                 // polygons
-                let l0_1 = Line::new(triangle.0, triangle.1);
-                let l1_2 = Line::new(triangle.1, triangle.2);
-                let l2_0 = Line::new(triangle.2, triangle.0);
+                let l0_1 = Line::new(triangle.v1(), triangle.v2());
+                let l1_2 = Line::new(triangle.v2(), triangle.v3());
+                let l2_0 = Line::new(triangle.v3(), triangle.v1());
                 self.add_line(&l0_1);
                 self.add_line(&l1_2);
                 self.add_line(&l2_0);
             }
             TwoDimensional => {
-                let centroid = (triangle.0 + triangle.1 + triangle.2) / T::from(3).unwrap();
+                let centroid =
+                    (triangle.v1() + triangle.v2() + triangle.v3()) / T::from(3).unwrap();
                 self.add_centroid(TwoDimensional, centroid, triangle.unsigned_area());
             }
             Empty => unreachable!("Rect dimensions cannot be empty"),

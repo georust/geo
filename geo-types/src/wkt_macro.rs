@@ -345,9 +345,10 @@ mod test {
     #[test]
     fn triangle() {
         let triangle = wkt! { TRIANGLE(0.0 1.0,4.0 2.0,3.0 5.0) };
-        assert_eq!(triangle.0, coord!(x: 0.0, y: 1.0));
-        assert_eq!(triangle.1, coord!(x: 4.0, y: 2.0));
-        assert_eq!(triangle.2, coord!(x: 3.0, y: 5.0));
+        // Triangle::new enforces CCW; these three points are already CCW so order is preserved.
+        assert_eq!(triangle.v1(), coord!(x: 0.0, y: 1.0));
+        assert_eq!(triangle.v2(), coord!(x: 4.0, y: 2.0));
+        assert_eq!(triangle.v3(), coord!(x: 3.0, y: 5.0));
     }
 
     #[test]

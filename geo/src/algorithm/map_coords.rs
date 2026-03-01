@@ -660,20 +660,24 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
     type Output = Triangle<NT>;
 
     fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Triangle::new(func(self.0), func(self.1), func(self.2))
+        Triangle::new(func(self.v1()), func(self.v2()), func(self.v3()))
     }
 
     fn try_map_coords<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
     ) -> Result<Self::Output, E> {
-        Ok(Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?))
+        Ok(Triangle::new(
+            func(self.v1())?,
+            func(self.v2())?,
+            func(self.v3())?,
+        ))
     }
 }
 
 impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
     fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
-        let mut new_triangle = Triangle::new(func(self.0), func(self.1), func(self.2));
+        let mut new_triangle = Triangle::new(func(self.v1()), func(self.v2()), func(self.v3()));
 
         ::std::mem::swap(self, &mut new_triangle);
     }
@@ -682,7 +686,7 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
         &mut self,
         func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
     ) -> Result<(), E> {
-        let mut new_triangle = Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?);
+        let mut new_triangle = Triangle::new(func(self.v1())?, func(self.v2())?, func(self.v3())?);
 
         ::std::mem::swap(self, &mut new_triangle);
 

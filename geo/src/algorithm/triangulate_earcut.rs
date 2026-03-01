@@ -234,13 +234,12 @@ mod test {
             (x: 0., y: 0.),
         ];
 
-        let mut triangles = square_polygon.earcut_triangles();
-        triangles.sort_by(|t1, t2| t1.1.x.partial_cmp(&t2.2.x).unwrap());
+        let triangles = square_polygon.earcut_triangles();
 
         assert_eq!(
             &[
-                wkt!(TRIANGLE(10.0 10.0,0.0 10.0,0.0 0.0)),
-                wkt!(TRIANGLE(0.0 0.0,10.0 0.0,10.0 10.0))
+                wkt!(TRIANGLE(0.0 0.0,10.0 0.0,10.0 10.0)),
+                wkt!(TRIANGLE(10.0 10.0,0.0 10.0,0.0 0.0))
             ][..],
             &triangles,
         );
