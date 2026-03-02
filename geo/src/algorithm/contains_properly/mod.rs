@@ -96,6 +96,16 @@ macro_rules! impl_contains_properly_geometry_for {
 }
 use impl_contains_properly_geometry_for;
 
+// Helper function to check value lies between min and max.
+// Only makes sense if min <= max (or always false)
+#[inline]
+fn value_in_range_exclusive<T>(value: T, min: T, max: T) -> bool
+where
+    T: std::cmp::PartialOrd,
+{
+    value > min && value < max
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
