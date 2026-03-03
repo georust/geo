@@ -1,4 +1,4 @@
-use super::{utils, CoordIndex, RingRole, Validation};
+use super::{CoordIndex, RingRole, Validation, utils};
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
 use crate::{GeoFloat, HasDimensions, Polygon, Relate};

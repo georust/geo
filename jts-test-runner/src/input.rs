@@ -116,7 +116,26 @@ pub struct RelateInput {
 }
 
 #[derive(Debug, Deserialize)]
+pub struct BufferInput {
+    pub(crate) arg1: String,
+    #[serde(rename = "arg2", deserialize_with = "deserialize_from_str")]
+    pub(crate) distance: f64,
+
+    #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
+    pub(crate) expected: geo::Geometry,
+}
+
+#[derive(Debug, Deserialize)]
 pub struct ContainsInput {
+    pub(crate) arg1: String,
+    pub(crate) arg2: String,
+
+    #[serde(rename = "$value", deserialize_with = "deserialize_from_str")]
+    pub(crate) expected: bool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CoversInput {
     pub(crate) arg1: String,
     pub(crate) arg2: String,
 
@@ -145,8 +164,14 @@ pub struct OverlayInput {
 #[derive(Debug, Deserialize)]
 #[serde(tag = "name")]
 pub(crate) enum OperationInput {
+    #[serde(rename = "buffer")]
+    BufferInput(BufferInput),
+
     #[serde(rename = "contains")]
     ContainsInput(ContainsInput),
+
+    #[serde(rename = "covers")]
+    CoversInput(CoversInput),
 
     #[serde(rename = "getCentroid")]
     CentroidInput(CentroidInput),
@@ -187,11 +212,21 @@ pub(crate) enum OperationInput {
 
 #[derive(Debug, Clone)]
 pub(crate) enum Operation {
+    Buffer {
+        subject: Geometry,
+        distance: f64,
+        expected: Geometry,
+    },
     Centroid {
         subject: Geometry,
         expected: Option<Point>,
     },
     Contains {
+        subject: Geometry,
+        target: Geometry,
+        expected: bool,
+    },
+    Covers {
         subject: Geometry,
         target: Geometry,
         expected: bool,
@@ -246,6 +281,18 @@ impl OperationInput {
     pub(crate) fn into_operation(self, case: &Case) -> Result<Operation> {
         let geometry = &case.a;
         match self {
+            Self::BufferInput(BufferInput {
+                arg1,
+                distance,
+                expected,
+            }) => {
+                assert_eq!("A", arg1.to_uppercase());
+                Ok(Operation::Buffer {
+                    subject: geometry.clone(),
+                    distance,
+                    expected,
+                })
+            }
             Self::CentroidInput(centroid_input) => {
                 assert_eq!("A", centroid_input.arg1);
                 Ok(Operation::Centroid {
@@ -300,6 +347,15 @@ impl OperationInput {
                 assert_eq!("A", input.arg1);
                 assert_eq!("B", input.arg2);
                 Ok(Operation::Contains {
+                    subject: geometry.clone(),
+                    target: case.b.clone().expect("no geometry b in case"),
+                    expected: input.expected,
+                })
+            }
+            Self::CoversInput(input) => {
+                assert_eq!("A", input.arg1);
+                assert_eq!("B", input.arg2);
+                Ok(Operation::Covers {
                     subject: geometry.clone(),
                     target: case.b.clone().expect("no geometry b in case"),
                     expected: input.expected,

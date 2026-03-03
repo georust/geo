@@ -6,6 +6,10 @@
 ///
 /// Note that `POINT EMPTY` is not accepted because it is not representable as a `geo_types::Point`.
 ///
+/// Note that all geometry variants are constructable with this macro.
+/// This includes [`LINE`](crate::Line), [`RECT`](crate::Rect), and [`TRIANGLE`](crate::Triangle), even though they are
+/// not standard WKT types, and will not be parsable by a standard WKT parser.
+///
 /// ```
 /// use geo_types::wkt;
 /// let point = wkt! { POINT(1.0 2.0) };
@@ -42,6 +46,12 @@ macro_rules! wkt_internal {
     };
     (POINT $($tail: tt)*) => {
         compile_error!("Invalid POINT wkt");
+    };
+    (LINE($a_x: literal $a_y: literal,$b_x: literal $b_y: literal)) => {
+        $crate::Line::new(
+            $crate::coord!(x: $a_x, y: $a_y),
+            $crate::coord!(x: $b_x, y: $b_y)
+        )
     };
     (LINESTRING EMPTY) => {
         $crate::LineString::empty()
@@ -133,8 +143,21 @@ macro_rules! wkt_internal {
     (GEOMETRYCOLLECTION $($tail: tt)*) => {
         compile_error!("Invalid GEOMETRYCOLLECTION wkt");
     };
+    (RECT($a_x: literal $a_y: literal,$b_x: literal $b_y: literal)) => {
+        $crate::Rect::new(
+            $crate::coord!(x: $a_x, y: $a_y),
+            $crate::coord!(x: $b_x, y: $b_y)
+        )
+    };
+    (TRIANGLE($a_x: literal $a_y: literal,$b_x: literal $b_y: literal,$c_x: literal $c_y: literal)) => {
+        $crate::Triangle::new(
+            $crate::coord!(x: $a_x, y: $a_y),
+            $crate::coord!(x: $b_x, y: $b_y),
+            $crate::coord!(x: $c_x, y: $c_y)
+        )
+    };
     ($name: ident ($($tail: tt)*)) => {
-        compile_error!("Unknown type. Must be one of POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOLYGON, or GEOMETRYCOLLECTION");
+        compile_error!("Unknown type. Must be one of POINT, LINESTRING, POLYGON, MULTIPOINT, MULTILINESTRING, MULTIPOLYGON, GEOMETRYCOLLECTION, LINE, RECT, or TRIANGLE")
     };
 }
 
@@ -155,6 +178,13 @@ mod test {
 
         // This (rightfully) fails to compile because geo-types doesn't support "empty" points
         // wkt! { POINT EMPTY }
+    }
+
+    #[test]
+    fn line() {
+        let line = wkt! { LINE(1.0 2.0,3.0 4.0) };
+        assert_eq!(line.start, coord!(x: 1.0, y: 2.0));
+        assert_eq!(line.end, coord!(x: 3.0, y: 4.0));
     }
 
     #[test]
@@ -187,21 +217,21 @@ mod test {
     fn polygon() {
         let polygon = wkt! { POLYGON((1.0 2.0)) };
         assert_eq!(polygon.exterior().0.len(), 1);
-        assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.exterior()[0], coord! { x: 1.0, y: 2.0 });
 
         let polygon = wkt! { POLYGON((1.0 2.0,3.0 4.0)) };
         // Note: an extra coord is added to close the linestring
         assert_eq!(polygon.exterior().0.len(), 3);
-        assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
-        assert_eq!(polygon.exterior().0[1], coord! { x: 3.0, y: 4.0 });
-        assert_eq!(polygon.exterior().0[2], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.exterior()[0], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.exterior()[1], coord! { x: 3.0, y: 4.0 });
+        assert_eq!(polygon.exterior()[2], coord! { x: 1.0, y: 2.0 });
 
         let polygon = wkt! { POLYGON((1.0 2.0), (1.1 2.1)) };
         assert_eq!(polygon.exterior().0.len(), 1);
         assert_eq!(polygon.interiors().len(), 1);
 
-        assert_eq!(polygon.exterior().0[0], coord! { x: 1.0, y: 2.0 });
-        assert_eq!(polygon.interiors()[0].0[0], coord! { x: 1.1, y: 2.1 });
+        assert_eq!(polygon.exterior()[0], coord! { x: 1.0, y: 2.0 });
+        assert_eq!(polygon.interiors()[0][0], coord! { x: 1.1, y: 2.1 });
 
         let polygon = wkt! { POLYGON((1.0 2.0,3.0 4.0), (1.1 2.1,3.1 4.1), (1.2 2.2,3.2 4.2)) };
         assert_eq!(polygon.exterior().0.len(), 3);
@@ -240,14 +270,14 @@ mod test {
     fn multi_line_string() {
         let multi_line_string = wkt! { MULTILINESTRING ((1.0 2.0,3.0 4.0)) };
         assert_eq!(multi_line_string.0.len(), 1);
-        assert_eq!(multi_line_string.0[0].0[1], coord! { x: 3.0, y: 4.0 });
+        assert_eq!(multi_line_string[0][1], coord! { x: 3.0, y: 4.0 });
         let multi_line_string = wkt! { MULTILINESTRING ((1.0 2.0,3.0 4.0),(5.0 6.0,7.0 8.0)) };
         assert_eq!(multi_line_string.0.len(), 2);
-        assert_eq!(multi_line_string.0[1].0[1], coord! { x: 7.0, y: 8.0 });
+        assert_eq!(multi_line_string[1][1], coord! { x: 7.0, y: 8.0 });
 
         let multi_line_string = wkt! { MULTILINESTRING ((1.0 2.0,3.0 4.0),EMPTY) };
         assert_eq!(multi_line_string.0.len(), 2);
-        assert_eq!(multi_line_string.0[1].0.len(), 0);
+        assert_eq!(multi_line_string[1].0.len(), 0);
     }
 
     #[test]
@@ -263,22 +293,16 @@ mod test {
     fn multi_line_polygon() {
         let multi_polygon = wkt! { MULTIPOLYGON (((1.0 2.0))) };
         assert_eq!(multi_polygon.0.len(), 1);
-        assert_eq!(multi_polygon.0[0].exterior().0[0], coord! { x: 1.0, y: 2.0});
+        assert_eq!(multi_polygon[0].exterior()[0], coord! { x: 1.0, y: 2.0});
 
         let multi_polygon = wkt! { MULTIPOLYGON (((1.0 2.0,3.0 4.0), (1.1 2.1,3.1 4.1), (1.2 2.2,3.2 4.2)),((1.0 2.0))) };
         assert_eq!(multi_polygon.0.len(), 2);
-        assert_eq!(
-            multi_polygon.0[0].interiors()[1].0[0],
-            coord! { x: 1.2, y: 2.2}
-        );
+        assert_eq!(multi_polygon[0].interiors()[1][0], coord! { x: 1.2, y: 2.2});
 
         let multi_polygon = wkt! { MULTIPOLYGON (((1.0 2.0,3.0 4.0), (1.1 2.1,3.1 4.1), (1.2 2.2,3.2 4.2)), EMPTY) };
         assert_eq!(multi_polygon.0.len(), 2);
-        assert_eq!(
-            multi_polygon.0[0].interiors()[1].0[0],
-            coord! { x: 1.2, y: 2.2}
-        );
-        assert!(multi_polygon.0[1].exterior().0.is_empty());
+        assert_eq!(multi_polygon[0].interiors()[1][0], coord! { x: 1.2, y: 2.2});
+        assert!(multi_polygon[1].exterior().0.is_empty());
     }
 
     #[test]
@@ -308,7 +332,23 @@ mod test {
                 geometry = geometry_collection[1]
             ),
         };
-        assert_eq!(line_string.0[1], coord! {x: 20.0, y: 20.0 });
+        assert_eq!(line_string[1], coord! {x: 20.0, y: 20.0 });
+    }
+
+    #[test]
+    fn rect() {
+        let rect = wkt! { RECT(1.0 2.0,3.0 4.0) };
+        assert_eq!(rect.min(), coord!(x: 1.0, y: 2.0));
+        assert_eq!(rect.max(), coord!(x: 3.0, y: 4.0));
+    }
+
+    #[test]
+    fn triangle() {
+        let triangle = wkt! { TRIANGLE(0.0 1.0,4.0 2.0,3.0 5.0) };
+        // Triangle::new enforces CCW; these three points are already CCW so order is preserved.
+        assert_eq!(triangle.v1(), coord!(x: 0.0, y: 1.0));
+        assert_eq!(triangle.v2(), coord!(x: 4.0, y: 2.0));
+        assert_eq!(triangle.v3(), coord!(x: 3.0, y: 5.0));
     }
 
     #[test]

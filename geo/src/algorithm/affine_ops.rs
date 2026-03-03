@@ -556,7 +556,7 @@ mod tests {
     }
 
     use super::*;
-    use crate::{wkt, Point};
+    use crate::{Point, wkt};
 
     // given a matrix with the shape
     // [[a, b, xoff],

@@ -3,12 +3,16 @@ pub use geomgraph::intersection_matrix::IntersectionMatrix;
 use relate_operation::RelateOperation;
 
 use crate::geometry::*;
-pub use crate::relate::geomgraph::index::PreparedGeometry;
+#[deprecated(
+    since = "0.31.1",
+    note = "PreparedGeometry has moved to geo::indexed::PreparedGeometry"
+)]
+pub use crate::indexed::PreparedGeometry;
 pub use crate::relate::geomgraph::GeometryGraph;
 use crate::{BoundingRect, GeoFloat, GeometryCow, HasDimensions};
 
 mod edge_end_builder;
-mod geomgraph;
+pub(crate) mod geomgraph;
 mod relate_operation;
 
 /// Topologically relate two geometries based on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
@@ -61,7 +65,7 @@ pub trait Relate<F: GeoFloat>: BoundingRect<F> + HasDimensions {
     ///
     /// `idx`: 0 or 1, designating A or B (respectively) in the role this geometry plays
     ///        in the relation. e.g. in `a.relate(b)`
-    fn geometry_graph(&self, idx: usize) -> GeometryGraph<F>;
+    fn geometry_graph(&self, idx: usize) -> GeometryGraph<'_, F>;
 
     fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix
     where
@@ -75,18 +79,18 @@ macro_rules! relate_impl {
     ($($t:ty ,)*) => {
         $(
             impl<F: GeoFloat> Relate<F> for $t {
-                fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<F> {
+                fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<'_, F> {
                     $crate::relate::GeometryGraph::new(arg_index, GeometryCow::from(self))
                 }
             }
             impl<F: GeoFloat> From<$t> for PreparedGeometry<'static, $t, F> {
                 fn from(geometry: $t) -> Self {
-                    $crate::relate::geomgraph::index::prepare_geometry(geometry)
+                    $crate::indexed::prepared_geometry::prepare_geometry(geometry)
                 }
             }
             impl<'a, F: GeoFloat> From<&'a $t> for PreparedGeometry<'a, &'a $t, F> {
                 fn from(geometry: &'a $t) -> Self {
-                    $crate::relate::geomgraph::index::prepare_geometry(geometry)
+                    $crate::indexed::prepared_geometry::prepare_geometry(geometry)
                 }
             }
         )*

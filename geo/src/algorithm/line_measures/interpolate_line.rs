@@ -65,7 +65,7 @@ pub trait InterpolateLine<F: CoordFloat>: InterpolatePoint<F> + Length<F> + Size
     ///
     /// - `line`: A `Line` or `LineString` which implements `InterpolatableLine`.
     /// - `distance`: How far down the line. The units of distance depend on the metric space.
-    ///     Distance will be clamped so that the returned point will not be outside of `line`.
+    ///   Distance will be clamped so that the returned point will not be outside of `line`.
     ///
     /// # Example
     /// ```
@@ -97,7 +97,7 @@ pub trait InterpolateLine<F: CoordFloat>: InterpolatePoint<F> + Length<F> + Size
     ///
     /// - `line`: A `Line` or `LineString` which implements `InterpolatableLine`.
     /// - `distance`: How far down the line. The units of distance depend on the metric space.
-    ///     Distance will be clamped so that the returned point will not be outside of `line`.
+    ///   Distance will be clamped so that the returned point will not be outside of `line`.
     ///
     /// # Example
     /// ```
@@ -209,7 +209,7 @@ pub trait InterpolatableLine<F: CoordFloat> {
     ///
     /// - `metric_space`: e.g. [`Euclidean`], [`Haversine`], or [`Geodesic`]. See [`metric_spaces`]
     /// - `distance`: How far down the line. The units of distance depend on the metric space.
-    ///     Distance will be clamped so that the returned point will not be outside of `line`.
+    ///   Distance will be clamped so that the returned point will not be outside of `line`.
     ///
     /// # Example
     /// ```
@@ -244,7 +244,7 @@ pub trait InterpolatableLine<F: CoordFloat> {
     ///
     /// - `metric_space`: e.g. [`Euclidean`], [`Haversine`], or [`Geodesic`]. See [`metric_spaces`]
     /// - `distance`: How far down the line. The units of distance depend on the metric space.
-    ///     Distance will be clamped so that the returned point will not be outside of `line`.
+    ///   Distance will be clamped so that the returned point will not be outside of `line`.
     ///
     /// # Example
     /// ```
@@ -756,7 +756,7 @@ mod tests {
 
             #[test]
             fn empty_line_string() {
-                let line_string: LineString = LineString::new(vec![]);
+                let line_string: LineString = LineString::empty();
                 assert_eq!(None, Euclidean.point_at_ratio_from_start(&line_string, 0.5));
                 assert_eq!(
                     None,

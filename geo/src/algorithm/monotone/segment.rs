@@ -1,8 +1,8 @@
 use std::cell::{Ref, RefCell};
 use std::{cmp::Ordering, fmt::Debug, rc::Rc};
 
-use crate::sweep::{Event, EventType, LineOrPoint, SweepPoint};
 use crate::GeoNum;
+use crate::old_sweep::{Event, EventType, LineOrPoint, SweepPoint};
 
 /// A segment in the sweep line algorithm.
 ///
@@ -50,7 +50,7 @@ impl<T: GeoNum, P> Clone for RcSegment<T, P> {
 
 impl<T: GeoNum, P: Clone + Debug> RcSegment<T, P> {
     pub(crate) fn split_at(&self, pt: SweepPoint<T>) -> Self {
-        debug!("Splitting segment {:?} at {:?}", self, pt);
+        debug!("Splitting segment {self:?} at {pt:?}");
         let mut borrow = RefCell::borrow_mut(&self.0);
         let right = borrow.line.right();
         borrow.line = LineOrPoint::from((borrow.line.left(), pt));
@@ -61,7 +61,7 @@ impl<T: GeoNum, P: Clone + Debug> RcSegment<T, P> {
 }
 
 impl<T: GeoNum, P> RcSegment<T, P> {
-    pub(crate) fn payload(&self) -> Ref<P> {
+    pub(crate) fn payload(&self) -> Ref<'_, P> {
         let borrow = RefCell::borrow(&self.0);
         Ref::map(borrow, |s| &s.payload)
     }

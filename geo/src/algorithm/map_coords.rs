@@ -1,8 +1,8 @@
 //! # Advanced Example: Fallible Geometry coordinate conversion using `PROJ`
 //!
-#![cfg_attr(feature = "use-proj", doc = "```")]
-#![cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
-//! // activate the [use-proj] feature in cargo.toml in order to access proj functions
+#![cfg_attr(feature = "proj", doc = "```")]
+#![cfg_attr(not(feature = "proj"), doc = "```ignore")]
+//! // activate the [proj] feature in cargo.toml in order to access proj functions
 //! use approx::assert_relative_eq;
 //! use geo::{Coord, Point};
 //! use geo::MapCoords;
@@ -24,8 +24,8 @@
 //! assert_relative_eq!(3497301.5918027186, usa_ft.y(), epsilon = 1e-6);
 //! ```
 
-pub(crate) use crate::geometry::*;
 pub(crate) use crate::CoordNum;
+pub(crate) use crate::geometry::*;
 
 /// Map a function over all the coordinates in an object, returning a new one
 pub trait MapCoords<T, NT> {
@@ -93,10 +93,10 @@ pub trait MapCoords<T, NT> {
     ///
     /// ## Advanced Example: Geometry coordinate conversion using `PROJ`
     ///
-    #[cfg_attr(feature = "use-proj", doc = "```")]
-    #[cfg_attr(not(feature = "use-proj"), doc = "```ignore")]
+    #[cfg_attr(feature = "proj", doc = "```")]
+    #[cfg_attr(not(feature = "proj"), doc = "```ignore")]
     /// use approx::assert_relative_eq;
-    /// // activate the [use-proj] feature in cargo.toml in order to access proj functions
+    /// // activate the [proj] feature in cargo.toml in order to access proj functions
     /// use geo::{Coord, Point};
     /// use geo::map_coords::MapCoords;
     /// use proj::{Coord as ProjCoord, Proj, ProjError};
@@ -660,20 +660,24 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
     type Output = Triangle<NT>;
 
     fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Triangle::new(func(self.0), func(self.1), func(self.2))
+        Triangle::new(func(self.v1()), func(self.v2()), func(self.v3()))
     }
 
     fn try_map_coords<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
     ) -> Result<Self::Output, E> {
-        Ok(Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?))
+        Ok(Triangle::new(
+            func(self.v1())?,
+            func(self.v2())?,
+            func(self.v3())?,
+        ))
     }
 }
 
 impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
     fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
-        let mut new_triangle = Triangle::new(func(self.0), func(self.1), func(self.2));
+        let mut new_triangle = Triangle::new(func(self.v1()), func(self.v2()), func(self.v3()));
 
         ::std::mem::swap(self, &mut new_triangle);
     }
@@ -682,7 +686,7 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
         &mut self,
         func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
     ) -> Result<(), E> {
-        let mut new_triangle = Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?);
+        let mut new_triangle = Triangle::new(func(self.v1())?, func(self.v2())?, func(self.v3())?);
 
         ::std::mem::swap(self, &mut new_triangle);
 
@@ -694,8 +698,8 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
 mod test {
     use super::{MapCoords, MapCoordsInPlace};
     use crate::{
-        coord, polygon, Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-        MultiPoint, MultiPolygon, Point, Polygon, Rect,
+        Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+        MultiPolygon, Point, Polygon, Rect, coord, polygon,
     };
 
     #[test]
@@ -795,8 +799,8 @@ mod test {
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2 = line1.map_coords(|Coord { x, y }| (x + 10., y - 100.).into());
-        assert_relative_eq!(line2.0[0], Coord::from((10., -100.)), epsilon = 1e-6);
-        assert_relative_eq!(line2.0[1], Coord::from((11., -98.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[0], Coord::from((10., -100.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[1], Coord::from((11., -98.)), epsilon = 1e-6);
     }
 
     #[test]
@@ -885,7 +889,7 @@ mod test {
         let mp2 = mp.map_coords(|Coord { x, y }| (x * 2., y + 100.).into());
         assert_eq!(mp2.0.len(), 2);
         assert_relative_eq!(
-            mp2.0[0],
+            mp2[0],
             polygon![
                 (x: 0., y: 100.),
                 (x: 20., y: 100.),
@@ -895,7 +899,7 @@ mod test {
             ],
         );
         assert_relative_eq!(
-            mp2.0[1],
+            mp2[1],
             polygon![
                 exterior: [
                     (x: 22., y: 111.),
@@ -941,7 +945,7 @@ mod test {
         assert_relative_eq!(p2.y(), 2f32);
     }
 
-    #[cfg(feature = "use-proj")]
+    #[cfg(feature = "proj")]
     #[test]
     fn test_fallible_proj() {
         use proj::{Proj, ProjError};

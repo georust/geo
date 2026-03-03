@@ -1,7 +1,7 @@
-use std::{fs, iter::FromIterator, path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
-use geo_types::{LineString, MultiPolygon, Point, Polygon};
-use wkt::{Geometry, Wkt, WktFloat};
+use geo_types::{LineString, MultiPoint, MultiPolygon, Point, Polygon};
+use wkt::{TryFromWkt, WktFloat};
 
 pub fn louisiana<T>() -> LineString<T>
 where
@@ -145,63 +145,49 @@ fn line_string<T>(name: &str) -> LineString<T>
 where
     T: WktFloat + Default + FromStr,
 {
-    let wkt = Wkt::from_str(&file(name)).unwrap();
-    match wkt.item {
-        Geometry::LineString(line_string) => wkt_line_string_to_geo(&line_string),
-        _ => unreachable!(),
-    }
+    LineString::try_from_wkt_reader(file(name)).unwrap()
 }
 
 pub fn polygon<T>(name: &str) -> Polygon<T>
 where
     T: WktFloat + Default + FromStr,
 {
-    let wkt = Wkt::from_str(&file(name)).unwrap();
-    match wkt.item {
-        Geometry::Polygon(wkt_polygon) => wkt_polygon_to_geo(&wkt_polygon),
-        _ => unreachable!(),
-    }
+    Polygon::try_from_wkt_reader(file(name)).unwrap()
 }
 
 pub fn multi_polygon<T>(name: &str) -> MultiPolygon<T>
 where
     T: WktFloat + Default + FromStr,
 {
-    let wkt = Wkt::from_str(&file(name)).unwrap();
-    match wkt.item {
-        Geometry::MultiPolygon(multi_polygon) => wkt_multi_polygon_to_geo(&multi_polygon),
-        _ => unreachable!(),
-    }
+    MultiPolygon::try_from_wkt_reader(file(name)).unwrap()
 }
 
-fn wkt_line_string_to_geo<T>(line_string: &wkt::types::LineString<T>) -> LineString<T>
+pub fn multi_point<T>(name: &str) -> MultiPoint<T>
 where
     T: WktFloat + Default + FromStr,
 {
-    LineString::from_iter(line_string.0.iter().map(|coord| (coord.x, coord.y)))
+    MultiPoint::try_from_wkt_reader(file(name)).unwrap()
 }
 
-fn wkt_polygon_to_geo<T>(polygon: &wkt::types::Polygon<T>) -> Polygon<T>
+/// 104 UK cities used for Voronoi diagram testing
+pub fn uk_cities<T>() -> MultiPoint<T>
 where
     T: WktFloat + Default + FromStr,
 {
-    let exterior: LineString<T> = wkt_line_string_to_geo(&polygon.0[0]);
-    let interiors: Vec<LineString<T>> = polygon.0[1..].iter().map(wkt_line_string_to_geo).collect();
-
-    Polygon::new(exterior, interiors)
+    multi_point("voronoi/uk_cities.wkt")
 }
 
-fn wkt_multi_polygon_to_geo<T>(multi_polygon: &wkt::types::MultiPolygon<T>) -> MultiPolygon<T>
+/// 151 post box locations in Islington, London used for Voronoi diagram testing
+pub fn islington_post_boxes<T>() -> MultiPoint<T>
 where
     T: WktFloat + Default + FromStr,
 {
-    let polygons: Vec<Polygon<T>> = multi_polygon.0.iter().map(wkt_polygon_to_geo).collect();
-    MultiPolygon(polygons)
+    multi_point("voronoi/islington.wkt")
 }
 
-pub fn file(name: &str) -> String {
+pub fn file(name: &str) -> std::fs::File {
     let mut res = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     res.push("fixtures");
     res.push(name);
-    fs::read_to_string(res).unwrap()
+    std::fs::File::open(&mut res).unwrap_or_else(|_| panic!("Can't open file: {res:?}"))
 }

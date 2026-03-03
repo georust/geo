@@ -1,6 +1,7 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::algorithm::{CoordsIter, HasDimensions};
 use crate::geometry::*;
+use crate::utils::lex_cmp;
 use crate::{CoordNum, GeoFloat};
 
 // ┌────────────────────────────────┐
@@ -135,7 +136,7 @@ where
 {
     fn contains(&self, triangle: &Triangle<T>) -> bool {
         // only a degenerate Triangle could be within a point
-        triangle.0 == triangle.1 && triangle.0 == triangle.2 && triangle.0 == self.0
+        triangle.v1() == triangle.v2() && triangle.v1() == triangle.v3() && triangle.v1() == self.0
     }
 }
 
@@ -145,7 +146,8 @@ impl_contains_geometry_for!(Point<T>);
 // │ Implementations for MultiPoint │
 // └────────────────────────────────┘
 
-impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, MultiPoint<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_from_relate!(MultiPoint<T>, [Line<T>, LineString<T>, Polygon<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
+impl_contains_geometry_for!(MultiPoint<T>);
 
 impl<T> Contains<Coord<T>> for MultiPoint<T>
 where
@@ -162,5 +164,117 @@ where
 {
     fn contains(&self, point: &Point<T>) -> bool {
         self.iter().any(|c| c == point)
+    }
+}
+
+impl<T> Contains<MultiPoint<T>> for MultiPoint<T>
+where
+    T: CoordNum,
+{
+    fn contains(&self, multi_point: &MultiPoint<T>) -> bool {
+        // sort both collections by x then y
+        // then double pointer our way up the sorted arrays
+
+        if self.0.is_empty() {
+            return false;
+        }
+        if multi_point.0.is_empty() {
+            return false;
+        }
+
+        let pt_cmp = |a: &Point<T>, b: &Point<T>| lex_cmp(&a.0, &b.0);
+
+        let mut self_order = self.0.clone();
+        self_order.sort_unstable_by(pt_cmp);
+        self_order.dedup();
+
+        let mut other_order = multi_point.0.clone();
+        other_order.sort_unstable_by(pt_cmp);
+        other_order.dedup();
+
+        if other_order.len() > self_order.len() {
+            return false;
+        }
+
+        let mut self_iter = self_order.iter().peekable();
+        let mut other_iter = other_order.iter().peekable();
+
+        loop {
+            // other has been exhausted
+            if other_iter.peek().is_none() {
+                return true;
+            }
+            // self has been exhausted but other has not been exhausted
+            if self_iter.peek().is_none() {
+                return false;
+            }
+
+            match pt_cmp(self_iter.peek().unwrap(), other_iter.peek().unwrap()) {
+                std::cmp::Ordering::Equal => {
+                    other_iter.next();
+                    self_iter.next();
+                }
+                std::cmp::Ordering::Less => {
+                    self_iter.next();
+                }
+                std::cmp::Ordering::Greater => {
+                    return false;
+                }
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{MultiPoint, Relate, coord, point};
+
+    #[test]
+    /**
+     * tests for empty multipoint
+     * behaviour follows `Relate` Trait
+     */
+    fn test_empty_multipoint_contains_multipoint() {
+        let empty: MultiPoint<f64> = MultiPoint::empty();
+        let non_empty: MultiPoint<f64> = MultiPoint::new(vec![point! {x: 0.0, y: 0.0}]);
+
+        // empty multipoint does not contains non-empty multipoint
+        assert!(!empty.contains(&non_empty));
+        assert!(!empty.relate(&non_empty).is_contains());
+
+        // non-empty multipoint does not contain empty multipoint
+        assert!(!non_empty.contains(&empty));
+        assert!(!non_empty.relate(&empty).is_contains());
+
+        // empty multipoint does not contain empty multipoint
+        assert!(!empty.contains(&empty));
+        assert!(!empty.relate(&empty).is_contains());
+    }
+
+    #[test]
+    fn test_multipoint_contains_multipoint() {
+        let pt_a = coord! {x: 0., y: 0.};
+        let pt_b = coord! {x: 10., y: 10.};
+        let pt_c = coord! {x: 20., y: 20.};
+        let pt_d = coord! {x: 30., y: 30.};
+
+        let mp_a = MultiPoint::from(vec![pt_a]);
+        let mp_bc = MultiPoint::from(vec![pt_a, pt_b]);
+        let mp_abc = MultiPoint::from(vec![pt_a, pt_b, pt_c]);
+        let mp_bcd = MultiPoint::from(vec![pt_b, pt_c, pt_d]);
+
+        // multipoint contains itself
+        assert!(mp_a.contains(&mp_a));
+        assert!(mp_bc.contains(&mp_bc));
+        assert!(mp_abc.contains(&mp_abc));
+        assert!(mp_bcd.contains(&mp_bcd));
+
+        // multipoint contains subsets
+        assert!(mp_abc.contains(&mp_a));
+        assert!(mp_abc.contains(&mp_bc));
+
+        // partially overlapping multipoints do not contain each other
+        assert!(!mp_abc.contains(&mp_bcd));
     }
 }

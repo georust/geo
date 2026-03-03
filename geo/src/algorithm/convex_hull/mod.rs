@@ -1,6 +1,6 @@
+use crate::GeoNum;
 use crate::geometry::{Coord, LineString, Polygon};
 use crate::kernels::*;
-use crate::GeoNum;
 
 /// Returns the convex hull of a geometry. The hull is always oriented counter-clockwise.
 ///

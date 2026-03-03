@@ -106,10 +106,10 @@ where
     let mut dataset: rstar::RTree<Coord<T>> = rstar::RTree::new();
     for coord in coords {
         let closest = dataset.nearest_neighbor(coord);
-        if let Some(closest) = closest {
-            if coords_are_equal(coord, closest) {
-                continue;
-            }
+        if let Some(closest) = closest
+            && coords_are_equal(coord, closest)
+        {
+            continue;
         }
 
         dataset.insert(*coord)
@@ -398,7 +398,7 @@ mod tests {
     #[test]
     fn empty_hull() {
         let actual: Polygon<f64> = concave_hull([].iter(), 3);
-        let expected = Polygon::new(LineString::new(vec![]), vec![]);
+        let expected = Polygon::empty();
         assert_eq!(actual, expected);
     }
 }

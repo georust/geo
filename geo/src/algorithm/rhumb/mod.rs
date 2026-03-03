@@ -6,7 +6,7 @@
 //! Turf.js is copyright its authors and the geodesy tools are copyright Chris
 //! Veness; both are available under an MIT license.
 
-use crate::{point, utils::normalize_longitude, CoordFloat, Point};
+use crate::{CoordFloat, Point, point, utils::normalize_longitude};
 use num_traits::FromPrimitive;
 
 mod distance;

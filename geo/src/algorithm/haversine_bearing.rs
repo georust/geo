@@ -46,11 +46,11 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::point;
     #[allow(deprecated)]
     use crate::HaversineBearing;
     #[allow(deprecated)]
     use crate::HaversineDestination;
+    use crate::point;
 
     #[test]
     fn north_bearing() {

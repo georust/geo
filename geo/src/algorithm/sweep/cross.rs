@@ -1,52 +1,40 @@
-use std::{fmt::Debug, rc::Rc, sync::Arc};
-
-use geo_types::Line;
-
-use super::*;
 use crate::GeoFloat;
+use geo_types::Line;
+use std::rc::Rc;
+use std::sync::Arc;
 
-/// Interface for types that can be processed to detect crossings.
+/// A 1-dimensional finite line used as input to [`Intersections`](super::Intersections).
 ///
-/// This type is implemented by [`LineOrPoint`], but users may also implement
-/// this on custom types to store extra information. Any type that represents an
-/// ordered line-segment may implement this.
+/// This is implemented by [`Line`], but you can implement it on your own
+/// type if you'd like to associate some other data with it.
 ///
 /// # Cloning
 ///
-/// Note that for usage with the planar sweep iterators, the type must
+/// Note that for usage with the `Intersections` iterator, the type must
 /// also impl. `Clone`. If the custom type is not cheap to clone, use
 /// either a reference to the type, a [`Rc`] or an [`Arc`]. All these
 /// are supported via blanket trait implementations.
-pub trait Cross: Sized + Debug {
-    /// Scalar used the coordinates.
+pub trait Cross {
+    /// Scalar used by the line coordinates.
     type Scalar: GeoFloat;
 
-    /// The geometry associated with this type. Use a `Line` with the
-    /// `start` and `end` coordinates to represent a point.
-    fn line(&self) -> LineOrPoint<Self::Scalar>;
-}
-
-impl<T: Cross> Cross for &'_ T {
-    type Scalar = T::Scalar;
-
-    fn line(&self) -> LineOrPoint<Self::Scalar> {
-        T::line(*self)
-    }
-}
-
-impl<T: GeoFloat> Cross for LineOrPoint<T> {
-    type Scalar = T;
-
-    fn line(&self) -> LineOrPoint<Self::Scalar> {
-        *self
-    }
+    /// The geometry associated with this type.
+    fn line(&self) -> Line<Self::Scalar>;
 }
 
 impl<T: GeoFloat> Cross for Line<T> {
     type Scalar = T;
 
-    fn line(&self) -> LineOrPoint<Self::Scalar> {
-        (*self).into()
+    fn line(&self) -> Line<Self::Scalar> {
+        *self
+    }
+}
+
+impl<C: Cross> Cross for &C {
+    type Scalar = C::Scalar;
+
+    fn line(&self) -> Line<Self::Scalar> {
+        C::line(*self)
     }
 }
 
@@ -55,7 +43,7 @@ macro_rules! blanket_impl_smart_pointer {
         impl<T: Cross> Cross for $ty {
             type Scalar = T::Scalar;
 
-            fn line(&self) -> LineOrPoint<Self::Scalar> {
+            fn line(&self) -> Line<Self::Scalar> {
                 T::line(self)
             }
         }

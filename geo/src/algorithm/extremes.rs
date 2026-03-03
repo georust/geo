@@ -82,7 +82,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{coord, polygon, MultiPoint};
+    use crate::{MultiPoint, coord, polygon};
 
     #[test]
     fn polygon() {
@@ -122,7 +122,7 @@ mod test {
 
     #[test]
     fn empty() {
-        let multi_point: MultiPoint<f32> = MultiPoint::new(vec![]);
+        let multi_point: MultiPoint<f32> = MultiPoint::empty();
 
         let actual = multi_point.extremes();
 

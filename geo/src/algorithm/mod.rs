@@ -8,11 +8,14 @@ pub use area::Area;
 
 /// Boolean Operations such as the union, xor, or difference of two geometries.
 pub mod bool_ops;
-pub use bool_ops::{unary_union, BooleanOps, OpType};
+pub use bool_ops::{BooleanOps, OpType, unary_union};
 
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
+
+pub mod buffer;
+pub use buffer::Buffer;
 
 /// Calculate the minimum rotated rectangle of a `Geometry`.
 pub mod minimum_rotated_rect;
@@ -41,6 +44,12 @@ pub use concave_hull::ConcaveHull;
 /// Determine whether `Geometry` `A` completely encloses `Geometry` `B`.
 pub mod contains;
 pub use contains::Contains;
+
+pub mod contains_properly;
+pub use contains_properly::ContainsProperly;
+
+pub mod covers;
+pub use covers::Covers;
 
 /// Convert the type of a geometry’s coordinate value.
 pub mod convert;
@@ -155,6 +164,10 @@ pub use haversine_length::HaversineLength;
 pub mod haversine_closest_point;
 pub use haversine_closest_point::HaversineClosestPoint;
 
+/// Geometries backed by spatial indexes for fast bulk operations
+pub mod indexed;
+pub use indexed::PreparedGeometry;
+
 /// Calculate a representative `Point` inside a `Geometry`
 pub mod interior_point;
 pub use interior_point::InteriorPoint;
@@ -214,7 +227,7 @@ pub mod orient;
 pub use orient::Orient;
 
 /// Coordinate projections and transformations using the current stable version of [PROJ](http://proj.org).
-#[cfg(feature = "use-proj")]
+#[cfg(feature = "proj")]
 pub mod proj;
 
 /// Relate two geometries based on DE-9IM
@@ -255,9 +268,9 @@ pub(crate) mod stitch;
 pub use stitch::StitchTriangles;
 
 /// Transform a geometry using PROJ.
-#[cfg(feature = "use-proj")]
+#[cfg(feature = "proj")]
 pub mod transform;
-#[cfg(feature = "use-proj")]
+#[cfg(feature = "proj")]
 pub use transform::Transform;
 
 /// Translate a `Geometry` along the given offsets.
@@ -276,7 +289,7 @@ pub use triangulate_earcut::TriangulateEarcut;
 #[cfg(feature = "spade")]
 pub mod triangulate_delaunay;
 #[cfg(feature = "spade")]
-pub use triangulate_delaunay::TriangulateDelaunay;
+pub use triangulate_delaunay::{TriangulateDelaunay, TriangulateDelaunayUnconstrained};
 
 /// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
 #[cfg(feature = "spade")]
@@ -302,6 +315,12 @@ pub use vincenty_distance::VincentyDistance;
 pub mod vincenty_length;
 pub use vincenty_length::VincentyLength;
 
+/// Produce the [Voronoi Diagram](https://en.wikipedia.org/wiki/Voronoi_diagram) of an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation).
+#[cfg(feature = "spade")]
+pub mod voronoi;
+#[cfg(feature = "spade")]
+pub use voronoi::{Voronoi, VoronoiClip, VoronoiError, VoronoiParams};
+
 /// Calculate and work with the winding order of `Linestring`s.
 pub mod winding_order;
 pub use winding_order::Winding;
@@ -310,7 +329,10 @@ pub use winding_order::Winding;
 pub mod within;
 pub use within::Within;
 
-/// Planar sweep algorithm and related utils
+/// Planar sweep algorithm and related utils for use by the monotone module
+pub(crate) mod old_sweep;
+
+/// Find line intersections using the Bentley-Ottmann algorithm
 pub mod sweep;
 
 /// Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
@@ -318,9 +340,17 @@ pub mod outlier_detection;
 
 pub use outlier_detection::OutlierDetection;
 
+/// Cluster points using [DBSCAN](https://en.wikipedia.org/wiki/DBSCAN) (Density-Based Spatial Clustering of Applications with Noise)
+pub mod dbscan;
+pub use dbscan::Dbscan;
+
+/// Cluster points using [k-means clustering](https://en.wikipedia.org/wiki/K-means_clustering)
+pub mod kmeans;
+pub use kmeans::{KMeans, KMeansError, KMeansParams};
+
 /// Monotonic polygon subdivision
 pub mod monotone;
-pub use monotone::{monotone_subdivision, MonoPoly, MonotonicPolygons};
+pub use monotone::{MonoPoly, MonotonicPolygons, monotone_subdivision};
 
 /// Rhumb-line-related algorithms and utils
 pub mod rhumb;

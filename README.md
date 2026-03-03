@@ -12,12 +12,14 @@
 ### Chat or ask questions on [Discord](https://discord.gg/Fp2aape)
 
 The `geo` crate provides geospatial primitive types such as `Point`, `LineString`, and `Polygon`, and provides algorithms and operations such as:
-- Area and centroid calculation
-- Simplification and convex hull operations
-- Euclidean and Haversine distance measurement
-- Intersection checks
-- Affine transforms such as rotation and translation
-- All DE-9IM spatial predicates such as contains, crosses, and touches.
+- Full DE-9IM support and topological relationship calculations such as containment and intersection
+- Affine operations on geometries (scale, rotate, skew, translate)
+- Boolean operations on geometries (clip, union, difference, intersection, xor)
+- Buffer / offset operations on geometries
+- Clustering operations such as DBSCAN and _k_-means
+- Euclidean, as well as spherical, haversine and other non-planar length and distance calculations
+- Support for projecting and converting between coordinate reference systems using PROJ
+- IO using the `geojson` and `geozero` crates.
 
 Please refer to [the documentation](https://docs.rs/geo) for a complete list.
 

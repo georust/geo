@@ -121,8 +121,8 @@ mod test {
     #![allow(deprecated)]
 
     use super::*;
-    use crate::{coord, point};
     use crate::{ClosestPoint, LineLocatePoint};
+    use crate::{coord, point};
     use num_traits::Float;
 
     #[test]
@@ -246,7 +246,7 @@ mod test {
         // fraction is nan or inf
         assert_eq!(
             linestring.line_interpolate_point(Float::infinity()),
-            linestring.points().last()
+            linestring.points().next_back()
         );
         assert_eq!(
             linestring.line_interpolate_point(Float::neg_infinity()),
@@ -282,8 +282,7 @@ mod test {
         assert_eq!(linestring.line_interpolate_point(-1.0), None);
 
         // Empty line
-        let coords: Vec<Point> = Vec::new();
-        let linestring: LineString = coords.into();
+        let linestring: LineString = LineString::empty();
         assert_eq!(linestring.line_interpolate_point(0.5), None);
     }
 

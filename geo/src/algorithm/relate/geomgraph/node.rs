@@ -67,9 +67,6 @@ where
             self.label.on_position(1),
             Dimensions::ZeroDimensional,
         );
-        debug!(
-            "updated intersection_matrix: {:?} from node: {:?}",
-            intersection_matrix, self
-        );
+        debug!("updated intersection_matrix: {intersection_matrix:?} from node: {self:?}");
     }
 }

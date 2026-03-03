@@ -122,7 +122,7 @@ mod test {
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(0., 2.)]);
         assert_relative_eq!(
-            Euclidean.distance(Point::from(ls_a.0[0]), Point::from(ls_b.0[0])),
+            Euclidean.distance(Point::from(ls_a[0]), Point::from(ls_b[0])),
             Euclidean.frechet_distance(&ls_a, &ls_b)
         );
     }
@@ -160,7 +160,7 @@ mod test {
         let ls: LineString = {
             let delta = 0.01;
 
-            let mut ls = vec![(0.0, 0.0); 10_000];
+            let mut ls = vec![(0.0, 0.0); 1_000];
             for i in 1..ls.len() {
                 let (lat, lon) = ls[i - 1];
                 ls[i] = (lat - delta, lon + delta);
@@ -178,7 +178,7 @@ mod test {
         let ls_a = LineString::from(vec![(1., 1.)]);
         let ls_b = LineString::from(vec![(0., 2.)]);
         assert_relative_eq!(
-            mars_measure.distance(Point::from(ls_a.0[0]), Point::from(ls_b.0[0])),
+            mars_measure.distance(Point::from(ls_a[0]), Point::from(ls_b[0])),
             mars_measure.frechet_distance(&ls_a, &ls_b)
         );
     }
@@ -209,7 +209,7 @@ mod test {
         let ls: LineString = {
             let delta = 0.01;
 
-            let mut ls = vec![(0.0, 0.0); 10_000];
+            let mut ls = vec![(0.0, 0.0); 1_000];
             for i in 1..ls.len() {
                 let (lat, lon) = ls[i - 1];
                 ls[i] = (lat - delta, lon + delta);

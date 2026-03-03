@@ -111,7 +111,7 @@ impl fmt::Display for RingRole {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             RingRole::Exterior => write!(f, "exterior ring"),
-            RingRole::Interior(idx) => write!(f, "interior ring at index {}", idx),
+            RingRole::Interior(idx) => write!(f, "interior ring at index {idx}"),
         }
     }
 }

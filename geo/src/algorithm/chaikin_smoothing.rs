@@ -3,7 +3,7 @@ use std::ops::Mul;
 use num_traits::FromPrimitive;
 
 use crate::{
-    coord, Coord, CoordFloat, Geometry, LineString, MultiLineString, MultiPolygon, Polygon,
+    Coord, CoordFloat, Geometry, LineString, MultiLineString, MultiPolygon, Polygon, coord,
 };
 
 /// Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikins algorithm.
@@ -114,11 +114,11 @@ where
 {
     let mut out_coords: Vec<_> = Vec::with_capacity(linestring.0.len() * 2);
 
-    if let (Some(first), Some(last)) = (linestring.0.first(), linestring.0.last()) {
-        if first != last {
-            // preserve start coordinate when the linestring is open
-            out_coords.push(*first);
-        }
+    if let (Some(first), Some(last)) = (linestring.0.first(), linestring.0.last())
+        && first != last
+    {
+        // preserve start coordinate when the linestring is open
+        out_coords.push(*first);
     }
     for window_coordinates in linestring.0.windows(2) {
         let (q, r) = smoothen_coordinates(window_coordinates[0], window_coordinates[1]);

@@ -1,6 +1,19 @@
 #![doc(html_logo_url = "https://raw.githubusercontent.com/georust/meta/master/logo/logo.png")]
 
-//! The `geo` crate provides geospatial primitive types and algorithms.
+//! The `geo` crate provides planar geospatial geometries and algorithms.
+//!
+//! # Overview
+//!
+//! - Full DE-9IM support and topological relationship calculations such as containment and intersection
+//! - Affine operations on geometries (scale, rotate, skew, translate)
+//! - Boolean operations on geometries (clip, union, difference, intersection, xor)
+//! - Buffer / offset operations on geometries
+//! - Clustering operations such as DBSCAN and _k_-means
+//! - Euclidean, as well as spherical, haversine and other non-planar length and distance calculations
+//! - Support for projecting and converting between coordinate reference systems using PROJ
+//! - IO using the `geojson` and `geozero` crates.
+//!
+//! For a full listing of available geometry types, functionality and features, see below:
 //!
 //! # Types
 //!
@@ -71,9 +84,11 @@
 //! - **[`BooleanOps`]**: Combine or split (Multi)Polygons using intersection, union, xor, or difference operations
 //! - **[`unary_union`]**: Efficient union of many [`Polygon`] or [`MultiPolygon`]s
 //!
-//! ## Outlier Detection
+//! ## Outlier Detection / Clustering
 //!
 //! - **[`OutlierDetection`]**: Detect outliers in a group of points using [LOF](https://en.wikipedia.org/wiki/Local_outlier_factor)
+//! - **[`Dbscan`]**: Calculate point clusters using the DBSCAN algorithm
+//! - **[`KMeans`]**: Calculate point clusters using the k-means algorithm
 //!
 //! ## Simplification
 //!
@@ -94,19 +109,21 @@
 //!   fraction of a line’s total length representing the location of the closest point on the
 //!   line to the given point
 //! - **[`InteriorPoint`]**:
-//!     Calculates a representative point inside a `Geometry`
+//!   Calculates a representative point inside a `Geometry`
 //!
 //! ## Topology
 //!
 //! - **[`Contains`]**: Calculate if a geometry contains another
 //!   geometry
-//! - **[`CoordinatePosition`]**: Calculate
-//!   the position of a coordinate relative to a geometry
+//! - **[`ContainsProperly`]**: Calculate if a geometry completely contains another geometry within its interior
+//! - **[`CoordinatePosition`]**: Calculate the position of a coordinate relative to a geometry
+//! - **[`Covers`]**: Calculate if a geometry covers another geometry
 //! - **[`HasDimensions`]**: Determine the dimensions of a geometry
 //! - **[`Intersects`]**: Calculate if a geometry intersects
 //!   another geometry
 //! - **[`line_intersection`]**: Calculates the
 //!   intersection, if any, between two lines
+//! - **[`Intersections`]**: Find all line segment intersections using an efficient sweep line algorithm (Bentley-Ottmann)
 //! - **[`Relate`]**: Topologically relate two geometries based on
 //!   [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics
 //! - **[`Within`]**: Calculate if a geometry lies completely within another geometry
@@ -115,6 +132,8 @@
 //!
 //! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `earcutr` feature, which is enabled by default
 //! - **[`TriangulateDelaunay`](triangulate_delaunay)**: Produce constrained or unconstrained Delaunay triangulations of polygons. Requires the `spade` feature, which is enabled by default
+//! - **[`Voronoi`](voronoi)**: Produce the Voronoi Diagram of a triangulation
+//!
 //! ## Winding
 //!
 //! - **[`Orient`]**: Apply a specified winding [`Direction`](orient::Direction) to a [`Polygon`]’s interior and exterior rings
@@ -152,16 +171,17 @@
 //!
 //! ## Conversion
 //!
-//! - **[`Convert`]**: Convert (infalliby) the numeric type of a geometry’s coordinate value
-//! - **[`TryConvert`]**: Convert (falliby) the numeric type of a geometry’s coordinate value
+//! - **[`Convert`]**: Convert (infallibly) the numeric type of a geometry’s coordinate value
+//! - **[`TryConvert`]**: Convert (fallibly) the numeric type of a geometry’s coordinate value
 //! - **[`ToDegrees`]**: Radians to degrees coordinate transforms for a given geometry
 //! - **[`ToRadians`]**: Degrees to radians coordinate transforms for a given geometry
 //!
 //! ## Miscellaneous
 //!
+//! - **[`Buffer`]**: Create a new geometry whose boundary is offset the specified distance from the input.
 //! - **[`Centroid`]**: Calculate the centroid of a geometry
 //! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm
-//! - **[`proj`]**: Project geometries with the `proj` crate (requires the `use-proj` feature)
+//! - **[`proj`]**: Project geometries with the `proj` crate (requires the `proj` feature)
 //! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments
 //! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance
 //! - **[`Transform`]**: Transform a geometry using Proj
@@ -186,10 +206,10 @@
 //!     - Enables [network grid] support for the [`proj` crate]
 //!     - After enabling this feature, [further configuration][proj crate file download] is required to use the network grid.
 //!     - ☐ Disabled by default
-//! - `use-proj`:
+//! - `proj`:
 //!     - Enables coordinate conversion and transformation of `Point` geometries using the [`proj` crate]
 //!     - ☐ Disabled by default
-//! - `use-serde`:
+//! - `serde`:
 //!     - Allows geometry types to be serialized and deserialized with [Serde]
 //!     - ☐ Disabled by default
 //! - `multithreading`:
@@ -230,7 +250,7 @@
 //! [rhumb line]: https://en.wikipedia.org/wiki/Rhumb_line
 //! [Serde]: https://serde.rs/
 
-#[cfg(feature = "use-serde")]
+#[cfg(feature = "serde")]
 #[macro_use]
 extern crate serde;
 
@@ -238,8 +258,9 @@ pub use crate::algorithm::*;
 pub use crate::types::Closest;
 use std::cmp::Ordering;
 
-pub use crate::relate::PreparedGeometry;
-pub use geo_types::{coord, line_string, point, polygon, wkt, CoordFloat, CoordNum};
+pub use crate::algorithm::sweep::Intersections;
+pub use crate::indexed::PreparedGeometry;
+pub use geo_types::{CoordFloat, CoordNum, coord, line_string, point, polygon, wkt};
 
 pub mod geometry;
 pub use geometry::*;
@@ -371,6 +392,32 @@ impl_geo_num_for_int!(i32);
 impl_geo_num_for_int!(i64);
 impl_geo_num_for_int!(i128);
 impl_geo_num_for_int!(isize);
+
+// Some gymnastics to help migrate people off our old feature flag naming conventions
+#[allow(unused)]
+mod deprecated_feature_flags {
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.31.1",
+            note = "The `use-serde` feature has been renamed to simply `serde`. Use the `serde` feature instead."
+        )
+    )]
+    pub struct UseSerde;
+
+    #[cfg_attr(
+        not(feature = "__allow_deprecated_features"),
+        deprecated(
+            since = "0.31.1",
+            note = "The `use-proj` feature has been renamed to simply `proj`. Use the `proj` feature instead."
+        )
+    )]
+    pub struct UseProj;
+}
+#[cfg(feature = "use-proj")]
+pub use deprecated_feature_flags::UseProj;
+#[cfg(feature = "use-serde")]
+pub use deprecated_feature_flags::UseSerde;
 
 #[cfg(test)]
 mod tests {

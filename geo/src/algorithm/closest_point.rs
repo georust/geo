@@ -1,7 +1,7 @@
-use crate::algorithm::{Euclidean, Intersects, Length};
-use crate::geometry::*;
 use crate::Closest;
 use crate::GeoFloat;
+use crate::algorithm::{Euclidean, Intersects, Length};
+use crate::geometry::*;
 
 use std::iter;
 
@@ -252,15 +252,14 @@ mod tests {
             assert_eq!(
                 line_string.closest_point(&p),
                 line.closest_point(&p),
-                "closest point to: {:?}",
-                p
+                "closest point to: {p:?}",
             );
         }
     }
 
     #[test]
     fn empty_line_string_is_indeterminate() {
-        let ls = LineString::new(Vec::new());
+        let ls = LineString::empty();
         let p = Point::new(0.0, 0.0);
 
         let got = ls.closest_point(&p);
@@ -293,7 +292,7 @@ mod tests {
     #[test]
     fn polygon_with_point_on_interior_ring() {
         let poly = holy_polygon();
-        let p = poly.interiors()[0].0[3];
+        let p = poly.interiors()[0][3];
         let should_be = Closest::Intersection(p.into());
 
         let got = poly.closest_point(&p.into());

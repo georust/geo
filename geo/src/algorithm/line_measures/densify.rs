@@ -202,7 +202,7 @@ impl<F: CoordFloat + FromPrimitive> Densifiable<F> for LineString<F> {
         MetricSpace: Distance<F, Point<F>, Point<F>> + InterpolatePoint<F>,
     {
         if self.coords_count() == 0 {
-            return LineString::new(vec![]);
+            return LineString::empty();
         }
 
         let mut points = vec![];
@@ -320,7 +320,7 @@ impl<F: CoordFloat + FromPrimitive> Densifiable<F> for Triangle<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, polygon, wkt, Euclidean, Geodesic, Haversine, Rhumb};
+    use crate::{Euclidean, Geodesic, Haversine, Rhumb, coord, polygon, wkt};
 
     #[test]
     fn densify_line() {
@@ -393,7 +393,7 @@ mod tests {
 
         #[test]
         fn test_empty_linestring_densify() {
-            let linestring = LineString::<f64>::new(vec![]);
+            let linestring = LineString::<f64>::empty();
             let max_dist = 2.0;
             let densified = Euclidean.densify(&linestring, max_dist);
             assert!(densified.0.is_empty());

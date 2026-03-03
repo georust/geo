@@ -1,14 +1,94 @@
 # Changes
 
-# Unreleased
+## Unreleased
 
+- Update `i_overlay` to 4.4 and enable OGC-compliant polygon extraction for all boolean operations, fixing cases where holes sharing vertices produced invalid geometry.
+  - <https://github.com/georust/geo/pull/1500>
+- Fix `CoordinatePosition` for `LineString` to handle dimensionally collapsed input  e.g. `LINESTRING(0 0)` is treated like `POINT(0 0)`.
+  - <https://github.com/georust/geo/pull/1483>
+- Fix `CoordinatePosition` for `Triangle` to correctly return `CoordPos::OnBoundary` for coordinate within vertical segment.
+- Split `TriangulateDelaunay` trait to support Point collections in addition to existing geometries
+  - <https://github.com/georust/geo/pull/1486>
+- Use Coord as DelaunayTriangulation vertex type
+  - <https://github.com/georust/geo/pull/1490>
+- Add Voronoi diagram generation functionality
+  - <https://github.com/georust/geo/pull/1487>
+- Fix Euclidean distance fast path for open `LineString`s to consider the last vertex (avoids incorrect `LineString`-to-`LineString` distances for separable geometries).
+  - <https://github.com/georust/geo/pull/1499>
+- Bump `float_next_after` dependency to 2.0.0
+- Bump geo MSRV to 1.88
+- Update `earcutr` dependency to 0.5.0
+- POSSIBLY BREAKING: `Triangle`s returned by `earcut_triangles` are now oriented CCW.
+- POSSIBLY BREAKING: `earcut_triangles_raw` now omits the redundant "closing" coordinate from `vertices`.
+  It wasn't referenced by the `triangle_indices` cut by earcutr, but you may notice a different triangulation for a given input.
+
+## 0.32.0 - 2025-12-05
+
+- Move `PreparedGeometry` into a new `indexed` module intended to provide index-backed geometries. `relate::PreparedGeometry` has been deprecated.
+- Use an interval tree for faster (Multi)Point in MultiPolygon checks
+- LOF algorithm efficiency improvements due to caching kth distance
+- Add DBSCAN clustering algorithm implementation
+- Add `distance_within` method with default impl for any geometry that implements `Distance`, with similar semantics to the PostGIS [ST_DWithin](https://postgis.net/docs/ST_DWithin.html) function
+- Add fast minimum 1D and 2D Euclidean distance algorithm for linearly separable geometries (#1424)
+- Add `ContainsProperly` trait to relate and as a standalone operation
+  - `ContainsProperly` is faster for `Polygon` and `MultiPolygon` when inputs are smaller than about 650 vertices, otherwise use `Relate.is_contains_properly`
+  - <https://github.com/georust/geo/pull/1457>
+- Add k-means clustering algorithm
+- POSSIBLY BREAKING: `minimum_rotated_rect` is about 1.3-2x faster, but might return slightly different results.
+  - <https://github.com/georust/geo/pull/1446>
+- Renamed features `use-proj`, `use-serde` to simply `proj` and `serde` (removing the `use-` prefix)
+  and deprecated the old spelling.
+  - <https://github.com/georust/geo/pull/1447>
+- Update `ConcaveHull` algorithm with implementation of [mapbox/concaveman](https://github.com/mapbox/concaveman).
+  - BREAKING: The `concave_hull` method now has no `concavity` parameter.  
+  - Add `concave_hull_with_options` method which requires `ConcaveHullOptions` as a parameter with `concavity` and `length_threshold` options.
+  - <https://github.com/georust/geo/pull/1442>
+- Add `Covers` trait to relate and as a standalone operation
+  - custom implementations for checking Geometries covered by `Rect`, `Triangle`, `Line`, `Point`, `Coord`
+  - custom implementations for checking Geometries covering `Point` and `MultiPoint`
+
+## 0.31.0 - 2025-09-01
+
+- Added: Geometry buffering to "grow" or "shrink" a geometry by creating a buffer whose boundary is the specified offset from the input.
+  - <https://github.com/georust/geo/pull/1365>
+- BREAKING: `BoolOpsNum` must now implement GeoFloat, not just GeoNum. In practice, this shouldn't break for any concrete types (like f32, f64).
+  - <https://github.com/georust/geo/pull/1365>
 - BREAKING: The `Simplify`, `SimplifyVw`, and `SimplifyVwIdx` traits no longer require a borrowed `epsilon` parameter as these are `Copy` types
-- BREAKING: update proj dependency to 0.30.0 (libproj 9.6.0)
-- Reduce memory consumption of FrechtDistance calculation.
+- Performance: Reduce memory consumption of FrechetDistance calculation.
   - <https://github.com/georust/geo/pull/1357>
-- Bump geo MSRV to 1.82
+- Bump geo MSRV to 1.85
+- Update i_overlay (dependency of BooleanOps and Buffer).
+  This is *mostly* an internal change. However, if you are using i_overlay directly in your project,
+  you'll notice that the `FillRule`, `LineCap`, and `LineJoin` options, which are re-exported from i_overlay,
+  are now compatible with 4.0
+  <https://github.com/georust/geo/pull/1405>
 - Simplify test rustc and libproj version specification in CI
-- Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
+- Performance: Avoid running through entire iterator to reach last element in `outlier_detection` when calculating LRD and LOF
+- Add `Bearing` and `Destination` trait implementations for `Euclidean`
+- Add `FillRule`-configurable boolean operations to `BooleanOps` trait
+  - <https://github.com/georust/geo/pull/1382>
+- Fix panic in `algorithm::simplify::compute_rdp` with one point
+- Fix Clippy warning (surfaced in Rust 1.89) related to lifetime elision
+- Silence Clippy warnings related to `old_sweep` module
+- Fix false positive convexity check for "star polygon" LineStrings
+  - BREAKING: previously, an empty LineString was considered non-convex. This has changed: empty LineStrings are now considered convex, in line with tools such as PostGIS
+- Update to proj 0.31.0 (libproj 9.6.2)
+- Update `Intersections` with new implementation of the Bentley-Ottmann sweep-line algorithm to efficiently find sparse intersections between groups of lines.
+  - no longer `panic`'s when given pathological input
+  - BREAKING: `Intersections` now computes intersections lazily
+  - BREAKING: The `Crosses` trait used by `Intersections` now returns a `Line`, not a `LineOrPoint`.
+  - BREAKING: The `Crosses` trait no longer needs to implement Clone
+    - <https://github.com/georust/geo/pull/1358>
+    - <https://github.com/georust/geo/pull/1387>
+    - <https://github.com/georust/geo/pull/1359>
+- Fix `is_convex` to correctly handle duplicate points
+- Fix`graham_hull` to correctly handle duplicate points when `on_hull` is set to true
+  - `graham_hull` now always returns a boundary with no duplicated points
+  - <https://github.com/georust/geo/issues/1383>
+- BREAKING: Break up blanket implementation of `Intersects<LineString>` into specific traits
+  - faster implementations for `Rect`, `Triangle`, `MultiPolygon`, `Polygon` intersects `LineString`
+  - <https://github.com/georust/geo/pull/1379>
+- Added `Contains` implementation for all remaining geometries.
 
 ## 0.30.0 - 2025-03-24
 

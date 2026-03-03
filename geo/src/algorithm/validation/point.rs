@@ -1,4 +1,4 @@
-use super::{utils, Validation};
+use super::{Validation, utils};
 use crate::{GeoFloat, Point};
 
 use std::fmt;
@@ -36,8 +36,8 @@ impl<F: GeoFloat> Validation for Point<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithm::validation::{assert_valid, assert_validation_errors};
     use crate::Point;
+    use crate::algorithm::validation::{assert_valid, assert_validation_errors};
 
     #[test]
     fn test_point_valid() {

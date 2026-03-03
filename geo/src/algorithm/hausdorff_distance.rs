@@ -1,6 +1,6 @@
-use crate::algorithm::{Distance, Euclidean};
 use crate::CoordsIter;
 use crate::GeoFloat;
+use crate::algorithm::{Distance, Euclidean};
 use geo_types::{Coord, Point};
 use num_traits::Bounded;
 
@@ -73,7 +73,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::HausdorffDistance;
-    use crate::{line_string, polygon, MultiPoint, MultiPolygon};
+    use crate::{MultiPoint, MultiPolygon, line_string, polygon};
 
     #[test]
     fn hd_mpnt_mpnt() {

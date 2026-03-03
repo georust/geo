@@ -1,7 +1,7 @@
 use std::fmt::Debug;
 
 use crate::geometry::*;
-use crate::{coord, CoordNum};
+use crate::{CoordNum, coord};
 
 use std::{fmt, iter, marker, slice};
 
@@ -415,9 +415,9 @@ impl<T: CoordNum> CoordsIter for Triangle<T> {
     type Scalar = T;
 
     fn coords_iter(&self) -> Self::Iter<'_> {
-        iter::once(self.0)
-            .chain(iter::once(self.1))
-            .chain(iter::once(self.2))
+        iter::once(self.v1())
+            .chain(iter::once(self.v2()))
+            .chain(iter::once(self.v3()))
     }
 
     /// Return the number of coordinates in the `Triangle`.
@@ -758,8 +758,8 @@ impl<T: CoordNum + Debug> fmt::Debug for GeometryExteriorCoordsIter<'_, T> {
 mod test {
     use super::CoordsIter;
     use crate::{
-        coord, line_string, point, polygon, Coord, Geometry, GeometryCollection, Line, LineString,
-        MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Triangle,
+        Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
+        MultiPolygon, Point, Polygon, Rect, Triangle, coord, line_string, point, polygon,
     };
 
     #[test]

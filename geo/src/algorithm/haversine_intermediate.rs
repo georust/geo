@@ -15,7 +15,7 @@ pub trait HaversineIntermediate<T: CoordFloat> {
     ///
     /// * `other` - The other point to interpolate towards.
     /// * `ratio` - How far along the route should the new point be, with 0.0 being at `self`
-    ///             and 1.0 being at `other`.
+    ///   and 1.0 being at `other`.
     ///
     /// # Examples
     ///

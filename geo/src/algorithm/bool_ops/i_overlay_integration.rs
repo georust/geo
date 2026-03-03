@@ -1,11 +1,12 @@
+use crate::GeoFloat;
 use crate::geometry::Coord;
-use crate::GeoNum;
 use i_overlay::i_float::float::compatible::FloatPointCompatible;
 use i_overlay::i_float::float::number::FloatNumber;
+use num_traits::FromPrimitive;
 
 /// A geometry coordinate scalar suitable for performing geometric boolean operations.
-pub trait BoolOpsNum: GeoNum + FloatNumber {}
-impl<T: GeoNum + FloatNumber> BoolOpsNum for T {}
+pub trait BoolOpsNum: GeoFloat + FloatNumber + FromPrimitive {}
+impl<T: GeoFloat + FloatNumber + FromPrimitive> BoolOpsNum for T {}
 
 /// New type for `Coord` that implements `FloatPointCompatible` for `BoolOpsNum` to
 /// circumvent orphan rule, since Coord is defined in geo_types.
@@ -26,11 +27,12 @@ impl<T: BoolOpsNum> FloatPointCompatible<T> for BoolOpsCoord<T> {
     }
 }
 
-pub(super) mod convert {
+pub(crate) mod convert {
     use super::super::OpType;
     use super::BoolOpsNum;
     use crate::bool_ops::i_overlay_integration::BoolOpsCoord;
     use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
+    use geo_types::Coord;
     use i_overlay::core::overlay_rule::OverlayRule;
 
     pub fn line_string_from_path<T: BoolOpsNum>(path: Vec<BoolOpsCoord<T>>) -> LineString<T> {
@@ -47,14 +49,11 @@ pub(super) mod convert {
 
     pub fn polygon_from_shape<T: BoolOpsNum>(shape: Vec<Vec<BoolOpsCoord<T>>>) -> Polygon<T> {
         let mut rings = shape.into_iter().map(|path| {
-            // From i_overlay: > Note: Outer boundary paths have a clockwise order, and holes have a counterclockwise order.
-            // Which is the opposite convention we use.
             let mut line_string = line_string_from_path(path);
             line_string.close();
-            line_string.0.reverse();
             line_string
         });
-        let exterior = rings.next().unwrap_or(LineString::new(vec![]));
+        let exterior = rings.next().unwrap_or(LineString::empty());
 
         Polygon::new(exterior, rings.collect())
     }
@@ -76,6 +75,12 @@ pub(super) mod convert {
         coords.iter().copied().map(BoolOpsCoord).collect()
     }
 
+    pub fn line_string_to_shape_path<T: BoolOpsNum>(
+        line_string: &LineString<T>,
+    ) -> Vec<BoolOpsCoord<T>> {
+        line_string.coords().copied().map(BoolOpsCoord).collect()
+    }
+
     impl From<OpType> for OverlayRule {
         fn from(op: OpType) -> Self {
             match op {
@@ -86,16 +91,22 @@ pub(super) mod convert {
             }
         }
     }
+
+    impl<T: BoolOpsNum> From<Coord<T>> for BoolOpsCoord<T> {
+        fn from(value: Coord<T>) -> Self {
+            BoolOpsCoord(value)
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use geo_types::polygon;
 
-    use crate::algorithm::BooleanOps;
+    use crate::algorithm::{BooleanOps, Relate, Winding};
     use crate::geometry::{MultiPolygon, Polygon};
     use crate::winding_order::WindingOrder;
-    use crate::{wkt, Winding};
+    use crate::wkt;
 
     #[test]
     // see https://github.com/georust/geo/issues/1309
@@ -110,7 +121,7 @@ mod tests {
             let union = poly1.union(&polygon!());
             assert_eq!(union.0.len(), 1);
 
-            let union = &union.0[0];
+            let union = &union[0];
             assert!(matches!(
                 union.exterior().winding_order(),
                 Some(WindingOrder::CounterClockwise)
@@ -120,7 +131,7 @@ mod tests {
             let intersection = poly1.intersection(&poly1);
             assert_eq!(intersection.0.len(), 1);
 
-            let intersection = &intersection.0[0];
+            let intersection = &intersection[0];
             assert!(matches!(
                 intersection.exterior().winding_order(),
                 Some(WindingOrder::CounterClockwise)
@@ -137,7 +148,7 @@ mod tests {
             let union = poly1.union(&poly2);
             assert_eq!(union.0.len(), 1);
 
-            let union = &union.0[0];
+            let union = &union[0];
             assert!(union.interiors().is_empty());
             assert!(matches!(
                 union.exterior().winding_order(),
@@ -158,7 +169,12 @@ mod tests {
     fn one_empty_polygon() {
         let p1: Polygon = wkt!(POLYGON((0.0 0.0,1.0 0.0,1.0 1.0,0.0 1.0,0.0 0.0)));
         let p2: Polygon = wkt!(POLYGON EMPTY);
-        assert_eq!(&p1.union(&p2), &MultiPolygon(vec![p1.clone()]));
+        {
+            let unioned = p1.union(&p2);
+            let expected = MultiPolygon(vec![p1.clone()]);
+            let im = unioned.relate(&expected);
+            assert!(im.is_equal_topo());
+        }
         assert_eq!(&p1.intersection(&p2), &wkt!(MULTIPOLYGON EMPTY));
     }
 }

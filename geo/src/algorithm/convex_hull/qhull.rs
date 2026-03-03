@@ -1,7 +1,7 @@
 use super::{swap_with_first_and_remove, trivial_hull};
 use crate::kernels::{Kernel, Orientation};
 use crate::utils::partition_slice;
-use crate::{coord, Coord, GeoNum, LineString};
+use crate::{Coord, GeoNum, LineString, coord};
 
 // Determines if `p_c` lies on the positive side of the
 // segment `p_a` to `p_b`. In other words, whether segment

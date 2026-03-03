@@ -1,6 +1,6 @@
 use crate::line_measures::{Bearing, Destination, Distance, Haversine};
 use crate::{Closest, Contains};
-use crate::{CoordsIter, GeoFloat, Point, MEAN_EARTH_RADIUS};
+use crate::{CoordsIter, GeoFloat, MEAN_EARTH_RADIUS, Point};
 use geo_types::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Polygon, Rect, Triangle,
@@ -514,7 +514,7 @@ mod test {
 
     #[test]
     fn point_to_empty_linestring() {
-        let linestring = LineString::new(vec![]);
+        let linestring = LineString::empty();
 
         let p_from = Point::new(17.02374, 10.57037);
 

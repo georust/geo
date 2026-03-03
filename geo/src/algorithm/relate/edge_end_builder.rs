@@ -77,10 +77,10 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
 
         let mut coord_prev = edge.coords()[i_prev];
         // if prev intersection is past the previous vertex, use it instead
-        if let Some(ei_prev) = ei_prev {
-            if ei_prev.segment_index() >= i_prev {
-                coord_prev = ei_prev.coordinate();
-            }
+        if let Some(ei_prev) = ei_prev
+            && ei_prev.segment_index() >= i_prev
+        {
+            coord_prev = ei_prev.coordinate();
         }
 
         let mut label = edge.label().clone();
@@ -112,10 +112,10 @@ impl<F: GeoFloat> EdgeEndBuilder<F> {
         let mut coord_next = edge.coords()[i_next];
 
         // if the next intersection is in the same segment as the current, use it as the endpoint
-        if let Some(ei_next) = ei_next {
-            if ei_next.segment_index() == ei_curr.segment_index() {
-                coord_next = ei_next.coordinate();
-            }
+        if let Some(ei_next) = ei_next
+            && ei_next.segment_index() == ei_curr.segment_index()
+        {
+            coord_next = ei_next.coordinate();
         }
 
         let label = edge.label().clone();

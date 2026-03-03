@@ -22,8 +22,8 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          echo 'rust-versions=["1.82", "1.83", "1.84"]' >> $GITHUB_OUTPUT
-          echo "proj-version=9.6.0" >> $GITHUB_OUTPUT
+          echo 'rust-versions=["1.88", "1.92", "1.93"]' >> $GITHUB_OUTPUT
+          echo "proj-version=9.6.2" >> $GITHUB_OUTPUT
 
   # The `ci-result` job doesn't actually test anything - it just aggregates the
   # overall build status, otherwise the merge queue would need an entry
@@ -38,10 +38,10 @@ jobs:
       - geo_types
       - geo
       - geo_traits
-      - geo_postgis
       - geo_fuzz
-      - bench
+      - geo_benches
       - docs
+      - wasm_build
     if: success()
     steps:
       - name: Mark the job as a success
@@ -54,9 +54,10 @@ jobs:
       - geo_types
       - geo
       - geo_traits
-      - geo_postgis
       - geo_fuzz
-      - bench
+      - geo_benches
+      - docs
+      - wasm_build
     if: failure()
     steps:
       - name: Mark the job as a failure
@@ -71,7 +72,8 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - run: rustup component add rustfmt clippy
       - run: cargo fmt --all -- --check
       - run: cargo clippy --all-features --all-targets -- -Dwarnings
@@ -91,10 +93,11 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - run: rustup target add thumbv7em-none-eabihf
       - run: cargo check --all-targets --no-default-features
-      - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F use-rstar_0_9,serde
+      - run: cargo check --lib --target thumbv7em-none-eabihf --no-default-features -F rstar_0_9,serde
       - run: cargo test --all-features
 
   geo:
@@ -112,10 +115,11 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
-      - run: cargo test --features "use-proj use-serde earcutr multithreading"
+      - run: cargo test --features "proj serde earcutr multithreading"
 
   geo_traits:
     name: geo-traits
@@ -132,18 +136,19 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets
       - run: cargo test
 
-  geo_postgis:
-    name: geo-postgis
+  geo_benches:
+    name: geo-benches
     needs: set-matrix
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     defaults:
       run:
-        working-directory: geo-postgis
+        working-directory: geo-benches
     strategy:
       matrix:
         rust_version: ${{ fromJson(needs.set-matrix.outputs.rust-versions) }}
@@ -151,9 +156,9 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ matrix.rust_version }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets
-      - run: cargo test
 
   geo_fuzz:
     name: geo-fuzz
@@ -167,20 +172,9 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - run: cargo build --bins
-
-  bench:
-    name: bench
-    needs: set-matrix
-    runs-on: ubuntu-latest
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
-    container:
-      image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-      - run: cargo bench --no-run
 
   docs:
     name: build documentation
@@ -191,5 +185,20 @@ jobs:
       image: "ghcr.io/georust/geo-ci:proj-${{ needs.set-matrix.outputs.proj-version }}-rust-${{ fromJson(needs.set-matrix.outputs.rust-versions)[2] }}"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
       - run: RUSTDOCFLAGS="-D warnings" cargo doc --all-features --no-deps
+
+  wasm_build:
+    name: WASM Build
+    needs: set-matrix
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup target add wasm32-unknown-unknown
+      - run: cargo check --target wasm32-unknown-unknown -p geo-traits
+      - run: cargo check --target wasm32-unknown-unknown -p geo-types
+      - run: cargo check --target wasm32-unknown-unknown -p geo

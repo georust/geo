@@ -43,11 +43,11 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::point;
     #[allow(deprecated)]
     use crate::RhumbBearing;
     #[allow(deprecated)]
     use crate::RhumbDestination;
+    use crate::point;
 
     #[test]
     fn north_bearing() {

@@ -1,4 +1,4 @@
-use crate::sweep::{Active, Event, EventType, LineOrPoint, SweepPoint, VecSet};
+use crate::old_sweep::{Active, Event, EventType, LineOrPoint, SweepPoint, VecSet};
 use crate::{GeoNum, Orientation};
 use std::{collections::BinaryHeap, fmt::Debug};
 
@@ -16,7 +16,7 @@ use super::{RcSegment, Segment};
 ///
 /// - query the set of active segments at the current iteration point: these are
 ///   the segments currently intersecting the sweep line, and are ordered by their
-///    position on the line
+///   position on the line
 ///
 /// # Note
 ///

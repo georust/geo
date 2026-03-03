@@ -10,10 +10,7 @@ fn generate_polygon_str(coords: &[Coord]) -> String {
     for coord in coords {
         points_str.push_str(format!("{},{} ", coord.x, coord.y).as_ref());
     }
-    format!(
-        "    <polygon points=\"{}\" fill=\"none\" stroke=\"black\"/>\n",
-        points_str
-    )
+    format!("    <polygon points=\"{points_str}\" fill=\"none\" stroke=\"black\"/>\n",)
 }
 
 fn generate_consecutive_circles(coords: &[Coord]) -> String {
@@ -55,10 +52,8 @@ fn main() -> std::io::Result<()> {
     let mut convex_hull_file = File::create("convexhull.svg")?;
     let width = 100;
     let height = 100;
-    let svg_file_string = format!(
-        "<svg viewBox=\"50 50 {} {}\" xmlns=\"http://www.w3.org/2000/svg\">\n",
-        width, height
-    );
+    let svg_file_string =
+        format!("<svg viewBox=\"50 50 {width} {height}\" xmlns=\"http://www.w3.org/2000/svg\">\n",);
     let norway = geo_test_fixtures::norway_main::<f64>();
     let v: Vec<_> = norway
         .0
@@ -67,7 +62,7 @@ fn main() -> std::io::Result<()> {
         .collect();
     let moved_v = move_points_in_viewbox(width as f64, height as f64, v);
     let multipoint = MultiPoint::from(moved_v);
-    let concave = multipoint.concave_hull(2.0);
+    let concave = multipoint.concave_hull();
     let convex = multipoint.convex_hull();
     let concave_polygon_str = generate_polygon_str(&concave.exterior().0);
     let convex_polygon_str = generate_polygon_str(&convex.exterior().0);

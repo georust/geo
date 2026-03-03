@@ -1,4 +1,4 @@
-use geo::{line_string, Centroid};
+use geo::{Centroid, line_string};
 
 fn main() {
     let linestring = geo::line_string![

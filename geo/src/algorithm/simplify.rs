@@ -1,6 +1,6 @@
+use crate::GeoFloat;
 use crate::algorithm::{CoordsIter, Distance, Euclidean};
 use crate::geometry::{Coord, Line, LineString, MultiLineString, MultiPolygon, Polygon};
-use crate::GeoFloat;
 
 const LINE_STRING_INITIAL_MIN: usize = 2;
 const POLYGON_INITIAL_MIN: usize = 4;
@@ -79,15 +79,12 @@ fn compute_rdp<T, const INITIAL_MIN: usize>(
 where
     T: GeoFloat,
 {
-    if rdp_indices.is_empty() {
-        return vec![];
-    }
-
-    let first = rdp_indices[0];
-    let last = rdp_indices[rdp_indices.len() - 1];
-    if rdp_indices.len() == 2 {
-        return vec![first, last];
-    }
+    let (first, last) = match rdp_indices {
+        [] => return vec![],
+        &[only] => return vec![only],
+        &[first, last] => return vec![first, last],
+        &[first, .., last] => (first, last),
+    };
 
     let first_last_line = Line::new(first.coord, last.coord);
 
@@ -351,6 +348,15 @@ mod test {
         let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
         assert_eq!(simplified, compare);
     }
+
+    #[test]
+    fn rdp_test_one_point_linestring() {
+        let vec = vec![coord! { x: 27.8, y: 0.1 }];
+        let compare = vec![coord! { x: 27.8, y: 0.1 }];
+        let simplified = rdp::<_, _, 2>(vec.into_iter(), 1.0);
+        assert_eq!(simplified, compare);
+    }
+
     #[test]
     fn rdp_test_two_point_linestring() {
         let vec = vec![coord! { x: 0.0, y: 0.0 }, coord! { x: 27.8, y: 0.1 }];

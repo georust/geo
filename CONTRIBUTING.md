@@ -124,9 +124,9 @@ of docs, or help writing some tests, don't hesitate to ask.
 ## Publishing to crates.io
 
 The repo contains three crates: `geo-types`, `geo`,
-`geo-postgis`, and the latter two depends on the former. A
-typical release involves publishing one of these, but major
-releases may involve all three.  If publishing more than one,
+`geo-traits`. A typical release involves publishing one of
+these, but major releases may involve all three.  If
+publishing more than one,
 
 ### Publishing a sub-crate
 

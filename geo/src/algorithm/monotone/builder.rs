@@ -9,7 +9,7 @@
 
 use super::{MonoPoly, SimpleSweep};
 use crate::{
-    sweep::{EventType, LineOrPoint, SweepPoint},
+    old_sweep::{EventType, LineOrPoint, SweepPoint},
     *,
 };
 use std::{cell::Cell, mem::replace};
@@ -48,7 +48,7 @@ impl<T: GeoNum> Builder<T> {
                         None
                     } else {
                         let line = LineOrPoint::from(line);
-                        debug!("adding line {:?}", line);
+                        debug!("adding line {line:?}");
                         Some((line, Default::default()))
                     }
                 })
@@ -89,7 +89,7 @@ impl<T: GeoNum> Builder<T> {
         incoming.sort_by(|a, b| a.partial_cmp(b).unwrap());
         outgoing.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
-        info!(
+        debug!(
             "\n\nprocessing point {:?}, #in={}, #out={}",
             pt,
             incoming.len(),
@@ -103,7 +103,7 @@ impl<T: GeoNum> Builder<T> {
             .as_ref()
             .map(|seg| (seg.payload().next_is_inside.get(), seg.payload().help.get()))
             .unwrap_or((false, None));
-        debug!("bot region: {:?}", bot_region);
+        debug!("bot region: {bot_region:?}",);
         debug!("bot segment: {:?}", bot_segment.as_ref().map(|s| s.line()));
 
         // Step 3. Reduce incoming segments.  Any two consecutive incoming
@@ -286,7 +286,7 @@ impl<T: GeoNum> Builder<T> {
                     first.payload().chain_idx.set(idx);
                     second.payload().chain_idx.set(jdx);
                 } else {
-                    debug!("registering help: [{}, {}]", idx, jdx);
+                    debug!("registering help: [{idx}, {jdx}]");
                     bot_segment
                         .as_ref()
                         .unwrap()
@@ -309,7 +309,7 @@ pub(super) struct Chain<T: GeoNum>(LineString<T>);
 
 impl<T: GeoNum + std::fmt::Debug> std::fmt::Debug for Chain<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let bot: Vec<SweepPoint<T>> = self.0 .0.iter().map(|c| (*c).into()).collect();
+        let bot: Vec<SweepPoint<T>> = self.0.0.iter().map(|c| (*c).into()).collect();
         f.debug_tuple("Chain").field(&bot).finish()
     }
 }
@@ -326,21 +326,21 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn fix_top(&mut self, pt: Coord<T>) {
-        *self.0 .0.last_mut().unwrap() = pt;
+        *self.0.0.last_mut().unwrap() = pt;
     }
 
     pub fn swap_at_top(&mut self, pt: Coord<T>) -> [Self; 2] {
-        let top = self.0 .0.pop().unwrap();
-        let prev = *self.0 .0.last().unwrap();
+        let top = self.0.0.pop().unwrap();
+        let prev = *self.0.0.last().unwrap();
         debug!(
             "chain swap: {:?} -> {:?}",
             SweepPoint::from(top),
             SweepPoint::from(pt)
         );
         debug!("\tprev = {:?}", SweepPoint::from(prev));
-        self.0 .0.push(pt);
+        self.0.0.push(pt);
 
-        let old_chain = Chain(replace(&mut self.0 .0, vec![prev, top]).into());
+        let old_chain = Chain(replace(&mut self.0.0, vec![prev, top]).into());
         let new_chain = Chain(vec![prev, pt].into());
 
         let lp1 = LineOrPoint::from((prev.into(), top.into()));
@@ -353,14 +353,13 @@ impl<T: GeoNum> Chain<T> {
     }
 
     pub fn push(&mut self, pt: Coord<T>) {
-        debug!("chain push: {:?} -> {:?}", self.0 .0.last().unwrap(), pt);
-        self.0 .0.push(pt);
+        debug!("chain push: {:?} -> {:?}", self.0.0.last().unwrap(), pt);
+        self.0.0.push(pt);
     }
 
     pub fn finish_with(self, other: Self) -> MonoPoly<T> {
         assert!(
-            self.0 .0[0] == other.0 .0[0]
-                && self.0 .0.last().unwrap() == other.0 .0.last().unwrap(),
+            self.0.0[0] == other.0.0[0] && self.0.0.last().unwrap() == other.0.0.last().unwrap(),
             "chains must finish with same start/end points"
         );
         debug!("finishing {self:?} with {other:?}");

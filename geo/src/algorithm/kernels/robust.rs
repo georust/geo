@@ -16,7 +16,7 @@ where
     T: CoordNum + Float,
 {
     fn orient2d(p: Coord<T>, q: Coord<T>, r: Coord<T>) -> Orientation {
-        use robust::{orient2d, Coord};
+        use robust::{Coord, orient2d};
 
         let orientation = orient2d(
             Coord {

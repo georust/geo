@@ -1,9 +1,9 @@
-use super::{has_disjoint_bboxes, Intersects};
+use super::{Intersects, has_disjoint_bboxes};
 use crate::coordinate_position::CoordPos;
-use crate::{BoundingRect, CoordinatePosition};
+use crate::{BoundingRect, CoordinatePosition, CoordsIter, LinesIter};
 use crate::{
-    Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPolygon, Point, Polygon, Rect,
-    Triangle,
+    Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
+    Polygon, Rect, Triangle,
 };
 
 impl<T> Intersects<Coord<T>> for Polygon<T>
@@ -14,8 +14,9 @@ where
         self.coordinate_position(p) != CoordPos::Outside
     }
 }
-symmetric_intersects_impl!(Coord<T>, Polygon<T>);
-symmetric_intersects_impl!(Polygon<T>, Point<T>);
+
+symmetric_intersects_impl!(Polygon<T>, LineString<T>);
+symmetric_intersects_impl!(Polygon<T>, MultiLineString<T>);
 
 impl<T> Intersects<Line<T>> for Polygon<T>
 where
@@ -28,29 +29,9 @@ where
             || self.intersects(&line.end)
     }
 }
-symmetric_intersects_impl!(Line<T>, Polygon<T>);
-symmetric_intersects_impl!(Polygon<T>, LineString<T>);
-symmetric_intersects_impl!(Polygon<T>, MultiLineString<T>);
 
-impl<T> Intersects<Rect<T>> for Polygon<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rect: &Rect<T>) -> bool {
-        self.intersects(&rect.to_polygon())
-    }
-}
-symmetric_intersects_impl!(Rect<T>, Polygon<T>);
-
-impl<T> Intersects<Triangle<T>> for Polygon<T>
-where
-    T: GeoNum,
-{
-    fn intersects(&self, rect: &Triangle<T>) -> bool {
-        self.intersects(&rect.to_polygon())
-    }
-}
-symmetric_intersects_impl!(Triangle<T>, Polygon<T>);
+symmetric_intersects_impl!(Polygon<T>, Point<T>);
+symmetric_intersects_impl!(Polygon<T>, MultiPoint<T>);
 
 impl<T> Intersects<Polygon<T>> for Polygon<T>
 where
@@ -61,16 +42,53 @@ where
             return false;
         }
 
-        // self intersects (or contains) any line in polygon
-        self.intersects(polygon.exterior()) ||
-            polygon.interiors().iter().any(|inner_line_string| self.intersects(inner_line_string)) ||
-            // self is contained inside polygon
-            polygon.intersects(self.exterior())
+        // if there are no line intersections among exteriors and interiors,
+        // then either one fully contains the other
+        // or they are disjoint
+
+        // check 1 point of each polygon being within the other
+        self.exterior().coords_iter().take(1).any(|p|polygon.intersects(&p))
+        || polygon.exterior().coords_iter().take(1).any(|p|self.intersects(&p))
+        // exterior exterior
+        || self.exterior().lines_iter().any(|self_line| polygon.exterior().lines_iter().any(|poly_line| self_line.intersects(&poly_line)))
+        // exterior interior
+        ||self.interiors().iter().any(|inner_line_string| polygon.exterior().intersects(inner_line_string))
+        ||polygon.interiors().iter().any(|inner_line_string| self.exterior().intersects(inner_line_string))
+
+        // interior interior (not needed)
+        /*
+           suppose interior-interior is a required check
+           this requires that there are no ext-ext intersections
+           and that there are no ext-int intersections
+           and that self-ext[0] not intersects other
+           and other-ext[0] not intersects self
+           and there is some intersection between self and other
+
+           if ext-ext disjoint, then one ext ring must be within the other ext ring
+
+           suppose self-ext is within other-ext and self-ext[0] is not intersects other
+           then self-ext[0] must be within an interior hole of other-ext
+           if self-ext does not intersect the interior ring which contains self-ext[0],
+           then self is contained within other interior hole
+           and hence self and other cannot intersect
+           therefore for self to intersect other, some part of the self-ext must intersect the other-int ring
+           However, this is a contradiction because one of the premises for requiring this check is that self-ext ring does not intersect any other-int ring
+
+           By symmetry, the mirror case of other-ext ring within self-ext ring is also true
+
+           therefore, if there cannot exist and int-int intersection when all the prior checks are false
+           and so we can skip the interior-interior check
+        */
     }
 }
 
-// Implementations for MultiPolygon
+symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
 
+symmetric_intersects_impl!(Polygon<T>, Rect<T>);
+
+symmetric_intersects_impl!(Polygon<T>, Triangle<T>);
+
+// Blanket implementation for MultiPolygon
 impl<G, T> Intersects<G> for MultiPolygon<T>
 where
     T: GeoNum,
@@ -84,12 +102,6 @@ where
         self.iter().any(|p| p.intersects(rhs))
     }
 }
-
-symmetric_intersects_impl!(Point<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Line<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Rect<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Triangle<T>, MultiPolygon<T>);
-symmetric_intersects_impl!(Polygon<T>, MultiPolygon<T>);
 
 #[cfg(test)]
 mod tests {

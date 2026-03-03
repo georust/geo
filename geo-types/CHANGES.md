@@ -2,8 +2,37 @@
 
 ## Unreleased
 
+- POSSIBLY BREAKING: `Triangle::from([a, b, c])` now enforces CCW winding (same as `Triangle::new`).
+- Add `Triangle::unchecked_winding(v1, v2, v3)` for callers that have pre-verified CCW order or don't require a specific winding.
+- Add `Triangle::v1()`, `Triangle::v2()`, `Triangle::v3()` getters.
+- Deprecate direct access to `Triangle`'s public tuple fields (`.0`, `.1`, `.2`); use the constructors and getters above.
+  - <https://github.com/georust/geo/pull/1510>
+- Implement Spade HasPosition for Coord
+  - <https://github.com/georust/geo/pull/1490>
+- Implement Index and Range accessors for LineString, MultiPoint, MultiLineString, MultiPolygon, and GeometryCollection
+  ```rust
+  let multi_point = wkt!(MULTIPOINT(0 0,1 1,2 2,3 3));
+  let point = multi_point[1];
+  let three_points = multi_point[0..3];
+  // panics!
+  let no_point = multi_point[4]
+  ```
+
+## 0.7.18 - 2025-12-01
+
+- Renamed features `use-rstar`, `use-rstar-0_8`, etc. to simply `rstar`, `rstar-0_8`, etc. (removing the `use-` prefix)
+  and deprecated the old spelling.
+  - <https://github.com/georust/geo/pull/1447>
+- You can now serialize `rstar::AABB<Point>` and `rstar::AABB<Coord>` when enabling the `rstar` and `serde` features.
+  - <https://github.com/georust/geo/pull/1450>
+
+## 0.7.17 - 2025-07-25
+
+- Add support to `wkt!` geometry creation macro for `LINE`, `RECT`, and `TRIANGLE` geometries.
+  - <https://github.com/georust/geo/pull/1389>
 - Add `empty` convenience initializer for constructing empty geometries
   - <https://github.com/georust/geo/pull/1363>
+- Fix Clippy warning (surfaced in Rust 1.89) related to lifetime elision
 
 ## 0.7.16 - 2025-03-24
 

@@ -1,5 +1,5 @@
 use crate::utils::{partial_max, partial_min};
-use crate::{coord, geometry::*, CoordNum, GeometryCow};
+use crate::{CoordNum, GeometryCow, coord, geometry::*};
 use geo_types::private_utils::{get_bounding_rect, line_string_bounding_rect};
 
 /// Calculation of the bounding rectangle of a geometry.
@@ -213,11 +213,11 @@ fn bounding_rect_merge<T: CoordNum>(a: Rect<T>, b: Rect<T>) -> Rect<T> {
 #[cfg(test)]
 mod test {
     use super::bounding_rect_merge;
-    use crate::line_string;
     use crate::BoundingRect;
+    use crate::line_string;
     use crate::{
-        coord, point, polygon, Geometry, GeometryCollection, Line, LineString, MultiLineString,
-        MultiPoint, MultiPolygon, Polygon, Rect,
+        Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint, MultiPolygon,
+        Polygon, Rect, coord, point, polygon,
     };
 
     #[test]

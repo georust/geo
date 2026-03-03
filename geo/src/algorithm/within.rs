@@ -50,7 +50,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{point, Rect};
+    use crate::{Rect, point};
     #[test]
     fn basic() {
         let a = point!(x: 1.0, y: 2.0);

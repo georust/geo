@@ -165,8 +165,8 @@ mod test {
 
     use super::LinesIter;
     use crate::{
-        coord, line_string, polygon, Line, LineString, MultiLineString, MultiPolygon, Rect,
-        Triangle,
+        Line, LineString, MultiLineString, MultiPolygon, Rect, Triangle, coord, line_string,
+        polygon,
     };
 
     #[test]

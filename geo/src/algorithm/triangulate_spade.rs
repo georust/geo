@@ -4,11 +4,11 @@ use spade::{
     ConstrainedDelaunayTriangulation, DelaunayTriangulation, Point2, SpadeNum, Triangulation,
 };
 
-use crate::{
-    line_intersection::line_intersection, CoordsIter, Distance, Euclidean, GeoFloat,
-    LineIntersection, LinesIter,
-};
 use crate::{Centroid, Contains};
+use crate::{
+    CoordsIter, Distance, Euclidean, GeoFloat, LineIntersection, LinesIter,
+    line_intersection::line_intersection,
+};
 
 // ======== Config ============
 
@@ -45,7 +45,7 @@ pub enum TriangulationError {
 
 impl std::fmt::Display for TriangulationError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 

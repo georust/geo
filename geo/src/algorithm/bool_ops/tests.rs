@@ -1,7 +1,43 @@
-use super::{unary_union, BooleanOps};
-use crate::{wkt, Convert, MultiPolygon, Polygon, Relate};
+use super::{BooleanOps, unary_union};
+use crate::{Convert, MultiPolygon, Polygon, Relate, wkt};
+use i_overlay::core::fill_rule::FillRule;
 use std::time::Instant;
 use wkt::ToWkt;
+
+#[test]
+fn test_union_fill_rules() {
+    let self_intersecting_star: Polygon =
+        wkt!(POLYGON((50.0 0.0, 21.0 90.0, 98.0 35.0, 2.0 35.0, 79.0 90.0 )));
+    let square: Polygon = wkt!(POLYGON((50.0 50.0, 94.0 50.0, 94.0 8.0, 50.0 8.0)));
+
+    let multi1 = self_intersecting_star.union(&square);
+    assert_eq!(multi1.0.len(), 4);
+
+    let multi2 = self_intersecting_star.union_with_fill_rule(&square, FillRule::EvenOdd);
+    assert_eq!(multi2.0.len(), 4);
+    assert_eq!(multi1, multi2);
+
+    let additive_union = self_intersecting_star.union_with_fill_rule(&square, FillRule::NonZero);
+    assert_eq!(additive_union.0.len(), 1);
+}
+
+#[test]
+fn test_difference_fill_rules() {
+    let self_intersecting_star: Polygon =
+        wkt!(POLYGON((50.0 0.0, 21.0 90.0, 98.0 35.0, 2.0 35.0, 79.0 90.0)));
+    let square: Polygon = wkt!(POLYGON((50.0 50.0, 94.0 50.0, 94.0 8.0, 50.0 8.0)));
+
+    let multi1 = self_intersecting_star.difference(&square);
+    assert_eq!(multi1.0.len(), 6);
+
+    let multi2 = self_intersecting_star.difference_with_fill_rule(&square, FillRule::EvenOdd);
+    assert_eq!(multi2.0.len(), 6);
+    assert_eq!(multi1, multi2);
+
+    let additive_difference =
+        self_intersecting_star.difference_with_fill_rule(&square, FillRule::NonZero);
+    assert_eq!(additive_difference.0.len(), 2);
+}
 
 #[test]
 fn test_unary_union() {
@@ -31,13 +67,13 @@ fn test_unary_union_errors() {
 
     let naive_union = {
         let start = Instant::now();
-        let mut output = MultiPolygon::new(Vec::new());
+        let mut output = MultiPolygon::empty();
         for poly in input.iter() {
             output = output.union(poly);
         }
         let union = output;
         let duration = start.elapsed();
-        println!("Time elapsed (naive): {:.2?}", duration);
+        println!("Time elapsed (naive): {duration:.2?}");
         union
     };
 
@@ -45,7 +81,7 @@ fn test_unary_union_errors() {
         let start = Instant::now();
         let union = unary_union(input.iter());
         let duration = start.elapsed();
-        println!("Time elapsed (simplification): {:.2?}", duration);
+        println!("Time elapsed (simplification): {duration:.2?}");
         union
     };
 
@@ -153,6 +189,7 @@ fn jts_test_overlay_la_1() {
 
 mod gh_issues {
     use super::super::{BooleanOps, OpType};
+    use crate::algorithm::Relate;
     use crate::{geometry::*, wkt};
 
     #[test]
@@ -279,7 +316,7 @@ mod gh_issues {
             wkt!(POLYGON((3.3493652 -55.80127,171.22443 -300.,195.83728 -300.,-46.650635 30.80127,3.3493652 -55.80127))),
         ];
 
-        let mut multi: MultiPolygon<f32> = MultiPolygon::new(Vec::new());
+        let mut multi: MultiPolygon<f32> = MultiPolygon::empty();
         for poly in polygons {
             multi = multi.union(&MultiPolygon::new(vec![poly]));
         }
@@ -364,9 +401,85 @@ mod gh_issues {
                 -17.60358 - 8.013862
             ))
         ));
-        assert_eq!(c, expected_c);
+        {
+            let im = c.relate(&expected_c);
+            assert!(im.is_equal_topo());
+        }
         assert_eq!(c.0.len(), 2);
-        assert!(crate::Area::unsigned_area(&c.0[1]) < 1e-5);
+        assert!(crate::Area::unsigned_area(&c[1]) < 1e-5);
         // The goal is just to get here without panic
+    }
+}
+
+mod ogc_compliance {
+    use super::*;
+
+    #[test]
+    fn test_disconnected_interior_split() {
+        // iOverlay ocg_tests test_0: Two L-shaped holes share vertices at
+        // (2,2) and (3,3), disconnecting the interior. OGC mode splits
+        // this into 2 valid polygons.
+        let square: Polygon<f64> = wkt!(POLYGON((0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0)));
+        let l_shapes: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+            ((1.0 2.0, 1.0 4.0, 3.0 4.0, 3.0 3.0, 2.0 3.0, 2.0 2.0, 1.0 2.0)),
+            ((2.0 1.0, 2.0 2.0, 3.0 2.0, 3.0 3.0, 4.0 3.0, 4.0 1.0, 2.0 1.0))
+        ));
+
+        let result = square.difference(&l_shapes);
+
+        assert_eq!(
+            result.0.len(),
+            2,
+            "OGC: disconnected interior must be split into 2 polygons"
+        );
+
+        let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+            (
+                (0.0 0.0, 5.0 0.0, 5.0 5.0, 0.0 5.0, 0.0 0.0),
+                (1.0 2.0, 1.0 4.0, 3.0 4.0, 3.0 3.0, 4.0 3.0, 4.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0)
+            ),
+            ((2.0 2.0, 3.0 2.0, 3.0 3.0, 2.0 3.0, 2.0 2.0))
+        ));
+        let im = result.relate(&expected);
+        assert!(
+            im.is_equal_topo(),
+            "result: {}, expected: {}",
+            result.to_wkt(),
+            expected.to_wkt(),
+        );
+    }
+
+    #[test]
+    fn test_proper_holes_touching_boundary() {
+        // iOverlay ocg_tests test_6: U-shaped polygon with two small
+        // square holes touching the inner boundary. OGC mode produces
+        // proper interior rings (1 polygon, 3 contours).
+        let u_shape: Polygon<f64> = wkt!(POLYGON((
+            0.0 0.0, 5.0 0.0, 5.0 3.0, 3.0 3.0,
+            3.0 2.0, 2.0 2.0, 2.0 3.0, 0.0 3.0, 0.0 0.0
+        )));
+        let squares: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+            ((1.0 1.0, 2.0 1.0, 2.0 2.0, 1.0 2.0, 1.0 1.0)),
+            ((3.0 1.0, 4.0 1.0, 4.0 2.0, 3.0 2.0, 3.0 1.0))
+        ));
+
+        let result = u_shape.difference(&squares);
+
+        assert_eq!(result.0.len(), 1, "result should be a single polygon");
+        let poly = &result.0[0];
+        assert_eq!(poly.interiors().len(), 2, "polygon should have 2 holes");
+
+        let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON((
+            (0.0 0.0, 5.0 0.0, 5.0 3.0, 3.0 3.0, 3.0 2.0, 2.0 2.0, 2.0 3.0, 0.0 3.0, 0.0 0.0),
+            (1.0 1.0, 1.0 2.0, 2.0 2.0, 2.0 1.0, 1.0 1.0),
+            (3.0 1.0, 3.0 2.0, 4.0 2.0, 4.0 1.0, 3.0 1.0)
+        )));
+        let im = result.relate(&expected);
+        assert!(
+            im.is_equal_topo(),
+            "result: {}, expected: {}",
+            result.to_wkt(),
+            expected.to_wkt(),
+        );
     }
 }

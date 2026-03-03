@@ -254,9 +254,10 @@ mod test {
 
         let first = lens[0];
 
-        assert!(lens
-            .iter()
-            .all(|x| first.relative_eq(x, f64::EPSILON, 1e-10)))
+        assert!(
+            lens.iter()
+                .all(|x| first.relative_eq(x, f64::EPSILON, 1e-10))
+        )
     }
 
     #[test]

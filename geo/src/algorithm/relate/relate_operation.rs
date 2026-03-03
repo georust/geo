@@ -1,10 +1,10 @@
 use super::{EdgeEndBuilder, IntersectionMatrix};
 use crate::dimensions::{Dimensions, HasDimensions};
 use crate::relate::geomgraph::{
-    index::SegmentIntersector,
-    node_map::{NodeFactory, NodeMap},
     CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, LabeledEdgeEndBundleStar,
     RobustLineIntersector,
+    index::SegmentIntersector,
+    node_map::{NodeFactory, NodeMap},
 };
 use crate::{Coord, GeoFloat, GeometryCow};
 use crate::{CoordinatePosition, Relate};
@@ -289,10 +289,7 @@ where
         labeled_node_edges: Vec<(CoordNode<F>, LabeledEdgeEndBundleStar<F>)>,
         intersection_matrix: &mut IntersectionMatrix,
     ) {
-        debug!(
-            "before updated_intersection_matrix(isolated_edges): {:?}",
-            intersection_matrix
-        );
+        debug!("before updated_intersection_matrix(isolated_edges): {intersection_matrix:?}",);
         for isolated_edge in &self.isolated_edges {
             let edge = isolated_edge.borrow();
             Edge::<F>::update_intersection_matrix(edge.label(), intersection_matrix);
@@ -386,7 +383,7 @@ mod test {
     use crate::Relate;
 
     use super::*;
-    use geo_types::{line_string, polygon, Geometry};
+    use geo_types::{Geometry, line_string, polygon};
     use std::str::FromStr;
 
     #[test]

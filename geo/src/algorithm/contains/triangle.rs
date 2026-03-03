@@ -1,6 +1,6 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
+use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::geometry::*;
-use crate::{kernels::Kernel, GeoFloat, GeoNum, Orientation};
+use crate::{GeoFloat, GeoNum, Orientation, kernels::Kernel};
 
 // ┌──────────────────────────────┐
 // │ Implementations for Triangle │

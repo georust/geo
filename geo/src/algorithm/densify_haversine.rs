@@ -141,7 +141,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, CoordsIter};
+    use crate::{CoordsIter, coord};
 
     #[test]
     fn test_polygon_densify() {
@@ -221,7 +221,7 @@ mod tests {
 
     #[test]
     fn test_empty_linestring() {
-        let linestring: LineString<f64> = LineString::new(vec![]);
+        let linestring: LineString<f64> = LineString::empty();
         #[allow(deprecated)]
         let dense = linestring.densify_haversine(10.0);
         assert_eq!(0, dense.coords_count());

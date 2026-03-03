@@ -1,7 +1,8 @@
-use super::{impl_contains_from_relate, impl_contains_geometry_for, Contains};
-use crate::algorithm::Intersects;
+use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
+use crate::algorithm::kernels::Kernel;
+use crate::dimensions::Dimensions;
 use crate::geometry::*;
-use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions};
+use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions, Intersects, Orientation};
 
 // ┌────────────────────────────────┐
 // │ Implementations for LineString │
@@ -20,9 +21,9 @@ where
             return self.is_closed();
         }
 
-        self.lines()
-            .enumerate()
-            .any(|(i, line)| line.contains(coord) || (i > 0 && coord == &line.start))
+        // since it is already known that coord != linestring start or end
+        // it is sufficient to check if the coord intersects any line,
+        self.lines().any(|ln| ln.intersects(coord))
     }
 }
 
@@ -44,60 +45,71 @@ where
             return self.contains(&line.start);
         }
 
-        // We copy the line as we may truncate the line as
-        // we find partial matches.
-        let mut line = *line;
-        let mut first_cut = None;
+        let is_vertical = line.start.x == line.end.x;
 
-        let lines_iter = self.lines();
-        let num_lines = lines_iter.len();
+        // pre-order the line so that we can use the faster overlap check
+        let line = if (is_vertical && line.start.y > line.end.y)
+            || (!is_vertical && line.start.x > line.end.x)
+        {
+            Line::new(line.end, line.start)
+        } else {
+            *line
+        };
 
-        // We need to repeat the logic twice to handle cases
-        // where the linestring starts at the middle of the line.
-        for (i, segment) in self.lines().chain(lines_iter).enumerate() {
-            if i >= num_lines {
-                // The first loop was done. If we never cut
-                // the line, or at the cut segment again, we
-                // can exit now.
-                if let Some(upto_i) = first_cut {
-                    if i >= num_lines + upto_i {
-                        break;
+        let candidates: Vec<(T, T)> = if is_vertical {
+            self.lines()
+                .filter(|segment| overlap::y_overlap(&line, segment))
+                .filter(|segment| is_collinear(&line, segment))
+                .map(|segment| {
+                    if segment.start.y < segment.end.y {
+                        (segment.start.y, segment.end.y)
+                    } else {
+                        (segment.end.y, segment.start.y)
                     }
-                } else {
-                    break;
+                })
+                .collect()
+        } else {
+            self.lines()
+                .filter(|segment| overlap::x_overlap(&line, segment))
+                .filter(|segment| is_collinear(&line, segment))
+                .map(|segment| {
+                    if segment.start.x < segment.end.x {
+                        (segment.start.x, segment.end.x)
+                    } else {
+                        (segment.end.x, segment.start.x)
+                    }
+                })
+                .collect()
+        };
+
+        let mut changed = true;
+
+        // use y value instead if x values are identical
+        let (mut line_start, mut line_end) = if is_vertical {
+            (line.start.y, line.end.y)
+        } else {
+            (line.start.x, line.end.x)
+        };
+
+        // interval-based overlap checks
+        while changed {
+            changed = false;
+            for (c_start, c_end) in candidates.iter() {
+                // if no overlap, skip
+                if *c_end <= line_start || line_end <= *c_start {
                 }
-            }
-            // Look for a segment that intersects at least
-            // one of the end points.
-            let other = if segment.intersects(&line.start) {
-                line.end
-            } else if segment.intersects(&line.end) {
-                line.start
-            } else {
-                continue;
-            };
-
-            // If the other end point also intersects this
-            // segment, then we are done.
-            let new_inside = if segment.intersects(&other) {
-                return true;
-            }
-            // otoh, if the line contains one of the ends of
-            // the segments, then we truncate the line to
-            // the part outside.
-            else if line.contains(&segment.start) {
-                segment.start
-            } else if line.contains(&segment.end) {
-                segment.end
-            } else {
-                continue;
-            };
-
-            first_cut = first_cut.or(Some(i));
-            if other == line.start {
-                line.end = new_inside;
-            } else {
-                line.start = new_inside;
+                // if candidate covers line, return true
+                else if *c_start <= line_start && line_end <= *c_end {
+                    return true;
+                } else if *c_start <= line_start {
+                    // trim start
+                    changed = true;
+                    line_start = *c_end;
+                } else if line_end <= *c_end {
+                    // trim end
+                    changed = true;
+                    line_end = *c_start;
+                }
             }
         }
 
@@ -113,7 +125,18 @@ where
         if self.is_empty() || rhs.is_empty() {
             return false;
         }
-        rhs.lines().all(|l| self.contains(&l))
+
+        // handle degenerate linestring case
+        if rhs.dimensions() == Dimensions::ZeroDimensional {
+            return self.contains(&rhs.0[0]);
+        }
+
+        // filter out zero-length segments
+        // it is known from != Dimensions::ZeroDimensional && !self.is_empty()
+        // that there must be at least one segment with non-zero length
+        rhs.lines()
+            .filter(|l| l.start != l.end)
+            .all(|l| self.contains(&l))
     }
 }
 
@@ -127,6 +150,16 @@ impl_contains_geometry_for!(LineString<T>);
 impl_contains_from_relate!(MultiLineString<T>, [Line<T>, LineString<T>, Polygon<T>, MultiPoint<T>, MultiLineString<T>, MultiPolygon<T>, GeometryCollection<T>, Rect<T>, Triangle<T>]);
 impl_contains_geometry_for!(MultiLineString<T>);
 
+impl<T> Contains<Coord<T>> for MultiLineString<T>
+where
+    T: CoordNum,
+    LineString<T>: Contains<Coord<T>>,
+{
+    fn contains(&self, coord: &Coord<T>) -> bool {
+        self.iter().any(|ls| ls.contains(coord))
+    }
+}
+
 impl<T> Contains<Point<T>> for MultiLineString<T>
 where
     T: CoordNum,
@@ -134,5 +167,123 @@ where
 {
     fn contains(&self, rhs: &Point<T>) -> bool {
         self.iter().any(|ls| ls.contains(rhs))
+    }
+}
+
+#[inline]
+fn is_collinear<T>(l1: &Line<T>, l2: &Line<T>) -> bool
+where
+    T: GeoNum,
+{
+    T::Ker::orient2d(l1.start, l1.end, l2.start) == Orientation::Collinear
+        && T::Ker::orient2d(l1.start, l1.end, l2.end) == Orientation::Collinear
+}
+
+/// Suppose we have 2 pairs (p1,p2) and (q1,q2) where p1 < p2 and q1 < q2
+///
+/// It is sufficient to show that each lower bound is smaller than the others' upper bound for the ranges to overlap  
+mod overlap {
+    use super::*;
+
+    #[inline]
+    /// Since l1 is ordered, we can execute overlap check in 3 comparisons.  
+    /// We use exclusive bounds because we only want to keep segments which can trim the line
+    pub(super) fn x_overlap<T: GeoNum>(ordered_l1: &Line<T>, l2: &Line<T>) -> bool {
+        debug_assert!(ordered_l1.start.x <= ordered_l1.end.x);
+
+        let (p1, p2) = (ordered_l1.start.x, ordered_l1.end.x);
+        let (q1, q2) = if l2.start.x < l2.end.x {
+            (l2.start.x, l2.end.x)
+        } else {
+            (l2.end.x, l2.start.x)
+        };
+
+        p1 < q2 && q1 < p2
+    }
+
+    #[inline]
+    /// Since l1 is ordered, we can execute overlap check in 3 comparisons.  
+    /// We use exclusive bounds because we only want to keep segments which can trim the line
+    pub(super) fn y_overlap<T: GeoNum>(ordered_l1: &Line<T>, l2: &Line<T>) -> bool {
+        debug_assert!(ordered_l1.start.y <= ordered_l1.end.y);
+
+        let (p1, p2) = (ordered_l1.start.y, ordered_l1.end.y);
+        let (q1, q2) = if l2.start.y < l2.end.y {
+            (l2.start.y, l2.end.y)
+        } else {
+            (l2.end.y, l2.start.y)
+        };
+
+        p1 < q2 && q1 < p2
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::{Contains, Relate};
+    use crate::{Convert, wkt};
+    use crate::{Line, LineString, Validation};
+
+    #[test]
+    fn linestring_component_with_zero_length() {
+        let ls: LineString<f64> = wkt! {LINESTRING(0 0, 2 2)}.convert();
+
+        // these are valid geometries
+        let ls_start: LineString<f64> = wkt! {LINESTRING(0 0, 0 0,0 0, 1 1)}.convert();
+        let ls_end: LineString<f64> = wkt! {LINESTRING(0 0, 1 1,1 1,1 1)}.convert();
+        assert!(ls_start.is_valid());
+        assert!(ls_end.is_valid());
+
+        // these are invalid geometries but we handle degenerate geometries as points
+        let degen_start: LineString<f64> = wkt! {LINESTRING(0 0, 0 0)}.convert();
+        let degen_end: LineString<f64> = wkt! {LINESTRING(2 2, 2 2)}.convert();
+        assert!(!degen_start.is_valid());
+        assert!(!degen_end.is_valid());
+
+        assert!(ls.relate(&ls_start).is_contains());
+        assert!(ls.contains(&ls_start));
+        assert!(ls.relate(&ls_end).is_contains());
+        assert!(ls.contains(&ls_end));
+
+        assert!(!ls.contains(&degen_start));
+        assert!(!ls.relate(&degen_start).is_contains());
+        assert!(!ls.contains(&degen_end));
+        assert!(!ls.relate(&degen_end).is_contains());
+    }
+
+    #[test]
+    fn triangles() {
+        let ln: Line<f64> = wkt! {LINE(0 0, 10 0)}.convert();
+        let ls: LineString<f64> = wkt! {LINESTRING(0 0, 1 1, 2 0, 4 0, 5 1, 6 0, 8 0, 9 1,10 0, 8 0, 7 -1, 6 0, 4 0, 3 -1, 2 0 , 0 0 )}.convert();
+
+        // ln and ls are valid
+        assert!(ln.is_valid());
+        assert!(ls.is_valid());
+
+        assert_eq!(
+            ls.relate(&ln).is_contains(), // true
+            ls.contains(&ln)              // true
+        );
+    }
+
+    #[test]
+    fn test_start_end() {
+        let ls: LineString<f64> = wkt! {LINESTRING(0 0,0 1, 1 1)}.convert();
+        let ln_start: Line<f64> = wkt! {LINE(0 0, 0 0)}.convert();
+        let ln_end: Line<f64> = wkt! {LINE(1 1, 1 1)}.convert();
+
+        assert!(!ls.contains(&ln_start));
+        assert!(!ls.contains(&ln_end));
+    }
+
+    #[test]
+    fn test_vertical() {
+        let ls1: LineString<f64> = wkt! {LINESTRING(0 0,0 5,0 10)}.convert();
+        let ls2: LineString<f64> = wkt! {LINESTRING(0 10,0 5, 0 0)}.convert();
+
+        let ln: Line<f64> = wkt! {LINE(0 0, 0 9)}.convert();
+
+        assert!(ls1.contains(&ln));
+        assert!(ls2.contains(&ln));
     }
 }

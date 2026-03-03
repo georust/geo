@@ -1,9 +1,9 @@
 use super::{
+    CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
     index::{
         EdgeSetIntersector, RStarEdgeSetIntersector, Segment, SegmentIntersector,
         SimpleEdgeSetIntersector,
     },
-    CoordNode, CoordPos, Direction, Edge, Label, LineIntersector, PlanarGraph, TopologyPosition,
 };
 
 use crate::HasDimensions;
@@ -143,7 +143,7 @@ where
         graph
     }
 
-    pub(crate) fn geometry(&self) -> &GeometryCow<F> {
+    pub(crate) fn geometry(&self) -> &GeometryCow<'_, F> {
         &self.parent_geometry
     }
 

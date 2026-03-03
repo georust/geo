@@ -45,7 +45,7 @@ impl<F: GeoFloat> Validation for MultiLineString<F> {
 mod tests {
     use super::*;
     use crate::algorithm::validation::{
-        assert_valid, assert_validation_errors, InvalidLineString, InvalidMultiLineString,
+        InvalidLineString, InvalidMultiLineString, assert_valid, assert_validation_errors,
     };
     use crate::wkt;
 

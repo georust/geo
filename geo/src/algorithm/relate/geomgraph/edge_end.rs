@@ -1,5 +1,5 @@
 use super::{CoordNode, Edge, Label, Quadrant};
-use crate::{coord, Coord, GeoFloat};
+use crate::{Coord, GeoFloat, coord};
 
 use std::cell::RefCell;
 use std::fmt;
