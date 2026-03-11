@@ -121,7 +121,7 @@ mod tests {
             let union = poly1.union(&polygon!());
             assert_eq!(union.0.len(), 1);
 
-            let union = &union.0[0];
+            let union = &union[0];
             assert!(matches!(
                 union.exterior().winding_order(),
                 Some(WindingOrder::CounterClockwise)
@@ -131,7 +131,7 @@ mod tests {
             let intersection = poly1.intersection(&poly1);
             assert_eq!(intersection.0.len(), 1);
 
-            let intersection = &intersection.0[0];
+            let intersection = &intersection[0];
             assert!(matches!(
                 intersection.exterior().winding_order(),
                 Some(WindingOrder::CounterClockwise)
@@ -148,7 +148,7 @@ mod tests {
             let union = poly1.union(&poly2);
             assert_eq!(union.0.len(), 1);
 
-            let union = &union.0[0];
+            let union = &union[0];
             assert!(union.interiors().is_empty());
             assert!(matches!(
                 union.exterior().winding_order(),

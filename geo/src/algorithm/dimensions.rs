@@ -415,8 +415,8 @@ impl<C: GeoNum> HasDimensions for Triangle<C> {
 
     fn dimensions(&self) -> Dimensions {
         use crate::Kernel;
-        if Collinear == C::Ker::orient2d(self.0, self.1, self.2) {
-            if self.0 == self.1 && self.1 == self.2 {
+        if Collinear == C::Ker::orient2d(self.v1(), self.v2(), self.v3()) {
+            if self.v1() == self.v2() && self.v2() == self.v3() {
                 // degenerate triangle is a point
                 Dimensions::ZeroDimensional
             } else {

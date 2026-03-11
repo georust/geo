@@ -88,10 +88,10 @@ impl<F: GeoFloat> LabeledEdgeEndBundleStar<F> {
 
         for edge_ends in self.edge_end_bundles_iter() {
             let label = edge_ends.label();
-            if label.is_geom_area(geom_index) {
-                if let Some(position) = label.position(geom_index, Direction::Left) {
-                    start_position = Some(position);
-                }
+            if label.is_geom_area(geom_index)
+                && let Some(position) = label.position(geom_index, Direction::Left)
+            {
+                start_position = Some(position);
             }
         }
         if start_position.is_none() {

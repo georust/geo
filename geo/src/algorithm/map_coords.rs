@@ -660,20 +660,24 @@ impl<T: CoordNum, NT: CoordNum> MapCoords<T, NT> for Triangle<T> {
     type Output = Triangle<NT>;
 
     fn map_coords(&self, func: impl Fn(Coord<T>) -> Coord<NT> + Copy) -> Self::Output {
-        Triangle::new(func(self.0), func(self.1), func(self.2))
+        Triangle::new(func(self.v1()), func(self.v2()), func(self.v3()))
     }
 
     fn try_map_coords<E>(
         &self,
         func: impl Fn(Coord<T>) -> Result<Coord<NT>, E>,
     ) -> Result<Self::Output, E> {
-        Ok(Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?))
+        Ok(Triangle::new(
+            func(self.v1())?,
+            func(self.v2())?,
+            func(self.v3())?,
+        ))
     }
 }
 
 impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
     fn map_coords_in_place(&mut self, func: impl Fn(Coord<T>) -> Coord<T>) {
-        let mut new_triangle = Triangle::new(func(self.0), func(self.1), func(self.2));
+        let mut new_triangle = Triangle::new(func(self.v1()), func(self.v2()), func(self.v3()));
 
         ::std::mem::swap(self, &mut new_triangle);
     }
@@ -682,7 +686,7 @@ impl<T: CoordNum> MapCoordsInPlace<T> for Triangle<T> {
         &mut self,
         func: impl Fn(Coord<T>) -> Result<Coord<T>, E>,
     ) -> Result<(), E> {
-        let mut new_triangle = Triangle::new(func(self.0)?, func(self.1)?, func(self.2)?);
+        let mut new_triangle = Triangle::new(func(self.v1())?, func(self.v2())?, func(self.v3())?);
 
         ::std::mem::swap(self, &mut new_triangle);
 
@@ -795,8 +799,8 @@ mod test {
     fn linestring() {
         let line1: LineString<f32> = LineString::from(vec![(0., 0.), (1., 2.)]);
         let line2 = line1.map_coords(|Coord { x, y }| (x + 10., y - 100.).into());
-        assert_relative_eq!(line2.0[0], Coord::from((10., -100.)), epsilon = 1e-6);
-        assert_relative_eq!(line2.0[1], Coord::from((11., -98.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[0], Coord::from((10., -100.)), epsilon = 1e-6);
+        assert_relative_eq!(line2[1], Coord::from((11., -98.)), epsilon = 1e-6);
     }
 
     #[test]
@@ -885,7 +889,7 @@ mod test {
         let mp2 = mp.map_coords(|Coord { x, y }| (x * 2., y + 100.).into());
         assert_eq!(mp2.0.len(), 2);
         assert_relative_eq!(
-            mp2.0[0],
+            mp2[0],
             polygon![
                 (x: 0., y: 100.),
                 (x: 20., y: 100.),
@@ -895,7 +899,7 @@ mod test {
             ],
         );
         assert_relative_eq!(
-            mp2.0[1],
+            mp2[1],
             polygon![
                 exterior: [
                     (x: 22., y: 111.),

@@ -2,8 +2,21 @@
 
 ## Unreleased
 
+- POSSIBLY BREAKING: `Triangle::from([a, b, c])` now enforces CCW winding (same as `Triangle::new`).
+- Add `Triangle::unchecked_winding(v1, v2, v3)` for callers that have pre-verified CCW order or don't require a specific winding.
+- Add `Triangle::v1()`, `Triangle::v2()`, `Triangle::v3()` getters.
+- Deprecate direct access to `Triangle`'s public tuple fields (`.0`, `.1`, `.2`); use the constructors and getters above.
+  - <https://github.com/georust/geo/pull/1510>
 - Implement Spade HasPosition for Coord
   - <https://github.com/georust/geo/pull/1490>
+- Implement Index and Range accessors for LineString, MultiPoint, MultiLineString, MultiPolygon, and GeometryCollection
+  ```rust
+  let multi_point = wkt!(MULTIPOINT(0 0,1 1,2 2,3 3));
+  let point = multi_point[1];
+  let three_points = multi_point[0..3];
+  // panics!
+  let no_point = multi_point[4]
+  ```
 
 ## 0.7.18 - 2025-12-01
 

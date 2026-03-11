@@ -138,7 +138,7 @@ where
         }
 
         // if any of the triangle's corners intersect the rectangle
-        self.intersects(&rhs.0)
+        self.intersects(&rhs.v1())
 
         // or some corner of the triangle intersects the rectangle
         || self.min().intersects(rhs)
