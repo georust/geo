@@ -21,6 +21,8 @@
 - POSSIBLY BREAKING: `Triangle`s returned by `earcut_triangles` are now oriented CCW.
 - POSSIBLY BREAKING: `earcut_triangles_raw` now omits the redundant "closing" coordinate from `vertices`.
   It wasn't referenced by the `triangle_indices` cut by earcutr, but you may notice a different triangulation for a given input.
+- Deprecate `StitchTriangulation`. Instead convert your triangles to Polygon and use unary_union.
+  - <https://github.com/georust/geo/pull/1514>
 
 ## 0.32.0 - 2025-12-05
 
