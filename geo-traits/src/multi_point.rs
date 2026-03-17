@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use crate::iterator::MultiPointIterator;
 use crate::{GeometryTrait, PointTrait, UnimplementedPoint};

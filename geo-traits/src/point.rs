@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 #[cfg(feature = "geo-types")]
 use geo_types::{Coord, CoordNum, Point};

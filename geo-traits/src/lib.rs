@@ -15,6 +15,7 @@
 //! different endianness than the current machine, so individual values may need to be cloned on
 //! read.
 
+#![cfg_attr(not(feature = "std"), no_std)]
 #![deny(missing_docs)]
 
 pub use coord::{CoordTrait, UnimplementedCoord};

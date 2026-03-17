@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 use crate::iterator::PolygonInteriorIterator;
 use crate::line_string::UnimplementedLineString;
