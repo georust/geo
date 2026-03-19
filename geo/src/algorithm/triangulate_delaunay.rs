@@ -96,7 +96,17 @@ mod private {
         // lines are deduped, etc.)
         fn cleanup_lines(lines: Vec<Line<T>>, snap_radius: T) -> TriangulationResult<Vec<Line<T>>> {
             let (known_coords, lines) = preprocess_lines(lines, snap_radius);
-            split_segments_at_intersections(lines, known_coords, snap_radius)
+            let mut lines = split_segments_at_intersections(lines, known_coords, snap_radius)?;
+            // Simple dedup (normalize direction, sort, remove consecutive duplicates).
+            // This is done here rather than inside split_segments_at_intersections
+            // because the repair module needs the raw duplicates for odd-even
+            // filtering -- see repair_polygon::odd_even_filter.
+            for line in lines.iter_mut() {
+                *line = sweep_normalize_line(*line);
+            }
+            lines.sort_by(sweep_line_ord);
+            lines.dedup();
+            Ok(lines)
         }
     }
 }
@@ -462,7 +472,7 @@ where
 /// A single pass suffices because splitting at all intersection points
 /// guarantees the resulting sub-segments share only endpoints, never
 /// interior crossings.
-fn split_segments_at_intersections<T: SpadeTriangulationFloat>(
+pub(crate) fn split_segments_at_intersections<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
     mut known_points: RTree<Coord<T>>,
     snap_radius: T,
@@ -559,13 +569,14 @@ fn split_segments_at_intersections<T: SpadeTriangulationFloat>(
         }
     }
 
-    // Phase 3: Dedup (normalize direction then sort + dedup)
+    // Phase 3: Remove degenerates only.  Deduplication is deliberately
+    // left to the caller because different consumers need different
+    // semantics: constrained triangulation uses simple dedup (keep one
+    // copy of each unique edge), while polygon repair uses odd-even
+    // filtering (edges appearing an even number of times cancel out).
+    // Collinear overlap splitting can produce legitimate duplicates that
+    // must survive to the caller for correct odd-even counting.
     result.retain(|l| l.start != l.end);
-    for line in result.iter_mut() {
-        *line = sweep_normalize_line(*line);
-    }
-    result.sort_by(sweep_line_ord);
-    result.dedup();
 
     Ok(result)
 }
@@ -585,7 +596,7 @@ impl<T: GeoFloat> crate::algorithm::sweep::Cross for SweepIndexedLine<T> {
 }
 
 /// Canonical direction for a line: lexicographically smaller endpoint first.
-fn sweep_normalize_line<T: GeoFloat>(line: Line<T>) -> Line<T> {
+pub(crate) fn sweep_normalize_line<T: GeoFloat>(line: Line<T>) -> Line<T> {
     let cmp = line
         .start
         .x
@@ -599,7 +610,7 @@ fn sweep_normalize_line<T: GeoFloat>(line: Line<T>) -> Line<T> {
 }
 
 /// Lexicographic comparison of two lines by (start.x, start.y, end.x, end.y).
-fn sweep_line_ord<T: GeoFloat>(a: &Line<T>, b: &Line<T>) -> std::cmp::Ordering {
+pub(crate) fn sweep_line_ord<T: GeoFloat>(a: &Line<T>, b: &Line<T>) -> std::cmp::Ordering {
     a.start
         .x
         .total_cmp(&b.start.x)
@@ -612,7 +623,7 @@ fn sweep_line_ord<T: GeoFloat>(a: &Line<T>, b: &Line<T>) -> std::cmp::Ordering {
 ///
 /// Uses an R-tree for O(log n) nearest-neighbour lookup instead of O(n) linear scan,
 /// which is critical for performance with large point sets.
-fn snap_or_register_point<T: SpadeTriangulationFloat>(
+pub(crate) fn snap_or_register_point<T: SpadeTriangulationFloat>(
     point: Coord<T>,
     known_points: &mut RTree<Coord<T>>,
     snap_radius: T,
@@ -648,7 +659,7 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
 ///    which was O(n) per insertion (O(n^2) total).
 ///
 /// Degenerate lines (start == end after snapping) are also removed.
-fn preprocess_lines<T: SpadeTriangulationFloat>(
+pub(crate) fn preprocess_lines<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
     snap_radius: T,
 ) -> (RTree<Coord<T>>, Vec<Line<T>>) {

@@ -288,6 +288,12 @@ pub mod triangulate_delaunay;
 #[cfg(feature = "spade")]
 pub use triangulate_delaunay::{TriangulateDelaunay, TriangulateDelaunayUnconstrained};
 
+/// Repair invalid polygons using constrained Delaunay triangulation (prepair algorithm).
+#[cfg(feature = "spade")]
+pub mod repair_polygon;
+#[cfg(feature = "spade")]
+pub use repair_polygon::MakeValid;
+
 /// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
 #[cfg(feature = "spade")]
 #[deprecated(
