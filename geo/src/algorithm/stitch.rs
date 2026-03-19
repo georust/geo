@@ -24,6 +24,10 @@ pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 
 // ========= Main Algo ============
 
+#[deprecated(
+    since = "0.32.1",
+    note = "Output is not always valid - use unary_union which is typically faster and produces valid output. Convert your triangles to polygon `triangle.to_polygon()` first."
+)]
 /// Trait to stitch together split up triangles.
 pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// This stitching only happens along identical edges which are located in two separate
@@ -139,6 +143,7 @@ mod private {
     }
 }
 
+#[allow(deprecated)]
 impl<S, T> StitchTriangles<T> for S
 where
     S: private::Stitchable<T>,
@@ -442,6 +447,7 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
 
 // ============= Tests ===========
 
+#[allow(deprecated)]
 #[cfg(test)]
 mod polygon_stitching_tests {
 
