@@ -27,6 +27,7 @@
   - <https://github.com/georust/geo/pull/1508>
   - The high level `TriangulateEarcut::earcut_triangles` API hasn't changed, but may return a different triangulation.
   - BREAKING: The low level `TriangulateEarcut::earcut_triangles_raw` API now groups coordinates `[[x0, y0],[x1 y1]]]`, previously it was flattened: `[x0, y1, x1, y1]`
+  - Replace quadratic algorithms in `triangulate_delaunay`
 
 ## 0.32.0 - 2025-12-05
 
