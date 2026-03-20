@@ -1,6 +1,7 @@
 use geo_types::{Coord, Line, Point, Triangle};
 use rstar::{RTree, RTreeNum};
 use spade::{ConstrainedDelaunayTriangulation, DelaunayTriangulation, SpadeNum, Triangulation};
+use std::collections::HashMap;
 
 use crate::{Centroid, Contains};
 use crate::{CoordsIter, Distance, Euclidean, GeoFloat, LineIntersection, LinesIter, Vector2DOps};
@@ -473,7 +474,7 @@ fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
         .map(|(i, l)| SweepIndexedLine { index: i, line: *l })
         .collect();
 
-    let mut split_points: Vec<Vec<Coord<T>>> = vec![Vec::new(); lines.len()];
+    let mut split_points: HashMap<usize, Vec<Coord<T>>> = HashMap::new();
     for (seg_a, seg_b, intersection) in Intersections::from_iter(indexed) {
         match intersection {
             LineIntersection::SinglePoint {
@@ -482,8 +483,8 @@ fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
             } => {
                 if is_proper {
                     let pt = snap_or_register_point(pt, &mut known_points, snap_radius);
-                    split_points[seg_a.index].push(pt);
-                    split_points[seg_b.index].push(pt);
+                    split_points.entry(seg_a.index).or_default().push(pt);
+                    split_points.entry(seg_b.index).or_default().push(pt);
                 }
             }
             LineIntersection::Collinear {
@@ -493,8 +494,8 @@ fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
                     let s = snap_or_register_point(overlap.start, &mut known_points, snap_radius);
                     let e = snap_or_register_point(overlap.end, &mut known_points, snap_radius);
                     for idx in [seg_a.index, seg_b.index] {
-                        split_points[idx].push(s);
-                        split_points[idx].push(e);
+                        split_points.entry(idx).or_default().push(s);
+                        split_points.entry(idx).or_default().push(e);
                     }
                 }
             }
@@ -502,21 +503,19 @@ fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
     }
 
     // Phase 2: Split each segment at its collected intersection points
-    let extra: usize = split_points.iter().map(|v| v.len()).sum();
+    let extra: usize = split_points.iter().map(|v| v.1.len()).sum();
     let mut result = Vec::with_capacity(lines.len() + extra);
     for (i, line) in lines.iter().enumerate() {
-        let pts = &mut split_points[i];
-        pts.retain(|p| *p != line.start && *p != line.end);
-
-        if pts.is_empty() {
+        let Some(mut pts) = split_points.remove(&i) else {
             result.push(*line);
             continue;
-        }
+        };
 
+        let dir = line.end - line.start;
+        pts.retain(|p| *p != line.start && *p != line.end);
         // Sort split points along the segment direction using dot-product
         // projection.  This correctly handles diagonal segments where sorting
         // by x or y alone would be ambiguous.
-        let dir = line.end - line.start;
         pts.sort_by(|a, b| {
             let ta = (*a - line.start).dot_product(dir);
             let tb = (*b - line.start).dot_product(dir);
