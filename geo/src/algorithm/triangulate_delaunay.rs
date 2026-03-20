@@ -3,10 +3,7 @@ use rstar::{RTree, RTreeNum};
 use spade::{ConstrainedDelaunayTriangulation, DelaunayTriangulation, SpadeNum, Triangulation};
 
 use crate::{Centroid, Contains};
-use crate::{
-    CoordsIter, Distance, Euclidean, GeoFloat, LineIntersection, LinesIter,
-    line_intersection::line_intersection,
-};
+use crate::{CoordsIter, Distance, Euclidean, GeoFloat, LineIntersection, LinesIter, Vector2DOps};
 
 // ======== Config ============
 
@@ -448,150 +445,145 @@ where
 
 // ========== Triangulation trait impl helpers ============
 
+/// Find all intersections in `lines` via a sweep-line pass and split every
+/// segment at its intersection points.  Newly created vertices are snapped
+/// into `known_points` using `snap_radius`.
+///
+/// This replaces the previous iterative find-one-split-loop approach that
+/// was O(k * n^2) (an all-pairs scan per intersection, up to 1000 times).
+/// The sweep finds all intersections in O((n + m) log n), then splits
+/// every segment in a single pass.  A single pass suffices because
+/// splitting at all intersection points guarantees the resulting
+/// sub-segments share only endpoints, never interior crossings.
 fn prepare_intersection_contraint<T: SpadeTriangulationFloat>(
-    mut lines: Vec<Line<T>>,
+    lines: Vec<Line<T>>,
     mut known_points: RTree<Coord<T>>,
     snap_radius: T,
 ) -> Result<Vec<Line<T>>, TriangulationError> {
-    // Rule 2 of "Power of 10" rules (NASA)
-    // safety net. We can't prove that the `while let` loop isn't going to run infinitely, so
-    // we abort after a fixed amount of iterations. In case that the iteration seems to loop
-    // indefinitely this check will return an Error indicating the infinite loop.
-    let mut loop_count = 1000;
-    let mut loop_check = || {
-        loop_count -= 1;
-        (loop_count != 0)
-            .then_some(())
-            .ok_or(TriangulationError::LoopTrap)
-    };
+    use crate::algorithm::sweep::Intersections;
 
-    while let Some((indices, intersection)) = {
-        let mut iter = iter_line_pairs(&lines);
-        iter.find_map(find_intersecting_lines_fn)
-    } {
-        loop_check()?;
-        let [l0, l1] = remove_lines_by_index(indices, &mut lines);
-        let new_lines = split_lines([l0, l1], intersection);
-        let new_lines = cleanup_filter_lines(new_lines, &lines, &mut known_points, snap_radius);
-
-        lines.extend(new_lines);
+    if lines.len() < 2 {
+        return Ok(lines);
     }
 
-    Ok(lines)
-}
+    // Phase 1: Find all intersections via sweep
+    let indexed: Vec<SweepIndexedLine<T>> = lines
+        .iter()
+        .enumerate()
+        .map(|(i, l)| SweepIndexedLine { index: i, line: *l })
+        .collect();
 
-/// iterates over all combinations (a,b) of lines in a vector where a != b
-fn iter_line_pairs<T: SpadeTriangulationFloat>(
-    lines: &[Line<T>],
-) -> impl Iterator<Item = [(usize, &Line<T>); 2]> {
-    lines.iter().enumerate().flat_map(|(idx0, line0)| {
-        lines
-            .iter()
-            .enumerate()
-            .skip(idx0 + 1)
-            .filter(move |(idx1, line1)| *idx1 != idx0 && line0 != *line1)
-            .map(move |(idx1, line1)| [(idx0, line0), (idx1, line1)])
-    })
-}
-
-/// checks whether two lines are intersecting and if so, checks the intersection to not be ill
-/// formed
-///
-/// returns
-/// - [usize;2] : sorted indexes of lines, smaller one comes first
-/// - intersection : type of intersection
-fn find_intersecting_lines_fn<T: SpadeTriangulationFloat>(
-    [(idx0, line0), (idx1, line1)]: [(usize, &Line<T>); 2],
-) -> Option<([usize; 2], LineIntersection<T>)> {
-    line_intersection(*line0, *line1)
-        .filter(|intersection| {
-            match intersection {
-                // intersection is not located in both lines
-                LineIntersection::SinglePoint { is_proper, .. } if !is_proper => false,
-                // collinear intersection is length zero line
-                LineIntersection::Collinear { intersection }
-                    if intersection.start == intersection.end =>
-                {
-                    false
+    let mut split_points: Vec<Vec<Coord<T>>> = vec![Vec::new(); lines.len()];
+    for (seg_a, seg_b, intersection) in Intersections::from_iter(indexed) {
+        match intersection {
+            LineIntersection::SinglePoint {
+                intersection: pt,
+                is_proper,
+            } => {
+                if is_proper {
+                    let pt = snap_or_register_point(pt, &mut known_points, snap_radius);
+                    split_points[seg_a.index].push(pt);
+                    split_points[seg_b.index].push(pt);
                 }
-                _ => true,
             }
-        })
-        .map(|intersection| ([idx0, idx1], intersection))
-}
-
-/// removes two lines by index in a safe way since the second index can be invalidated after
-/// the first line was removed (remember `.remove(idx)` returns the element and shifts the tail
-/// of the vector in direction of its start to close the gap)
-fn remove_lines_by_index<T: SpadeTriangulationFloat>(
-    mut indices: [usize; 2],
-    lines: &mut Vec<Line<T>>,
-) -> [Line<T>; 2] {
-    indices.sort();
-    let [idx0, idx1] = indices;
-    let l1 = lines.remove(idx1);
-    let l0 = lines.remove(idx0);
-    [l0, l1]
-}
-
-/// split lines based on intersection kind:
-///
-/// - intersection point: create 4 new lines from the existing line's endpoints to the intersection
-///   point
-/// - collinear: create 3 new lines (before overlap, overlap, after overlap)
-fn split_lines<T: SpadeTriangulationFloat>(
-    [l0, l1]: [Line<T>; 2],
-    intersection: LineIntersection<T>,
-) -> Vec<Line<T>> {
-    match intersection {
-        LineIntersection::SinglePoint { intersection, .. } => [
-            (l0.start, intersection),
-            (l0.end, intersection),
-            (l1.start, intersection),
-            (l1.end, intersection),
-        ]
-        .map(|(a, b)| Line::new(a, b))
-        .to_vec(),
-        LineIntersection::Collinear { .. } => {
-            let mut points = [l0.start, l0.end, l1.start, l1.end];
-            // sort points by their coordinate values to resolve ambiguities
-            points.sort_by(|a, b| {
-                a.x.partial_cmp(&b.x)
-                    .expect("sorting points by coordinate x failed")
-                    .then_with(|| {
-                        a.y.partial_cmp(&b.y)
-                            .expect("sorting points by coordinate y failed")
-                    })
-            });
-            // since all points are on one line we can just create new lines from consecutive
-            // points after sorting
-            points
-                .windows(2)
-                .map(|win| Line::new(win[0], win[1]))
-                .collect::<Vec<_>>()
+            LineIntersection::Collinear {
+                intersection: overlap,
+            } => {
+                if overlap.start != overlap.end {
+                    let s = snap_or_register_point(overlap.start, &mut known_points, snap_radius);
+                    let e = snap_or_register_point(overlap.end, &mut known_points, snap_radius);
+                    for idx in [seg_a.index, seg_b.index] {
+                        split_points[idx].push(s);
+                        split_points[idx].push(e);
+                    }
+                }
+            }
         }
     }
+
+    // Phase 2: Split each segment at its collected intersection points
+    let extra: usize = split_points.iter().map(|v| v.len()).sum();
+    let mut result = Vec::with_capacity(lines.len() + extra);
+    for (i, line) in lines.iter().enumerate() {
+        let pts = &mut split_points[i];
+        pts.retain(|p| *p != line.start && *p != line.end);
+
+        if pts.is_empty() {
+            result.push(*line);
+            continue;
+        }
+
+        // Sort split points along the segment direction using dot-product
+        // projection.  This correctly handles diagonal segments where sorting
+        // by x or y alone would be ambiguous.
+        let dir = line.end - line.start;
+        pts.sort_by(|a, b| {
+            let ta = (*a - line.start).dot_product(dir);
+            let tb = (*b - line.start).dot_product(dir);
+            ta.total_cmp(&tb)
+        });
+        pts.dedup();
+
+        // Create sub-segments between consecutive split points
+        let mut prev = line.start;
+        for &pt in pts.iter() {
+            if pt != prev {
+                result.push(Line::new(prev, pt));
+            }
+            prev = pt;
+        }
+        if prev != line.end {
+            result.push(Line::new(prev, line.end));
+        }
+    }
+
+    // Phase 3: Dedup (normalize direction then sort + dedup)
+    result.retain(|l| l.start != l.end);
+    for line in result.iter_mut() {
+        *line = sweep_normalize_line(*line);
+    }
+    result.sort_by(sweep_line_ord);
+    result.dedup();
+
+    Ok(result)
 }
 
-/// new lines from the `split_lines` function may contain a variety of ill formed lines, this
-/// function cleans all of these cases up
-fn cleanup_filter_lines<T: SpadeTriangulationFloat>(
-    lines_need_check: Vec<Line<T>>,
-    existing_lines: &[Line<T>],
-    known_points: &mut RTree<Coord<T>>,
-    snap_radius: T,
-) -> Vec<Line<T>> {
-    lines_need_check
-        .into_iter()
-        .map(|mut line| {
-            line.start = snap_or_register_point(line.start, known_points, snap_radius);
-            line.end = snap_or_register_point(line.end, known_points, snap_radius);
-            line
-        })
-        .filter(|l| l.start != l.end)
-        .filter(|l| !existing_lines.contains(l))
-        .filter(|l| !existing_lines.contains(&Line::new(l.end, l.start)))
-        .collect::<Vec<_>>()
+/// A line segment tagged with its original index, for the sweep iterator.
+#[derive(Clone, Debug)]
+struct SweepIndexedLine<T: GeoFloat> {
+    index: usize,
+    line: Line<T>,
+}
+
+impl<T: GeoFloat> crate::algorithm::sweep::Cross for SweepIndexedLine<T> {
+    type Scalar = T;
+    fn line(&self) -> Line<T> {
+        self.line
+    }
+}
+
+/// Canonical direction for a line: lexicographically smaller endpoint first.
+fn sweep_normalize_line<T: GeoFloat>(line: Line<T>) -> Line<T> {
+    let cmp = line
+        .start
+        .x
+        .total_cmp(&line.end.x)
+        .then_with(|| line.start.y.total_cmp(&line.end.y));
+    if cmp == std::cmp::Ordering::Greater {
+        Line::new(line.end, line.start)
+    } else {
+        line
+    }
+}
+
+/// Lexicographic comparison of two lines by (start.x, start.y, end.x, end.y).
+fn sweep_line_ord<T: GeoFloat>(a: &Line<T>, b: &Line<T>) -> std::cmp::Ordering {
+    a.start
+        .x
+        .total_cmp(&b.start.x)
+        .then_with(|| a.start.y.total_cmp(&b.start.y))
+        .then_with(|| a.end.x.total_cmp(&b.end.x))
+        .then_with(|| a.end.y.total_cmp(&b.end.y))
 }
 
 /// Snap point to the nearest existing point if it's close enough.
@@ -615,34 +607,49 @@ fn snap_or_register_point<T: SpadeTriangulationFloat>(
         })
 }
 
-/// preprocesses lines so that we're less likely to hit issues when using the spade triangulation
+/// Snap endpoints and deduplicate lines before intersection splitting.
+///
+/// This function interleaves two concerns in a specific order:
+///
+/// 1. **Snap** every endpoint to the nearest known coordinate within
+///    `snap_radius`, using an R-tree for O(log n) nearest-neighbour
+///    lookup.  Snapping must happen first because it can make two
+///    previously distinct coordinates equal, which affects dedup.
+///    The R-tree is built incrementally so that later lines snap to
+///    points introduced by earlier ones.
+///
+/// 2. **Deduplicate** lines that are identical after snapping.  Both
+///    forward (A->B) and reverse (B->A) are considered duplicates.
+///    This is done by normalising each line so the lexicographically
+///    smaller endpoint comes first, then sorting and deduplicating
+///    in O(n log n).  The previous implementation used `Vec::contains`
+///    which was O(n) per insertion (O(n^2) total).
+///
+/// Degenerate lines (start == end after snapping) are also removed.
 fn preprocess_lines<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
     snap_radius: T,
 ) -> (RTree<Coord<T>>, Vec<Line<T>>) {
+    // Pass 1: snap all endpoints via R-tree (O(n log n))
     let mut known_coords: RTree<Coord<T>> = RTree::new();
-    let capacity = lines.len();
-    let lines = lines
+    let mut snapped: Vec<Line<T>> = lines
         .into_iter()
-        .fold(Vec::with_capacity(capacity), |mut lines, mut line| {
-            // deduplicating:
-
-            // 1. snap coords of lines to existing coords
+        .map(|mut line| {
             line.start = snap_or_register_point(line.start, &mut known_coords, snap_radius);
             line.end = snap_or_register_point(line.end, &mut known_coords, snap_radius);
-            if
-            // 2. make sure line isn't degenerate (no length when start == end)
-            line.start != line.end
-                // 3. make sure line or flipped line wasn't already added
-                && !lines.contains(&line)
-                && !lines.contains(&Line::new(line.end, line.start))
-            {
-                lines.push(line)
-            }
+            line
+        })
+        .filter(|l| l.start != l.end)
+        .collect();
 
-            lines
-        });
-    (known_coords, lines)
+    // Pass 2: normalise direction, sort, dedup (O(n log n))
+    for line in snapped.iter_mut() {
+        *line = sweep_normalize_line(*line);
+    }
+    snapped.sort_by(sweep_line_ord);
+    snapped.dedup();
+
+    (known_coords, snapped)
 }
 
 #[cfg(test)]
@@ -898,5 +905,71 @@ mod spade_triangulation {
         // Respects polygon boundaries -> 2 triangles (one per polygon)
         let constrained = slice.constrained_triangulation(Default::default());
         assert_num_triangles(&constrained, 2);
+    }
+
+    // ====== Tests: prepare_intersection_contraint (sweep-based) ======
+
+    #[test]
+    fn prepare_intersection_no_crossings() {
+        let lines = vec![
+            Line::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 10.0, y: 0.0 }),
+            Line::new(Coord { x: 0.0, y: 5.0 }, Coord { x: 10.0, y: 5.0 }),
+        ];
+        let result = prepare_intersection_contraint(lines, RTree::new(), 0.0001).unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn prepare_intersection_single_crossing() {
+        // X pattern: two lines crossing at (5, 5)
+        let lines = vec![
+            Line::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 10.0, y: 10.0 }),
+            Line::new(Coord { x: 0.0, y: 10.0 }, Coord { x: 10.0, y: 0.0 }),
+        ];
+        let result = prepare_intersection_contraint(lines, RTree::new(), 0.0001).unwrap();
+        assert_eq!(result.len(), 4, "two crossing lines -> 4 sub-segments");
+    }
+
+    #[test]
+    fn prepare_intersection_multiple_splits() {
+        // Horizontal line crossed by two vertical lines
+        let lines = vec![
+            Line::new(Coord { x: 0.0, y: 5.0 }, Coord { x: 10.0, y: 5.0 }),
+            Line::new(Coord { x: 3.0, y: 0.0 }, Coord { x: 3.0, y: 10.0 }),
+            Line::new(Coord { x: 7.0, y: 0.0 }, Coord { x: 7.0, y: 10.0 }),
+        ];
+        let result = prepare_intersection_contraint(lines, RTree::new(), 0.0001).unwrap();
+        // Horizontal: 3 parts, each vertical: 2 parts = 7
+        assert_eq!(result.len(), 7);
+    }
+
+    #[test]
+    fn prepare_intersection_diagonal_sort() {
+        // Diagonal crossed by two horizontals -- tests parametric sorting
+        let lines = vec![
+            Line::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 10.0, y: 10.0 }),
+            Line::new(Coord { x: 0.0, y: 3.0 }, Coord { x: 10.0, y: 3.0 }),
+            Line::new(Coord { x: 0.0, y: 7.0 }, Coord { x: 10.0, y: 7.0 }),
+        ];
+        let result = prepare_intersection_contraint(lines, RTree::new(), 0.0001).unwrap();
+        assert_eq!(result.len(), 7);
+        for line in &result {
+            assert_ne!(line.start, line.end, "sub-segment should not be degenerate");
+        }
+    }
+
+    #[test]
+    fn prepare_intersection_endpoint_touch() {
+        // Two lines sharing an endpoint should not be split
+        let lines = vec![
+            Line::new(Coord { x: 0.0, y: 0.0 }, Coord { x: 5.0, y: 5.0 }),
+            Line::new(Coord { x: 5.0, y: 5.0 }, Coord { x: 10.0, y: 0.0 }),
+        ];
+        let result = prepare_intersection_contraint(lines, RTree::new(), 0.0001).unwrap();
+        assert_eq!(
+            result.len(),
+            2,
+            "shared endpoint should not cause splitting"
+        );
     }
 }
