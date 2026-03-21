@@ -480,7 +480,13 @@ fn split_segments_at_intersections<T: SpadeTriangulationFloat>(
         .map(|(i, l)| SweepIndexedLine { index: i, line: *l })
         .collect();
 
-    let mut split_points: Vec<Vec<Coord<T>>> = vec![Vec::new(); lines.len()];
+    // Collect intersections lazily: defer the per-segment split-point
+    // storage until the first proper intersection is found.  For the
+    // common case (valid polygon edges that share only endpoints after
+    // snapping), the sweep finds no proper intersections and we skip
+    // Phase 2 and 3 entirely -- returning the input unchanged without
+    // allocating or iterating over n segments.
+    let mut split_points: Option<Vec<Vec<Coord<T>>>> = None;
     for (seg_a, seg_b, intersection) in Intersections::from_iter(indexed) {
         match intersection {
             LineIntersection::SinglePoint {
@@ -488,25 +494,34 @@ fn split_segments_at_intersections<T: SpadeTriangulationFloat>(
                 is_proper,
             } => {
                 if is_proper {
+                    let sp = split_points.get_or_insert_with(|| vec![Vec::new(); lines.len()]);
                     let pt = snap_or_register_point(pt, &mut known_points, snap_radius);
-                    split_points[seg_a.index].push(pt);
-                    split_points[seg_b.index].push(pt);
+                    sp[seg_a.index].push(pt);
+                    sp[seg_b.index].push(pt);
                 }
             }
             LineIntersection::Collinear {
                 intersection: overlap,
             } => {
                 if overlap.start != overlap.end {
+                    let sp = split_points.get_or_insert_with(|| vec![Vec::new(); lines.len()]);
                     let s = snap_or_register_point(overlap.start, &mut known_points, snap_radius);
                     let e = snap_or_register_point(overlap.end, &mut known_points, snap_radius);
                     for idx in [seg_a.index, seg_b.index] {
-                        split_points[idx].push(s);
-                        split_points[idx].push(e);
+                        sp[idx].push(s);
+                        sp[idx].push(e);
                     }
                 }
             }
         }
     }
+
+    // Fast path: no proper intersections found.  The input segments
+    // already share only endpoints (the common case after preprocess_lines
+    // has snapped and deduped), so return them unchanged.
+    let Some(mut split_points) = split_points else {
+        return Ok(lines);
+    };
 
     // Phase 2: Split each segment at its collected intersection points
     let extra: usize = split_points.iter().map(|v| v.len()).sum();
