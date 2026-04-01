@@ -3,8 +3,8 @@ use geo::prelude::*;
 use geo::{Coord, CoordNum};
 
 use num_traits::Signed;
-use rand::Rng;
 use rand::distr::uniform::SampleUniform;
+use rand::{Rng, RngExt};
 pub fn uniform_points_in_range<S: CoordNum + SampleUniform + Signed, R: Rng>(
     range: S,
     size: usize,
