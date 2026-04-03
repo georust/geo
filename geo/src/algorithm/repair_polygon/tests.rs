@@ -21,27 +21,10 @@ fn total_area(mp: &MultiPolygon<f64>) -> f64 {
     mp.unsigned_area()
 }
 
-/// Run the same line preparation pipeline as build_cdt (snap + odd-even +
-/// split + odd-even) for testing the line preparation logic directly.
+/// Thin wrapper around the real preparation pipeline for testing.
 fn prepare_lines_for_repair(lines: Vec<Line<f64>>) -> Vec<Line<f64>> {
-    use crate::algorithm::triangulate_delaunay::snap_or_register_point;
-    use rstar::RTree;
-
     let snap_radius = 0.0001;
-    let mut known_coords: RTree<Coord<f64>> = RTree::new();
-    let mut lines: Vec<Line<f64>> = lines
-        .into_iter()
-        .map(|mut line| {
-            line.start = snap_or_register_point(line.start, &mut known_coords, snap_radius);
-            line.end = snap_or_register_point(line.end, &mut known_coords, snap_radius);
-            line
-        })
-        .filter(|l| l.start != l.end)
-        .collect();
-    odd_even_filter(&mut lines);
-    let mut lines = split_segments_at_intersections(lines, known_coords, snap_radius).unwrap();
-    odd_even_filter(&mut lines);
-    lines
+    prepare_constraint_lines(lines, snap_radius).unwrap()
 }
 
 // ====== Valid input should survive repair ======

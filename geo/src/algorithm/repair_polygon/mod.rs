@@ -347,20 +347,27 @@ fn extract_lines<T: GeoFloat>(polygon: &Polygon<T>) -> Vec<Line<T>> {
 
 // ====== Step 2: Build CDT ======
 
-fn build_cdt<T: SpadeTriangulationFloat>(
+/// Snap endpoints, then apply odd-even edge counting before and after
+/// splitting at intersections.
+///
+/// Odd-even filtering is specific to polygon repair: edges appearing an even
+/// number of times cancel out (shared edges between rings, dangling edges that
+/// double back). We do NOT call `preprocess_lines` here because its simple
+/// dedup would reduce duplicate-pair counts to 1 before odd-even sees them.
+///
+/// The second `odd_even_filter` call is needed because
+/// `split_segments_at_intersections` can produce new duplicates from collinear
+/// overlapping segments. Two segments that partially overlap are different
+/// lines, so the first filter won't catch them. After splitting, the
+/// overlapping portion appears as an identical sub-segment from both original
+/// segments — the second filter cancels these.
+fn prepare_constraint_lines<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
     snap_radius: T,
-) -> Result<ConstrainedDelaunayTriangulation<Coord<T>>, RepairPolygonError> {
+) -> Result<Vec<Line<T>>, RepairPolygonError> {
     use crate::algorithm::triangulate_delaunay::snap_or_register_point;
     use rstar::RTree;
 
-    // Snap endpoints (shared with triangulate_delaunay), then apply odd-even
-    // edge counting before and after splitting. Odd-even is specific to
-    // polygon repair: edges appearing an even number of times cancel out
-    // (shared edges between rings, dangling edges that double back).
-    //
-    // We do NOT call preprocess_lines here because its simple dedup would
-    // reduce duplicate-pair counts to 1 before odd-even sees them.
     let mut known_coords: RTree<Coord<T>> = RTree::new();
     let mut lines: Vec<Line<T>> = lines
         .into_iter()
@@ -373,11 +380,15 @@ fn build_cdt<T: SpadeTriangulationFloat>(
         .collect();
     odd_even_filter(&mut lines);
     let mut lines = split_segments_at_intersections(lines, known_coords, snap_radius)?;
-    // This second filter call is needed because split_segments_at_intersections can produce new duplicates from
-    // collinear overlapping segments. Two segments that partially overlap are different lines, so the first
-    // filter won't catch them. After splitting, the overlapping portion appears as an identical sub-segment
-    // from both original segments the second odd_even_filter cancels these.
     odd_even_filter(&mut lines);
+    Ok(lines)
+}
+
+fn build_cdt<T: SpadeTriangulationFloat>(
+    lines: Vec<Line<T>>,
+    snap_radius: T,
+) -> Result<ConstrainedDelaunayTriangulation<Coord<T>>, RepairPolygonError> {
+    let lines = prepare_constraint_lines(lines, snap_radius)?;
 
     lines.into_iter().try_fold(
         ConstrainedDelaunayTriangulation::<Coord<T>>::new(),
