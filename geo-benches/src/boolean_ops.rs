@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 use criterion::{measurement::Measurement, *};
 use geo::algorithm::{BooleanOps, Rotate};
 
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 use rand_distr::StandardUniform;
 
 use geo_benches::utils::bops::convert_poly;

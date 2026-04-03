@@ -261,6 +261,7 @@ pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
 /// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
 #[allow(dead_code)]
 pub(crate) mod stitch;
+#[allow(deprecated)]
 pub use stitch::StitchTriangles;
 
 /// Transform a geometry using PROJ.
@@ -275,10 +276,10 @@ pub use translate::Translate;
 
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
 ///
-/// Requires the `"earcutr"` feature.
-#[cfg(feature = "earcutr")]
+/// Requires the `"earcut"` feature.
+#[cfg(feature = "earcut")]
 pub mod triangulate_earcut;
-#[cfg(feature = "earcutr")]
+#[cfg(feature = "earcut")]
 pub use triangulate_earcut::TriangulateEarcut;
 
 /// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
@@ -286,6 +287,12 @@ pub use triangulate_earcut::TriangulateEarcut;
 pub mod triangulate_delaunay;
 #[cfg(feature = "spade")]
 pub use triangulate_delaunay::{TriangulateDelaunay, TriangulateDelaunayUnconstrained};
+
+/// Repair invalid polygons using constrained Delaunay triangulation (prepair algorithm).
+#[cfg(feature = "spade")]
+pub mod repair_polygon;
+#[cfg(feature = "spade")]
+pub use repair_polygon::MakeValid;
 
 /// Triangulate polygons using an (un)constrained [Delaunay Triangulation](https://en.wikipedia.org/wiki/Delaunay_triangulation) algorithm.
 #[cfg(feature = "spade")]

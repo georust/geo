@@ -199,8 +199,8 @@
 //!
 //! The following optional [Cargo features] are available:
 //!
-//! - `earcutr`:
-//!     - Enables the `earcutr` crate, which provides triangulation of polygons using the earcut algorithm
+//! - `earcut`:
+//!     - Enables the `earcut` crate, which provides triangulation of polygons using the earcut algorithm
 //!     - ☑ Enabled by default
 //! - `proj-network`:
 //!     - Enables [network grid] support for the [`proj` crate]
