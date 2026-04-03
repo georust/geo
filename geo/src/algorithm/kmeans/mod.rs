@@ -136,11 +136,10 @@ use crate::line_measures::Distance;
 use crate::line_measures::metric_spaces::Euclidean;
 use crate::{Centroid, GeoFloat, MultiPoint, Point};
 
-use rand::Rng;
+use rand::RngExt;
 use rand::SeedableRng;
 use rand::distr::weighted::WeightedIndex;
 use rand::prelude::Distribution;
-use rand::rngs::StdRng;
 
 /// Parameters for k-means clustering with builder pattern.
 ///
@@ -258,6 +257,9 @@ where
     /// Each element is a cluster ID in the range `0..k`.
     ///
     /// To specify configuration options, use [`kmeans_with_params`](Self::kmeans_with_params).
+    ///
+    /// The output depends on initial conditions - see [`Self::kmeans_with_seed`] or [`Self::kmeans_with_params`]
+    /// to pass in a random or predetermined seed, otherwise a deterministic seed will be used.
     ///
     /// # Errors
     ///
@@ -615,15 +617,7 @@ where
     T: GeoFloat,
 {
     let n = points.len();
-    let mut rng = match seed {
-        Some(s) => StdRng::seed_from_u64(s),
-        #[cfg(not(all(target_family = "wasm", target_os = "unknown")))]
-        None => StdRng::from_os_rng(),
-        #[cfg(all(target_family = "wasm", target_os = "unknown"))]
-        None => unreachable!(
-            "Geo only allows to construct KMeans with an explicit seed on WASM targets"
-        ),
-    };
+    let mut rng = rand_pcg::Pcg32::seed_from_u64(seed.unwrap_or(0));
     let mut centroids = Vec::with_capacity(k);
 
     // Choose first centroid uniformly at random

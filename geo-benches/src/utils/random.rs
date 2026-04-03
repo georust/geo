@@ -4,8 +4,9 @@ use std::f64::consts::PI;
 use geo::algorithm::{BoundingRect, ConcaveHull, ConvexHull, MapCoords, Rotate};
 use geo::geometry::*;
 
-use rand::{Rng, rng};
-use rand_distr::{Distribution, Normal, StandardUniform};
+use rand::distr::StandardUniform;
+use rand::{Rng, RngExt, rng};
+use rand_distr::{Distribution, Normal};
 
 // TODO: @rmanoka wonders if: it would be nice to provide these
 // random-geom-samplers as `Distribution::sample` implementations directly. But
