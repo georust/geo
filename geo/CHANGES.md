@@ -28,6 +28,7 @@
   - The high level `TriangulateEarcut::earcut_triangles` API hasn't changed, but may return a different triangulation.
   - BREAKING: The low level `TriangulateEarcut::earcut_triangles_raw` API now groups coordinates `[[x0, y0],[x1 y1]]]`, previously it was flattened: `[x0, y1, x1, y1]`
   - Replace quadratic algorithms in `triangulate_delaunay`
+  - Add `MakeValid` trait for (Multi)Polygon repair using the prepair algorithm
   - Use portable source of randomness for kmeans. The output of kmeans might change slightly vs. previous versions,
     but it should now be consistent across platforms given a particular seed.
   - Update `rand` dependency to 0.10.0
