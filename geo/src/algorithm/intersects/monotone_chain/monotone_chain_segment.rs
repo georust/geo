@@ -19,7 +19,6 @@ macro_rules! intersects_MonotoneChainSegment {
                 if has_disjoint_bboxes(self, rhs) {
                     return false;
                 }
-                const SEARCH_THRESHOLD: usize = 2;
 
                 match self.ls().len() {
                     0 => false,
@@ -30,16 +29,13 @@ macro_rules! intersects_MonotoneChainSegment {
                         // e.g. Line intersect Line could become just the orientation checks
                         Line::<T>::new(self.ls()[0], self.ls()[1]).intersects(rhs)
                     }
-                    n if n > SEARCH_THRESHOLD => {
+                    _ => {
                         if let (l, Some(r)) = self.divide() {
                             l.intersects(rhs) || r.intersects(rhs)
                         } else {
-                            unreachable!(
-                                "divide() should always return Some for n > SEARCH_THRESHOLD"
-                            );
+                            unreachable!("divide() should always return Some for n > 2");
                         }
                     }
-                    _ => LineString::from_iter(self.ls().iter().cloned()).intersects(rhs),
                 }
             }
         }
@@ -67,12 +63,6 @@ where
         if rhs.ls().len() == 1 {
             return rhs.ls()[0].intersects(self);
         }
-        // handle base case
-        if self.ls().len() == 2 && rhs.ls().len() == 2 {
-            //PERF: optimize this to skip construction and bounding box check
-            return Line::<T>::new(self.ls()[0], self.ls()[1])
-                .intersects(&Line::<T>::new(rhs.ls()[0], rhs.ls()[1]));
-        }
 
         // recurse with binary split on both sides
         match (self.divide(), rhs.divide()) {
@@ -81,7 +71,9 @@ where
             }
             ((a, Some(b)), (_c, None)) => a.intersects(rhs) || b.intersects(rhs),
             ((_a, None), (c, Some(d))) => self.intersects(&c) || self.intersects(&d),
-            ((_a, None), (_c, None)) => unreachable!("both sides are single segments"),
+
+            ((a, None), (c, None)) => Line::<T>::new(a.ls()[0], a.ls()[1])
+                .intersects(&Line::<T>::new(c.ls()[0], c.ls()[1])),
         }
     }
 }

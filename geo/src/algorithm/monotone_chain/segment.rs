@@ -38,7 +38,7 @@ impl<'a: 'caller, 'caller, T: GeoNum> MonotoneChainSegment<'a, T> {
         Option<MonotoneChainSegment<'a, T>>,
     ) {
         // if segment is a line, cannot be divided
-        if self.ls.len() == 2 {
+        if self.ls.len() <= 2 {
             return (self.clone(), None);
         }
 
@@ -103,8 +103,9 @@ impl<'a, T: GeoNum> Iterator for MonotoneChainSegmentFactory<'a, T> {
             if !is_monotonic(&mut slope_x, next_slope_x)
                 || !is_monotonic(&mut slope_y, next_slope_y)
             {
-                // `coord` is the end of this segment
-                // `next_coord` is the start of the next segment
+                // current segment violates monotonicity
+                // `coord` is the last point of the current segment
+                // `coord` is the first point of the next segment
                 self.position += segment_length;
                 return Some(MonotoneChainSegment::<T>::new(
                     &self.coords[segment_start..=self.position],
