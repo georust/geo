@@ -188,6 +188,17 @@
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
 //! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
 //!
+//! # Indexed Geometries
+//!
+//! ## Monotone Chain backed geometries
+//! - **[`MonotoneChainLineString`]**: A [`LineString`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainMultiLineString`]**: A [`MultiLineString`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainPolygon`]**: A [`Polygon`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainMultiPolygon`]**: A [`MultiPolygon`] backed by [`MonotoneChain`]
+//! - **[`MonotoneChainGeometry`]**: An enumeration of all monotone chain-backed geometry types
+//! - provides fast [`ContainsProperly`] methods between themselves and [`Intersects`] with other geometries
+//! - see [`monotone_chain`] for deeper explanation on the concepts behind this
+//!
 //! # Spatial Indexing
 //!
 //! `geo` geometries ([`Point`], [`Line`], [`LineString`], [`Polygon`], [`MultiPolygon`]) can be used with the [rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage)
