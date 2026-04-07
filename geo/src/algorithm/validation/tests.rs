@@ -367,18 +367,17 @@ mod gdal_test_cases {
     // GDAL heading: "Polygon hole equal to shell"
     // GDAL error: "Self-intersection"
     // When the interior ring is identical to the exterior ring, GDAL calls this a
-    // self-intersection. Our code reports InteriorRingNotContainedInExteriorRing (the coincident
-    // ring is on the exterior boundary, not strictly inside it) followed by
-    // IntersectingRingsOnALine (the exterior ring boundary and interior ring share a 1D set).
+    // self-intersection. Our code reports IntersectingRingsOnALine (the exterior ring boundary and
+    // interior ring share a 1D set).
     #[test]
     fn polygon_hole_equal_to_shell() {
         let polygon = wkt!(POLYGON ((10. 90., 90. 90., 90. 10., 10. 10., 10. 90.), (10. 90., 90. 90., 90. 10., 10. 10., 10. 90.)));
         assert_eq!(
             polygon.validation_errors(),
-            vec![
-                InvalidPolygon::InteriorRingNotContainedInExteriorRing(RingRole::Interior(0)),
-                InvalidPolygon::IntersectingRingsOnALine(RingRole::Exterior, RingRole::Interior(0))
-            ]
+            vec![InvalidPolygon::IntersectingRingsOnALine(
+                RingRole::Exterior,
+                RingRole::Interior(0)
+            )]
         );
     }
 

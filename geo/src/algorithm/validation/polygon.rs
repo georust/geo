@@ -301,11 +301,11 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
         // count distinct edges and know if any of them is a vertex.
         unique_edges.clear();
         for info in group {
-            if let Some(last) = unique_edges.last_mut() {
-                if last.0 == info.edge_idx {
-                    last.1 |= info.is_vertex;
-                    continue;
-                }
+            if let Some(last) = unique_edges.last_mut()
+                && last.0 == info.edge_idx
+            {
+                last.1 |= info.is_vertex;
+                continue;
             }
             unique_edges.push((info.edge_idx, info.is_vertex));
         }
