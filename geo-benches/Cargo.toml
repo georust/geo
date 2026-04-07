@@ -169,3 +169,8 @@ harness = false
 name = "voronoi"
 path = "src/voronoi.rs"
 harness = false
+
+[[bench]]
+name = "validation"
+path = "src/validation.rs"
+harness = false

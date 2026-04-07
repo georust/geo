@@ -3,6 +3,8 @@ use std::{path::PathBuf, str::FromStr};
 use geo_types::{LineString, MultiPoint, MultiPolygon, Point, Polygon};
 use wkt::{TryFromWkt, WktFloat};
 
+pub mod checkerboard;
+
 pub fn louisiana<T>() -> LineString<T>
 where
     T: WktFloat + Default + FromStr,
