@@ -297,7 +297,7 @@ mod simply_connected_interior {
             "Expected InteriorNotSimplyConnected, got: {:?}",
             errors[0],
         );
-  }
+    }
 }
 /// Test cases ported from GDAL's geometry validity documentation.
 /// See: https://gdal.org/en/latest/user/geometry_validity.html

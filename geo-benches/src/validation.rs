@@ -50,14 +50,18 @@ fn validation_benchmark(c: &mut Criterion) {
     );
 
     let nl_zones = geo_test_fixtures::nl_zones::<f64>();
-    group.bench_with_input(BenchmarkId::new("fixture", "nl_zones"), &nl_zones, |b, mp| {
-        b.iter(|| criterion::black_box(mp.is_valid()))
-    });
+    group.bench_with_input(
+        BenchmarkId::new("fixture", "nl_zones"),
+        &nl_zones,
+        |b, mp| b.iter(|| criterion::black_box(mp.is_valid())),
+    );
 
     let nl_plots = geo_test_fixtures::nl_plots_wgs84::<f64>();
-    group.bench_with_input(BenchmarkId::new("fixture", "nl_plots"), &nl_plots, |b, mp| {
-        b.iter(|| criterion::black_box(mp.is_valid()))
-    });
+    group.bench_with_input(
+        BenchmarkId::new("fixture", "nl_plots"),
+        &nl_plots,
+        |b, mp| b.iter(|| criterion::black_box(mp.is_valid())),
+    );
 
     group.finish();
 }
