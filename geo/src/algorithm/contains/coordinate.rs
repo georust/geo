@@ -135,7 +135,7 @@ where
 {
     fn contains(&self, triangle: &Triangle<T>) -> bool {
         // only a degenerate Triangle could be within a point
-        triangle.0 == triangle.1 && triangle.0 == triangle.2 && triangle.0 == *self
+        triangle.v1() == triangle.v2() && triangle.v1() == triangle.v3() && triangle.v1() == *self
     }
 }
 

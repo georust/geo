@@ -68,6 +68,7 @@ mod collections;
 mod coordinate;
 mod line;
 mod line_string;
+mod monotone_chain;
 mod point;
 mod polygon;
 mod rect;
@@ -109,19 +110,18 @@ where
 }
 
 // A cheap bbox check to see if we can skip the more expensive intersection computation
-fn has_disjoint_bboxes<T, A, B>(a: &A, b: &B) -> bool
+pub(crate) fn has_disjoint_bboxes<T, A, B>(a: &A, b: &B) -> bool
 where
     T: CoordNum,
     A: BoundingRect<T>,
     B: BoundingRect<T>,
 {
     let mut disjoint_bbox = false;
-    if let Some(a_bbox) = a.bounding_rect().into() {
-        if let Some(b_bbox) = b.bounding_rect().into() {
-            if !a_bbox.intersects(&b_bbox) {
-                disjoint_bbox = true;
-            }
-        }
+    if let Some(a_bbox) = a.bounding_rect().into()
+        && let Some(b_bbox) = b.bounding_rect().into()
+        && !a_bbox.intersects(&b_bbox)
+    {
+        disjoint_bbox = true;
     }
     disjoint_bbox
 }

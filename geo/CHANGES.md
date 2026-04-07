@@ -19,6 +19,29 @@
   - <https://github.com/georust/geo/pull/1487>
 - Fix Euclidean distance fast path for open `LineString`s to consider the last vertex (avoids incorrect `LineString`-to-`LineString` distances for separable geometries).
   - <https://github.com/georust/geo/pull/1499>
+- Bump `float_next_after` dependency to 2.0.0
+- Bump geo MSRV to 1.88
+- Update `earcutr` dependency to 0.5.0
+- POSSIBLY BREAKING: `Triangle`s returned by `earcut_triangles` are now oriented CCW.
+- POSSIBLY BREAKING: `earcut_triangles_raw` now omits the redundant "closing" coordinate from `vertices`.
+  It wasn't referenced by the `triangle_indices` cut by earcutr, but you may notice a different triangulation for a given input.
+- Deprecate `StitchTriangulation`. Instead convert your triangles to Polygon and use unary_union.
+  - <https://github.com/georust/geo/pull/1514>
+- Replace `earcutr` crate with the faster `earcut` crate.
+  - <https://github.com/georust/geo/pull/1508>
+  - The high level `TriangulateEarcut::earcut_triangles` API hasn't changed, but may return a different triangulation.
+  - BREAKING: The low level `TriangulateEarcut::earcut_triangles_raw` API now groups coordinates `[[x0, y0],[x1 y1]]]`, previously it was flattened: `[x0, y1, x1, y1]`
+  - Replace quadratic algorithms in `triangulate_delaunay`
+  - Add `MakeValid` trait for (Multi)Polygon repair using the prepair algorithm
+  - Use portable source of randomness for kmeans. The output of kmeans might change slightly vs. previous versions,
+    but it should now be consistent across platforms given a particular seed.
+  - Update `rand` dependency to 0.10.0
+  - kmeans is now deterministic unless provided a random seed.
+- Add `MonotoneChain`-backed geometry types
+  - Variant of `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon` which are backed by Monotone Chains
+  - Preprocessing cost to construct these types, but provide a significant performance boost for intersects and contains_properly checks
+  - <https://github.com/georust/geo/issues/1466>
+  - <https://github.com/georust/geo/pull/1467>
 
 ## 0.32.0 - 2025-12-05
 

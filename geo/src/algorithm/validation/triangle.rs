@@ -40,34 +40,38 @@ impl<F: CoordFloat> Validation for Triangle<F> {
         &self,
         mut handle_validation_error: Box<dyn FnMut(Self::Error) -> Result<(), T> + '_>,
     ) -> Result<(), T> {
-        if utils::check_coord_is_not_finite(&self.0) {
+        let v1 = self.v1();
+        let v2 = self.v2();
+        let v3 = self.v3();
+
+        if utils::check_coord_is_not_finite(&v1) {
             handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(0)))?;
         }
-        if utils::check_coord_is_not_finite(&self.1) {
+        if utils::check_coord_is_not_finite(&v2) {
             handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(1)))?;
         }
-        if utils::check_coord_is_not_finite(&self.2) {
+        if utils::check_coord_is_not_finite(&v3) {
             handle_validation_error(InvalidTriangle::NonFiniteCoord(CoordIndex(2)))?;
         }
 
         // We wont check if the points are collinear if they are identical
         let mut identical = false;
 
-        if self.0 == self.1 {
+        if v1 == v2 {
             handle_validation_error(InvalidTriangle::IdenticalCoords(
                 CoordIndex(0),
                 CoordIndex(1),
             ))?;
             identical = true;
         }
-        if self.0 == self.2 {
+        if v1 == v3 {
             handle_validation_error(InvalidTriangle::IdenticalCoords(
                 CoordIndex(0),
                 CoordIndex(2),
             ))?;
             identical = true;
         }
-        if self.1 == self.2 {
+        if v2 == v3 {
             handle_validation_error(InvalidTriangle::IdenticalCoords(
                 CoordIndex(1),
                 CoordIndex(2),
@@ -75,7 +79,7 @@ impl<F: CoordFloat> Validation for Triangle<F> {
             identical = true;
         }
 
-        if !identical && utils::robust_check_points_are_collinear::<F>(&self.0, &self.1, &self.2) {
+        if !identical && utils::robust_check_points_are_collinear::<F>(&v1, &v2, &v3) {
             handle_validation_error(InvalidTriangle::CollinearCoords)?;
         }
 
@@ -90,13 +94,13 @@ mod tests {
 
     #[test]
     fn test_triangle_valid() {
-        let t = Triangle((0., 0.).into(), (0., 1.).into(), (0.5, 2.).into());
+        let t = Triangle::new((0., 0.).into(), (0., 1.).into(), (0.5, 2.).into());
         assert_valid!(t);
     }
 
     #[test]
     fn test_triangle_invalid_same_points() {
-        let t = Triangle((0., 0.).into(), (0., 1.).into(), (0., 1.).into());
+        let t = Triangle::new((0., 0.).into(), (0., 1.).into(), (0., 1.).into());
         assert_validation_errors!(
             t,
             vec![InvalidTriangle::IdenticalCoords(
@@ -108,7 +112,7 @@ mod tests {
 
     #[test]
     fn test_triangle_invalid_points_collinear() {
-        let t = Triangle((0., 0.).into(), (1., 1.).into(), (2., 2.).into());
+        let t = Triangle::new((0., 0.).into(), (1., 1.).into(), (2., 2.).into());
         assert_validation_errors!(t, vec![InvalidTriangle::CollinearCoords]);
     }
 }

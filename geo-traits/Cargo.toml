@@ -11,9 +11,10 @@ rust-version = "1.65"
 edition = "2021"
 
 [features]
-default = ["geo-types"]
+default = ["std", "geo-types"]
+std = ["geo-types?/std"]
 
 [dependencies]
-geo-types = { version = "0.7.17", optional = true }
+geo-types = { version = "0.7.17", optional = true, default-features = false }
 
 [dev-dependencies]

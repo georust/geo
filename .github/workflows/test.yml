@@ -22,7 +22,7 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          echo 'rust-versions=["1.85", "1.88", "1.89"]' >> $GITHUB_OUTPUT
+          echo 'rust-versions=["1.88", "1.92", "1.93"]' >> $GITHUB_OUTPUT
           echo "proj-version=9.6.2" >> $GITHUB_OUTPUT
 
   # The `ci-result` job doesn't actually test anything - it just aggregates the
@@ -119,7 +119,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo check --all-targets --no-default-features
       # we don't want to test `proj-network` because it only enables the `proj` feature
-      - run: cargo test --features "proj serde earcutr multithreading"
+      - run: cargo test --features "proj serde earcut multithreading"
 
   geo_traits:
     name: geo-traits

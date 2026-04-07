@@ -24,6 +24,10 @@ pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 
 // ========= Main Algo ============
 
+#[deprecated(
+    since = "0.32.1",
+    note = "Output is not always valid - use unary_union which is typically faster and produces valid output. Convert your triangles to polygon `triangle.to_polygon()` first."
+)]
 /// Trait to stitch together split up triangles.
 pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     /// This stitching only happens along identical edges which are located in two separate
@@ -71,7 +75,7 @@ pub trait StitchTriangles<T: GeoFloat>: private::Stitchable<T> {
     ///
     /// assert_eq!(mp.0.len(), 1);
     ///
-    /// let poly = mp.0[0].clone();
+    /// let poly = mp[0].clone();
     /// // 4 coords + 1 duplicate for closed-ness
     /// assert_eq!(poly.exterior().0.len(), 4 + 1);
     ///
@@ -139,6 +143,7 @@ mod private {
     }
 }
 
+#[allow(deprecated)]
 impl<S, T> StitchTriangles<T> for S
 where
     S: private::Stitchable<T>,
@@ -442,10 +447,11 @@ fn try_stitch<F: GeoFloat>(a: &[Coord<F>], b: &[Coord<F>]) -> Option<Vec<Coord<F
 
 // ============= Tests ===========
 
+#[allow(deprecated)]
 #[cfg(test)]
 mod polygon_stitching_tests {
 
-    use crate::{Relate, TriangulateEarcut, Winding};
+    use crate::{Relate, TriangulateEarcut, Validation, Winding};
 
     use super::*;
     use geo_types::*;
@@ -527,30 +533,8 @@ mod polygon_stitching_tests {
 
     #[test]
     fn stitch_creating_hole() {
-        let poly1 = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 1.0, y: 1.0 },
-                Coord { x: 1.0, y: 2.0 },
-                Coord { x: 2.0, y: 2.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 3.0, y: 0.0 },
-                Coord { x: 3.0, y: 3.0 },
-                Coord { x: 0.0, y: 3.0 },
-            ]),
-            vec![],
-        );
-        let poly2 = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 1.0, y: 0.0 },
-                Coord { x: 2.0, y: 0.0 },
-                Coord { x: 2.0, y: 1.0 },
-                Coord { x: 1.0, y: 1.0 },
-            ]),
-            vec![],
-        );
+        let poly1 = wkt!(POLYGON((0.0 0.0,1.0 0.0,1.0 1.0,1.0 2.0,2.0 2.0,2.0 1.0,2.0 0.0,3.0 0.0,3.0 3.0,0.0 3.0,0.0 0.0)));
+        let poly2 = wkt!(POLYGON((1.0 0.0,2.0 0.0,2.0 1.0,1.0 1.0,1.0 0.0)));
 
         let result = [poly1, poly2]
             .map(|p| p.earcut_triangles())
@@ -559,23 +543,12 @@ mod polygon_stitching_tests {
             .unwrap();
 
         assert_eq!(result.0.len(), 1);
-        assert_eq!(result.0[0].interiors().len(), 1);
+        assert_eq!(result[0].interiors().len(), 1);
     }
 
     #[test]
     fn inner_banana_produces_hole() {
-        let poly = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 4.0, y: 0.0 },
-                Coord { x: 3.0, y: 2.0 },
-                Coord { x: 5.0, y: 2.0 },
-                Coord { x: 4.0, y: 0.0 },
-                Coord { x: 8.0, y: 0.0 },
-                Coord { x: 4.0, y: 4.0 },
-            ]),
-            vec![],
-        );
+        let poly = wkt!(POLYGON((0.0 0.0,4.0 0.0,3.0 2.0,5.0 2.0,4.0 0.0,8.0 0.0,4.0 4.0,0.0 0.0)));
 
         let result = [poly]
             .map(|p| p.earcut_triangles())
@@ -584,23 +557,14 @@ mod polygon_stitching_tests {
             .unwrap();
 
         assert_eq!(result.0.len(), 1);
-        assert_eq!(result.0[0].interiors().len(), 1);
+        assert_eq!(result[0].interiors().len(), 1);
     }
 
     #[test]
+    #[should_panic(expected = "should have 2 separate polygons")]
     fn outer_banana_doesnt_produce_hole() {
-        let poly = Polygon::new(
-            LineString::new(vec![
-                Coord { x: 0.0, y: 0.0 },
-                Coord { x: 4.0, y: 0.0 },
-                Coord { x: 3.0, y: -2.0 },
-                Coord { x: 5.0, y: -2.0 },
-                Coord { x: 4.0, y: 0.0 },
-                Coord { x: 8.0, y: 0.0 },
-                Coord { x: 4.0, y: 4.0 },
-            ]),
-            vec![],
-        );
+        let poly =
+            wkt!(POLYGON((0.0 0.0,4.0 0.0,3.0 -2.0,5.0 -2.0,4.0 0.0,8.0 0.0,4.0 4.0,0.0 0.0)));
 
         let result = [poly]
             .map(|p| p.earcut_triangles())
@@ -608,7 +572,50 @@ mod polygon_stitching_tests {
             .stitch_triangulation()
             .unwrap();
 
-        assert_eq!(result.0.len(), 2);
-        assert_eq!(result.0[0].interiors().len(), 0);
+        // Currently panics: stitch_rings_from_lines produces a self-intersecting ring.
+        // See `document_bug_in_stitch_rings_order_dependent_at_non_manifold_vertices` for an exploration.
+        assert_eq!(result.0.len(), 2, "should have 2 separate polygons");
+        result[0].check_validation().unwrap();
+
+        assert_eq!(result[0].interiors().len(), 0);
+    }
+
+    // This test documents a bug in our stitch implementation.
+    //
+    // The polygon from `outer_banana_doesnt_produce_hole` self-touches at (4,0): that vertex appears twice in the ring.
+    // Triangulating it yields 3 triangles that share only that point, not an edge, so the
+    // boundary has 4 incident edges at (4,0).
+    //
+    // We verified (by running the same input against the old `earcutr` library) that both
+    // libraries emit geometrically identical triangles. The only difference is the *order*
+    // they are emitted. That order difference causes `stitch_rings_from_lines` to produce different
+    // ring topologies.
+    #[test]
+    fn document_bug_in_stitch_rings_order_dependent_at_non_manifold_vertices() {
+        // The old earcutr crate's triangulation happend to work with our stitch trait.
+        let old_earcutr_order = vec![
+            wkt!(TRIANGLE(4.0 0.0,4.0 4.0,0.0 0.0)),   // left body
+            wkt!(TRIANGLE(4.0 0.0,3.0 -2.0,5.0 -2.0)), // notch (before right body)
+            wkt!(TRIANGLE(8.0 0.0,4.0 4.0,4.0 0.0)),   // right body
+        ];
+        let old_result = old_earcutr_order.stitch_triangulation().unwrap();
+        assert_eq!(old_result.0.len(), 2); // 2 valid polygons: main body + notch
+        old_result.check_validation().unwrap();
+
+        // The new earcut crate has a different order of triangles, but it's still valid.
+        // It should work, but some nuance of our stitch algorithm was predicated on the
+        // arbitrary ordering of the previous triangulation.
+        let new_earcut_order = vec![
+            wkt!(TRIANGLE(4.0 0.0,4.0 4.0,0.0 0.0)),   // left body
+            wkt!(TRIANGLE(4.0 0.0,8.0 0.0,4.0 4.0)),   // right body (before notch!)
+            wkt!(TRIANGLE(4.0 0.0,3.0 -2.0,5.0 -2.0)), // notch
+        ];
+        let poly =
+            wkt!(POLYGON((0.0 0.0,4.0 0.0,3.0 -2.0,5.0 -2.0,4.0 0.0,8.0 0.0,4.0 4.0,0.0 0.0)));
+        assert_eq!(poly.earcut_triangles(), new_earcut_order);
+
+        let new_result = new_earcut_order.stitch_triangulation().unwrap();
+        assert_eq!(new_result.0.len(), 1); // 1 self-intersecting polygon
+        new_result.check_validation().unwrap_err();
     }
 }

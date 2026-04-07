@@ -62,7 +62,7 @@ where
         rhs.coords_iter().take(1).any(|p| self.intersects(&p))
 
         // or any point of the triangle intersects the polygon
-        || self.0.intersects(rhs)
+        || self.v1().intersects(rhs)
 
         // or any of the polygon's lines intersect the triangle's lines
         || rhs.lines_iter().any(|rhs_line| {

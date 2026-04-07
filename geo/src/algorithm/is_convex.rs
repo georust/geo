@@ -396,10 +396,10 @@ where
     };
 
     // If a specific orientation is expected, accept only that.
-    if let Some(req_orientation) = specific_orientation {
-        if req_orientation != first_non_collinear {
-            return None;
-        }
+    if let Some(req_orientation) = specific_orientation
+        && req_orientation != first_non_collinear
+    {
+        return None;
     }
 
     // Now we have a fixed orientation expected at the rest
