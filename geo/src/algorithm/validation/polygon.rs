@@ -5,6 +5,7 @@ use crate::relate::geomgraph::GeometryGraph;
 use crate::{Coord, GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
 
 use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::fmt;
 
@@ -359,6 +360,15 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
 /// - `global.connected(u, v) && !local.connected(u, v)`: the rings are
 ///   reachable through a previously processed (different) coordinate, but not
 ///   through this one — closing a multi-coordinate cycle. **Invalid.**
+///
+/// # Params
+///
+/// `coord_edges`: Coord and the two rings touching at that coord
+/// `num_rings`: Number of rings in the Polygon
+///
+/// # Returns
+///
+/// The rings which disconnect the interior, or None if the interior is connected.
 fn check_ring_touches_disconnect_interior<F: GeoFloat>(
     coord_edges: &mut [(Coord<F>, usize, usize)],
     num_rings: usize,
@@ -369,6 +379,7 @@ fn check_ring_touches_disconnect_interior<F: GeoFloat>(
             .then_with(|| a.0.y.total_cmp(&b.0.y))
     });
 
+    // Which rings are connected, even if vicariously, through other rings.
     let mut global = UnionFind::new(num_rings);
     let mut group_start = 0;
     while group_start < coord_edges.len() {
@@ -379,13 +390,16 @@ fn check_ring_touches_disconnect_interior<F: GeoFloat>(
             group_end += 1;
         }
 
+        // Which rings are touching at *this* coordinate
         let mut local = UnionFind::new(num_rings);
         for &(_, u, v) in &coord_edges[group_start..group_end] {
-            if global.find(u) == global.find(v) && local.find(u) != local.find(v) {
+            if global.find_root(u) == global.find_root(v)
+                && local.find_root(u) != local.find_root(v)
+            {
                 return Some((u.min(v), u.max(v)));
             }
-            global.union(u, v);
-            local.union(u, v);
+            global.union_sets(u, v);
+            local.union_sets(u, v);
         }
 
         group_start = group_end;
@@ -394,6 +408,9 @@ fn check_ring_touches_disconnect_interior<F: GeoFloat>(
     None
 }
 
+/// Union Find is a classic algorithm for managing disjoint sets - i.e. which rings are touching.
+///
+/// Includes Path Compression and Rank counting optimizations.
 struct UnionFind {
     parent: Vec<usize>,
     rank: Vec<usize>,
@@ -407,27 +424,40 @@ impl UnionFind {
         }
     }
 
-    fn find(&mut self, mut x: usize) -> usize {
-        while self.parent[x] != x {
-            self.parent[x] = self.parent[self.parent[x]];
-            x = self.parent[x];
+    /// Which set does `x` belong to? (identified by the set parent).
+    ///
+    /// Rings that are touching will have the same root.
+    /// Once all touching rings have been unioned, rings with different roots are not touching.
+    fn find_root(&mut self, x: usize) -> usize {
+        let mut parent = x;
+        // A root node is its own parent
+        while parent != self.parent[x] {
+            parent = self.parent[self.parent[x]];
+            // compress path to make `find_root` faster next time
+            self.parent[x] = parent;
         }
-        x
+        parent
     }
 
-    fn union(&mut self, x: usize, y: usize) {
-        let rx = self.find(x);
-        let ry = self.find(y);
-        if rx == ry {
+    /// If two rings are touching, union their two "touchable" sets.
+    fn union_sets(&mut self, x: usize, y: usize) {
+        let root_x = self.find_root(x);
+        let root_y = self.find_root(y);
+        if root_x == root_y {
+            // Already in same set
             return;
         }
-        if self.rank[rx] < self.rank[ry] {
-            self.parent[rx] = ry;
-        } else if self.rank[rx] > self.rank[ry] {
-            self.parent[ry] = rx;
-        } else {
-            self.parent[ry] = rx;
-            self.rank[rx] += 1;
+        match self.rank[root_x].cmp(&self.rank[root_y]) {
+            Ordering::Less => {
+                self.parent[root_x] = root_y;
+            }
+            Ordering::Greater => {
+                self.parent[root_y] = root_x;
+            }
+            Ordering::Equal => {
+                self.parent[root_y] = root_x;
+                self.rank[root_x] += 1;
+            }
         }
     }
 }
