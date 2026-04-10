@@ -2,11 +2,13 @@ use super::{CoordIndex, RingRole, Validation, utils};
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
 use crate::relate::geomgraph::GeometryGraph;
-use crate::{Coord, GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
+use crate::{GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
+
+use total_ord_coord::TotalOrdCoord;
+use union_find::UnionFind;
 
 use std::cell::RefCell;
-use std::cmp::Ordering;
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 /// A [`Polygon`] must follow these rules to be valid:
@@ -231,215 +233,143 @@ fn edge_index_to_ring_role(edge_idx: usize) -> RingRole {
 fn check_interior_simply_connected_from_graph<F: GeoFloat>(
     graph: &GeometryGraph<F>,
 ) -> Option<(usize, usize)> {
-    let edges = graph.edges();
-    if edges.len() < 2 {
+    let rings = graph.edges();
+    if rings.len() < 2 {
         return None;
     }
 
-    // Collect all intersection points with their edge index and vertex status.
-    struct IntersectionInfo<F: GeoFloat> {
-        coord: Coord<F>,
-        ring_idx: usize,
-        is_vertex: bool,
-    }
-
-    let mut all_intersections: Vec<IntersectionInfo<F>> = Vec::new();
-    for (ring_idx, ring_edge) in edges.iter().enumerate() {
+    // Group intersections by coordinate
+    //     Coord => (
+    //        0: All the rings which intersect at this coordinate
+    //        1: If at least one of these intersecting rings has this coordinate as a vertex
+    //     )
+    let mut all_intersections: BTreeMap<TotalOrdCoord<F>, (BTreeSet<usize>, bool)> =
+        BTreeMap::new();
+    for (ring_idx, ring_edge) in rings.iter().enumerate() {
         let ring_edge = RefCell::borrow(ring_edge);
         let coords = ring_edge.coords();
         for ei in ring_edge.edge_intersections() {
             let coord = ei.coordinate();
             let is_vertex = coords.contains(&coord);
-            all_intersections.push(IntersectionInfo {
-                coord,
-                ring_idx,
-                is_vertex,
-            });
+            let (intersecting_rings, any_is_vertex) = all_intersections
+                .entry(TotalOrdCoord(coord))
+                .or_insert((BTreeSet::new(), false));
+            intersecting_rings.insert(ring_idx);
+            *any_is_vertex |= is_vertex;
         }
     }
-
-    // Sort by (coordinate, edge_idx) using total_cmp for consistent ordering.
-    all_intersections.sort_by(|a, b| {
-        a.coord
-            .x
-            .total_cmp(&b.coord.x)
-            .then_with(|| a.coord.y.total_cmp(&b.coord.y))
-            .then_with(|| a.ring_idx.cmp(&b.ring_idx))
-    });
-
-    // Group all intersections sharing the same coordinate and build:
-    // - coord_edges: (coord, edge_a, edge_b) for each touch, used by cycle detection
-    // - ring_pair_seen: if a pair is seen a second time, it shares 2+ touch
-    //   points at different coordinates, which always disconnects the interior
-    let mut coord_edges: Vec<(Coord<F>, usize, usize)> = Vec::new();
-    let mut ring_pair_seen: HashSet<(usize, usize)> = HashSet::new();
-    let mut intersecting_rings: BTreeSet<usize> = BTreeSet::new();
-    let mut i = 0;
-    while i < all_intersections.len() {
-        let current_coord = all_intersections[i].coord;
-
-        // Find the range of intersections sharing this coordinate.
-        let mut j = i + 1;
-        while j < all_intersections.len() && all_intersections[j].coord == current_coord {
-            j += 1;
-        }
-        let all_intersections_at_coord = &all_intersections[i..j];
-
-        // Deduplicate edges within the group. The same edge can appear multiple
-        // times with different vertex flags, so we merge them to ensure we only
-        // count distinct edges and know if any of them is a vertex.
-        intersecting_rings.clear();
-        let mut intersection_is_on_a_vertex = false;
-        for intersection in all_intersections_at_coord {
-            intersection_is_on_a_vertex |= intersection.is_vertex;
-            intersecting_rings.insert(intersection.ring_idx);
-        }
-
-        // A "touch" requires 2+ distinct edges, at least one having the point
-        // as a vertex.
-        if intersection_is_on_a_vertex {
-            for (idx_a, edge_a) in intersecting_rings.iter().enumerate() {
-                for edge_b in intersecting_rings.iter().skip(idx_a + 1) {
-                    debug_assert!(edge_a < edge_b);
-                    let key = (*edge_a, *edge_b);
-                    if !ring_pair_seen.insert(key) {
-                        return Some(key);
-                    }
-                    coord_edges.push((current_coord, *edge_a, *edge_b));
-                }
-            }
-        }
-
-        i = j;
-    }
-
-    check_ring_touches_disconnect_interior(&mut coord_edges, edges.len())
-}
-
-/// Detect cycles through distinct coordinates in the ring touch graph.
-///
-/// Each entry in `coord_edges` is `(coord, ring_a, ring_b)` representing a
-/// single-touch between two rings at the given coordinate. The caller has
-/// already handled the case where any pair shares 2+ touch points.
-///
-/// A cycle of ring touches only disconnects the interior if the cycle passes
-/// through at least two distinct coordinates (enclosing area). A cycle where
-/// every edge shares the same coordinate — e.g. three holes all meeting at
-/// one point — does not enclose any area and is harmless.
-///
-/// To distinguish these cases, edges are sorted and grouped by coordinate,
-/// then processed with two Union-Find structures:
-///
-/// - **Global UF**: accumulates connectivity across all coordinate groups
-///   processed so far. "Are these two rings connected by ANY path of touches?"
-/// - **Local UF**: reset for each coordinate group. "Are these two rings
-///   connected through touches at THIS coordinate only?"
-///
-/// For each edge `(u, v)` in the current coordinate group:
-/// - `!global.connected(u, v)`: first connection between these components — no
-///   cycle at all. **Safe.**
-/// - `global.connected(u, v) && local.connected(u, v)`: the rings are already
-///   connected within this coordinate group — a same-coordinate cycle. **Safe.**
-/// - `global.connected(u, v) && !local.connected(u, v)`: the rings are
-///   reachable through a previously processed (different) coordinate, but not
-///   through this one — closing a multi-coordinate cycle. **Invalid.**
-///
-/// # Params
-///
-/// `coord_edges`: Coord and the two rings touching at that coord
-/// `num_rings`: Number of rings in the Polygon
-///
-/// # Returns
-///
-/// The rings which disconnect the interior, or None if the interior is connected.
-fn check_ring_touches_disconnect_interior<F: GeoFloat>(
-    coord_edges: &mut [(Coord<F>, usize, usize)],
-    num_rings: usize,
-) -> Option<(usize, usize)> {
-    coord_edges.sort_by(|a, b| {
-        a.0.x
-            .total_cmp(&b.0.x)
-            .then_with(|| a.0.y.total_cmp(&b.0.y))
-    });
 
     // Which rings are connected, even if vicariously, through other rings.
-    let mut global = UnionFind::new(num_rings);
-    let mut group_start = 0;
-    while group_start < coord_edges.len() {
-        let mut group_end = group_start + 1;
-        while group_end < coord_edges.len()
-            && coord_edges[group_end].0 == coord_edges[group_start].0
-        {
-            group_end += 1;
+    let mut global = UnionFind::new(rings.len());
+    for (_intersection_coord, (intersecting_rings, intersection_is_on_a_vertex)) in
+        all_intersections
+    {
+        if !intersection_is_on_a_vertex {
+            continue;
         }
+        // Which rings are connected at *this* coordinate
+        let mut local = UnionFind::new(rings.len());
 
-        // Which rings are touching at *this* coordinate
-        let mut local = UnionFind::new(num_rings);
-        for &(_, u, v) in &coord_edges[group_start..group_end] {
-            if global.find_root(u) == global.find_root(v)
-                && local.find_root(u) != local.find_root(v)
+        let mut intersecting_rings = intersecting_rings.into_iter();
+        let Some(first) = intersecting_rings.next() else {
+            continue;
+        };
+        for next in intersecting_rings {
+            if global.find_root(first) == global.find_root(next)
+                && local.find_root(first) != local.find_root(next)
             {
-                return Some((u.min(v), u.max(v)));
+                // These rings have touched before, we have a disconnected interior.
+                return Some((first.min(next), first.max(next)));
+            } else {
+                global.union_sets(first, next);
+                local.union_sets(first, next);
             }
-            global.union_sets(u, v);
-            local.union_sets(u, v);
         }
-
-        group_start = group_end;
     }
-
     None
 }
 
-/// Union Find is a classic algorithm for managing disjoint sets - i.e. which rings are touching.
-///
-/// Includes Path Compression and Rank counting optimizations.
-struct UnionFind {
-    parent: Vec<usize>,
-    rank: Vec<usize>,
+mod total_ord_coord {
+    use crate::{Coord, GeoFloat};
+    use std::cmp::Ordering;
+
+    #[derive(Debug, Clone, Copy)]
+    pub(super) struct TotalOrdCoord<F: GeoFloat>(pub Coord<F>);
+
+    impl<F: GeoFloat> PartialEq<Self> for TotalOrdCoord<F> {
+        fn eq(&self, other: &Self) -> bool {
+            self.cmp(other) == Ordering::Equal
+        }
+    }
+    impl<F: GeoFloat> Eq for TotalOrdCoord<F> {}
+    impl<F: GeoFloat> PartialOrd for TotalOrdCoord<F> {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+    impl<F: GeoFloat> Ord for TotalOrdCoord<F> {
+        fn cmp(&self, other: &Self) -> Ordering {
+            self.0
+                .x
+                .total_cmp(&other.0.x)
+                .then_with(|| self.0.y.total_cmp(&other.0.y))
+        }
+    }
 }
 
-impl UnionFind {
-    fn new(n: usize) -> Self {
-        Self {
-            parent: (0..n).collect(),
-            rank: vec![0; n],
-        }
-    }
+mod union_find {
+    use std::cmp::Ordering;
 
-    /// Which set does `x` belong to? (identified by the set parent).
+    /// Union Find is a classic algorithm for managing disjoint sets - i.e. which rings are touching.
     ///
-    /// Rings that are touching will have the same root.
-    /// Once all touching rings have been unioned, rings with different roots are not touching.
-    fn find_root(&mut self, x: usize) -> usize {
-        let mut parent = x;
-        // A root node is its own parent
-        while parent != self.parent[x] {
-            parent = self.parent[self.parent[x]];
-            // compress path to make `find_root` faster next time
-            self.parent[x] = parent;
-        }
-        parent
+    /// Includes Path Compression and Rank counting optimizations.
+    pub(super) struct UnionFind {
+        parent: Vec<usize>,
+        rank: Vec<usize>,
     }
 
-    /// If two rings are touching, union their two "touchable" sets.
-    fn union_sets(&mut self, x: usize, y: usize) {
-        let root_x = self.find_root(x);
-        let root_y = self.find_root(y);
-        if root_x == root_y {
-            // Already in same set
-            return;
+    impl UnionFind {
+        pub(crate) fn new(n: usize) -> Self {
+            Self {
+                parent: (0..n).collect(),
+                rank: vec![0; n],
+            }
         }
-        match self.rank[root_x].cmp(&self.rank[root_y]) {
-            Ordering::Less => {
-                self.parent[root_x] = root_y;
+
+        /// Which set does `x` belong to? (identified by the set parent).
+        ///
+        /// Rings that are touching will have the same root.
+        /// Once all touching rings have been unioned, rings with different roots are not touching.
+        pub(crate) fn find_root(&mut self, x: usize) -> usize {
+            let mut parent = x;
+            // A root node is its own parent
+            while parent != self.parent[x] {
+                parent = self.parent[self.parent[x]];
+                // compress path to make `find_root` faster next time
+                self.parent[x] = parent;
             }
-            Ordering::Greater => {
-                self.parent[root_y] = root_x;
+            parent
+        }
+
+        /// If two rings are touching, union their two "touchable" sets.
+        pub(crate) fn union_sets(&mut self, x: usize, y: usize) {
+            let root_x = self.find_root(x);
+            let root_y = self.find_root(y);
+            if root_x == root_y {
+                // Already in same set
+                return;
             }
-            Ordering::Equal => {
-                self.parent[root_y] = root_x;
-                self.rank[root_x] += 1;
+            match self.rank[root_x].cmp(&self.rank[root_y]) {
+                Ordering::Less => {
+                    self.parent[root_x] = root_y;
+                }
+                Ordering::Greater => {
+                    self.parent[root_y] = root_x;
+                }
+                Ordering::Equal => {
+                    self.parent[root_y] = root_x;
+                    self.rank[root_x] += 1;
+                }
             }
         }
     }
