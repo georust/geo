@@ -541,18 +541,23 @@ mod tests {
 
         assert_validation_errors!(
             &polygon,
-            vec![InvalidPolygon::IntersectingRingsOnAnArea(
-                RingRole::Interior(0),
-                RingRole::Interior(1)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnAnArea(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                ),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                )
+            ]
         );
     }
 
     #[test]
     fn test_polygon_invalid_interior_ring_touches_exterior_ring_as_line() {
-        // The following polygon contains an interior ring that touches
-        // the exterior ring on one point.
-        // This is valid according to the OGC spec.
+        // The following polygon contains an interior ring that overlaps
+        // the exterior ring along a line.
         let polygon = wkt!(
             POLYGON(
                 (0. 0., 4. 0., 4. 4., 0. 4., 0. 0.),
