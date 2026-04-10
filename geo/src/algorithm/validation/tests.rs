@@ -374,10 +374,13 @@ mod gdal_test_cases {
         let polygon = wkt!(POLYGON ((10. 90., 90. 90., 90. 10., 10. 10., 10. 90.), (10. 90., 90. 90., 90. 10., 10. 10., 10. 90.)));
         assert_eq!(
             polygon.validation_errors(),
-            vec![InvalidPolygon::IntersectingRingsOnALine(
-                RingRole::Exterior,
-                RingRole::Interior(0)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(RingRole::Exterior, RingRole::Interior(0)),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Exterior,
+                    RingRole::Interior(0)
+                )
+            ]
         );
     }
 

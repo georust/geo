@@ -128,14 +128,8 @@ impl<F: GeoFloat> Validation for Polygon<F> {
         let polygon_exterior = Polygon::new(self.exterior().clone(), vec![]);
         let prepared_exterior = PreparedGeometry::from(&polygon_exterior);
 
-        // Track ring pairs that already have intersection errors so the
-        // simply-connected check can skip them (avoids duplicate reporting).
-        // Keys use GeometryGraph edge indices: 0 = exterior, N = interior N-1.
-        let mut errored_edge_pairs: HashSet<(usize, usize)> = HashSet::new();
-
         for (interior_1_idx, interior_1) in self.interiors().iter().enumerate() {
             let ring_role_1 = RingRole::Interior(interior_1_idx);
-            let edge_idx_1 = interior_1_idx + 1;
             if interior_1.is_empty() {
                 continue;
             }
@@ -154,7 +148,6 @@ impl<F: GeoFloat> Validation for Polygon<F> {
             if exterior_vs_interior.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
                 == Dimensions::OneDimensional
             {
-                errored_edge_pairs.insert((0, edge_idx_1));
                 handle_validation_error(InvalidPolygon::IntersectingRingsOnALine(
                     RingRole::Exterior,
                     ring_role_1,
@@ -165,7 +158,6 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 self.interiors().iter().enumerate().skip(interior_1_idx + 1)
             {
                 let ring_role_2 = RingRole::Interior(interior_2_idx);
-                let edge_idx_2 = interior_2_idx + 1;
                 if interior_2.is_empty() {
                     continue;
                 }
@@ -176,7 +168,6 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 if intersection_matrix.get(CoordPos::Inside, CoordPos::Inside)
                     == Dimensions::TwoDimensional
                 {
-                    errored_edge_pairs.insert((edge_idx_1, edge_idx_2));
                     handle_validation_error(InvalidPolygon::IntersectingRingsOnAnArea(
                         ring_role_1,
                         ring_role_2,
@@ -185,7 +176,6 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 if intersection_matrix.get(CoordPos::OnBoundary, CoordPos::OnBoundary)
                     == Dimensions::OneDimensional
                 {
-                    errored_edge_pairs.insert((edge_idx_1, edge_idx_2));
                     handle_validation_error(InvalidPolygon::IntersectingRingsOnALine(
                         ring_role_1,
                         ring_role_2,
@@ -196,10 +186,9 @@ impl<F: GeoFloat> Validation for Polygon<F> {
 
         // Check that the interior is simply connected.
         let prepared_polygon = PreparedGeometry::from(self);
-        if let Some((edge_a, edge_b)) = check_interior_simply_connected_from_graph(
-            &prepared_polygon.geometry_graph,
-            &errored_edge_pairs,
-        ) {
+        if let Some((edge_a, edge_b)) =
+            check_interior_simply_connected_from_graph(&prepared_polygon.geometry_graph)
+        {
             let role_a = edge_index_to_ring_role(edge_a);
             let role_b = edge_index_to_ring_role(edge_b);
             handle_validation_error(InvalidPolygon::InteriorNotSimplyConnected(role_a, role_b))?;
@@ -241,7 +230,6 @@ fn edge_index_to_ring_role(edge_idx: usize) -> RingRole {
 /// identifying the ring pair that causes disconnection.
 fn check_interior_simply_connected_from_graph<F: GeoFloat>(
     graph: &GeometryGraph<F>,
-    skip_pairs: &HashSet<(usize, usize)>,
 ) -> Option<(usize, usize)> {
     let edges = graph.edges();
     if edges.len() < 2 {
@@ -317,12 +305,10 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
             for (idx_a, &(edge_a, _)) in unique_edges.iter().enumerate() {
                 for &(edge_b, _) in unique_edges.iter().skip(idx_a + 1) {
                     let key = (edge_a, edge_b);
-                    if !skip_pairs.contains(&key) {
-                        if !ring_pair_seen.insert(key) {
-                            return Some(key);
-                        }
-                        coord_edges.push((current_coord, edge_a, edge_b));
+                    if !ring_pair_seen.insert(key) {
+                        return Some(key);
                     }
+                    coord_edges.push((current_coord, edge_a, edge_b));
                 }
             }
         }
@@ -520,10 +506,16 @@ mod tests {
 
         assert_validation_errors!(
             &polygon,
-            vec![InvalidPolygon::IntersectingRingsOnALine(
-                RingRole::Interior(0),
-                RingRole::Interior(1)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                ),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                )
+            ]
         );
     }
 
@@ -568,10 +560,13 @@ mod tests {
 
         assert_validation_errors!(
             &polygon,
-            vec![InvalidPolygon::IntersectingRingsOnALine(
-                RingRole::Exterior,
-                RingRole::Interior(0)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(RingRole::Exterior, RingRole::Interior(0)),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Exterior,
+                    RingRole::Interior(0)
+                )
+            ]
         );
     }
 
