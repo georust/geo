@@ -6,7 +6,7 @@ use crate::{Coord, GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
 
 use std::cell::RefCell;
 use std::cmp::Ordering;
-use std::collections::HashSet;
+use std::collections::{BTreeSet, HashSet};
 use std::fmt;
 
 /// A [`Polygon`] must follow these rules to be valid:
@@ -239,20 +239,20 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
     // Collect all intersection points with their edge index and vertex status.
     struct IntersectionInfo<F: GeoFloat> {
         coord: Coord<F>,
-        edge_idx: usize,
+        ring_idx: usize,
         is_vertex: bool,
     }
 
     let mut all_intersections: Vec<IntersectionInfo<F>> = Vec::new();
-    for (edge_idx, edge) in edges.iter().enumerate() {
-        let edge = RefCell::borrow(edge);
-        let coords = edge.coords();
-        for ei in edge.edge_intersections() {
+    for (ring_idx, ring_edge) in edges.iter().enumerate() {
+        let ring_edge = RefCell::borrow(ring_edge);
+        let coords = ring_edge.coords();
+        for ei in ring_edge.edge_intersections() {
             let coord = ei.coordinate();
             let is_vertex = coords.contains(&coord);
             all_intersections.push(IntersectionInfo {
                 coord,
-                edge_idx,
+                ring_idx,
                 is_vertex,
             });
         }
@@ -264,7 +264,7 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
             .x
             .total_cmp(&b.coord.x)
             .then_with(|| a.coord.y.total_cmp(&b.coord.y))
-            .then_with(|| a.edge_idx.cmp(&b.edge_idx))
+            .then_with(|| a.ring_idx.cmp(&b.ring_idx))
     });
 
     // Group all intersections sharing the same coordinate and build:
@@ -273,7 +273,7 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
     //   points at different coordinates, which always disconnects the interior
     let mut coord_edges: Vec<(Coord<F>, usize, usize)> = Vec::new();
     let mut ring_pair_seen: HashSet<(usize, usize)> = HashSet::new();
-    let mut unique_edges: Vec<(usize, bool)> = Vec::new();
+    let mut intersecting_rings: BTreeSet<usize> = BTreeSet::new();
     let mut i = 0;
     while i < all_intersections.len() {
         let current_coord = all_intersections[i].coord;
@@ -283,32 +283,29 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
         while j < all_intersections.len() && all_intersections[j].coord == current_coord {
             j += 1;
         }
-        let group = &all_intersections[i..j];
+        let all_intersections_at_coord = &all_intersections[i..j];
 
         // Deduplicate edges within the group. The same edge can appear multiple
         // times with different vertex flags, so we merge them to ensure we only
         // count distinct edges and know if any of them is a vertex.
-        unique_edges.clear();
-        for info in group {
-            if let Some(last) = unique_edges.last_mut()
-                && last.0 == info.edge_idx
-            {
-                last.1 |= info.is_vertex;
-                continue;
-            }
-            unique_edges.push((info.edge_idx, info.is_vertex));
+        intersecting_rings.clear();
+        let mut intersection_is_on_a_vertex = false;
+        for intersection in all_intersections_at_coord {
+            intersection_is_on_a_vertex |= intersection.is_vertex;
+            intersecting_rings.insert(intersection.ring_idx);
         }
 
         // A "touch" requires 2+ distinct edges, at least one having the point
-        // as a vertex. Skip pairs the caller already reported as intersecting.
-        if unique_edges.len() >= 2 && unique_edges.iter().any(|(_, is_v)| *is_v) {
-            for (idx_a, &(edge_a, _)) in unique_edges.iter().enumerate() {
-                for &(edge_b, _) in unique_edges.iter().skip(idx_a + 1) {
-                    let key = (edge_a, edge_b);
+        // as a vertex.
+        if intersection_is_on_a_vertex {
+            for (idx_a, edge_a) in intersecting_rings.iter().enumerate() {
+                for edge_b in intersecting_rings.iter().skip(idx_a + 1) {
+                    debug_assert!(edge_a < edge_b);
+                    let key = (*edge_a, *edge_b);
                     if !ring_pair_seen.insert(key) {
                         return Some(key);
                     }
-                    coord_edges.push((current_coord, edge_a, edge_b));
+                    coord_edges.push((current_coord, *edge_a, *edge_b));
                 }
             }
         }
