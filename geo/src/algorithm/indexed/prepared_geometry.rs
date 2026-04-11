@@ -1,10 +1,9 @@
 use crate::geometry::*;
-use crate::relate::geomgraph::{GeometryGraph, RobustLineIntersector};
+use crate::relate::geomgraph::GeometryGraph;
 use crate::{BoundingRect, GeometryCow, HasDimensions};
 use crate::{GeoFloat, Relate};
 
 use std::fmt::{Debug, Formatter};
-use std::rc::Rc;
 
 use crate::dimensions::Dimensions;
 use rstar::RTreeNum;
@@ -66,14 +65,8 @@ where
     F: GeoFloat,
     T: Clone + Into<GeometryCow<'a, F>>,
 {
-    let mut geometry_graph = GeometryGraph::new(0, geometry.clone().into());
-    let r_tree = geometry_graph.build_tree();
-    geometry_graph.set_tree(Rc::new(r_tree));
+    let geometry_graph = GeometryGraph::new(0, geometry.clone().into());
     let bounding_rect = geometry_graph.geometry().bounding_rect();
-
-    // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
-    // and the type (Robust) shouldn't be hard coded here.
-    geometry_graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));
     PreparedGeometry {
         geometry,
         geometry_graph,
