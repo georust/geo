@@ -187,9 +187,8 @@ impl<F: GeoFloat> Validation for Polygon<F> {
         }
 
         // Check that the interior is simply connected.
-        let prepared_polygon = PreparedGeometry::from(self);
-        if let Some((edge_a, edge_b)) =
-            check_interior_simply_connected_from_graph(&prepared_polygon.geometry_graph)
+        let geometry_graph = GeometryGraph::new(0, self.into());
+        if let Some((edge_a, edge_b)) = check_interior_simply_connected_from_graph(&geometry_graph)
         {
             let role_a = edge_index_to_ring_role(edge_a);
             let role_b = edge_index_to_ring_role(edge_b);
