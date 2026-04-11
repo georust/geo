@@ -8,7 +8,7 @@ use geo::coord;
 use geo::geometry::{LineString, Polygon};
 use geo_test_fixtures::checkerboard::create_checkerboard_polygon;
 
-fn create_simple_polygon(size: usize) -> Polygon<f64> {
+fn create_valid_circular_polygon(size: usize) -> Polygon<f64> {
     let n = size;
     let mut coords = Vec::with_capacity(n + 1);
     for i in 0..n {
@@ -23,11 +23,11 @@ fn validation_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("polygon_validation");
 
     for size in [10, 100, 1000] {
-        let simple = create_simple_polygon(size);
+        let simple = create_valid_circular_polygon(size);
         group.bench_with_input(
             BenchmarkId::new("simple_polygon", size),
             &simple,
-            |b, poly| b.iter(|| criterion::black_box(poly.is_valid())),
+            |b, poly| b.iter(|| assert!(criterion::black_box(poly.is_valid()))),
         );
     }
 
@@ -38,7 +38,9 @@ fn validation_benchmark(c: &mut Criterion) {
         group.bench_with_input(
             BenchmarkId::new("checkerboard", &label),
             &checkerboard,
-            |b, poly| b.iter(|| criterion::black_box(poly.is_valid())),
+            |b, poly| {
+                b.iter(|| assert_eq!(criterion::black_box(poly.validation_errors().len()), 1))
+            },
         );
     }
 
@@ -46,21 +48,21 @@ fn validation_benchmark(c: &mut Criterion) {
     group.bench_with_input(
         BenchmarkId::new("fixture", "east_baton_rouge"),
         &east_baton_rouge,
-        |b, poly| b.iter(|| criterion::black_box(poly.is_valid())),
+        |b, poly| b.iter(|| assert!(criterion::black_box(poly.is_valid()))),
     );
 
     let nl_zones = geo_test_fixtures::nl_zones::<f64>();
     group.bench_with_input(
         BenchmarkId::new("fixture", "nl_zones"),
         &nl_zones,
-        |b, mp| b.iter(|| criterion::black_box(mp.is_valid())),
+        |b, mp| b.iter(|| assert_eq!(criterion::black_box(mp.validation_errors().len()), 194)),
     );
 
     let nl_plots = geo_test_fixtures::nl_plots_wgs84::<f64>();
     group.bench_with_input(
         BenchmarkId::new("fixture", "nl_plots"),
         &nl_plots,
-        |b, mp| b.iter(|| criterion::black_box(mp.is_valid())),
+        |b, mp| b.iter(|| assert_eq!(criterion::black_box(mp.validation_errors().len()), 782)),
     );
 
     group.finish();
