@@ -267,7 +267,7 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
             continue;
         }
         // Which rings are connected at *this* coordinate
-        let mut local = UnionFind::new(rings.len());
+        // let mut local = UnionFind::new(rings.len());
 
         let mut intersecting_rings = intersecting_rings.into_iter();
         let Some(first) = intersecting_rings.next() else {
@@ -275,13 +275,13 @@ fn check_interior_simply_connected_from_graph<F: GeoFloat>(
         };
         for next in intersecting_rings {
             if global.find_root(first) == global.find_root(next)
-                && local.find_root(first) != local.find_root(next)
+            // && local.find_root(first) != local.find_root(next)
             {
                 // These rings have touched before, we have a disconnected interior.
                 return Some((first.min(next), first.max(next)));
             } else {
                 global.union_sets(first, next);
-                local.union_sets(first, next);
+                // local.union_sets(first, next);
             }
         }
     }
