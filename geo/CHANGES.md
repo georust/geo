@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.33.0 - 2026-4-15
 
 - Polygon validation now uses `PreparedGeometry` to cache R-tree structures for interior/exterior containment checks, improving validation speed for polygons with many holes.
   - <https://github.com/georust/geo/pull/1501>
@@ -19,6 +19,7 @@
   - <https://github.com/georust/geo/pull/1499>
 - Bump `float_next_after` dependency to 2.0.0
 - Bump geo MSRV to 1.88
+- Bump geo-types to 0.7.19
 - Update `earcutr` dependency to 0.5.0
 - POSSIBLY BREAKING: `Triangle`s returned by `earcut_triangles` are now oriented CCW.
 - POSSIBLY BREAKING: `earcut_triangles_raw` now omits the redundant "closing" coordinate from `vertices`.
