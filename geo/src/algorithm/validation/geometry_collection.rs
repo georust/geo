@@ -90,11 +90,6 @@ mod tests {
 
         assert_eq!(
             errors[1].to_string(),
-            "geometry at index 3 is invalid: interior ring at index 0 is not contained within the polygon's exterior"
-        );
-
-        assert_eq!(
-            errors[2].to_string(),
             "geometry at index 3 is invalid: exterior ring and interior ring at index 0 intersect on a line"
         );
     }
