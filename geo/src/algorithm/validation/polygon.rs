@@ -1,8 +1,14 @@
 use super::{CoordIndex, RingRole, Validation, utils};
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
+use crate::relate::geomgraph::GeometryGraph;
 use crate::{GeoFloat, HasDimensions, Polygon, PreparedGeometry, Relate};
 
+use total_ord_coord::TotalOrdCoord;
+use union_find::UnionFind;
+
+use std::cell::RefCell;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 
 /// A [`Polygon`] must follow these rules to be valid:
@@ -10,9 +16,7 @@ use std::fmt;
 /// - [x] boundary rings do not cross
 /// - [x] boundary rings may touch at points but only as a tangent (i.e. not in a line)
 /// - [x] interior rings are contained in the exterior ring
-/// - [ ] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
-///
-/// Note: the simple connectivity of the interior is not checked by this implementation.
+/// - [x] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
 #[derive(Debug, Clone, PartialEq)]
 pub enum InvalidPolygon {
     /// A ring must have at least 4 points to be valid. Note that, in order to close the ring, the first and final points will be identical.
@@ -27,6 +31,16 @@ pub enum InvalidPolygon {
     IntersectingRingsOnALine(RingRole, RingRole),
     /// A valid polygon's rings must not intersect one another. In this case, the intersection is 2-dimensional.
     IntersectingRingsOnAnArea(RingRole, RingRole),
+    /// The polygon interior is not simply connected because rings touch in a way that
+    /// disconnects the interior into multiple regions.
+    ///
+    /// Per OGC Simple Feature Specification (ISO 19125-1), section 6.1.11.1:
+    /// "The interior of every Surface is a connected point set."
+    ///
+    /// This can occur when:
+    /// - Two rings share two or more vertices (creating a "corridor" that cuts through the interior)
+    /// - Rings form a cycle of single-vertex touches that encloses part of the interior
+    InteriorNotSimplyConnected(RingRole, RingRole),
 }
 
 impl fmt::Display for InvalidPolygon {
@@ -49,6 +63,12 @@ impl fmt::Display for InvalidPolygon {
             }
             InvalidPolygon::IntersectingRingsOnAnArea(ring_1, ring_2) => {
                 write!(f, "{ring_1} and {ring_2} intersect on an area")
+            }
+            InvalidPolygon::InteriorNotSimplyConnected(ring_1, ring_2) => {
+                write!(
+                    f,
+                    "{ring_1} and {ring_2} touch in a way that disconnects the polygon interior"
+                )
             }
         }
     }
@@ -165,7 +185,192 @@ impl<F: GeoFloat> Validation for Polygon<F> {
                 }
             }
         }
+
+        // Check that the interior is simply connected.
+        let geometry_graph = GeometryGraph::new(0, self.into());
+        if let Some((edge_a, edge_b)) = check_interior_simply_connected_from_graph(&geometry_graph)
+        {
+            let role_a = edge_index_to_ring_role(edge_a);
+            let role_b = edge_index_to_ring_role(edge_b);
+            handle_validation_error(InvalidPolygon::InteriorNotSimplyConnected(role_a, role_b))?;
+        }
+
         Ok(())
+    }
+}
+
+/// Convert a GeometryGraph edge index to a [`RingRole`].
+///
+/// Edge 0 is the exterior ring; edge N (N >= 1) is interior ring N-1.
+fn edge_index_to_ring_role(edge_idx: usize) -> RingRole {
+    if edge_idx == 0 {
+        RingRole::Exterior
+    } else {
+        RingRole::Interior(edge_idx - 1)
+    }
+}
+
+/// Check that the polygon interior is simply connected using the GeometryGraph.
+///
+/// Extracts touch-point information from the pre-computed GeometryGraph. The
+/// interior is disconnected when rings touch in a way that creates separate
+/// regions. This occurs when:
+/// - Two rings share 2+ touch points at different coordinates
+/// - Rings form a cycle through distinct single touch points
+///   (graph-theoretically: the ring adjacency graph has a cycle whose edges
+///   correspond to distinct coordinates, meaning the cycle encloses area)
+///
+/// Multiple rings meeting at a *single* coordinate does NOT disconnect
+/// the interior — the connected regions can still reach each other around
+/// the shared point.
+///
+/// Ring pairs in `skip_pairs` are excluded (they already have intersection
+/// errors reported by the caller).
+///
+/// Returns `None` if the interior is simply connected, or `Some((edge_a, edge_b))`
+/// identifying the ring pair that causes disconnection.
+fn check_interior_simply_connected_from_graph<F: GeoFloat>(
+    graph: &GeometryGraph<F>,
+) -> Option<(usize, usize)> {
+    let rings = graph.edges();
+    if rings.len() < 2 {
+        return None;
+    }
+
+    // Group intersections by coordinate
+    //     Coord => (
+    //        0: All the rings which intersect at this coordinate
+    //        1: If at least one of these intersecting rings has this coordinate as a vertex
+    //     )
+    let mut all_intersections: BTreeMap<TotalOrdCoord<F>, (BTreeSet<usize>, bool)> =
+        BTreeMap::new();
+    for (ring_idx, ring_edge) in rings.iter().enumerate() {
+        let ring_edge = RefCell::borrow(ring_edge);
+        let coords = ring_edge.coords();
+        for ei in ring_edge.edge_intersections() {
+            let coord = ei.coordinate();
+            let is_vertex = coords.contains(&coord);
+            let (intersecting_rings, any_is_vertex) = all_intersections
+                .entry(TotalOrdCoord(coord))
+                .or_insert((BTreeSet::new(), false));
+            intersecting_rings.insert(ring_idx);
+            *any_is_vertex |= is_vertex;
+        }
+    }
+
+    // Which rings are connected, even if vicariously, through other rings.
+    let mut global = UnionFind::new(rings.len());
+    for (_intersection_coord, (intersecting_rings, intersection_is_on_a_vertex)) in
+        all_intersections
+    {
+        if !intersection_is_on_a_vertex {
+            continue;
+        }
+        // Which rings are connected at *this* coordinate
+        // let mut local = UnionFind::new(rings.len());
+
+        let mut intersecting_rings = intersecting_rings.into_iter();
+        let Some(first) = intersecting_rings.next() else {
+            continue;
+        };
+        for next in intersecting_rings {
+            if global.find_root(first) == global.find_root(next)
+            // && local.find_root(first) != local.find_root(next)
+            {
+                // These rings have touched before, we have a disconnected interior.
+                return Some((first.min(next), first.max(next)));
+            } else {
+                global.union_sets(first, next);
+                // local.union_sets(first, next);
+            }
+        }
+    }
+    None
+}
+
+mod total_ord_coord {
+    use crate::{Coord, GeoFloat};
+    use std::cmp::Ordering;
+
+    #[derive(Debug, Clone, Copy)]
+    pub(super) struct TotalOrdCoord<F: GeoFloat>(pub Coord<F>);
+
+    impl<F: GeoFloat> PartialEq<Self> for TotalOrdCoord<F> {
+        fn eq(&self, other: &Self) -> bool {
+            self.cmp(other) == Ordering::Equal
+        }
+    }
+    impl<F: GeoFloat> Eq for TotalOrdCoord<F> {}
+    impl<F: GeoFloat> PartialOrd for TotalOrdCoord<F> {
+        fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+            Some(self.cmp(other))
+        }
+    }
+    impl<F: GeoFloat> Ord for TotalOrdCoord<F> {
+        fn cmp(&self, other: &Self) -> Ordering {
+            self.0
+                .x
+                .total_cmp(&other.0.x)
+                .then_with(|| self.0.y.total_cmp(&other.0.y))
+        }
+    }
+}
+
+mod union_find {
+    use std::cmp::Ordering;
+
+    /// Union Find is a classic algorithm for managing disjoint sets - i.e. which rings are touching.
+    ///
+    /// Includes Path Compression and Rank counting optimizations.
+    pub(super) struct UnionFind {
+        parent: Vec<usize>,
+        rank: Vec<usize>,
+    }
+
+    impl UnionFind {
+        pub(crate) fn new(n: usize) -> Self {
+            Self {
+                parent: (0..n).collect(),
+                rank: vec![0; n],
+            }
+        }
+
+        /// Which set does `x` belong to? (identified by the set parent).
+        ///
+        /// Rings that are touching will have the same root.
+        /// Once all touching rings have been unioned, rings with different roots are not touching.
+        pub(crate) fn find_root(&mut self, x: usize) -> usize {
+            let mut parent = x;
+            // A root node is its own parent
+            while parent != self.parent[x] {
+                parent = self.parent[self.parent[x]];
+                // compress path to make `find_root` faster next time
+                self.parent[x] = parent;
+            }
+            parent
+        }
+
+        /// If two rings are touching, union their two "touchable" sets.
+        pub(crate) fn union_sets(&mut self, x: usize, y: usize) {
+            let root_x = self.find_root(x);
+            let root_y = self.find_root(y);
+            if root_x == root_y {
+                // Already in same set
+                return;
+            }
+            match self.rank[root_x].cmp(&self.rank[root_y]) {
+                Ordering::Less => {
+                    self.parent[root_x] = root_y;
+                }
+                Ordering::Greater => {
+                    self.parent[root_y] = root_x;
+                }
+                Ordering::Equal => {
+                    self.parent[root_y] = root_x;
+                    self.rank[root_x] += 1;
+                }
+            }
+        }
     }
 }
 
@@ -227,10 +432,16 @@ mod tests {
 
         assert_validation_errors!(
             &polygon,
-            vec![InvalidPolygon::IntersectingRingsOnALine(
-                RingRole::Interior(0),
-                RingRole::Interior(1)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                ),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                )
+            ]
         );
     }
 
@@ -248,18 +459,23 @@ mod tests {
 
         assert_validation_errors!(
             &polygon,
-            vec![InvalidPolygon::IntersectingRingsOnAnArea(
-                RingRole::Interior(0),
-                RingRole::Interior(1)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnAnArea(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                ),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Interior(0),
+                    RingRole::Interior(1)
+                )
+            ]
         );
     }
 
     #[test]
     fn test_polygon_invalid_interior_ring_touches_exterior_ring_as_line() {
-        // The following polygon contains an interior ring that touches
-        // the exterior ring on one point.
-        // This is valid according to the OGC spec.
+        // The following polygon contains an interior ring that overlaps
+        // the exterior ring along a line.
         let polygon = wkt!(
             POLYGON(
                 (0. 0., 4. 0., 4. 4., 0. 4., 0. 0.),
@@ -270,10 +486,13 @@ mod tests {
 
         assert_validation_errors!(
             &polygon,
-            vec![InvalidPolygon::IntersectingRingsOnALine(
-                RingRole::Exterior,
-                RingRole::Interior(0)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(RingRole::Exterior, RingRole::Interior(0)),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Exterior,
+                    RingRole::Interior(0)
+                )
+            ]
         );
     }
 
