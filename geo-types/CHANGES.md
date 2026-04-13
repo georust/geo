@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.7.19 - 2026-04-15
 
 - POSSIBLY BREAKING: `Triangle::from([a, b, c])` now enforces CCW winding (same as `Triangle::new`).
 - Add `Triangle::unchecked_winding(v1, v2, v3)` for callers that have pre-verified CCW order or don't require a specific winding.
