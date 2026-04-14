@@ -18,7 +18,7 @@
 //! # Construction
 //!
 //! Build a tree from any collection of point-like values via [`BallTree::new`].
-//! Bare [`Point`]s, [`Coord`]s, and [`MultiPoint`](crate::MultiPoint)s are all
+//! Bare [`Point`](crate::Point)s, [`Coord`](crate::Coord)s, and [`MultiPoint`](crate::MultiPoint)s are all
 //! accepted directly; to attach per-point data (labels, identifiers, etc.),
 //! wrap each point in a [`PointWithData`].
 //!
