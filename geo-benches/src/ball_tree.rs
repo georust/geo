@@ -1,5 +1,5 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
-use geo::{BallTree, Point, point};
+use criterion::{BenchmarkId, Criterion, black_box, criterion_group, criterion_main};
+use geo::{BallTree, BallTreeBuilder, Point, point};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use rand_distr::{Distribution, Uniform};
@@ -144,6 +144,75 @@ fn ball_tree_benchmarks(c: &mut Criterion) {
         });
 
         group.finish();
+    }
+
+    // -- leaf size sweep at 10k points --------------------------------------
+    //
+    // Sweep `leaf_size` across a representative range to inform the default
+    // for 2-D geospatial workloads. We focus on 10k points (large enough to
+    // matter, small enough to iterate on quickly) and on query operations
+    // relevant to HDBSCAN: k-NN with k=5 (a typical `min_samples`) and
+    // fixed-radius neighbour search.
+    {
+        let leaf_sizes = [2usize, 4, 8, 16, 32, 64];
+        let trees: Vec<BallTree<f64>> = leaf_sizes
+            .iter()
+            .map(|&ls| BallTreeBuilder::with_leaf_size(ls).build(points_10k.clone()))
+            .collect();
+
+        // Construction
+        {
+            let mut group = c.benchmark_group("ball_tree_leaf_size_build_10k");
+            for &ls in &leaf_sizes {
+                group.bench_with_input(BenchmarkId::from_parameter(ls), &ls, |b, &ls| {
+                    b.iter(|| {
+                        let tree = BallTreeBuilder::with_leaf_size(ls)
+                            .build(black_box(points_10k.clone()));
+                        black_box(tree);
+                    });
+                });
+            }
+            group.finish();
+        }
+
+        // NN
+        {
+            let mut group = c.benchmark_group("ball_tree_leaf_size_nn_10k");
+            for (ls, tree) in leaf_sizes.iter().zip(trees.iter()) {
+                group.bench_with_input(BenchmarkId::from_parameter(ls), tree, |b, tree| {
+                    b.iter(|| {
+                        black_box(tree.nearest_neighbour(black_box(&query)));
+                    });
+                });
+            }
+            group.finish();
+        }
+
+        // k-NN at k=5 (HDBSCAN-typical min_samples)
+        {
+            let mut group = c.benchmark_group("ball_tree_leaf_size_knn5_10k");
+            for (ls, tree) in leaf_sizes.iter().zip(trees.iter()) {
+                group.bench_with_input(BenchmarkId::from_parameter(ls), tree, |b, tree| {
+                    b.iter(|| {
+                        black_box(tree.nearest_neighbours(black_box(&query), 5));
+                    });
+                });
+            }
+            group.finish();
+        }
+
+        // Fixed-radius search
+        {
+            let mut group = c.benchmark_group("ball_tree_leaf_size_radius_10k");
+            for (ls, tree) in leaf_sizes.iter().zip(trees.iter()) {
+                group.bench_with_input(BenchmarkId::from_parameter(ls), tree, |b, tree| {
+                    b.iter(|| {
+                        black_box(tree.within_radius(black_box(&query), radius));
+                    });
+                });
+            }
+            group.finish();
+        }
     }
 }
 
