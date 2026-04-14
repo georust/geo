@@ -1,5 +1,5 @@
-use criterion::{Criterion, criterion_group, criterion_main};
-use geo::{BuildBallTree, Point, point};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use geo::{BallTree, Point, point};
 use rand::SeedableRng;
 use rand::rngs::StdRng;
 use rand_distr::{Distribution, Uniform};
@@ -31,23 +31,23 @@ fn ball_tree_benchmarks(c: &mut Criterion) {
 
         group.bench_function("1k_points", |b| {
             b.iter(|| {
-                let tree = criterion::black_box(&points_1k).build_ball_tree();
-                criterion::black_box(tree);
+                let tree = BallTree::new(black_box(points_1k.clone()));
+                black_box(tree);
             });
         });
 
         group.bench_function("10k_points", |b| {
             b.iter(|| {
-                let tree = criterion::black_box(&points_10k).build_ball_tree();
-                criterion::black_box(tree);
+                let tree = BallTree::new(black_box(points_10k.clone()));
+                black_box(tree);
             });
         });
 
         group.sample_size(10);
         group.bench_function("100k_points", |b| {
             b.iter(|| {
-                let tree = criterion::black_box(&points_100k).build_ball_tree();
-                criterion::black_box(tree);
+                let tree = BallTree::new(black_box(points_100k.clone()));
+                black_box(tree);
             });
         });
 
@@ -55,9 +55,9 @@ fn ball_tree_benchmarks(c: &mut Criterion) {
     }
 
     // Pre-build trees for the query benchmarks.
-    let tree_1k = points_1k.build_ball_tree();
-    let tree_10k = points_10k.build_ball_tree();
-    let tree_100k = points_100k.build_ball_tree();
+    let tree_1k = BallTree::new(points_1k.clone());
+    let tree_10k = BallTree::new(points_10k.clone());
+    let tree_100k = BallTree::new(points_100k.clone());
 
     // -- nearest neighbour ---------------------------------------------------
     {
@@ -65,26 +65,23 @@ fn ball_tree_benchmarks(c: &mut Criterion) {
 
         group.bench_function("1k_points", |b| {
             b.iter(|| {
-                let result =
-                    criterion::black_box(&tree_1k).nearest_neighbour(criterion::black_box(&query));
-                criterion::black_box(result);
+                let result = black_box(&tree_1k).nearest_neighbour(black_box(&query));
+                black_box(result);
             });
         });
 
         group.bench_function("10k_points", |b| {
             b.iter(|| {
-                let result =
-                    criterion::black_box(&tree_10k).nearest_neighbour(criterion::black_box(&query));
-                criterion::black_box(result);
+                let result = black_box(&tree_10k).nearest_neighbour(black_box(&query));
+                black_box(result);
             });
         });
 
         group.sample_size(10);
         group.bench_function("100k_points", |b| {
             b.iter(|| {
-                let result = criterion::black_box(&tree_100k)
-                    .nearest_neighbour(criterion::black_box(&query));
-                criterion::black_box(result);
+                let result = black_box(&tree_100k).nearest_neighbour(black_box(&query));
+                black_box(result);
             });
         });
 
@@ -97,26 +94,23 @@ fn ball_tree_benchmarks(c: &mut Criterion) {
 
         group.bench_function("1k_points", |b| {
             b.iter(|| {
-                let result = criterion::black_box(&tree_1k)
-                    .nearest_neighbours(criterion::black_box(&query), 10);
-                criterion::black_box(result);
+                let result = black_box(&tree_1k).nearest_neighbours(black_box(&query), 10);
+                black_box(result);
             });
         });
 
         group.bench_function("10k_points", |b| {
             b.iter(|| {
-                let result = criterion::black_box(&tree_10k)
-                    .nearest_neighbours(criterion::black_box(&query), 10);
-                criterion::black_box(result);
+                let result = black_box(&tree_10k).nearest_neighbours(black_box(&query), 10);
+                black_box(result);
             });
         });
 
         group.sample_size(10);
         group.bench_function("100k_points", |b| {
             b.iter(|| {
-                let result = criterion::black_box(&tree_100k)
-                    .nearest_neighbours(criterion::black_box(&query), 10);
-                criterion::black_box(result);
+                let result = black_box(&tree_100k).nearest_neighbours(black_box(&query), 10);
+                black_box(result);
             });
         });
 
@@ -129,26 +123,23 @@ fn ball_tree_benchmarks(c: &mut Criterion) {
 
         group.bench_function("1k_points", |b| {
             b.iter(|| {
-                let result = criterion::black_box(&tree_1k)
-                    .within_radius(criterion::black_box(&query), radius);
-                criterion::black_box(result);
+                let result = black_box(&tree_1k).within_radius(black_box(&query), radius);
+                black_box(result);
             });
         });
 
         group.bench_function("10k_points", |b| {
             b.iter(|| {
-                let result = criterion::black_box(&tree_10k)
-                    .within_radius(criterion::black_box(&query), radius);
-                criterion::black_box(result);
+                let result = black_box(&tree_10k).within_radius(black_box(&query), radius);
+                black_box(result);
             });
         });
 
         group.sample_size(10);
         group.bench_function("100k_points", |b| {
             b.iter(|| {
-                let result = criterion::black_box(&tree_100k)
-                    .within_radius(criterion::black_box(&query), radius);
-                criterion::black_box(result);
+                let result = black_box(&tree_100k).within_radius(black_box(&query), radius);
+                black_box(result);
             });
         });
 

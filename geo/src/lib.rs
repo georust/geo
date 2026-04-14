@@ -207,8 +207,9 @@
 //! method and [`GeomWithData`](https://docs.rs/rstar/0.12.0/rstar/primitives/struct.GeomWithData.html) struct.
 //!
 //! For point-only data, the [`BallTree`] provides an alternative spatial index with nearest-neighbour,
-//! k-nearest-neighbours, and radius search queries. Construct one via the [`BuildBallTree`] trait,
-//! [`BallTree::new`] (for associated data), or [`BallTreeBuilder`] (for configurable leaf size).
+//! k-nearest-neighbours, and radius search queries. Construct one via [`BallTree::new`] (wrapping
+//! each point in a [`PointWithData`] when you need an associated payload), or [`BallTreeBuilder`]
+//! for a configurable leaf size.
 //!
 //! # Features
 //!

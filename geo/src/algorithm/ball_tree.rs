@@ -17,60 +17,49 @@
 //!
 //! # Construction
 //!
-//! There are three ways to build a ball tree:
+//! Build a tree from any collection of point-like values via [`BallTree::new`].
+//! Bare [`Point`]s, [`Coord`]s, and [`MultiPoint`](crate::MultiPoint)s are all
+//! accepted directly; to attach per-point data (labels, identifiers, etc.),
+//! wrap each point in a [`PointWithData`].
 //!
-//! - **[`BuildBallTree::build_ball_tree`]**: a convenience trait implemented on
-//!   `[Point<T>]`, `Vec<Point<T>>`, and `MultiPoint<T>`. Use this when you just
-//!   need to index points without associated data.
+//! ```
+//! use geo::point;
+//! use geo::algorithm::ball_tree::BallTree;
 //!
-//!   ```
-//!   use geo::{MultiPoint, point};
-//!   use geo::algorithm::ball_tree::BuildBallTree;
+//! let tree = BallTree::new(vec![
+//!     point!(x: 0.0, y: 0.0),
+//!     point!(x: 1.0, y: 1.0),
+//!     point!(x: 2.0, y: 2.0),
+//! ]);
+//! let nearest = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
+//! assert_eq!(nearest.point, point!(x: 0.0, y: 0.0));
+//! ```
 //!
-//!   let points = MultiPoint::new(vec![
-//!       point!(x: 0.0, y: 0.0),
-//!       point!(x: 1.0, y: 1.0),
-//!       point!(x: 2.0, y: 2.0),
-//!   ]);
-//!   let tree = points.build_ball_tree();
-//!   ```
+//! ```
+//! use geo::point;
+//! use geo::algorithm::ball_tree::{BallTree, PointWithData};
 //!
-//! - **[`BallTree::new`]**: takes a `Vec<Point<T>>` and a parallel `Vec<D>` of
-//!   associated data. Use this when each point carries a label, identifier, or
-//!   other payload.
+//! let tree = BallTree::new(vec![
+//!     PointWithData::new(point!(x: 0.0, y: 0.0), "origin"),
+//!     PointWithData::new(point!(x: 1.0, y: 1.0), "middle"),
+//!     PointWithData::new(point!(x: 2.0, y: 2.0), "far"),
+//! ]);
+//! let nearest = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
+//! assert_eq!(*nearest.data, "origin");
+//! ```
 //!
-//!   ```
-//!   use geo::point;
-//!   use geo::algorithm::ball_tree::BallTree;
+//! To tune the leaf size, use [`BallTreeBuilder`]:
 //!
-//!   let points = vec![
-//!       point!(x: 0.0, y: 0.0),
-//!       point!(x: 1.0, y: 1.0),
-//!       point!(x: 2.0, y: 2.0),
-//!   ];
-//!   let labels = vec!["origin", "middle", "far"];
-//!   let tree = BallTree::new(points, labels);
-//!   let nearest = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
-//!   assert_eq!(*nearest.data, "origin");
-//!   ```
+//! ```
+//! use geo::point;
+//! use geo::algorithm::ball_tree::BallTreeBuilder;
 //!
-//! - **[`BallTreeBuilder`]**: a builder that allows configuring parameters such
-//!   as the leaf size before construction. Use this when you need to tune tree
-//!   structure for your workload.
-//!
-//!   ```
-//!   use geo::point;
-//!   use geo::algorithm::ball_tree::BallTreeBuilder;
-//!
-//!   let points = vec![
-//!       point!(x: 0.0, y: 0.0),
-//!       point!(x: 1.0, y: 1.0),
-//!       point!(x: 2.0, y: 2.0),
-//!   ];
-//!   let tree = BallTreeBuilder::new()
-//!       .leaf_size(8)
-//!       .build_pointset(points);
-//!   ```
+//! let tree = BallTreeBuilder::with_leaf_size(16).build(vec![
+//!     point!(x: 0.0, y: 0.0),
+//!     point!(x: 1.0, y: 1.0),
+//!     point!(x: 2.0, y: 2.0),
+//! ]);
+//! ```
 //!
 //! # Queries
 //!
@@ -78,7 +67,7 @@
 //! - [`BallTree::nearest_neighbours`] -- k nearest neighbours, sorted by distance
 //! - [`BallTree::within_radius`] -- all points within a given radius
 
-use crate::{Coord, GeoFloat, GeoNum, MultiPoint, Point};
+use crate::{Coord, CoordNum, GeoFloat, GeoNum, Point};
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
@@ -88,6 +77,95 @@ use std::collections::BinaryHeap;
 /// plateau for NN, radius, and construction. See `geo-benches/ball_tree`'s
 /// `ball_tree_leaf_size_*` groups for the underlying sweep.
 const DEFAULT_LEAF_SIZE: usize = 16;
+
+// -- Trait: BallTreePoint -----------------------------------------------------
+
+/// A point-like value that can be indexed in a [`BallTree`].
+///
+/// Implemented for [`Point`], [`Coord`], and [`PointWithData`]. A collection of
+/// any `BallTreePoint` may be passed to [`BallTree::new`] or
+/// [`BallTreeBuilder::build`]. The associated `Data` type determines the
+/// payload returned from queries: it is `()` for bare points, and `D` for
+/// [`PointWithData<T, D>`].
+pub trait BallTreePoint<T: GeoFloat> {
+    /// Associated data carried alongside each point. `()` for bare points.
+    type Data;
+
+    /// The 2-D coordinate used for distance calculations during tree
+    /// construction and queries.
+    fn coord(&self) -> Coord<T>;
+
+    /// Consume `self`, yielding its point and associated data.
+    fn into_point_data(self) -> (Point<T>, Self::Data);
+}
+
+impl<T: GeoFloat> BallTreePoint<T> for Point<T> {
+    type Data = ();
+
+    fn coord(&self) -> Coord<T> {
+        self.0
+    }
+
+    fn into_point_data(self) -> (Point<T>, ()) {
+        (self, ())
+    }
+}
+
+impl<T: GeoFloat> BallTreePoint<T> for Coord<T> {
+    type Data = ();
+
+    fn coord(&self) -> Coord<T> {
+        *self
+    }
+
+    fn into_point_data(self) -> (Point<T>, ()) {
+        (Point(self), ())
+    }
+}
+
+/// A [`Point`] paired with an associated data payload, for indexing in a
+/// [`BallTree`].
+///
+/// Use this when each point carries a label, identifier, or other user data
+/// that should be returned alongside query hits.
+///
+/// ```
+/// use geo::point;
+/// use geo::algorithm::ball_tree::{BallTree, PointWithData};
+///
+/// let tree = BallTree::new(vec![
+///     PointWithData::new(point!(x: 0.0, y: 0.0), "origin"),
+///     PointWithData::new(point!(x: 1.0, y: 1.0), "middle"),
+/// ]);
+/// let nn = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
+/// assert_eq!(*nn.data, "origin");
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub struct PointWithData<T: CoordNum, D> {
+    pub point: Point<T>,
+    pub data: D,
+}
+
+impl<T: CoordNum, D> PointWithData<T, D> {
+    /// Construct a new `PointWithData` from a point and its associated value.
+    pub fn new(point: Point<T>, data: D) -> Self {
+        Self { point, data }
+    }
+}
+
+impl<T: GeoFloat, D> BallTreePoint<T> for PointWithData<T, D> {
+    type Data = D;
+
+    fn coord(&self) -> Coord<T> {
+        self.point.0
+    }
+
+    fn into_point_data(self) -> (Point<T>, D) {
+        (self.point, self.data)
+    }
+}
+
+// -- BallTree -----------------------------------------------------------------
 
 /// An immutable ball tree built from a set of points, supporting repeated
 /// queries without mutation. Points can carry associated data of type `D`
@@ -100,23 +178,23 @@ const DEFAULT_LEAF_SIZE: usize = 16;
 /// of maximum dispersion, producing a balanced binary tree in O(n log n) time.
 #[derive(Debug, Clone)]
 pub struct BallTree<T: GeoFloat, D = ()> {
-    pub(super) nodes: Vec<Node<T>>,
-    pub(super) points: Vec<Point<T>>,
+    nodes: Vec<Node<T>>,
+    points: Vec<Point<T>>,
     data: Vec<D>,
-    pub(super) indices: Vec<usize>,
+    indices: Vec<usize>,
 }
 
 #[derive(Debug, Clone)]
-pub(super) struct Node<T: GeoFloat> {
-    pub(super) center: Coord<T>,
-    pub(super) radius: T,
-    pub(super) start: usize,
-    pub(super) end: usize,
-    pub(super) kind: NodeKind,
+struct Node<T: GeoFloat> {
+    center: Coord<T>,
+    radius: T,
+    start: usize,
+    end: usize,
+    kind: NodeKind,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub(super) enum NodeKind {
+enum NodeKind {
     Leaf,
     Branch { left: usize, right: usize },
 }
@@ -140,43 +218,31 @@ pub struct NearestNeighbour<'a, T: GeoFloat, D> {
 }
 
 impl<T: GeoFloat, D> BallTree<T, D> {
-    /// Build a ball tree from a vector of points and a parallel vector of
-    /// associated data.
+    /// Build a ball tree from any iterable of point-like items.
     ///
-    /// If you do not need associated data, the [`BuildBallTree`] trait provides
-    /// a convenience method that can be called directly on point collections:
+    /// The `Data` associated type on [`BallTreePoint`] determines the `D`
+    /// parameter of the resulting tree. For bare [`Point`]s, [`Coord`]s, and
+    /// [`MultiPoint`](crate::MultiPoint)s this is `()`; for
+    /// [`PointWithData<T, D>`] it is `D`.
     ///
     /// ```
     /// use geo::point;
-    /// use geo::algorithm::ball_tree::BuildBallTree;
+    /// use geo::algorithm::ball_tree::BallTree;
     ///
-    /// let points = vec![point!(x: 0.0, y: 0.0), point!(x: 1.0, y: 1.0)];
-    /// let tree = points.build_ball_tree();
+    /// let tree = BallTree::new(vec![
+    ///     point!(x: 0.0, y: 0.0),
+    ///     point!(x: 1.0, y: 1.0),
+    /// ]);
+    /// assert_eq!(tree.len(), 2);
     /// ```
     ///
-    /// # Panics
-    ///
-    /// Panics if `points` and `data` have different lengths.
-    pub fn new(points: Vec<Point<T>>, data: Vec<D>) -> Self {
-        assert_eq!(
-            points.len(),
-            data.len(),
-            "points and data must have the same length"
-        );
-        let n = points.len();
-        let mut indices: Vec<usize> = (0..n).collect();
-        let mut nodes = Vec::new();
-
-        if n > 0 {
-            build_recursive(&points, &mut indices, 0, n, &mut nodes, DEFAULT_LEAF_SIZE);
-        }
-
-        BallTree {
-            nodes,
-            points,
-            data,
-            indices,
-        }
+    /// To configure the leaf size, use [`BallTreeBuilder`] instead.
+    pub fn new<I, P>(items: I) -> Self
+    where
+        I: IntoIterator<Item = P>,
+        P: BallTreePoint<T, Data = D>,
+    {
+        BallTreeBuilder::new().build(items)
     }
 
     /// Returns the number of points in the tree.
@@ -192,18 +258,14 @@ impl<T: GeoFloat, D> BallTree<T, D> {
 
 /// Compute the squared Euclidean distance between two coords.
 #[inline]
-pub(super) fn coord_distance_sq<T: GeoFloat>(a: Coord<T>, b: Coord<T>) -> T {
+fn coord_distance_sq<T: GeoFloat>(a: Coord<T>, b: Coord<T>) -> T {
     let dx = a.x - b.x;
     let dy = a.y - b.y;
     dx * dx + dy * dy
 }
 
-/// Squared lower-bound Euclidean distance from a query point to the nearest
-/// possible point inside a ball with the given `center` and `radius`.
-///
-/// Returns zero when the query is inside the ball (no pruning possible).
-/// This consolidates the sqrt-subtract-re-square pattern that otherwise
-/// appears at every ball-bound pruning site.
+/// Squared lower-bound Euclidean distance from `query` to the nearest point
+/// inside the ball `(center, radius)`; zero when `query` is inside the ball.
 #[inline]
 fn ball_lower_bound_sq<T: GeoFloat>(query: Coord<T>, center: Coord<T>, radius: T) -> T {
     let dist_to_center = coord_distance_sq(query, center).sqrt();
@@ -243,8 +305,7 @@ fn build_recursive<T: GeoFloat>(
     let mut max_x = T::neg_infinity();
     let mut min_y = T::infinity();
     let mut max_y = T::neg_infinity();
-    for p in node_points() {
-        let (x, y) = p.x_y();
+    for Point(Coord { x, y }) in node_points() {
         sum_x = sum_x + x;
         sum_y = sum_y + y;
         min_x = min_x.min(x);
@@ -332,6 +393,20 @@ impl<T: GeoFloat, D> BallTree<T, D> {
         })
     }
 
+    /// Order two child node indices so that the one whose centre is closer to
+    /// `query` is visited first — this maximises the chance of shrinking the
+    /// best-distance bound before the farther child is explored, improving
+    /// pruning in both `nn_search` and `knn_search`.
+    fn ordered_children(&self, query: Coord<T>, left: usize, right: usize) -> (usize, usize) {
+        let dl = coord_distance_sq(query, self.nodes[left].center);
+        let dr = coord_distance_sq(query, self.nodes[right].center);
+        if dl <= dr {
+            (left, right)
+        } else {
+            (right, left)
+        }
+    }
+
     fn nn_search(
         &self,
         node_idx: usize,
@@ -364,15 +439,7 @@ impl<T: GeoFloat, D> BallTree<T, D> {
                 }
             }
             NodeKind::Branch { left, right } => {
-                let dl = coord_distance_sq(query, self.nodes[*left].center);
-                let dr = coord_distance_sq(query, self.nodes[*right].center);
-
-                let (first, second) = if dl <= dr {
-                    (*left, *right)
-                } else {
-                    (*right, *left)
-                };
-
+                let (first, second) = self.ordered_children(query, *left, *right);
                 self.nn_search(first, query, best_dist_sq, best_index);
                 self.nn_search(second, query, best_dist_sq, best_index);
             }
@@ -382,16 +449,12 @@ impl<T: GeoFloat, D> BallTree<T, D> {
 
 // -- Query: k-nearest neighbours ----------------------------------------------
 
-/// Entry in the max-heap used during k-NN search.
-/// The largest distance sits at the top and can be evicted first.
-///
-/// Uses [`GeoNum::total_cmp`](crate::GeoNum::total_cmp) to provide a real
-/// total order, so NaN values (which cannot arise here in practice, since
-/// distances are computed by squaring and summing finite coordinates) would
-/// still sort consistently.
+/// Entry in the max-heap used during k-NN search; the largest `dist_sq` sits
+/// at the top and is evicted first. `Ord` uses [`GeoNum::total_cmp`] so the
+/// order is total even if a NaN slipped in.
 struct KnnCandidate<T> {
     dist_sq: T,
-    /// Index into the `indices` array (not the original index).
+    /// Original insertion index of the candidate point.
     idx: usize,
 }
 
@@ -435,14 +498,11 @@ impl<T: GeoFloat, D> BallTree<T, D> {
 
         let mut results: Vec<_> = heap
             .into_iter()
-            .map(|c| {
-                let orig = self.indices[c.idx];
-                NearestNeighbour {
-                    point: self.points[orig],
-                    data: &self.data[orig],
-                    index: orig,
-                    distance: c.dist_sq.sqrt(),
-                }
+            .map(|c| NearestNeighbour {
+                point: self.points[c.idx],
+                data: &self.data[c.idx],
+                index: c.idx,
+                distance: c.dist_sq.sqrt(),
             })
             .collect();
         results.sort_by(|a, b| a.distance.total_cmp(&b.distance));
@@ -474,27 +534,18 @@ impl<T: GeoFloat, D> BallTree<T, D> {
 
         match kind {
             NodeKind::Leaf => {
-                for i in *start..*end {
-                    let idx = self.indices[i];
+                for &idx in &self.indices[*start..*end] {
                     let d = coord_distance_sq(query, self.points[idx].0);
                     if heap.len() < k {
-                        heap.push(KnnCandidate { dist_sq: d, idx: i });
+                        heap.push(KnnCandidate { dist_sq: d, idx });
                     } else if d < heap.peek().unwrap().dist_sq {
                         heap.pop();
-                        heap.push(KnnCandidate { dist_sq: d, idx: i });
+                        heap.push(KnnCandidate { dist_sq: d, idx });
                     }
                 }
             }
             NodeKind::Branch { left, right } => {
-                let dl = coord_distance_sq(query, self.nodes[*left].center);
-                let dr = coord_distance_sq(query, self.nodes[*right].center);
-
-                let (first, second) = if dl <= dr {
-                    (*left, *right)
-                } else {
-                    (*right, *left)
-                };
-
+                let (first, second) = self.ordered_children(query, *left, *right);
                 self.knn_search(first, query, k, heap);
                 self.knn_search(second, query, k, heap);
             }
@@ -529,24 +580,33 @@ impl<T: GeoFloat, D> BallTree<T, D> {
         results: &mut Vec<NearestNeighbour<'a, T, D>>,
     ) {
         let node = &self.nodes[node_idx];
-        let dist_to_center = coord_distance_sq(query, node.center).sqrt();
+        let dist_sq = coord_distance_sq(query, node.center);
 
-        // Prune: the ball is entirely outside the search radius
-        if dist_to_center - node.radius > search_radius {
+        // Prune: the ball is entirely outside the search radius iff
+        // `dist_to_center > search_radius + node.radius`. Both sides are
+        // non-negative so we can square and compare without a `sqrt`.
+        let outer = search_radius + node.radius;
+        if dist_sq > outer * outer {
             return;
         }
 
-        // Bulk include: the ball is entirely within the search radius
-        if dist_to_center + node.radius <= search_radius {
-            results.extend(self.indices[node.start..node.end].iter().map(|&idx| {
-                NearestNeighbour {
-                    point: self.points[idx],
-                    data: &self.data[idx],
-                    index: idx,
-                    distance: coord_distance_sq(query, self.points[idx].0).sqrt(),
-                }
-            }));
-            return;
+        // Bulk include: the ball is entirely within the search radius iff
+        // `dist_to_center <= search_radius - node.radius`. That can only
+        // hold when `node.radius <= search_radius`, otherwise the RHS is
+        // negative and we must fall through to the per-point path.
+        if node.radius <= search_radius {
+            let inner = search_radius - node.radius;
+            if dist_sq <= inner * inner {
+                results.extend(self.indices[node.start..node.end].iter().map(|&idx| {
+                    NearestNeighbour {
+                        point: self.points[idx],
+                        data: &self.data[idx],
+                        index: idx,
+                        distance: coord_distance_sq(query, self.points[idx].0).sqrt(),
+                    }
+                }));
+                return;
+            }
         }
 
         match node.kind {
@@ -584,17 +644,14 @@ impl<T: GeoFloat, D> BallTree<T, D> {
 ///
 /// ```
 /// use geo::point;
-/// use geo::algorithm::ball_tree::BallTreeBuilder;
+/// use geo::algorithm::ball_tree::{BallTreeBuilder, PointWithData};
 ///
-/// let points = vec![
-///     point!(x: 0.0, y: 0.0),
-///     point!(x: 1.0, y: 1.0),
-///     point!(x: 2.0, y: 2.0),
+/// let items = vec![
+///     PointWithData::new(point!(x: 0.0, y: 0.0), "origin"),
+///     PointWithData::new(point!(x: 1.0, y: 1.0), "middle"),
+///     PointWithData::new(point!(x: 2.0, y: 2.0), "far"),
 /// ];
-/// let labels = vec!["origin", "middle", "far"];
-/// let tree = BallTreeBuilder::new()
-///     .leaf_size(8)
-///     .build(points, labels);
+/// let tree = BallTreeBuilder::with_leaf_size(8).build(items);
 /// let nearest = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
 /// assert_eq!(*nearest.data, "origin");
 /// ```
@@ -610,6 +667,16 @@ impl BallTreeBuilder {
         }
     }
 
+    /// Create a new builder with the given leaf size.
+    ///
+    /// Shorthand for `BallTreeBuilder::new().leaf_size(size)`. A leaf size of
+    /// zero is treated as one.
+    pub fn with_leaf_size(size: usize) -> Self {
+        Self {
+            leaf_size: size.max(1),
+        }
+    }
+
     /// Set the leaf size (maximum number of points in a leaf node).
     ///
     /// A leaf size of zero is treated as one (every leaf holds at least one point).
@@ -618,17 +685,26 @@ impl BallTreeBuilder {
         self
     }
 
-    /// Build a [`BallTree`] from points and parallel associated data.
+    /// Build a [`BallTree`] from any iterable of point-like items.
     ///
-    /// # Panics
-    ///
-    /// Panics if `points` and `data` have different lengths.
-    pub fn build<T: GeoFloat, D>(self, points: Vec<Point<T>>, data: Vec<D>) -> BallTree<T, D> {
-        assert_eq!(
-            points.len(),
-            data.len(),
-            "points and data must have the same length"
-        );
+    /// The `Data` associated type on [`BallTreePoint`] determines the payload
+    /// type `D` of the resulting tree.
+    pub fn build<T, I, P>(self, items: I) -> BallTree<T, P::Data>
+    where
+        T: GeoFloat,
+        I: IntoIterator<Item = P>,
+        P: BallTreePoint<T>,
+    {
+        let iter = items.into_iter();
+        let (lo, hi) = iter.size_hint();
+        let cap = hi.unwrap_or(lo);
+        let mut points = Vec::with_capacity(cap);
+        let mut data = Vec::with_capacity(cap);
+        for item in iter {
+            let (p, d) = item.into_point_data();
+            points.push(p);
+            data.push(d);
+        }
         let n = points.len();
         let mut indices: Vec<usize> = (0..n).collect();
         let mut nodes = Vec::new();
@@ -644,48 +720,11 @@ impl BallTreeBuilder {
             indices,
         }
     }
-
-    /// Build a [`BallTree`] from points without associated data.
-    ///
-    /// This is the builder equivalent of [`BuildBallTree::build_ball_tree`].
-    pub fn build_pointset<T: GeoFloat>(self, points: Vec<Point<T>>) -> BallTree<T> {
-        let data = vec![(); points.len()];
-        self.build(points, data)
-    }
 }
 
 impl Default for BallTreeBuilder {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-// -- Trait: BuildBallTree -----------------------------------------------------
-
-/// Construct a [`BallTree`] from a collection of points (without associated data).
-///
-/// This is the convenience route for building a `BallTree<T, ()>`. To attach
-/// per-point data, use [`BallTree::new`] directly.
-pub trait BuildBallTree<T: GeoFloat> {
-    fn build_ball_tree(&self) -> BallTree<T>;
-}
-
-impl<T: GeoFloat> BuildBallTree<T> for [Point<T>] {
-    fn build_ball_tree(&self) -> BallTree<T> {
-        let data = vec![(); self.len()];
-        BallTree::new(self.to_vec(), data)
-    }
-}
-
-impl<T: GeoFloat> BuildBallTree<T> for Vec<Point<T>> {
-    fn build_ball_tree(&self) -> BallTree<T> {
-        self.as_slice().build_ball_tree()
-    }
-}
-
-impl<T: GeoFloat> BuildBallTree<T> for MultiPoint<T> {
-    fn build_ball_tree(&self) -> BallTree<T> {
-        self.0.build_ball_tree()
     }
 }
 
@@ -711,21 +750,21 @@ mod tests {
 
     #[test]
     fn test_construction_basic() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         assert_eq!(tree.len(), 9);
         assert!(!tree.is_empty());
     }
 
     #[test]
     fn test_construction_empty() {
-        let tree: BallTree<f64> = BallTree::new(vec![], vec![]);
+        let tree: BallTree<f64> = BallTree::new(Vec::<Point<f64>>::new());
         assert!(tree.is_empty());
         assert_eq!(tree.len(), 0);
     }
 
     #[test]
     fn test_construction_single_point() {
-        let tree = vec![point!(x: 1.0_f64, y: 2.0)].build_ball_tree();
+        let tree = BallTree::new(vec![point!(x: 1.0_f64, y: 2.0)]);
         assert_eq!(tree.len(), 1);
         assert_eq!(tree.nodes.len(), 1);
     }
@@ -734,7 +773,7 @@ mod tests {
     fn test_bounding_invariant() {
         // Every point should be within the root node's bounding ball
         let points = make_points();
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
         let root = &tree.nodes[0];
         let center = Point(root.center);
         for p in &points {
@@ -748,7 +787,7 @@ mod tests {
 
     #[test]
     fn test_nn_exact_match() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let result = tree.nearest_neighbour(&point!(x: 1.0, y: 1.0)).unwrap();
         assert_eq!(result.index, 4);
         assert_relative_eq!(result.distance, 0.0);
@@ -756,14 +795,14 @@ mod tests {
 
     #[test]
     fn test_nn_closest_point() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let result = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
         assert_eq!(result.index, 0); // (0,0) is closest to (0.1, 0.1)
     }
 
     #[test]
     fn test_nn_empty_tree() {
-        let tree: BallTree<f64> = BallTree::new(vec![], vec![]);
+        let tree: BallTree<f64> = BallTree::new(Vec::<Point<f64>>::new());
         assert!(tree.nearest_neighbour(&point!(x: 0.0, y: 0.0)).is_none());
     }
 
@@ -771,7 +810,7 @@ mod tests {
     fn test_nn_brute_force_comparison() {
         // Compare ball tree NN against brute-force for various query points
         let points = make_points();
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
 
         let queries = vec![
             point!(x: 0.5, y: 0.5),
@@ -798,7 +837,7 @@ mod tests {
 
     #[test]
     fn test_knn_basic() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let results = tree.nearest_neighbours(&point!(x: 0.0, y: 0.0), 3);
         assert_eq!(results.len(), 3);
         // Should be sorted by distance
@@ -811,21 +850,21 @@ mod tests {
 
     #[test]
     fn test_knn_k_zero() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let results = tree.nearest_neighbours(&point!(x: 0.0, y: 0.0), 0);
         assert!(results.is_empty());
     }
 
     #[test]
     fn test_knn_k_greater_than_n() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let results = tree.nearest_neighbours(&point!(x: 0.0, y: 0.0), 100);
         assert_eq!(results.len(), 9);
     }
 
     #[test]
     fn test_knn_k_one_equals_nn() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let query = point!(x: 0.5, y: 0.5);
         let nn = tree.nearest_neighbour(&query).unwrap();
         let knn = tree.nearest_neighbours(&query, 1);
@@ -837,7 +876,7 @@ mod tests {
     #[test]
     fn test_knn_brute_force_comparison() {
         let points = make_points();
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
         let query = point!(x: 0.5, y: 0.5);
         let k = 4;
 
@@ -858,7 +897,7 @@ mod tests {
 
     #[test]
     fn test_within_radius_basic() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         // All points within distance 1.0 of origin: (0,0), (1,0), (0,1)
         let results = tree.within_radius(&point!(x: 0.0, y: 0.0), 1.0);
         let mut indices: Vec<usize> = results.iter().map(|r| r.index).collect();
@@ -868,14 +907,14 @@ mod tests {
 
     #[test]
     fn test_within_radius_empty_result() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let results = tree.within_radius(&point!(x: 10.0, y: 10.0), 0.1);
         assert!(results.is_empty());
     }
 
     #[test]
     fn test_within_radius_all_points() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
         let results = tree.within_radius(&point!(x: 1.0, y: 1.0), 10.0);
         assert_eq!(results.len(), 9);
     }
@@ -883,7 +922,7 @@ mod tests {
     #[test]
     fn test_within_radius_brute_force_comparison() {
         let points = make_points();
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
         let query = point!(x: 1.0, y: 1.0);
         let radius = 1.1;
 
@@ -905,13 +944,12 @@ mod tests {
 
     #[test]
     fn test_with_associated_data() {
-        let points = vec![
-            point!(x: 0.0, y: 0.0),
-            point!(x: 1.0, y: 1.0),
-            point!(x: 2.0, y: 2.0),
+        let items = vec![
+            PointWithData::new(point!(x: 0.0, y: 0.0), "alpha"),
+            PointWithData::new(point!(x: 1.0, y: 1.0), "beta"),
+            PointWithData::new(point!(x: 2.0, y: 2.0), "gamma"),
         ];
-        let data = vec!["alpha", "beta", "gamma"];
-        let tree = BallTree::new(points, data);
+        let tree = BallTree::new(items);
 
         // NN
         let result = tree.nearest_neighbour(&point!(x: 0.9, y: 0.9)).unwrap();
@@ -932,35 +970,38 @@ mod tests {
     }
 
     #[test]
-    fn test_build_ball_tree_trait_multipoint() {
+    fn test_multipoint_accepted_directly() {
         let mp = MultiPoint::new(vec![
             point!(x: 0.0, y: 0.0),
             point!(x: 1.0, y: 1.0),
             point!(x: 2.0, y: 2.0),
         ]);
-        let tree = mp.build_ball_tree();
+        let tree = BallTree::new(mp);
         assert_eq!(tree.len(), 3);
         let result = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
         assert_eq!(result.index, 0);
     }
 
     #[test]
-    fn test_build_ball_tree_trait_slice() {
-        let points = vec![
-            point!(x: 0.0_f64, y: 0.0),
-            point!(x: 1.0, y: 1.0),
-            point!(x: 2.0, y: 2.0),
+    fn test_coord_accepted_directly() {
+        let coords: Vec<Coord<f64>> = vec![
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 1.0, y: 1.0 },
+            Coord { x: 2.0, y: 2.0 },
         ];
-        let tree = points.as_slice().build_ball_tree();
+        let tree = BallTree::new(coords);
         assert_eq!(tree.len(), 3);
+        let result = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
+        assert_eq!(result.index, 0);
     }
 
     #[test]
-    fn test_duplicate_points() {
-        // All points at the same location
-        let points: Vec<Point<f64>> = (0..20).map(|_| point!(x: 5.0, y: 5.0)).collect();
-        let data: Vec<usize> = (0..20).collect();
-        let tree = BallTree::new(points, data);
+    fn test_duplicate_points_with_data() {
+        // All points at the same location, carrying integer labels
+        let items: Vec<PointWithData<f64, usize>> = (0..20)
+            .map(|i| PointWithData::new(point!(x: 5.0, y: 5.0), i))
+            .collect();
+        let tree = BallTree::new(items);
         assert_eq!(tree.len(), 20);
 
         let nn = tree.nearest_neighbour(&point!(x: 5.0, y: 5.0)).unwrap();
@@ -980,12 +1021,12 @@ mod tests {
     fn test_collinear_points() {
         // All points on the x-axis (zero y-spread)
         let points: Vec<Point<f64>> = (0..20).map(|i| point!(x: i as f64, y: 0.0)).collect();
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
 
         let nn = tree.nearest_neighbour(&point!(x: 5.5, y: 0.0)).unwrap();
         // Points 5 and 6 are both at distance 0.5; either is a valid result
         assert!(nn.index == 5 || nn.index == 6);
-        assert_eq!(nn.distance, 0.5);
+        assert_relative_eq!(nn.distance, 0.5, epsilon = 1e-10);
 
         let knn = tree.nearest_neighbours(&point!(x: 10.0, y: 0.0), 3);
         assert_eq!(knn.len(), 3);
@@ -1003,7 +1044,7 @@ mod tests {
             point!(x: 1.0, y: 1.0),
             point!(x: 5.0, y: 5.0),
         ];
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
 
         let nn = tree.nearest_neighbour(&point!(x: -4.0, y: -4.0)).unwrap();
         assert_eq!(nn.index, 0); // (-5,-5) is closest
@@ -1016,7 +1057,7 @@ mod tests {
             point!(x: 1.0_f32, y: 0.0),
             point!(x: 0.0_f32, y: 1.0),
         ];
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
         assert_eq!(tree.len(), 3);
 
         let nn = tree.nearest_neighbour(&point!(x: 0.1_f32, y: 0.1)).unwrap();
@@ -1029,7 +1070,7 @@ mod tests {
 
     #[test]
     fn test_within_radius_zero() {
-        let tree = make_points().build_ball_tree();
+        let tree = BallTree::new(make_points());
 
         // Radius 0 at an exact point should include that point
         let results = tree.within_radius(&point!(x: 1.0, y: 1.0), 0.0);
@@ -1043,7 +1084,7 @@ mod tests {
 
     #[test]
     fn test_empty_tree_all_queries() {
-        let tree: BallTree<f64> = BallTree::new(vec![], vec![]);
+        let tree: BallTree<f64> = BallTree::new(Vec::<Point<f64>>::new());
         assert!(tree.nearest_neighbour(&point!(x: 0.0, y: 0.0)).is_none());
         assert!(
             tree.nearest_neighbours(&point!(x: 0.0, y: 0.0), 5)
@@ -1053,21 +1094,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "points and data must have the same length")]
-    fn test_mismatched_lengths_panics() {
-        let _tree = BallTree::new(
-            vec![point!(x: 0.0, y: 0.0), point!(x: 1.0, y: 1.0)],
-            vec![()],
-        );
-    }
-
-    #[test]
     fn test_large_point_set() {
         // Ensure the tree works with more points than DEFAULT_LEAF_SIZE
         let points: Vec<Point<f64>> = (0..100)
             .map(|i| point!(x: (i % 10) as f64, y: (i / 10) as f64))
             .collect();
-        let tree = points.build_ball_tree();
+        let tree = BallTree::new(points.clone());
         assert_eq!(tree.len(), 100);
 
         // Verify NN for a few queries against brute-force
@@ -1092,11 +1124,14 @@ mod tests {
 
     #[test]
     fn test_builder_default_matches_new() {
-        let points = make_points();
-        let data: Vec<usize> = (0..points.len()).collect();
+        let items: Vec<PointWithData<f64, usize>> = make_points()
+            .into_iter()
+            .enumerate()
+            .map(|(i, p)| PointWithData::new(p, i))
+            .collect();
 
-        let tree_new = BallTree::new(points.clone(), data.clone());
-        let tree_builder = BallTreeBuilder::new().build(points, data);
+        let tree_new = BallTree::new(items.clone());
+        let tree_builder = BallTreeBuilder::new().build(items);
 
         // Both trees should yield identical NN results for several queries
         let queries = vec![
@@ -1160,9 +1195,7 @@ mod tests {
         ];
 
         for leaf_size in [1, 2, 8, 16, 50] {
-            let tree = BallTreeBuilder::new()
-                .leaf_size(leaf_size)
-                .build_pointset(points.clone());
+            let tree = BallTreeBuilder::with_leaf_size(leaf_size).build(points.clone());
 
             for query in &queries {
                 // NN -- compare distances, not indices, because ties are
@@ -1195,11 +1228,13 @@ mod tests {
     }
 
     #[test]
-    fn test_builder_pointset_matches_trait() {
+    fn test_builder_with_leaf_size_shortcut() {
+        // BallTreeBuilder::with_leaf_size should be equivalent to
+        // BallTreeBuilder::new().leaf_size(..).
         let points = make_points();
 
-        let tree_trait = points.build_ball_tree();
-        let tree_builder = BallTreeBuilder::new().build_pointset(points.clone());
+        let tree_a = BallTreeBuilder::with_leaf_size(8).build(points.clone());
+        let tree_b = BallTreeBuilder::new().leaf_size(8).build(points.clone());
 
         let queries = vec![
             point!(x: 0.5, y: 0.5),
@@ -1207,10 +1242,10 @@ mod tests {
             point!(x: -1.0, y: -1.0),
         ];
         for query in &queries {
-            let nn_trait = tree_trait.nearest_neighbour(query).unwrap();
-            let nn_builder = tree_builder.nearest_neighbour(query).unwrap();
-            assert_eq!(nn_trait.index, nn_builder.index);
-            assert_relative_eq!(nn_trait.distance, nn_builder.distance, epsilon = 1e-10);
+            let nn_a = tree_a.nearest_neighbour(query).unwrap();
+            let nn_b = tree_b.nearest_neighbour(query).unwrap();
+            assert_eq!(nn_a.index, nn_b.index);
+            assert_relative_eq!(nn_a.distance, nn_b.distance, epsilon = 1e-10);
         }
     }
 
@@ -1218,9 +1253,7 @@ mod tests {
     fn test_builder_leaf_size_zero_clamped_to_one() {
         // leaf_size(0) should be clamped to 1 and still produce correct results
         let points = make_points();
-        let tree = BallTreeBuilder::new()
-            .leaf_size(0)
-            .build_pointset(points.clone());
+        let tree = BallTreeBuilder::new().leaf_size(0).build(points.clone());
 
         let nn = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
         let (bf_idx, _) = brute_force_nn(&points, &point!(x: 0.1, y: 0.1));
