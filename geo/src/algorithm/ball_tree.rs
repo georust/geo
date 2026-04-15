@@ -176,10 +176,23 @@ impl<T: GeoFloat, D> BallTreePoint<T> for PointWithData<T, D> {
 ///
 /// Construction uses the KD algorithm: recursive median split along the axis
 /// of maximum dispersion, producing a balanced binary tree in O(n log n) time.
+///
+/// # Memory
+///
+/// The tree keeps two copies of the input points: one in original-input order
+/// (accessible via the standard index lookups) and one reordered to match the
+/// tree's leaf layout (exposed through [`BallTreeNode::points`] for
+/// cache-friendly leaf scans). This costs roughly `2 * n * size_of::<Point<T>>()`
+/// in bytes beyond the node metadata.
 #[derive(Debug, Clone)]
 pub struct BallTree<T: GeoFloat, D = ()> {
     nodes: Vec<Node<T>>,
     points: Vec<Point<T>>,
+    /// Points reordered so that `points_ordered[i] == points[indices[i]]`.
+    /// Lets leaf scans read points sequentially through a node's `start..end`
+    /// range, turning the otherwise scattered `points[indices[j]]` gather into
+    /// a contiguous walk.
+    points_ordered: Vec<Point<T>>,
     data: Vec<D>,
     indices: Vec<usize>,
 }
@@ -193,10 +206,25 @@ struct Node<T: GeoFloat> {
     kind: NodeKind,
 }
 
+/// Shape of a [`BallTree`] node: either a leaf, or an internal branch whose
+/// children are referenced by node index.
+///
+/// Use [`BallTree::node`] to turn those indices into [`BallTreeNode`]
+/// accessors.
 #[derive(Debug, Clone, Copy)]
-enum NodeKind {
+pub enum NodeKind {
+    /// A leaf node: all points in its ball are stored contiguously in the
+    /// tree's internal index array.
     Leaf,
-    Branch { left: usize, right: usize },
+    /// An internal node: its ball bounds the union of its two children's
+    /// balls. The fields are node indices that can be passed to
+    /// [`BallTree::node`].
+    Branch {
+        /// Node index of the left child.
+        left: usize,
+        /// Node index of the right child.
+        right: usize,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -253,6 +281,117 @@ impl<T: GeoFloat, D> BallTree<T, D> {
     /// Returns `true` if the tree contains no points.
     pub fn is_empty(&self) -> bool {
         self.points.is_empty()
+    }
+
+    /// Returns the number of internal nodes in the tree (leaves plus
+    /// branches).
+    ///
+    /// Node indices in the range `0..node_count()` can be passed to
+    /// [`BallTree::node`] to obtain a [`BallTreeNode`] accessor.
+    pub fn node_count(&self) -> usize {
+        self.nodes.len()
+    }
+
+    /// Returns an accessor for the node at the given index.
+    ///
+    /// The root is always node `0`. Child indices reached via
+    /// [`NodeKind::Branch`] are also valid. Panics if `idx >= node_count()`.
+    pub fn node(&self, idx: usize) -> BallTreeNode<'_, T, D> {
+        assert!(idx < self.nodes.len(), "node index out of range");
+        BallTreeNode { tree: self, idx }
+    }
+}
+
+/// A read-only accessor for a node in a [`BallTree`].
+///
+/// Exposes the bounding-ball geometry, structural [`NodeKind`], and the
+/// original-input indices of the points the node covers, without leaking
+/// the tree's internal storage layout. Cheap to construct and copy.
+#[derive(Debug, Clone, Copy)]
+pub struct BallTreeNode<'a, T: GeoFloat, D> {
+    tree: &'a BallTree<T, D>,
+    idx: usize,
+}
+
+impl<'a, T: GeoFloat, D> BallTreeNode<'a, T, D> {
+    #[inline]
+    fn raw(&self) -> &'a Node<T> {
+        &self.tree.nodes[self.idx]
+    }
+
+    /// Centre of this node's bounding ball.
+    #[inline]
+    pub fn center(&self) -> Coord<T> {
+        self.raw().center
+    }
+
+    /// Radius of this node's bounding ball.
+    #[inline]
+    pub fn radius(&self) -> T {
+        self.raw().radius
+    }
+
+    /// Structural kind of this node (leaf or branch).
+    #[inline]
+    pub fn kind(&self) -> NodeKind {
+        self.raw().kind
+    }
+
+    /// Original-input indices of every point contained in this node's ball.
+    ///
+    /// For a leaf, this is the set of points stored directly in the leaf.
+    /// For a branch, it is the concatenation of the leaves in its subtree.
+    #[inline]
+    pub fn indices(&self) -> &'a [usize] {
+        let n = self.raw();
+        &self.tree.indices[n.start..n.end]
+    }
+
+    /// Range of tree-internal positions this node's points occupy.
+    ///
+    /// Matches the slice bounds used by [`indices`](Self::indices) and
+    /// [`points`](Self::points). Useful for maintaining per-point arrays
+    /// indexed by tree position rather than by original input index -- e.g.
+    /// caching computed values alongside the tree's cache-friendly layout.
+    #[inline]
+    pub fn position_range(&self) -> std::ops::Range<usize> {
+        let n = self.raw();
+        n.start..n.end
+    }
+
+    /// Points contained in this node's ball, in tree-internal order.
+    ///
+    /// The returned slice is backed by a reordered copy that matches the
+    /// layout of [`indices`](Self::indices) element-for-element:
+    /// `points()[i]` is the point whose original index is `indices()[i]`.
+    /// Because the slice is contiguous in memory, iterating it scans
+    /// sequentially -- useful for cache-sensitive inner loops (e.g.
+    /// dual-tree traversals) where the original-order `points[indices[i]]`
+    /// gather would otherwise stride across memory.
+    #[inline]
+    pub fn points(&self) -> &'a [Point<T>] {
+        let n = self.raw();
+        &self.tree.points_ordered[n.start..n.end]
+    }
+
+    /// Lower bound on the Euclidean distance between any point in this
+    /// node's ball and any point in `other`'s ball.
+    ///
+    /// Returns zero when the balls overlap. Useful for dual-tree pruning:
+    /// if this bound exceeds the current best candidate, no pair of points
+    /// drawn from the two subtrees can improve the candidate.
+    ///
+    /// The computation uses the squared centre-to-centre distance and then
+    /// a square root, so with extreme coordinate magnitudes (roughly beyond
+    /// `1e100` for `f64`) the squared term can overflow to infinity and
+    /// propagate through the subtraction. Callers on well-scaled real-world
+    /// inputs don't need to worry about this; algorithms that may see
+    /// pathological magnitudes should clamp or pre-validate coordinates.
+    #[inline]
+    pub fn min_distance_to(&self, other: &BallTreeNode<'_, T, D>) -> T {
+        let center_dist = coord_distance_sq(self.center(), other.center()).sqrt();
+        let gap = center_dist - self.radius() - other.radius();
+        if gap > T::zero() { gap } else { T::zero() }
     }
 }
 
@@ -713,9 +852,12 @@ impl BallTreeBuilder {
             build_recursive(&points, &mut indices, 0, n, &mut nodes, self.leaf_size);
         }
 
+        let points_ordered: Vec<Point<T>> = indices.iter().map(|&i| points[i]).collect();
+
         BallTree {
             nodes,
             points,
+            points_ordered,
             data,
             indices,
         }
