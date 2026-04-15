@@ -140,3 +140,43 @@ impl<T> Samples<T> {
         Samples(self.0.into_iter().map(proc).collect())
     }
 }
+
+/// Generate test data similar to sklearn's `make_moons`.
+///
+/// Creates two interleaving half circles with optional Gaussian noise. Shared
+/// by the DBSCAN and HDBSCAN benchmarks so their inputs stay comparable.
+pub fn make_moons(num_points: usize, noise: f64, seed: u64) -> Vec<Point<f64>> {
+    use rand::SeedableRng;
+    use rand::rngs::StdRng;
+    use rand::seq::SliceRandom;
+
+    let mut rng = StdRng::seed_from_u64(seed);
+    let mut points = Vec::with_capacity(num_points);
+
+    let n_samples_out = num_points / 2;
+    let n_samples_in = num_points - n_samples_out;
+
+    // Outer semicircle: theta from 0 to PI.
+    for i in 0..n_samples_out {
+        let theta = (i as f64) * PI / (n_samples_out - 1) as f64;
+        points.push(Point::new(theta.cos(), theta.sin()));
+    }
+
+    // Inner semicircle: offset and flipped to interleave.
+    for i in 0..n_samples_in {
+        let theta = (i as f64) * PI / (n_samples_in - 1) as f64;
+        points.push(Point::new(1.0 - theta.cos(), 1.0 - theta.sin() - 0.5));
+    }
+
+    if noise > 0.0 {
+        let normal = Normal::new(0.0, noise).unwrap();
+        for point in &mut points {
+            let dx = normal.sample(&mut rng);
+            let dy = normal.sample(&mut rng);
+            *point = Point::new(point.x() + dx, point.y() + dy);
+        }
+    }
+
+    points.shuffle(&mut rng);
+    points
+}
