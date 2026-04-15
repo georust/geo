@@ -176,10 +176,23 @@ impl<T: GeoFloat, D> BallTreePoint<T> for PointWithData<T, D> {
 ///
 /// Construction uses the KD algorithm: recursive median split along the axis
 /// of maximum dispersion, producing a balanced binary tree in O(n log n) time.
+///
+/// # Memory
+///
+/// The tree keeps two copies of the input points: one in original-input order
+/// (accessible via the standard index lookups) and one reordered to match the
+/// tree's leaf layout (exposed through [`BallTreeNode::points`] for
+/// cache-friendly leaf scans). This costs roughly `2 * n * size_of::<Point<T>>()`
+/// in bytes beyond the node metadata.
 #[derive(Debug, Clone)]
 pub struct BallTree<T: GeoFloat, D = ()> {
     nodes: Vec<Node<T>>,
     points: Vec<Point<T>>,
+    /// Points reordered so that `points_ordered[i] == points[indices[i]]`.
+    /// Lets leaf scans read points sequentially through a node's `start..end`
+    /// range, turning the otherwise scattered `points[indices[j]]` gather into
+    /// a contiguous walk.
+    points_ordered: Vec<Point<T>>,
     data: Vec<D>,
     indices: Vec<usize>,
 }
@@ -193,10 +206,25 @@ struct Node<T: GeoFloat> {
     kind: NodeKind,
 }
 
+/// Shape of a [`BallTree`] node: either a leaf, or an internal branch whose
+/// children are referenced by node index.
+///
+/// Use [`BallTree::node`] to turn those indices into [`BallTreeNode`]
+/// accessors.
 #[derive(Debug, Clone, Copy)]
-enum NodeKind {
+pub enum NodeKind {
+    /// A leaf node: all points in its ball are stored contiguously in the
+    /// tree's internal index array.
     Leaf,
-    Branch { left: usize, right: usize },
+    /// An internal node: its ball bounds the union of its two children's
+    /// balls. The fields are node indices that can be passed to
+    /// [`BallTree::node`].
+    Branch {
+        /// Node index of the left child.
+        left: usize,
+        /// Node index of the right child.
+        right: usize,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -253,6 +281,121 @@ impl<T: GeoFloat, D> BallTree<T, D> {
     /// Returns `true` if the tree contains no points.
     pub fn is_empty(&self) -> bool {
         self.points.is_empty()
+    }
+
+    /// Returns the total number of nodes in the tree, counting both leaves
+    /// and branches. An empty tree has no nodes.
+    ///
+    /// Node indices in the range `0..node_count()` can be passed to
+    /// [`BallTree::node`] to obtain a [`BallTreeNode`] accessor.
+    pub fn node_count(&self) -> usize {
+        self.nodes.len()
+    }
+
+    /// Returns an accessor for the node at the given index.
+    ///
+    /// For a non-empty tree the root is node `0`. Child indices reached via
+    /// [`NodeKind::Branch`] are also valid. Panics if `idx >= node_count()`
+    /// (in particular, for any `idx` on an empty tree).
+    pub fn node(&self, idx: usize) -> BallTreeNode<'_, T, D> {
+        assert!(idx < self.nodes.len(), "node index out of range");
+        BallTreeNode { tree: self, idx }
+    }
+}
+
+/// A read-only accessor for a node in a [`BallTree`].
+///
+/// Exposes the bounding-ball geometry, structural [`NodeKind`], and the
+/// original-input indices of the points the node covers, without leaking
+/// the tree's internal storage layout. Cheap to construct and copy.
+#[derive(Debug, Clone, Copy)]
+pub struct BallTreeNode<'a, T: GeoFloat, D> {
+    tree: &'a BallTree<T, D>,
+    idx: usize,
+}
+
+impl<'a, T: GeoFloat, D> BallTreeNode<'a, T, D> {
+    #[inline]
+    fn raw(&self) -> &'a Node<T> {
+        &self.tree.nodes[self.idx]
+    }
+
+    /// Centre of this node's bounding ball.
+    #[inline]
+    pub fn center(&self) -> Coord<T> {
+        self.raw().center
+    }
+
+    /// Radius of this node's bounding ball.
+    #[inline]
+    pub fn radius(&self) -> T {
+        self.raw().radius
+    }
+
+    /// Structural kind of this node (leaf or branch).
+    #[inline]
+    pub fn kind(&self) -> NodeKind {
+        self.raw().kind
+    }
+
+    /// Original-input indices of every point in this node's subtree.
+    ///
+    /// For a leaf, this is the set of points stored directly in the leaf.
+    /// For a branch, it is the concatenation of the leaves in its subtree.
+    /// Note that this is a structural property, not a geometric one:
+    /// sibling balls can overlap, so a point lying inside this node's ball
+    /// may belong to a different subtree and will not appear here.
+    #[inline]
+    pub fn indices(&self) -> &'a [usize] {
+        let n = self.raw();
+        &self.tree.indices[n.start..n.end]
+    }
+
+    /// Range of tree-internal positions this node's points occupy.
+    ///
+    /// Matches the slice bounds used by [`indices`](Self::indices) and
+    /// [`points`](Self::points). Useful for maintaining per-point arrays
+    /// indexed by tree position rather than by original input index – e.g.
+    /// caching computed values alongside the tree's cache-friendly layout.
+    #[inline]
+    pub fn position_range(&self) -> std::ops::Range<usize> {
+        let n = self.raw();
+        n.start..n.end
+    }
+
+    /// Points in this node's subtree, in tree-internal order.
+    ///
+    /// The returned slice is backed by a reordered copy that matches the
+    /// layout of [`indices`](Self::indices) element-for-element:
+    /// `points()[i]` is the point whose original index is `indices()[i]`.
+    /// Because the slice is contiguous in memory, iterating it scans
+    /// sequentially – useful for cache-sensitive inner loops (e.g.
+    /// dual-tree traversals) where the original-order `points[indices[i]]`
+    /// gather would otherwise stride across memory.
+    #[inline]
+    pub fn points(&self) -> &'a [Point<T>] {
+        let n = self.raw();
+        &self.tree.points_ordered[n.start..n.end]
+    }
+
+    /// Lower bound on the Euclidean distance between any point in this
+    /// node's ball and any point in `other`'s ball.
+    ///
+    /// Returns zero when the balls overlap. Useful for dual-tree pruning:
+    /// if this bound exceeds the current best candidate, no pair of points
+    /// drawn from the two subtrees can improve the candidate.
+    ///
+    /// The computation uses the squared centre-to-centre distance and then
+    /// a square root, so with extreme coordinate magnitudes (roughly beyond
+    /// `1e100` for `f64`) the squared term can overflow to infinity and
+    /// propagate through the subtraction. Callers on well-scaled real-world
+    /// inputs don't need to worry about this; algorithms that may see
+    /// pathological magnitudes should clamp or pre-validate coordinates.
+    #[inline]
+    pub fn min_distance_to(&self, other: &BallTreeNode<'_, T, D>) -> T {
+        let center_dist = coord_distance_sq(self.center(), other.center()).sqrt();
+        let gap = center_dist - self.radius() - other.radius();
+        if gap > T::zero() { gap } else { T::zero() }
     }
 }
 
@@ -713,9 +856,12 @@ impl BallTreeBuilder {
             build_recursive(&points, &mut indices, 0, n, &mut nodes, self.leaf_size);
         }
 
+        let points_ordered: Vec<Point<T>> = indices.iter().map(|&i| points[i]).collect();
+
         BallTree {
             nodes,
             points,
+            points_ordered,
             data,
             indices,
         }
@@ -1258,5 +1404,137 @@ mod tests {
         let nn = tree.nearest_neighbour(&point!(x: 0.1, y: 0.1)).unwrap();
         let (bf_idx, _) = brute_force_nn(&points, &point!(x: 0.1, y: 0.1));
         assert_eq!(nn.index, bf_idx);
+    }
+
+    // -- BallTreeNode accessor API ---------------------------------------
+
+    /// Collect the indices of every node in the tree by walking the
+    /// structure through the public accessor API.
+    fn walk_nodes(tree: &BallTree<f64>) -> Vec<usize> {
+        let mut stack = vec![0];
+        let mut visited = Vec::new();
+        while let Some(idx) = stack.pop() {
+            visited.push(idx);
+            if let NodeKind::Branch { left, right } = tree.node(idx).kind() {
+                stack.push(left);
+                stack.push(right);
+            }
+        }
+        visited
+    }
+
+    #[test]
+    fn test_node_root_covers_all_points() {
+        let points = make_points();
+        let tree = BallTreeBuilder::with_leaf_size(2).build(points.clone());
+
+        let root = tree.node(0);
+        assert_eq!(root.position_range(), 0..points.len());
+
+        // The root's indices are a permutation of the input indices.
+        let mut indices = root.indices().to_vec();
+        indices.sort();
+        assert_eq!(indices, (0..points.len()).collect::<Vec<_>>());
+
+        // points() and indices() correspond element-for-element.
+        for (p, &orig) in root.points().iter().zip(root.indices()) {
+            assert_eq!(*p, points[orig]);
+        }
+    }
+
+    #[test]
+    fn test_node_branch_children_partition_parent() {
+        let tree = BallTreeBuilder::with_leaf_size(2).build(make_points());
+
+        for idx in walk_nodes(&tree) {
+            let node = tree.node(idx);
+            if let NodeKind::Branch { left, right } = node.kind() {
+                let parent = node.position_range();
+                let l = tree.node(left).position_range();
+                let r = tree.node(right).position_range();
+                // Children are contiguous, non-empty, and exactly cover
+                // the parent's range.
+                assert_eq!(l.start, parent.start);
+                assert_eq!(l.end, r.start);
+                assert_eq!(r.end, parent.end);
+                assert!(!l.is_empty());
+                assert!(!r.is_empty());
+            }
+        }
+    }
+
+    #[test]
+    fn test_node_points_lie_within_ball() {
+        let tree = BallTreeBuilder::with_leaf_size(2).build(make_points());
+
+        for idx in walk_nodes(&tree) {
+            let node = tree.node(idx);
+            let center = Point::from(node.center());
+            for p in node.points() {
+                let d = Euclidean.distance(&center, p);
+                assert!(
+                    d <= node.radius() + 1e-9,
+                    "point {p:?} lies outside node {idx}'s ball (d = {d}, radius = {})",
+                    node.radius()
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_min_distance_to_is_a_lower_bound() {
+        let tree = BallTreeBuilder::with_leaf_size(2).build(make_points());
+        let nodes = walk_nodes(&tree);
+
+        for &a in &nodes {
+            for &b in &nodes {
+                let bound = tree.node(a).min_distance_to(&tree.node(b));
+                assert!(bound >= 0.0);
+
+                // Brute-force minimum pairwise distance between the two
+                // nodes' point sets.
+                let actual = tree
+                    .node(a)
+                    .points()
+                    .iter()
+                    .flat_map(|p| tree.node(b).points().iter().map(move |q| (p, q)))
+                    .map(|(p, q)| Euclidean.distance(p, q))
+                    .fold(f64::INFINITY, f64::min);
+                assert!(
+                    bound <= actual + 1e-9,
+                    "min_distance_to({a}, {b}) = {bound} exceeds actual minimum {actual}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn test_min_distance_to_overlapping_balls_is_zero() {
+        let tree = BallTreeBuilder::with_leaf_size(2).build(make_points());
+        let root = tree.node(0);
+        // A ball trivially overlaps itself and each of its children.
+        assert_eq!(root.min_distance_to(&root), 0.0);
+        if let NodeKind::Branch { left, right } = root.kind() {
+            assert_eq!(root.min_distance_to(&tree.node(left)), 0.0);
+            assert_eq!(root.min_distance_to(&tree.node(right)), 0.0);
+        }
+    }
+
+    #[test]
+    fn test_node_count_single_leaf_and_empty() {
+        // Default leaf size comfortably exceeds 9 points: a single leaf.
+        let tree = BallTree::new(make_points());
+        assert_eq!(tree.node_count(), 1);
+        assert!(matches!(tree.node(0).kind(), NodeKind::Leaf));
+
+        let empty: BallTree<f64> = BallTree::new(Vec::<Point<f64>>::new());
+        assert_eq!(empty.node_count(), 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "node index out of range")]
+    fn test_node_index_out_of_range_panics() {
+        let tree = BallTree::new(make_points());
+        let _ = tree.node(tree.node_count());
     }
 }
