@@ -4,7 +4,9 @@ pub use kernels::{Kernel, Orientation};
 
 /// Nearest-neighbour queries on point sets using a ball tree.
 pub mod ball_tree;
-pub use ball_tree::{BallTree, BallTreeBuilder, BallTreePoint, PointWithData};
+pub use ball_tree::{
+    BallTree, BallTreeBuilder, BallTreeNode, BallTreePoint, NodeKind, PointWithData,
+};
 
 /// Calculate the area of the surface of a `Geometry`.
 pub mod area;
