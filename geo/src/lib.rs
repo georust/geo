@@ -206,6 +206,11 @@
 //! their members and adding them. Note in particular the availability of the [`bulk_load`](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#method.bulk_load)
 //! method and [`GeomWithData`](https://docs.rs/rstar/0.12.0/rstar/primitives/struct.GeomWithData.html) struct.
 //!
+//! For point-only data, the [`BallTree`] provides an alternative spatial index with nearest-neighbour,
+//! k-nearest-neighbours, and radius search queries. Construct one via [`BallTree::new`] (wrapping
+//! each point in a [`PointWithData`] when you need an associated payload), or [`BallTreeBuilder`]
+//! for a configurable leaf size.
+//!
 //! # Features
 //!
 //! The following optional [Cargo features] are available:
