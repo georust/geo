@@ -9,6 +9,7 @@ use super::{
 use crate::HasDimensions;
 use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
+use crate::relate::geomgraph::RobustLineIntersector;
 use rstar::{RTree, RTreeNum};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -35,9 +36,8 @@ where
 {
     arg_index: usize,
     parent_geometry: GeometryCow<'a, F>,
-    tree: Option<Rc<RTree<Segment<F>>>>,
+    tree: Rc<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
-    has_computed_self_nodes: bool,
     planar_graph: PlanarGraph<F>,
 }
 
@@ -49,17 +49,11 @@ impl<F> GeometryGraph<'_, F>
 where
     F: GeoFloat,
 {
-    pub(crate) fn set_tree(&mut self, tree: Rc<RTree<Segment<F>>>) {
-        self.tree = Some(tree);
+    pub(crate) fn tree(&self) -> &RTree<Segment<F>> {
+        &self.tree
     }
 
-    pub(crate) fn get_or_build_tree(&self) -> Rc<RTree<Segment<F>>> {
-        self.tree
-            .clone()
-            .unwrap_or_else(|| Rc::new(self.build_tree()))
-    }
-
-    pub(crate) fn build_tree(&self) -> RTree<Segment<F>> {
+    fn build_tree(&self) -> RTree<Segment<F>> {
         let segments: Vec<Segment<F>> = self
             .edges()
             .iter()
@@ -88,10 +82,6 @@ where
     }
 
     pub(crate) fn clone_for_arg_index(&self, arg_index: usize) -> Self {
-        debug_assert!(
-            self.has_computed_self_nodes,
-            "should only be called after computing self nodes"
-        );
         let planar_graph = self
             .planar_graph
             .clone_for_arg_index(self.arg_index, arg_index);
@@ -100,7 +90,6 @@ where
             parent_geometry: self.parent_geometry.clone(),
             tree: self.tree.clone(),
             use_boundary_determination_rule: self.use_boundary_determination_rule,
-            has_computed_self_nodes: true,
             planar_graph,
         }
     }
@@ -135,11 +124,14 @@ where
             arg_index,
             parent_geometry,
             use_boundary_determination_rule: true,
-            tree: None,
-            has_computed_self_nodes: false,
+            tree: Rc::new(RTree::new()),
             planar_graph: PlanarGraph::new(),
         };
         graph.add_geometry(&graph.parent_geometry.clone());
+        graph.tree = Rc::new(graph.build_tree());
+        // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
+        // and the type (Robust) shouldn't be hard coded here.
+        graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));
         graph
     }
 
@@ -325,12 +317,7 @@ where
     /// assumed to be valid).
     ///
     /// `line_intersector` the [`LineIntersector`] to use to determine intersection
-    pub(crate) fn compute_self_nodes(&mut self, line_intersector: Box<dyn LineIntersector<F>>) {
-        if self.has_computed_self_nodes {
-            return;
-        }
-        self.has_computed_self_nodes = true;
-
+    fn compute_self_nodes(&mut self, line_intersector: Box<dyn LineIntersector<F>>) {
         let mut segment_intersector = SegmentIntersector::new(line_intersector, true);
 
         // optimize intersection search for valid Polygons and LinearRings
