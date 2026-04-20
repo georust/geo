@@ -1,5 +1,6 @@
 use crate::{CoordFloat, CoordsIter, Polygon, Triangle, coord};
 use earcut::Earcut;
+use num_traits::AsPrimitive;
 
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
 ///
@@ -120,7 +121,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     fn earcut_triangles_raw(&self) -> RawTriangulation<T>;
 }
 
-impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
+impl<T: CoordFloat + AsPrimitive<u32>> TriangulateEarcut<T> for Polygon<T> {
     fn earcut_triangles_raw(&self) -> RawTriangulation<T> {
         let mut earcut = Earcut::new();
 
@@ -143,6 +144,14 @@ impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
             vertices: input.vertices,
             triangle_indices,
         }
+    }
+
+    fn earcut_triangles(&self) -> Vec<Triangle<T>> {
+        self.earcut_triangles_iter().collect()
+    }
+
+    fn earcut_triangles_iter(&self) -> Iter<T> {
+        Iter(self.earcut_triangles_raw())
     }
 }
 
