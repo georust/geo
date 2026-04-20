@@ -1,5 +1,10 @@
 # Changes
 
+## 0.33.1 - 2026-4-20
+
+- Fix build breakage introduced by semver incompatible earcut dependency release
+  - <https://github.com/georust/geo/pull/1527>
+
 ## 0.33.0 - 2026-4-15
 
 - Polygon validation now uses `PreparedGeometry` to cache R-tree structures for interior/exterior containment checks, improving validation speed for polygons with many holes.
