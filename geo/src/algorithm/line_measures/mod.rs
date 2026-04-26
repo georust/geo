@@ -34,6 +34,9 @@ pub use interpolate_point::InterpolatePoint;
 mod interpolate_line;
 pub use interpolate_line::{InterpolatableLine, InterpolateLine};
 
+mod substring;
+pub use substring::{Substring, SubstringError, SubstringableLine};
+
 mod length;
 pub use length::{Length, LengthMeasurable};
 

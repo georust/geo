@@ -211,7 +211,7 @@ pub use line_measures::metric_spaces::{
 };
 pub use line_measures::{
     Bearing, Densify, Destination, Distance, InterpolatableLine, InterpolateLine, InterpolatePoint,
-    Length,
+    Length, Substring, SubstringError, SubstringableLine,
 };
 
 /// Split a LineString into n segments
