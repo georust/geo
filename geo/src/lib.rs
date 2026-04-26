@@ -199,6 +199,15 @@
 //! - provides fast [`ContainsProperly`] methods between themselves and [`Intersects`] with other geometries
 //! - see [`monotone_chain`] for deeper explanation on the concepts behind this
 //!
+//! ## Interval-tree backed MultiPolygon
+//! - **[`IntervalTreeMultiPolygon`](indexed::IntervalTreeMultiPolygon)**: A [`MultiPolygon`] backed by
+//!   a y-axis [interval tree] for fast point-in-polygon containment queries. Build the index once from
+//!   a [`MultiPolygon`] and reuse it across many [`Contains`] checks against [`Point`] or [`Coord`] —
+//!   useful when classifying many points against the same fixed boundary, or repeatedly probing a
+//!   single complex polygon. See [`indexed::IntervalTreeMultiPolygon`] for an example.
+//!
+//! [interval tree]: https://en.wikipedia.org/wiki/Interval_tree
+//!
 //! # Spatial Indexing
 //!
 //! `geo` geometries ([`Point`], [`Line`], [`LineString`], [`Polygon`], [`MultiPolygon`]) can be used with the [rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage)

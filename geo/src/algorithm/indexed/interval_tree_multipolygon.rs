@@ -49,7 +49,45 @@ struct YIntervalSegment<T: GeoNum> {
     x_max: T,
 }
 
-/// A [`MultiPolygon`] backed by an [interval tree](https://en.wikipedia.org/wiki/Interval_tree) for fast containment queries
+/// A [`MultiPolygon`] backed by an [interval tree] for fast point-in-polygon containment queries.
+///
+/// Use this when you need to test many points against the same fixed (Multi)Polygon — for example,
+/// classifying a large point cloud against administrative boundaries, or repeatedly probing a
+/// single complex polygon. The index is built once from a [`MultiPolygon`] and amortises its
+/// construction cost across subsequent queries; for one-off checks, the plain
+/// [`Contains`](crate::Contains) implementation on `MultiPolygon` is preferable.
+///
+/// Internally, every line segment from each ring (exterior and interior) is stored in an interval
+/// tree keyed by its y-extent, together with its precomputed maximum x. A point query then visits
+/// only those segments whose y-interval covers the query point's y, applies an x-based early
+/// rejection, and runs a robust winding-number test on the survivors. This avoids the linear scan
+/// over every segment that a naive ray cast would perform.
+///
+/// Containment queries are exposed via the [`Contains`](crate::Contains) trait for both
+/// [`Coord`] and [`Point`](crate::Point), and follow the same semantics as
+/// `MultiPolygon::contains` (points strictly on the boundary are not contained).
+///
+/// # Example
+///
+/// ```
+/// use geo::indexed::IntervalTreeMultiPolygon;
+/// use geo::{Contains, MultiPolygon, Point, wkt};
+///
+/// // A square with a square hole.
+/// let mp: MultiPolygon = wkt!(
+///     MULTIPOLYGON(((0.0 0.0, 4.0 0.0, 4.0 4.0, 0.0 4.0, 0.0 0.0),
+///                   (1.0 1.0, 1.0 3.0, 3.0 3.0, 3.0 1.0, 1.0 1.0)))
+/// );
+///
+/// // Build the index once, then reuse it across many queries.
+/// let indexed = IntervalTreeMultiPolygon::new(&mp);
+///
+/// assert!(indexed.contains(&Point::new(0.5, 0.5))); // inside the shell
+/// assert!(!indexed.contains(&Point::new(2.0, 2.0))); // inside the hole
+/// assert!(!indexed.contains(&Point::new(5.0, 5.0))); // outside
+/// ```
+///
+/// [interval tree]: https://en.wikipedia.org/wiki/Interval_tree
 pub struct IntervalTreeMultiPolygon<T: GeoNum> {
     y_interval_tree: ITree<YValue<T>, YIntervalSegment<T>>,
 }
