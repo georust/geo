@@ -130,7 +130,7 @@
 //!
 //! ## Triangulation
 //!
-//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `earcutr` feature, which is enabled by default
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `earcut` feature, which is enabled by default
 //! - **[`TriangulateDelaunay`](triangulate_delaunay)**: Produce constrained or unconstrained Delaunay triangulations of polygons. Requires the `spade` feature, which is enabled by default
 //! - **[`Voronoi`](voronoi)**: Produce the Voronoi Diagram of a triangulation
 //!
