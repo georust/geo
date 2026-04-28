@@ -21,7 +21,7 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         bencher.iter(|| {
             for poly in &multi_poly {
                 let triangulation = earcutter.triangulate(poly);
-                criterion::black_box(triangulation.triangle_indices);
+                criterion::black_box(triangulation.triangle_indices());
             }
         });
     });
@@ -74,8 +74,8 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         bencher.iter(|| {
             for poly in &multi_poly {
                 let triangulation = earcutter.triangulate(poly);
-                assert!(triangulation.triangle_indices.len() > 3);
-                criterion::black_box(triangulation.triangle_indices);
+                assert!(triangulation.triangle_indices().len() > 3);
+                criterion::black_box(triangulation.triangle_indices());
             }
         });
     });
@@ -117,8 +117,8 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
         let mut earcutter = Earcutter::new();
         bencher.iter(|| {
             let triangulation = earcutter.triangulate(&poly);
-            assert!(triangulation.triangle_indices.len() > 3);
-            criterion::black_box(triangulation.triangle_indices);
+            assert!(triangulation.triangle_indices().len() > 3);
+            criterion::black_box(triangulation.triangle_indices());
         });
     });
 }

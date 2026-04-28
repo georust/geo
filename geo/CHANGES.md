@@ -2,9 +2,11 @@
 
 ## Unreleased
 
-- Unpin the `earcut` dependency now that the upstream semver violation has been reverted. 
+- Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
   - <https://github.com/georust/geo/pull/1533>
-- Add `Earcutter`, a reusable triangulator that avoids per-call memory allocations across multiple triangulations.
+- Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.
+  - <https://github.com/georust/geo/pull/1534>
+- Rename `TriangulateEarcut::earcut_triangles_raw` to `TriangulateEarcut::earcut_triangulation`
   - <https://github.com/georust/geo/pull/1534>
 
 ## 0.33.1 - 2026-4-20

@@ -76,7 +76,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// assert!(triangles_iter.next().is_none());
     /// ```
     fn earcut_triangles_iter(&self) -> Iter<T> {
-        Iter(self.earcut_triangles_raw())
+        Iter(self.earcut_triangulation())
     }
 
     /// Return the raw result from the `earcut` library: a one-dimensional vector of polygon
@@ -85,11 +85,14 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// methods, but can be helpful when working in graphics contexts that expect flat vectors of
     /// data.
     ///
+    /// See [`earcut_triangulation_ref`](TriangulateEarcut::earcut_triangulation_ref) if you want
+    /// to speed up repeated triangulations.
+    ///
     /// # Examples
     ///
     /// ```
     /// use geo::{coord, polygon, Triangle, TriangulateEarcut};
-    /// use geo::triangulate_earcut::RawTriangulation;
+    /// use geo::triangulate_earcut::EarcutTriangulation;
     ///
     /// let square_polygon = polygon![
     ///     (x: 0., y: 0.), // SW
@@ -99,10 +102,10 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     (x: 0., y: 0.), // SW
     /// ];
     ///
-    /// let mut triangles_raw = square_polygon.earcut_triangles_raw();
+    /// let mut triangles_raw = square_polygon.earcut_triangulation();
     ///
     /// assert_eq!(
-    ///     RawTriangulation {
+    ///     EarcutTriangulation {
     ///         vertices: vec![
     ///             [0., 0.], // SW
     ///             [10., 0.], // SE
@@ -117,30 +120,52 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///     triangles_raw,
     /// );
     /// ```
-    fn earcut_triangles_raw(&self) -> RawTriangulation<T>;
+    fn earcut_triangulation(&self) -> EarcutTriangulation<T> {
+        // waiting for breaking release before deleting the old spelling
+        #[allow(deprecated)]
+        self.earcut_triangles_raw()
+    }
+
+    #[deprecated(note = "renamed to earcut_triangulation")]
+    fn earcut_triangles_raw(&self) -> EarcutTriangulation<T>;
+
+    /// Like [`earcut_triangulation`](TriangulateEarcut::earcut_triangulation), but reuses internal buffers for a performance boost when
+    /// doing repeated triangulations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::wkt;
+    /// use geo::triangulate_earcut::{TriangulateEarcut, Earcutter};
+    ///
+    /// let square = wkt!(POLYGON((0. 0.,10. 0.,10. 10.,0. 10.)));
+    /// let triangle = wkt!(POLYGON((0. 0.,10. 0.,10. 10.)));
+    ///
+    /// let mut earcutter = Earcutter::new();
+    ///
+    /// let triangulation = square.earcut_triangulation_ref(&mut earcutter);
+    /// assert_eq!(triangulation.vertices(), &[[0., 0.], [10., 0.], [10., 10.], [0., 10.]]);
+    /// assert_eq!(triangulation.triangle_indices(), &[2, 3, 0, 0, 1, 2]);
+    ///
+    /// let triangulation = triangle.earcut_triangulation_ref(&mut earcutter);
+    /// assert_eq!(triangulation.vertices(), &[[0., 0.], [10., 0.], [10., 10.]]);
+    /// assert_eq!(triangulation.triangle_indices(), &[1, 2, 0]);
+    /// ```
+    fn earcut_triangulation_ref<'a>(
+        &self,
+        earcutter: &'a mut Earcutter<T>,
+    ) -> EarcutTriangulationRef<'a, T>;
 }
 
 impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
-    fn earcut_triangles_raw(&self) -> RawTriangulation<T> {
-        let mut vertices = Vec::new();
-        let mut interior_indexes = Vec::new();
-        flatten_ring(self.exterior(), &mut vertices);
-        for interior in self.interiors() {
-            interior_indexes.push(vertices.len());
-            flatten_ring(interior, &mut vertices);
-        }
-
-        let mut triangle_indices = Vec::new();
-        Earcut::new().earcut(
-            vertices.iter().copied(),
-            &interior_indexes,
-            &mut triangle_indices,
-        );
-
-        RawTriangulation {
-            vertices,
-            triangle_indices,
-        }
+    fn earcut_triangles_raw(&self) -> EarcutTriangulation<T> {
+        Earcutter::new().into_triangulation(self)
+    }
+    fn earcut_triangulation_ref<'a>(
+        &self,
+        earcutter: &'a mut Earcutter<T>,
+    ) -> EarcutTriangulationRef<'a, T> {
+        earcutter.triangulate(self)
     }
 }
 
@@ -155,28 +180,27 @@ impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
 /// # Examples
 ///
 /// ```
-/// use geo::polygon;
+/// use geo::wkt;
 /// use geo::triangulate_earcut::Earcutter;
 ///
 /// let polygons = vec![
-///     polygon![(x: 0., y: 0.), (x: 10., y: 0.), (x: 10., y: 10.), (x: 0., y: 10.)],
-///     polygon![(x: 1., y: 1.), (x: 5., y: 1.), (x: 5., y: 5.), (x: 1., y: 5.)],
+///     wkt!(POLYGON((0. 0.,10. 0.,10. 10.,0. 10.))),
+///     wkt!(POLYGON((1. 1.,5. 1.,5. 5.,1. 5.))),
 /// ];
 ///
 /// let mut earcutter = Earcutter::new();
 /// for polygon in &polygons {
 ///     let triangulation = earcutter.triangulate(polygon);
-///     for tri in triangulation.triangle_indices.chunks_exact(3) {
-///         let v = |i: u32| triangulation.vertices[i as usize];
+///     for tri in triangulation.triangle_indices().chunks_exact(3) {
+///         let v = |i| triangulation.vertices()[i];
 ///         let _ = (v(tri[0]), v(tri[1]), v(tri[2]));
 ///     }
 /// }
 /// ```
 pub struct Earcutter<T: CoordFloat> {
     earcut: Earcut<T>,
-    vertices: Vec<[T; 2]>,
-    interior_indexes: Vec<u32>,
-    triangle_indices: Vec<u32>,
+    interior_indexes: Vec<usize>,
+    scratch: EarcutTriangulation<T>,
 }
 
 impl<T: CoordFloat> Default for Earcutter<T> {
@@ -189,60 +213,77 @@ impl<T: CoordFloat> Earcutter<T> {
     pub fn new() -> Self {
         Self {
             earcut: Earcut::new(),
-            vertices: Vec::new(),
             interior_indexes: Vec::new(),
-            triangle_indices: Vec::new(),
+            scratch: EarcutTriangulation {
+                vertices: Vec::new(),
+                triangle_indices: Vec::new(),
+            },
         }
     }
 
     /// Triangulate `polygon`, reusing the internal buffers. The returned
-    /// [`EarcutTriangulation`] borrows from `self`, so each call must finish
+    /// [`EarcutTriangulationRef`] borrows from `self`, so each call must finish
     /// using the previous result before the next call.
-    pub fn triangulate(&mut self, polygon: &Polygon<T>) -> EarcutTriangulation<'_, T> {
-        self.vertices.clear();
+    pub fn triangulate(&mut self, polygon: &Polygon<T>) -> EarcutTriangulationRef<'_, T> {
+        self.scratch.vertices.clear();
         self.interior_indexes.clear();
 
-        flatten_ring(polygon.exterior(), &mut self.vertices);
+        flatten_ring(polygon.exterior(), &mut self.scratch.vertices);
         for interior in polygon.interiors() {
-            self.interior_indexes.push(self.vertices.len() as u32);
-            flatten_ring(interior, &mut self.vertices);
+            self.interior_indexes.push(self.scratch.vertices.len());
+            flatten_ring(interior, &mut self.scratch.vertices);
         }
 
         // `Earcut::earcut` clears `triangle_indices` internally before writing.
         self.earcut.earcut(
-            self.vertices.iter().copied(),
+            self.scratch.vertices.iter().copied(),
             &self.interior_indexes,
-            &mut self.triangle_indices,
+            &mut self.scratch.triangle_indices,
         );
 
-        EarcutTriangulation {
-            vertices: &self.vertices,
-            triangle_indices: &self.triangle_indices,
-        }
+        EarcutTriangulationRef(&self.scratch)
     }
-}
 
-/// Borrowed view of a triangulation produced by [`Earcutter::triangulate`].
-#[derive(Debug)]
-pub struct EarcutTriangulation<'a, T: CoordFloat> {
-    /// Flattened polygon vertices (XY pairs).
-    pub vertices: &'a [[T; 2]],
-    /// Indices into `vertices`, in groups of three per triangle.
-    pub triangle_indices: &'a [u32],
+    /// Triangulate `polygon`, returning [`EarcutTriangulation`].
+    ///
+    /// This consumes `Earcutter`.
+    ///
+    /// If you'd instead like to make repeated calls with fewer allocations,
+    /// you can borrow the inner buffers by using the [`triangulate`](Earcutter::triangulate) method.
+    pub fn into_triangulation(mut self, polygon: &Polygon<T>) -> EarcutTriangulation<T> {
+        _ = self.triangulate(polygon);
+        self.scratch
+    }
 }
 
 /// The raw result of triangulating a polygon from `earcut`.
 #[derive(Debug, PartialEq, Clone)]
-pub struct RawTriangulation<T: CoordFloat> {
+pub struct EarcutTriangulation<T: CoordFloat> {
     /// Flattened vector of polygon vertices (in XY order).
     pub vertices: Vec<[T; 2]>,
 
-    /// Indices of the triangles within the vertices vector.
+    /// Indices into `vertices`, in groups of three per triangle.
     pub triangle_indices: Vec<usize>,
 }
 
+#[deprecated(note = "renamed to EarcutTriangulation")]
+pub type RawTriangulation<T> = EarcutTriangulation<T>;
+
+/// Borrowed view of [`EarcutTriangulation`].
 #[derive(Debug)]
-pub struct Iter<T: CoordFloat>(RawTriangulation<T>);
+pub struct EarcutTriangulationRef<'a, T: CoordFloat>(&'a EarcutTriangulation<T>);
+
+impl<'a, T: CoordFloat> EarcutTriangulationRef<'a, T> {
+    pub fn triangle_indices(&self) -> &[usize] {
+        self.0.triangle_indices.as_slice()
+    }
+    pub fn vertices(&self) -> &[[T; 2]] {
+        self.0.vertices.as_slice()
+    }
+}
+
+#[derive(Debug)]
+pub struct Iter<T: CoordFloat>(EarcutTriangulation<T>);
 
 impl<T: CoordFloat> Iterator for Iter<T> {
     type Item = Triangle<T>;
@@ -326,7 +367,7 @@ mod test {
             (0. 0.,10. 0., 10. 10., 0. 10.)
         ));
 
-        let triangles = square_polygon.earcut_triangles_raw();
+        let triangles = square_polygon.earcut_triangulation();
         assert_eq!(
             triangles.vertices,
             vec![[0., 0.], [10., 0.], [10., 10.], [0., 10.]] // exterior
@@ -341,7 +382,7 @@ mod test {
             (2. 2., 8. 2., 8. 8., 2. 8.,2. 2.)
         ));
 
-        let triangles = poly_with_hole.earcut_triangles_raw();
+        let triangles = poly_with_hole.earcut_triangulation();
 
         assert_eq!(
             triangles.vertices,
@@ -381,10 +422,10 @@ mod test {
         let triangulation = earcutter.triangulate(&square_polygon);
 
         assert_eq!(
-            triangulation.vertices,
+            triangulation.vertices(),
             &[[0., 0.], [10., 0.], [10., 10.], [0., 10.]][..]
         );
-        assert_eq!(triangulation.triangle_indices, &[2u32, 3, 0, 0, 1, 2][..]);
+        assert_eq!(triangulation.triangle_indices(), &[2, 3, 0, 0, 1, 2][..]);
     }
 
     #[test]
@@ -396,12 +437,12 @@ mod test {
 
         // Square: 4 vertices, 6 triangle indices.
         let result = earcutter.triangulate(&square);
-        assert_eq!(result.vertices.len(), 4);
-        assert_eq!(result.triangle_indices.len(), 6);
+        assert_eq!(result.vertices().len(), 4);
+        assert_eq!(result.triangle_indices().len(), 6);
 
         // Triangle: 3 vertices, 3 triangle indices. Buffers must shrink, not append.
         let result = earcutter.triangulate(&triangle);
-        assert_eq!(result.vertices.len(), 3);
-        assert_eq!(result.triangle_indices.len(), 3);
+        assert_eq!(result.vertices().len(), 3);
+        assert_eq!(result.triangle_indices().len(), 3);
     }
 }
