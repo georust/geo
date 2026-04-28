@@ -1,5 +1,10 @@
 # Changes
 
+## Unreleased
+
+- Unpin the `earcut` dependency now that the upstream semver violation has been reverted. 
+  - <https://github.com/georust/geo/pull/1533>
+
 ## 0.33.1 - 2026-4-20
 
 - Fix build breakage introduced by semver incompatible earcut dependency release
