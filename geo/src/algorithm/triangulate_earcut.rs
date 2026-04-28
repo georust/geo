@@ -1,4 +1,4 @@
-use crate::{CoordFloat, CoordsIter, Polygon, Triangle, coord};
+use crate::{CoordFloat, Polygon, Triangle, coord};
 use earcut::Earcut;
 
 /// Triangulate polygons using an [ear-cutting algorithm](https://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf).
@@ -122,28 +122,113 @@ pub trait TriangulateEarcut<T: CoordFloat> {
 
 impl<T: CoordFloat> TriangulateEarcut<T> for Polygon<T> {
     fn earcut_triangles_raw(&self) -> RawTriangulation<T> {
-        let mut earcut = Earcut::new();
+        let mut vertices = Vec::new();
+        let mut interior_indexes = Vec::new();
+        flatten_ring(self.exterior(), &mut vertices);
+        for interior in self.interiors() {
+            interior_indexes.push(vertices.len());
+            flatten_ring(interior, &mut vertices);
+        }
 
-        let input = EarcutInput::from(self);
-        // PERF: expose a way to pass in a re-usable output vector for those who are triangulating
-        // in a hot loop
-        let mut triangle_indices = vec![];
-        earcut.earcut(
-            input.vertices.clone(), // PERF: iterate `vertices` lazily rather than create a Vec
-            &input.interior_indexes,
+        let mut triangle_indices = Vec::new();
+        Earcut::new().earcut(
+            vertices.iter().copied(),
+            &interior_indexes,
             &mut triangle_indices,
         );
 
         RawTriangulation {
-            // PERF: As mentioned above, if we don't manifest a concrete vertices Vec,
-            // we'll need to return some kind of "getter" that translates triangle_indices back to polygon coords, accounting
-            // for the lack of an explicit "closing" coordinate in the triangle_indices
-            //
-            // We'll need to measure if all that indirection is cheaper than just manifesting the Vec.
-            vertices: input.vertices,
+            vertices,
             triangle_indices,
         }
     }
+}
+
+/// Reusable triangulator that retains internal buffers across calls,
+/// avoiding per-call allocations when triangulating many polygons.
+///
+/// Methods on the [`TriangulateEarcut`] trait construct a fresh `earcut`
+/// instance, vertex buffer, and output buffer on every call. When
+/// triangulating many polygons in a hot loop, prefer reusing a single
+/// `Earcutter` to amortize those allocations.
+///
+/// # Examples
+///
+/// ```
+/// use geo::polygon;
+/// use geo::triangulate_earcut::Earcutter;
+///
+/// let polygons = vec![
+///     polygon![(x: 0., y: 0.), (x: 10., y: 0.), (x: 10., y: 10.), (x: 0., y: 10.)],
+///     polygon![(x: 1., y: 1.), (x: 5., y: 1.), (x: 5., y: 5.), (x: 1., y: 5.)],
+/// ];
+///
+/// let mut earcutter = Earcutter::new();
+/// for polygon in &polygons {
+///     let triangulation = earcutter.triangulate(polygon);
+///     for tri in triangulation.triangle_indices.chunks_exact(3) {
+///         let v = |i: u32| triangulation.vertices[i as usize];
+///         let _ = (v(tri[0]), v(tri[1]), v(tri[2]));
+///     }
+/// }
+/// ```
+pub struct Earcutter<T: CoordFloat> {
+    earcut: Earcut<T>,
+    vertices: Vec<[T; 2]>,
+    interior_indexes: Vec<u32>,
+    triangle_indices: Vec<u32>,
+}
+
+impl<T: CoordFloat> Default for Earcutter<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T: CoordFloat> Earcutter<T> {
+    pub fn new() -> Self {
+        Self {
+            earcut: Earcut::new(),
+            vertices: Vec::new(),
+            interior_indexes: Vec::new(),
+            triangle_indices: Vec::new(),
+        }
+    }
+
+    /// Triangulate `polygon`, reusing the internal buffers. The returned
+    /// [`EarcutTriangulation`] borrows from `self`, so each call must finish
+    /// using the previous result before the next call.
+    pub fn triangulate(&mut self, polygon: &Polygon<T>) -> EarcutTriangulation<'_, T> {
+        self.vertices.clear();
+        self.interior_indexes.clear();
+
+        flatten_ring(polygon.exterior(), &mut self.vertices);
+        for interior in polygon.interiors() {
+            self.interior_indexes.push(self.vertices.len() as u32);
+            flatten_ring(interior, &mut self.vertices);
+        }
+
+        // `Earcut::earcut` clears `triangle_indices` internally before writing.
+        self.earcut.earcut(
+            self.vertices.iter().copied(),
+            &self.interior_indexes,
+            &mut self.triangle_indices,
+        );
+
+        EarcutTriangulation {
+            vertices: &self.vertices,
+            triangle_indices: &self.triangle_indices,
+        }
+    }
+}
+
+/// Borrowed view of a triangulation produced by [`Earcutter::triangulate`].
+#[derive(Debug)]
+pub struct EarcutTriangulation<'a, T: CoordFloat> {
+    /// Flattened polygon vertices (XY pairs).
+    pub vertices: &'a [[T; 2]],
+    /// Indices into `vertices`, in groups of three per triangle.
+    pub triangle_indices: &'a [u32],
 }
 
 /// The raw result of triangulating a polygon from `earcut`.
@@ -183,32 +268,6 @@ impl<T: CoordFloat> Iter<T> {
     }
 }
 
-struct EarcutInput<T: CoordFloat> {
-    pub vertices: Vec<[T; 2]>,
-    pub interior_indexes: Vec<usize>,
-}
-
-impl<'a, T: CoordFloat> From<&'a Polygon<T>> for EarcutInput<T> {
-    fn from(polygon: &'a Polygon<T>) -> EarcutInput<T> {
-        let mut vertices = Vec::with_capacity(polygon.coords_count() - 1);
-        let mut interior_indexes = Vec::with_capacity(polygon.interiors().len());
-        debug_assert!(polygon.exterior().0.len() >= 4);
-
-        flatten_ring(polygon.exterior(), &mut vertices);
-
-        for interior in polygon.interiors() {
-            debug_assert!(interior.0.len() >= 4);
-            interior_indexes.push(vertices.len());
-            flatten_ring(interior, &mut vertices);
-        }
-
-        Self {
-            vertices,
-            interior_indexes,
-        }
-    }
-}
-
 fn flatten_ring<T: CoordFloat>(line_string: &crate::LineString<T>, vertices: &mut Vec<[T; 2]>) {
     if line_string.0.is_empty() {
         return;
@@ -223,7 +282,7 @@ fn flatten_ring<T: CoordFloat>(line_string: &crate::LineString<T>, vertices: &mu
 
 #[cfg(test)]
 mod test {
-    use super::TriangulateEarcut;
+    use super::{Earcutter, TriangulateEarcut};
     use crate::{polygon, wkt};
 
     #[test]
@@ -310,5 +369,39 @@ mod test {
                 0, 4, 7, 5, 4, 0, 3, 0, 7, 5, 0, 1, 2, 3, 7, 6, 5, 1, 2, 7, 6, 6, 1, 2
             ]
         );
+    }
+
+    #[test]
+    fn test_earcutter_square() {
+        let square_polygon = wkt!(POLYGON(
+            (0. 0.,10. 0., 10. 10., 0. 10.)
+        ));
+
+        let mut earcutter = Earcutter::new();
+        let triangulation = earcutter.triangulate(&square_polygon);
+
+        assert_eq!(
+            triangulation.vertices,
+            &[[0., 0.], [10., 0.], [10., 10.], [0., 10.]][..]
+        );
+        assert_eq!(triangulation.triangle_indices, &[2u32, 3, 0, 0, 1, 2][..]);
+    }
+
+    #[test]
+    fn test_earcutter_reuse_shrinks_buffers() {
+        let square = wkt!(POLYGON((0. 0., 10. 0., 10. 10., 0. 10.)));
+        let triangle = wkt!(POLYGON((0. 0., 10. 0., 10. 10.)));
+
+        let mut earcutter = Earcutter::new();
+
+        // Square: 4 vertices, 6 triangle indices.
+        let result = earcutter.triangulate(&square);
+        assert_eq!(result.vertices.len(), 4);
+        assert_eq!(result.triangle_indices.len(), 6);
+
+        // Triangle: 3 vertices, 3 triangle indices. Buffers must shrink, not append.
+        let result = earcutter.triangulate(&triangle);
+        assert_eq!(result.vertices.len(), 3);
+        assert_eq!(result.triangle_indices.len(), 3);
     }
 }
