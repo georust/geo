@@ -83,13 +83,8 @@ where
             }
         }
 
-        let mut graph_a = self.geometry_a.geometry_graph(0);
-        let mut graph_b = self.geometry_b.geometry_graph(1);
-
-        // Since changes to topology are inspected at nodes, we must crate a node for each
-        // intersection.
-        graph_a.compute_self_nodes(Box::new(self.line_intersector.clone()));
-        graph_b.compute_self_nodes(Box::new(self.line_intersector.clone()));
+        let graph_a = self.geometry_a.geometry_graph(0);
+        let graph_b = self.geometry_b.geometry_graph(1);
 
         // compute intersections between edges of the two input geometries
         let segment_intersector =

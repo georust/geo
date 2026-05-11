@@ -21,8 +21,10 @@ where
     ) {
         let edges = graph.edges();
 
-        let tree = graph.get_or_build_tree();
-        for (segment_0, segment_1) in tree.intersection_candidates_with_other_tree(&tree) {
+        for (segment_0, segment_1) in graph
+            .tree()
+            .intersection_candidates_with_other_tree(graph.tree())
+        {
             if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
                 let edge_0 = &edges[segment_0.edge_idx];
                 let edge_1 = &edges[segment_1.edge_idx];
@@ -45,10 +47,10 @@ where
         let edges_0 = graph_0.edges();
         let edges_1 = graph_1.edges();
 
-        let tree_0 = graph_0.get_or_build_tree();
-        let tree_1 = graph_1.get_or_build_tree();
+        let tree_0 = graph_0.tree();
+        let tree_1 = graph_1.tree();
 
-        for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(&tree_1) {
+        for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(tree_1) {
             let edge_0 = &edges_0[segment_0.edge_idx];
             let edge_1 = &edges_1[segment_1.edge_idx];
             segment_intersector.add_intersections(
