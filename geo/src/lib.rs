@@ -98,6 +98,17 @@
 //! - **[`SimplifyVwPreserve`]**: Simplify a geometry using a topology-preserving variant of the Visvalingam-Whyatt algorithm
 //! - **[`SimplifyVwIdx`]**: Calculate a simplified geometry using the Visvalingam-Whyatt algorithm, returning coordinate indices
 //!
+//! ## Linear referencing
+//!
+//! Locate points on a line by their distance along it, and slice a line
+//! between two such positions. Equivalent to PostGIS `ST_Line_Substring`
+//! / `ST_Line_Locate_Point` and GEOS `LengthIndexedLine`.
+//!
+//! - **[`Substring`]**: Extract a sub-linestring between two distance- or ratio-along-line bounds (any metric space).
+//! - **[`InterpolateLine`]**: Interpolate a point along a line by distance or ratio (any metric space).
+//! - **[`LineLocatePoint`]**: Closest point on a line as a fraction of length (Euclidean only).
+//! - **[`LineStringSegmentize`]**: Split a `LineString` into `n` equal-length pieces. Haversine variant: [`LineStringSegmentizeHaversine`].
+//!
 //! ## Query
 //!
 //! - **[`ClosestPoint`]**: Find the point on a geometry
@@ -105,9 +116,6 @@
 //! - **[`HaversineClosestPoint`]**: Find the point on a geometry
 //!   closest to a given point on a sphere using spherical coordinates and lines being great arcs
 //! - **[`IsConvex`]**: Calculate the convexity of a [`LineString`]
-//! - **[`LineLocatePoint`]**: Calculate the
-//!   fraction of a line’s total length representing the location of the closest point on the
-//!   line to the given point
 //! - **[`InteriorPoint`]**:
 //!   Calculates a representative point inside a `Geometry`
 //!
@@ -182,8 +190,6 @@
 //! - **[`Centroid`]**: Calculate the centroid of a geometry
 //! - **[`ChaikinSmoothing`]**: Smoothen `LineString`, `Polygon`, `MultiLineString` and `MultiPolygon` using Chaikin's algorithm
 //! - **[`proj`]**: Project geometries with the `proj` crate (requires the `proj` feature)
-//! - **[`LineStringSegmentize`]**: Segment a LineString into `n` segments
-//! - **[`LineStringSegmentizeHaversine`]**: Segment a LineString using Haversine distance
 //! - **[`Transform`]**: Transform a geometry using Proj
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
 //! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
