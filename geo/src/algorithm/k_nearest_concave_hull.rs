@@ -105,7 +105,7 @@ where
 {
     let mut dataset: rstar::RTree<Coord<T>> = rstar::RTree::new();
     for coord in coords {
-        let closest = dataset.nearest_neighbor(coord);
+        let closest = dataset.nearest_neighbor(*coord);
         if let Some(closest) = closest
             && coords_are_equal(coord, closest)
         {
@@ -257,7 +257,7 @@ where
     T: GeoFloat + RTreeNum,
 {
     dataset
-        .nearest_neighbor_iter(base_coord)
+        .nearest_neighbor_iter(*base_coord)
         .take(candidate_no as usize)
 }
 
