@@ -500,12 +500,12 @@ where
     geom2
         .points()
         .fold(<T as Bounded>::max_value(), |acc, point| {
-            let nearest = tree_a.nearest_neighbor(&point).unwrap();
+            let nearest = tree_a.nearest_neighbor(point).unwrap();
             #[allow(deprecated)]
             acc.min(nearest.euclidean_distance(&point))
         })
         .min(geom1.points().fold(Bounded::max_value(), |acc, point| {
-            let nearest = tree_b.nearest_neighbor(&point).unwrap();
+            let nearest = tree_b.nearest_neighbor(point).unwrap();
             #[allow(deprecated)]
             acc.min(nearest.euclidean_distance(&point))
         }))

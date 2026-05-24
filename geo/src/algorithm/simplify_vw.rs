@@ -415,7 +415,7 @@ where
         orig[triangle.right],
     )
     .bounding_rect();
-    tree.locate_in_envelope_intersecting(&rstar::AABB::from_corners(
+    tree.locate_in_envelope_intersecting(rstar::AABB::from_corners(
         bounding_rect.min().into(),
         bounding_rect.max().into(),
     ))

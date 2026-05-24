@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Update the `rstar` dependency to 0.13.
 - Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
   - <https://github.com/georust/geo/pull/1533>
 - Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.
