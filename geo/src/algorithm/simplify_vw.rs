@@ -983,3 +983,102 @@ mod test {
         }
     }
 }
+
+#[cfg(test)]
+mod idx_tests {
+    use super::{PolygonIndices, SimplifyVwPreserveIdx};
+    use crate::{MultiLineString, MultiPolygon, Polygon, line_string, polygon};
+
+    #[test]
+    fn simplify_vw_preserve_idx_linestring() {
+        let ls = line_string![
+            (x: 10., y: 60.),
+            (x: 135., y: 68.),
+            (x: 94.,  y: 48.),
+            (x: 126., y: 31.),
+            (x: 280., y: 19.),
+            (x: 117., y: 48.),
+            (x: 300., y: 40.),
+            (x: 301., y: 10.),
+        ];
+        let indices: Vec<usize> = ls.simplify_vw_preserve_idx(668.6);
+        assert_eq!(indices, vec![0, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_polygon_with_hole() {
+        // outer[2] retention is the shared-rtree signal: dropping it would
+        // self-intersect against the inner ring.
+        let outer = line_string![
+            (x: -54.4921875, y: 21.289374355860424),
+            (x: -33.5, y: 56.9449741808516),
+            (x: -22.5, y: 44.08758502824516),
+            (x: -19.5, y: 23.241346102386135),
+            (x: -54.4921875, y: 21.289374355860424),
+        ];
+        let inner = line_string![
+            (x: -24.451171875, y: 35.266685523707665),
+            (x: -40.0, y: 45.),
+            (x: -29.513671875, y: 47.32027765985069),
+            (x: -22.869140625, y: 43.80817468459856),
+            (x: -24.451171875, y: 35.266685523707665),
+        ];
+        let poly = Polygon::new(outer, vec![inner]);
+
+        let result: PolygonIndices = poly.simplify_vw_preserve_idx(95.4);
+
+        assert_eq!(result.exterior, vec![0, 1, 2, 3, 4]);
+        assert_eq!(result.interiors, vec![vec![0, 1, 3, 4]]);
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_polygon_identity() {
+        let poly = polygon![
+            (x: 0., y: 0.),
+            (x: 10., y: 0.),
+            (x: 10., y: 10.),
+            (x: 0., y: 10.),
+            (x: 0., y: 0.),
+        ];
+        let result: PolygonIndices = poly.simplify_vw_preserve_idx(0.0);
+        assert_eq!(result.exterior, vec![0, 1, 2, 3, 4]);
+        assert!(result.interiors.is_empty());
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_multilinestring() {
+        let mls = MultiLineString::new(vec![
+            line_string![(x: 0., y: 0.), (x: 5., y: 0.), (x: 10., y: 0.)],
+            line_string![(x: 0., y: 10.), (x: 10., y: 10.)],
+        ]);
+        let result: Vec<Vec<usize>> = mls.simplify_vw_preserve_idx(0.0);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0], vec![0, 1, 2]);
+        assert_eq!(result[1], vec![0, 1]);
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_multipolygon() {
+        let p1 = polygon![
+            (x: 0., y: 0.),
+            (x: 10., y: 0.),
+            (x: 10., y: 10.),
+            (x: 0., y: 10.),
+            (x: 0., y: 0.),
+        ];
+        let p2 = polygon![
+            (x: 20., y: 20.),
+            (x: 30., y: 20.),
+            (x: 30., y: 30.),
+            (x: 20., y: 30.),
+            (x: 20., y: 20.),
+        ];
+        let mp = MultiPolygon::new(vec![p1, p2]);
+        let result: Vec<PolygonIndices> = mp.simplify_vw_preserve_idx(0.0);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].exterior, vec![0, 1, 2, 3, 4]);
+        assert!(result[0].interiors.is_empty());
+        assert_eq!(result[1].exterior, vec![0, 1, 2, 3, 4]);
+        assert!(result[1].interiors.is_empty());
+    }
+}
