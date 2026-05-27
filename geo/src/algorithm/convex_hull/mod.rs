@@ -116,3 +116,73 @@ fn swap_with_first_and_remove<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a
 
 #[cfg(test)]
 mod test;
+
+#[cfg(test)]
+mod idx_tests {
+    use super::{ConvexHull, ConvexHullIdx};
+    use crate::algorithm::CoordsIter;
+    use crate::{MultiPoint, Point, line_string, polygon};
+
+    // Four square corners + one strictly interior point at index 4.
+    fn fixture() -> MultiPoint<f64> {
+        MultiPoint::from(vec![
+            Point::new(0.0, 0.0),
+            Point::new(10.0, 0.0),
+            Point::new(10.0, 10.0),
+            Point::new(0.0, 10.0),
+            Point::new(5.0, 5.0),
+        ])
+    }
+
+    #[test]
+    fn convex_hull_idx_matches_convex_hull_coords() {
+        let mp = fixture();
+        let coords: Vec<_> = mp.exterior_coords_iter().collect();
+        let from_idx: Vec<_> = mp
+            .convex_hull_idx()
+            .into_iter()
+            .map(|i| coords[i])
+            .collect();
+        let from_hull = mp.convex_hull().exterior().0.clone();
+        assert_eq!(from_idx, from_hull);
+    }
+
+    #[test]
+    fn convex_hull_idx_drops_interior_point() {
+        let mp = fixture();
+        assert!(!mp.convex_hull_idx().contains(&4));
+    }
+
+    #[test]
+    fn convex_hull_idx_polygon() {
+        let p = polygon![
+            (x: 0., y: 0.),
+            (x: 10., y: 0.),
+            (x: 10., y: 10.),
+            (x: 0., y: 10.),
+            (x: 0., y: 0.),
+        ];
+        let indices = p.convex_hull_idx();
+        let coords: Vec<_> = p.exterior_coords_iter().collect();
+        for &i in &indices {
+            assert!(i < coords.len(), "index {} out of range", i);
+        }
+        assert!(indices.len() >= 4);
+    }
+
+    #[test]
+    fn convex_hull_idx_linestring() {
+        let ls = line_string![
+            (x: 0., y: 0.),
+            (x: 10., y: 0.),
+            (x: 5., y: 5.),
+            (x: 10., y: 10.),
+            (x: 0., y: 10.),
+        ];
+        let indices = ls.convex_hull_idx();
+        assert!(
+            !indices.contains(&2),
+            "interior vertex should be dropped from hull"
+        );
+    }
+}
