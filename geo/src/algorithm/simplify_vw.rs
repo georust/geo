@@ -943,4 +943,43 @@ mod test {
             epsilon = 1e-6
         );
     }
+
+    // Pins the invariant that `SimplifyVwPreserve` is strictly subtractive:
+    // every coord in the output must also exist in the input. The algorithm
+    // tracks deletions via a fixed-length `adjacent` linked list and emits the
+    // surviving slots from `orig.0`, so synthesizing a new vertex would be a
+    // regression. Fixture exercises the shared-rtree retention branch (where
+    // removing `outer[2]` would self-intersect against the inner ring).
+    #[test]
+    fn simplify_vw_preserve_output_is_subset_of_input() {
+        let outer = line_string![
+            (x: -54.4921875, y: 21.289374355860424),
+            (x: -33.5, y: 56.9449741808516),
+            (x: -22.5, y: 44.08758502824516),
+            (x: -19.5, y: 23.241346102386135),
+            (x: -54.4921875, y: 21.289374355860424),
+        ];
+        let inner = line_string![
+            (x: -24.451171875, y: 35.266685523707665),
+            (x: -40.0, y: 45.),
+            (x: -29.513671875, y: 47.32027765985069),
+            (x: -22.869140625, y: 43.80817468459856),
+            (x: -24.451171875, y: 35.266685523707665),
+        ];
+        let poly = Polygon::new(outer, vec![inner]);
+
+        let simplified = poly.simplify_vw_preserve(95.4);
+
+        for ring in std::iter::once(simplified.exterior()).chain(simplified.interiors().iter()) {
+            for c in &ring.0 {
+                let in_input = poly.exterior().0.contains(c)
+                    || poly.interiors().iter().any(|i| i.0.contains(c));
+                assert!(
+                    in_input,
+                    "simplify_vw_preserve emitted coord {:?} not in input",
+                    c
+                );
+            }
+        }
+    }
 }
