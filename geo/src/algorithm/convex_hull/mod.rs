@@ -61,7 +61,7 @@ where
 }
 
 pub mod qhull;
-pub use qhull::quick_hull;
+pub use qhull::{quick_hull, quick_hull_indices};
 
 pub mod graham;
 pub use graham::graham_hull;
@@ -112,6 +112,30 @@ fn swap_with_first_and_remove<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a
     let (h, t) = tmp.split_first_mut().unwrap();
     *slice = t;
     h
+}
+
+/// Index-tracking analogue of [`ConvexHull`]. Returns input-relative indices
+/// of the hull-perimeter coords, in CCW order, closed (first index repeated
+/// at the end).
+///
+/// Useful when per-vertex data alongside the input coords needs to be carried
+/// into the hull output without rebuilding a coordinate buffer.
+pub trait ConvexHullIdx<'a, T> {
+    type Scalar: GeoNum;
+    fn convex_hull_idx(&'a self) -> Vec<usize>;
+}
+
+impl<'a, T, G> ConvexHullIdx<'a, T> for G
+where
+    T: GeoNum,
+    G: CoordsIter<Scalar = T>,
+{
+    type Scalar = T;
+
+    fn convex_hull_idx(&'a self) -> Vec<usize> {
+        let coords: Vec<Coord<T>> = self.exterior_coords_iter().collect();
+        qhull::quick_hull_indices(&coords)
+    }
 }
 
 #[cfg(test)]

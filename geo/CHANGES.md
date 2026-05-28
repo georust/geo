@@ -6,6 +6,9 @@
   - <https://github.com/georust/geo/issues/1325>
 - Add `SimplifyVwPreserveIdx` trait (impls for `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`) and `PolygonIndices` struct. Returns input-relative indices of vertices retained by topology-preserving Visvalingam-Whyatt simplification, mirroring the existing `SimplifyIdx` / `SimplifyVwIdx` pattern.
   - <https://github.com/georust/geo/issues/1537>
+- Add `ConvexHullIdx` trait (blanket impl over `CoordsIter`) and `quick_hull_indices` free function in `algorithm::convex_hull`. Returns input-relative indices of the hull-perimeter vertices in CCW order, closed.
+  - <https://github.com/georust/geo/issues/1537>
+- Remove unused `utils::least_and_greatest_index`; the `algorithm::convex_hull::qhull` refactor inlined a generic version that abstracts over `Coord` and `(usize, Coord)`.
 - Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
   - <https://github.com/georust/geo/pull/1533>
 - Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.

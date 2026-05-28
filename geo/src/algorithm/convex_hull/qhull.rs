@@ -1,7 +1,27 @@
 use super::{swap_with_first_and_remove, trivial_hull};
 use crate::kernels::{Kernel, Orientation};
-use crate::utils::partition_slice;
-use crate::{Coord, GeoNum, LineString, coord};
+use crate::utils::{lex_cmp, partition_slice};
+use crate::{Coord, CoordNum, GeoNum, LineString, coord};
+use std::cmp::Ordering;
+
+// Generic point-like element the kernel can operate on. Coord<T> carries no
+// extra information; (usize, Coord<T>) tags each input with its position so
+// the indices fall out of the algorithm.
+trait HasCoord<T: CoordNum> {
+    fn coord(&self) -> Coord<T>;
+}
+
+impl<T: CoordNum> HasCoord<T> for Coord<T> {
+    fn coord(&self) -> Coord<T> {
+        *self
+    }
+}
+
+impl<T: CoordNum> HasCoord<T> for (usize, Coord<T>) {
+    fn coord(&self) -> Coord<T> {
+        self.1
+    }
+}
 
 // Determines if `p_c` lies on the positive side of the
 // segment `p_a` to `p_b`. In other words, whether segment
@@ -18,17 +38,58 @@ where
 }
 
 // Adapted from https://web.archive.org/web/20180409175413/http://www.ahristov.com/tutorial/geometry-games/convex-hull.html
-pub fn quick_hull<T>(mut points: &mut [Coord<T>]) -> LineString<T>
+pub fn quick_hull<T>(points: &mut [Coord<T>]) -> LineString<T>
 where
     T: GeoNum,
 {
-    // can't build a hull from fewer than four points
     if points.len() < 4 {
         return trivial_hull(points, false);
     }
+    let hull = quick_hull_kernel::<T, Coord<T>>(points);
+    let mut ls: LineString<T> = hull.into();
+    ls.close();
+    ls
+}
+
+/// Index-tracking analogue of [`quick_hull`]. Returns input indices of the
+/// hull-perimeter coords, in CCW order, closed (first index repeated at the end).
+pub fn quick_hull_indices<T>(points: &[Coord<T>]) -> Vec<usize>
+where
+    T: GeoNum,
+{
+    if points.len() < 4 {
+        // trivial_hull's coord output is a strict subset of the input;
+        // recover indices by lookup. Linear scan is bounded by 4 hull vertices.
+        let mut working = points.to_vec();
+        let hull = trivial_hull(&mut working, false);
+        return hull
+            .0
+            .iter()
+            .map(|hc| {
+                points
+                    .iter()
+                    .position(|c| c == hc)
+                    .expect("hull vertex must come from the input coords")
+            })
+            .collect();
+    }
+    let mut tagged: Vec<(usize, Coord<T>)> = points.iter().copied().enumerate().collect();
+    let hull = quick_hull_kernel::<T, (usize, Coord<T>)>(&mut tagged);
+    let mut indices: Vec<usize> = hull.into_iter().map(|(i, _)| i).collect();
+    // close the polygon: repeat the first index at the end if not already there
+    if !indices.is_empty() && indices.first() != indices.last() {
+        indices.push(indices[0]);
+    }
+    indices
+}
+
+fn quick_hull_kernel<T, P>(mut points: &mut [P]) -> Vec<P>
+where
+    T: GeoNum,
+    P: HasCoord<T> + Copy,
+{
     let mut hull = vec![];
 
-    use crate::utils::least_and_greatest_index;
     let (min, max) = {
         let (min_idx, mut max_idx) = least_and_greatest_index(points);
         let min = swap_with_first_and_remove(&mut points, min_idx);
@@ -45,27 +106,25 @@ where
         max_idx = max_idx.saturating_sub(1);
 
         let max = swap_with_first_and_remove(&mut points, max_idx);
-        (min, max)
+        (*min, *max)
     };
 
     {
-        let (points, _) = partition_slice(points, |p| is_ccw(*max, *min, *p));
-        hull_set(*max, *min, points, &mut hull);
+        let (points, _) = partition_slice(points, |p| is_ccw(max.coord(), min.coord(), p.coord()));
+        hull_set(max, min, points, &mut hull);
     }
-    hull.push(*max);
-    let (points, _) = partition_slice(points, |p| is_ccw(*min, *max, *p));
-    hull_set(*min, *max, points, &mut hull);
-    hull.push(*min);
-    // close the polygon
-    let mut hull: LineString<_> = hull.into();
-    hull.close();
+    hull.push(max);
+    let (points, _) = partition_slice(points, |p| is_ccw(min.coord(), max.coord(), p.coord()));
+    hull_set(min, max, points, &mut hull);
+    hull.push(min);
     hull
 }
 
 /// Recursively calculate the convex hull of a subset of points
-fn hull_set<T>(p_a: Coord<T>, p_b: Coord<T>, mut set: &mut [Coord<T>], hull: &mut Vec<Coord<T>>)
+fn hull_set<T, P>(p_a: P, p_b: P, mut set: &mut [P], hull: &mut Vec<P>)
 where
     T: GeoNum,
+    P: HasCoord<T> + Copy,
 {
     if set.is_empty() {
         return;
@@ -79,16 +138,17 @@ where
     // compute inner product of this with `v` - `p_a` to
     // find the farthest point from the line segment a-b.
     let p_orth = coord! {
-        x: p_a.y - p_b.y,
-        y: p_b.x - p_a.x,
+        x: p_a.coord().y - p_b.coord().y,
+        y: p_b.coord().x - p_a.coord().x,
     };
 
     let furthest_idx = set
         .iter()
         .map(|pt| {
+            let c = pt.coord();
             let p_diff = coord! {
-                x: pt.x - p_a.x,
-                y: pt.y - p_a.y,
+                x: c.x - p_a.coord().x,
+                y: c.y - p_a.coord().y,
             };
             p_orth.x * p_diff.x + p_orth.y * p_diff.y
         })
@@ -97,17 +157,40 @@ where
         .unwrap()
         .0;
 
-    // move Coord at furthest_point from set into hull
+    // move element at furthest_idx from set into hull
     let furthest_point = swap_with_first_and_remove(&mut set, furthest_idx);
     // points over PB
     {
-        let (points, _) = partition_slice(set, |p| is_ccw(*furthest_point, p_b, *p));
+        let (points, _) = partition_slice(set, |p| {
+            is_ccw(furthest_point.coord(), p_b.coord(), p.coord())
+        });
         hull_set(*furthest_point, p_b, points, hull);
     }
     hull.push(*furthest_point);
     // points over AP
-    let (points, _) = partition_slice(set, |p| is_ccw(p_a, *furthest_point, *p));
+    let (points, _) = partition_slice(set, |p| {
+        is_ccw(p_a.coord(), furthest_point.coord(), p.coord())
+    });
     hull_set(p_a, *furthest_point, points, hull);
+}
+
+fn least_and_greatest_index<T, P>(pts: &[P]) -> (usize, usize)
+where
+    T: GeoNum,
+    P: HasCoord<T>,
+{
+    assert_ne!(pts.len(), 0);
+    let (mut min_i, mut max_i) = (0, 0);
+    for i in 1..pts.len() {
+        let c = pts[i].coord();
+        if lex_cmp(&c, &pts[min_i].coord()) == Ordering::Less {
+            min_i = i;
+        }
+        if lex_cmp(&c, &pts[max_i].coord()) == Ordering::Greater {
+            max_i = i;
+        }
+    }
+    (min_i, max_i)
 }
 
 #[cfg(test)]

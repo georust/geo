@@ -69,7 +69,7 @@ pub use convert_angle_unit::{ToDegrees, ToRadians};
 
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
-pub use convex_hull::ConvexHull;
+pub use convex_hull::{ConvexHull, ConvexHullIdx};
 
 /// Cross track distance
 pub mod cross_track_distance;

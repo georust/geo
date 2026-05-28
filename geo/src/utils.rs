@@ -110,41 +110,6 @@ pub fn least_index<T: CoordNum>(pts: &[Coord<T>]) -> usize {
         .0
 }
 
-/// Compute index of the lexicographically least _and_ the
-/// greatest coordinate in one pass.
-///
-/// Should only be called on a non-empty slice with no `nan`
-/// coordinates.
-pub fn least_and_greatest_index<T: CoordNum>(pts: &[Coord<T>]) -> (usize, usize) {
-    assert_ne!(pts.len(), 0);
-    let (min, max) = pts
-        .iter()
-        .enumerate()
-        .fold((None, None), |(min, max), (idx, p)| {
-            (
-                if let Some((midx, min)) = min {
-                    if lex_cmp(p, min) == Ordering::Less {
-                        Some((idx, p))
-                    } else {
-                        Some((midx, min))
-                    }
-                } else {
-                    Some((idx, p))
-                },
-                if let Some((midx, max)) = max {
-                    if lex_cmp(p, max) == Ordering::Greater {
-                        Some((idx, p))
-                    } else {
-                        Some((midx, max))
-                    }
-                } else {
-                    Some((idx, p))
-                },
-            )
-        });
-    (min.unwrap().0, max.unwrap().0)
-}
-
 /// Normalize a longitude to coordinate to ensure it's within [-180,180]
 pub fn normalize_longitude<T: CoordFloat + FromPrimitive>(coord: T) -> T {
     let one_eighty = T::from(180.0f64).unwrap();
