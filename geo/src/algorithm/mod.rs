@@ -260,7 +260,7 @@ pub use simplify::{Simplify, SimplifyIdx};
 
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplify_vw;
-pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
+pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve, SimplifyVwPreserveIdx};
 
 /// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
 #[allow(dead_code)]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `SimplifyVwPreserveIdx` trait (impls for `LineString`, `MultiLineString`, `Polygon`, `MultiPolygon`) and `PolygonIndices` struct. Returns input-relative indices of vertices retained by topology-preserving Visvalingam-Whyatt simplification, mirroring the existing `SimplifyIdx` / `SimplifyVwIdx` pattern.
+  - <https://github.com/georust/geo/issues/1537>
 - Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
   - <https://github.com/georust/geo/pull/1533>
 - Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.

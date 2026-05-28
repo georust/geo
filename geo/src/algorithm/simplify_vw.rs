@@ -235,11 +235,11 @@ where
 //     stop: since a self-intersection causes removal of the spatially previous point, THAT could
 //     lead to a further self-intersection without the possibility of removing more points,
 //     potentially leaving the geometry in an invalid state.
-fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
+fn vwp_wrapper_indices<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     exterior: &LineString<T>,
     interiors: Option<&[LineString<T>]>,
     epsilon: T,
-) -> Vec<Vec<Coord<T>>>
+) -> Vec<Vec<usize>>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -259,18 +259,36 @@ where
     );
 
     // Simplify shell
-    rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
+    rings.push(visvalingam_preserve_indices::<T, INITIAL_MIN, MIN_POINTS>(
         exterior, epsilon, &mut tree,
     ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
+            rings.push(visvalingam_preserve_indices::<T, INITIAL_MIN, MIN_POINTS>(
                 ring, epsilon, &mut tree,
             ))
         }
     }
     rings
+}
+
+fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
+    exterior: &LineString<T>,
+    interiors: Option<&[LineString<T>]>,
+    epsilon: T,
+) -> Vec<Vec<Coord<T>>>
+where
+    T: GeoFloat + RTreeNum,
+{
+    let indices_per_ring =
+        vwp_wrapper_indices::<T, INITIAL_MIN, MIN_POINTS>(exterior, interiors, epsilon);
+    let rings = std::iter::once(exterior).chain(interiors.iter().flat_map(|i| i.iter()));
+    indices_per_ring
+        .into_iter()
+        .zip(rings)
+        .map(|(idx, ring)| idx.into_iter().map(|i| ring.0[i]).collect())
+        .collect()
 }
 
 /// Visvalingam-Whyatt with self-intersection detection to preserve topologies
@@ -285,16 +303,16 @@ where
 //     stop: since a self-intersection causes removal of the spatially previous point, THAT could
 //     lead to a further self-intersection without the possibility of removing more points,
 //     potentially leaving the geometry in an invalid state.
-fn visvalingam_preserve<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
+fn visvalingam_preserve_indices<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     orig: &LineString<T>,
     epsilon: T,
     tree: &mut RTree<CachedEnvelope<Line<T>>>,
-) -> Vec<Coord<T>>
+) -> Vec<usize>
 where
     T: GeoFloat + RTreeNum,
 {
     if orig.0.len() < 3 || epsilon <= T::zero() {
-        return orig.0.to_vec();
+        return (0..orig.0.len()).collect();
     }
     let max = orig.0.len();
     let mut counter = orig.0.len();
@@ -382,11 +400,11 @@ where
         // this may add new triangles to the heap
         recompute_triangles(&smallest, orig, &mut pq, ll, left, right, rr, max, epsilon);
     }
-    // Filter out the points that have been deleted, returning remaining points
-    orig.0
+    // Filter out the points that have been deleted, returning indices of remaining points
+    adjacent
         .iter()
-        .zip(adjacent.iter())
-        .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
+        .enumerate()
+        .filter_map(|(idx, adj)| if *adj != (0, 0) { Some(idx) } else { None })
         .collect()
 }
 
@@ -689,6 +707,86 @@ where
 {
     fn simplify_vw(&self, epsilon: T) -> MultiPolygon<T> {
         MultiPolygon::new(self.iter().map(|p| p.simplify_vw(epsilon)).collect())
+    }
+}
+
+/// Per-ring index output for [`SimplifyVwPreserveIdx`] applied to a `Polygon`.
+///
+/// The topology-preserving Visvalingam-Whyatt variant runs across all rings of
+/// a polygon together (shared R-tree), so the output keeps the exterior and
+/// interior boundaries distinct rather than flattening into a single
+/// `Vec<usize>`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PolygonIndices {
+    pub exterior: Vec<usize>,
+    pub interiors: Vec<Vec<usize>>,
+}
+
+/// Index-tracking analogue of [`SimplifyVwPreserve`]. Returns input-relative
+/// indices of vertices retained by the topology-preserving
+/// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263)
+/// algorithm.
+///
+/// `Output` is `Vec<usize>` for `LineString`, `Vec<Vec<usize>>` for
+/// `MultiLineString`, [`PolygonIndices`] for `Polygon`, and
+/// `Vec<PolygonIndices>` for `MultiPolygon`.
+pub trait SimplifyVwPreserveIdx<T, Epsilon = T> {
+    type Output;
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Self::Output
+    where
+        T: GeoFloat + RTreeNum;
+}
+
+impl<T> SimplifyVwPreserveIdx<T> for LineString<T>
+where
+    T: GeoFloat + RTreeNum,
+{
+    type Output = Vec<usize>;
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<usize> {
+        let mut indices = vwp_wrapper_indices::<_, 2, 4>(self, None, epsilon);
+        indices.pop().unwrap()
+    }
+}
+
+impl<T> SimplifyVwPreserveIdx<T> for MultiLineString<T>
+where
+    T: GeoFloat + RTreeNum,
+{
+    type Output = Vec<Vec<usize>>;
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<Vec<usize>> {
+        self.0
+            .iter()
+            .map(|ls| ls.simplify_vw_preserve_idx(epsilon))
+            .collect()
+    }
+}
+
+impl<T> SimplifyVwPreserveIdx<T> for Polygon<T>
+where
+    T: GeoFloat + RTreeNum,
+{
+    type Output = PolygonIndices;
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> PolygonIndices {
+        let mut indices_per_ring =
+            vwp_wrapper_indices::<_, 4, 5>(self.exterior(), Some(self.interiors()), epsilon);
+        let exterior = indices_per_ring.remove(0);
+        PolygonIndices {
+            exterior,
+            interiors: indices_per_ring,
+        }
+    }
+}
+
+impl<T> SimplifyVwPreserveIdx<T> for MultiPolygon<T>
+where
+    T: GeoFloat + RTreeNum,
+{
+    type Output = Vec<PolygonIndices>;
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<PolygonIndices> {
+        self.0
+            .iter()
+            .map(|p| p.simplify_vw_preserve_idx(epsilon))
+            .collect()
     }
 }
 
