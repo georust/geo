@@ -8,6 +8,8 @@
   - <https://github.com/georust/geo/pull/1534>
 - Rename `TriangulateEarcut::earcut_triangles_raw` to `TriangulateEarcut::earcut_triangulation`
   - <https://github.com/georust/geo/pull/1534>
+- FIX: `Haversine::distance` no longer returns NaN on nearly antipodal points.
+  - <https://github.com/georust/geo/pull/1535>
 
 ## 0.33.1 - 2026-4-20
 
