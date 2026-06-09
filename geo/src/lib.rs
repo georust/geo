@@ -152,6 +152,8 @@
 //!
 //! - **[`BoundingRect`]**: Calculate the axis-aligned
 //!   bounding rectangle of a geometry
+//! - **[`RectOps`]**: Union and intersection of axis-aligned
+//!   rectangles
 //! - **[`MinimumRotatedRect`]**: Calculate the
 //!   minimum bounding box of a geometry
 //! - **[`ConcaveHull`]**: Calculate the concave hull of a
