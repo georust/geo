@@ -16,6 +16,7 @@ The `geo` crate provides geospatial primitive types such as `Point`, `LineString
 - Affine operations on geometries (scale, rotate, skew, translate)
 - Boolean operations on geometries (clip, union, difference, intersection, xor)
 - Buffer / offset operations on geometries
+- Repair of invalid polygons and multipolygons, using constrained Delaunay triangulation to produce valid geometry 
 - Clustering operations such as DBSCAN and _k_-means
 - Euclidean, as well as spherical, haversine and other non-planar length and distance calculations
 - Support for projecting and converting between coordinate reference systems using PROJ
