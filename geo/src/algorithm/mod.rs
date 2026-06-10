@@ -18,6 +18,10 @@ pub use bool_ops::{BooleanOps, OpType, unary_union};
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
 
+/// Union and intersection of axis-aligned rectangles.
+pub mod rect_ops;
+pub use rect_ops::RectOps;
+
 pub mod buffer;
 pub use buffer::Buffer;
 
