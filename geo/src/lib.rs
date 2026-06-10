@@ -187,6 +187,7 @@
 //! - **[`Transform`]**: Transform a geometry using Proj
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
 //! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
+//! - **[`MakeValid`]**: Repair an invalid [`Polygon`] or [`MultiPolygon`], using constrained Delaunay triangulation (the _prepair_ algorithm) to produce valid geometry (requires the `spade` feature, enabled by default)
 //!
 //! # Indexed Geometries
 //!
