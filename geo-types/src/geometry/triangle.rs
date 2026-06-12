@@ -235,7 +235,8 @@ mod approx_integration {
     feature = "rstar_0_9",
     feature = "rstar_0_10",
     feature = "rstar_0_11",
-    feature = "rstar_0_12"
+    feature = "rstar_0_12",
+    feature = "rstar_0_13"
 ))]
 macro_rules! impl_rstar_triangle {
     ($rstar:ident) => {
@@ -268,3 +269,6 @@ impl_rstar_triangle!(rstar_0_11);
 
 #[cfg(feature = "rstar_0_12")]
 impl_rstar_triangle!(rstar_0_12);
+
+#[cfg(feature = "rstar_0_13")]
+impl_rstar_triangle!(rstar_0_13);

@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+- Add support for `rstar` 0.13 via the `rstar_0_13` feature, alongside the existing `rstar` versions.
+
 ## 0.7.19 - 2026-04-15
 
 - POSSIBLY BREAKING: `Triangle::from([a, b, c])` now enforces CCW winding (same as `Triangle::new`).

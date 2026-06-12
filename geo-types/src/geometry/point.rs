@@ -784,6 +784,35 @@ where
     }
 }
 
+#[cfg(feature = "rstar_0_13")]
+impl<T> ::rstar_0_13::Point for Point<T>
+where
+    T: ::num_traits::Float + ::rstar_0_13::RTreeNum,
+{
+    type Scalar = T;
+
+    const DIMENSIONS: usize = 2;
+
+    fn generate(mut generator: impl FnMut(usize) -> Self::Scalar) -> Self {
+        Point::new(generator(0), generator(1))
+    }
+
+    fn nth(&self, index: usize) -> Self::Scalar {
+        match index {
+            0 => self.0.x,
+            1 => self.0.y,
+            _ => unreachable!(),
+        }
+    }
+    fn nth_mut(&mut self, index: usize) -> &mut Self::Scalar {
+        match index {
+            0 => &mut self.0.x,
+            1 => &mut self.0.y,
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl<T: CoordNum> AsRef<Coord<T>> for Point<T> {
     fn as_ref(&self) -> &Coord<T> {
         &self.0
