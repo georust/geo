@@ -108,7 +108,36 @@ impl<T: CoordNum> GeometryCollection<T> {
         self.0.len()
     }
 
-    /// Is this GeometryCollection empty
+    /// Returns `true` if this `GeometryCollection` contains zero geometries.
+    ///
+    /// This is a purely structural check: it tests only whether the
+    /// underlying collection has no elements. It does **not** recurse into
+    /// the contained geometries, so a collection holding only empty
+    /// geometries (for example a single empty [`LineString`]) is **not**
+    /// considered empty by this method.
+    ///
+    /// If you need the dimensional notion of emptiness — where a collection
+    /// is empty when it has no geometries *or* all of its geometries are
+    /// themselves empty — use `geo::HasDimensions::is_empty` instead.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo_types::{GeometryCollection, LineString};
+    ///
+    /// // A collection with no geometries is empty.
+    /// let gc = GeometryCollection::<f64>::new_from(vec![]);
+    /// assert!(gc.is_empty());
+    ///
+    /// // A collection containing a single (empty) geometry is NOT empty:
+    /// // the element is present even though it has no coordinates.
+    /// let gc = GeometryCollection::<f64>::new_from(vec![
+    ///     LineString::<f64>::new(vec![]).into(),
+    /// ]);
+    /// assert!(!gc.is_empty());
+    /// ```
+    ///
+    /// [`LineString`]: crate::LineString
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
