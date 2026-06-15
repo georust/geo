@@ -1,4 +1,12 @@
+use geo_types::CoordFloat;
+
 use crate::{Coord, CoordNum};
+use core::f64::consts::FRAC_1_SQRT_2;
+
+/// Value of `sin(22.5°)`.
+const SIN_22_5_DEG: f64 = 0.382_683_432_365_089_8;
+/// Value of `cos(22.5°)`.
+const COS_22_5_DEG: f64 = 0.923_879_532_511_286_7;
 
 /// One of the four cardinal directions of the compass: north, east, south,
 /// and west.
@@ -56,6 +64,170 @@ pub enum SixteenwiseDirection {
     NorthNorthWest,
 }
 
+impl CardinalDirection {
+    /// Returns the unit vector pointing in this direction, with `x` increasing
+    /// towards east and `y` increasing towards north.
+    pub fn unit_vector<T: CoordNum>(self) -> Coord<T> {
+        match self {
+            CardinalDirection::North => Coord {
+                x: T::zero(),
+                y: T::one(),
+            },
+            CardinalDirection::East => Coord {
+                x: T::one(),
+                y: T::zero(),
+            },
+            CardinalDirection::South => Coord {
+                x: T::zero(),
+                y: T::zero() - T::one(),
+            },
+            CardinalDirection::West => Coord {
+                x: T::zero() - T::one(),
+                y: T::zero(),
+            },
+        }
+    }
+}
+
+impl OrdinalDirection {
+    /// Returns the unit vector pointing in this direction, with `x` increasing
+    /// towards east and `y` increasing towards north.
+    pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
+        match self {
+            OrdinalDirection::NorthEast => Coord {
+                x: T::from(FRAC_1_SQRT_2).unwrap(),
+                y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+            OrdinalDirection::SouthEast => Coord {
+                x: T::from(FRAC_1_SQRT_2).unwrap(),
+                y: T::from(-FRAC_1_SQRT_2).unwrap(),
+            },
+            OrdinalDirection::SouthWest => Coord {
+                x: T::from(-FRAC_1_SQRT_2).unwrap(),
+                y: T::from(-FRAC_1_SQRT_2).unwrap(),
+            },
+            OrdinalDirection::NorthWest => Coord {
+                x: T::from(-FRAC_1_SQRT_2).unwrap(),
+                y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+        }
+    }
+}
+
+impl EightwiseDirection {
+    /// Returns the unit vector pointing in this direction, with `x` increasing
+    /// towards east and `y` increasing towards north.
+    pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
+        match self {
+            EightwiseDirection::North => Coord {
+                x: T::zero(),
+                y: T::one(),
+            },
+            EightwiseDirection::NorthEast => Coord {
+                x: T::from(FRAC_1_SQRT_2).unwrap(),
+                y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+            EightwiseDirection::East => Coord {
+                x: T::one(),
+                y: T::zero(),
+            },
+            EightwiseDirection::SouthEast => Coord {
+                x: T::from(FRAC_1_SQRT_2).unwrap(),
+                y: T::from(-FRAC_1_SQRT_2).unwrap(),
+            },
+            EightwiseDirection::South => Coord {
+                x: T::zero(),
+                y: T::zero() - T::one(),
+            },
+            EightwiseDirection::SouthWest => Coord {
+                x: T::from(-FRAC_1_SQRT_2).unwrap(),
+                y: T::from(-FRAC_1_SQRT_2).unwrap(),
+            },
+            EightwiseDirection::West => Coord {
+                x: T::zero() - T::one(),
+                y: T::zero(),
+            },
+            EightwiseDirection::NorthWest => Coord {
+                x: T::from(-FRAC_1_SQRT_2).unwrap(),
+                y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+        }
+    }
+}
+
+impl SixteenwiseDirection {
+    /// Returns the unit vector pointing in this direction, with `x` increasing
+    /// towards east and `y` increasing towards north.
+    pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
+        match self {
+            SixteenwiseDirection::North => Coord {
+                x: T::zero(),
+                y: T::one(),
+            },
+            SixteenwiseDirection::NorthNorthEast => Coord {
+                x: T::from(SIN_22_5_DEG).unwrap(),
+                y: T::from(COS_22_5_DEG).unwrap(),
+            },
+            SixteenwiseDirection::NorthEast => Coord {
+                x: T::from(FRAC_1_SQRT_2).unwrap(),
+                y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+            SixteenwiseDirection::EastNorthEast => Coord {
+                x: T::from(COS_22_5_DEG).unwrap(),
+                y: T::from(SIN_22_5_DEG).unwrap(),
+            },
+            SixteenwiseDirection::East => Coord {
+                x: T::one(),
+                y: T::zero(),
+            },
+            SixteenwiseDirection::EastSouthEast => Coord {
+                x: T::from(COS_22_5_DEG).unwrap(),
+                y: T::from(-SIN_22_5_DEG).unwrap(),
+            },
+            SixteenwiseDirection::SouthEast => Coord {
+                x: T::from(FRAC_1_SQRT_2).unwrap(),
+                y: T::from(-FRAC_1_SQRT_2).unwrap(),
+            },
+            SixteenwiseDirection::SouthSouthEast => Coord {
+                x: T::from(SIN_22_5_DEG).unwrap(),
+                y: T::from(-COS_22_5_DEG).unwrap(),
+            },
+            SixteenwiseDirection::South => Coord {
+                x: T::zero(),
+                y: T::zero() - T::one(),
+            },
+            SixteenwiseDirection::SouthSouthWest => Coord {
+                x: T::from(-SIN_22_5_DEG).unwrap(),
+                y: T::from(-COS_22_5_DEG).unwrap(),
+            },
+            SixteenwiseDirection::SouthWest => Coord {
+                x: T::from(-FRAC_1_SQRT_2).unwrap(),
+                y: T::from(-FRAC_1_SQRT_2).unwrap(),
+            },
+            SixteenwiseDirection::WestSouthWest => Coord {
+                x: T::from(-COS_22_5_DEG).unwrap(),
+                y: T::from(-SIN_22_5_DEG).unwrap(),
+            },
+            SixteenwiseDirection::West => Coord {
+                x: T::zero() - T::one(),
+                y: T::zero(),
+            },
+            SixteenwiseDirection::WestNorthWest => Coord {
+                x: T::from(-COS_22_5_DEG).unwrap(),
+                y: T::from(SIN_22_5_DEG).unwrap(),
+            },
+            SixteenwiseDirection::NorthWest => Coord {
+                x: T::from(-FRAC_1_SQRT_2).unwrap(),
+                y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+            SixteenwiseDirection::NorthNorthWest => Coord {
+                x: T::from(-SIN_22_5_DEG).unwrap(),
+                y: T::from(COS_22_5_DEG).unwrap(),
+            },
+        }
+    }
+}
+
 /// Snap [`Coord`], interpreted as a direction vector from the origin, to the
 /// nearest direction in one of the sets of compass directions.
 ///
@@ -77,7 +249,7 @@ pub enum SixteenwiseDirection {
 /// [`CardinalDirection::North`].
 ///
 /// Note that whether a given vector lands exactly on a boundary is subject to
-/// floating-point rounding, since the coordinates are converted to `f64`.
+/// floating-point rounding, since the coordinates are first converted to `f64`.
 ///
 /// The zero vector has no well-defined direction; every method returns `None`
 /// for it.
@@ -331,6 +503,80 @@ mod tests {
         assert_eq!(
             coord! { x: 0i32, y: -3i32 }.nearest_sixteenwise_direction(),
             Some(SixteenwiseDirection::South)
+        );
+    }
+
+    #[test]
+    fn unit_vectors_are_axis_aligned_for_cardinals() {
+        assert_eq!(
+            CardinalDirection::North.unit_vector(),
+            coord! { x: 0.0, y: 1.0 }
+        );
+        assert_eq!(
+            CardinalDirection::East.unit_vector(),
+            coord! { x: 1.0, y: 0.0 }
+        );
+        assert_eq!(
+            CardinalDirection::South.unit_vector(),
+            coord! { x: 0.0, y: -1.0 }
+        );
+        assert_eq!(
+            CardinalDirection::West.unit_vector(),
+            coord! { x: -1.0, y: 0.0 }
+        );
+    }
+
+    #[test]
+    fn unit_vectors_have_unit_magnitude() {
+        let sixteen = [
+            SixteenwiseDirection::North,
+            SixteenwiseDirection::NorthNorthEast,
+            SixteenwiseDirection::NorthEast,
+            SixteenwiseDirection::EastNorthEast,
+            SixteenwiseDirection::East,
+            SixteenwiseDirection::EastSouthEast,
+            SixteenwiseDirection::SouthEast,
+            SixteenwiseDirection::SouthSouthEast,
+            SixteenwiseDirection::South,
+            SixteenwiseDirection::SouthSouthWest,
+            SixteenwiseDirection::SouthWest,
+            SixteenwiseDirection::WestSouthWest,
+            SixteenwiseDirection::West,
+            SixteenwiseDirection::WestNorthWest,
+            SixteenwiseDirection::NorthWest,
+            SixteenwiseDirection::NorthNorthWest,
+        ];
+        for direction in sixteen {
+            let v = direction.unit_vector::<f64>();
+            assert_relative_eq!((v.x * v.x + v.y * v.y).sqrt(), 1.0);
+        }
+    }
+
+    #[test]
+    fn unit_vectors_round_trip_through_snapping() {
+        assert_eq!(
+            CardinalDirection::West
+                .unit_vector::<f64>()
+                .nearest_cardinal_direction(),
+            Some(CardinalDirection::West)
+        );
+        assert_eq!(
+            OrdinalDirection::SouthEast
+                .unit_vector::<f64>()
+                .nearest_ordinal_direction(),
+            Some(OrdinalDirection::SouthEast)
+        );
+        assert_eq!(
+            EightwiseDirection::NorthWest
+                .unit_vector::<f64>()
+                .nearest_eightwise_direction(),
+            Some(EightwiseDirection::NorthWest)
+        );
+        assert_eq!(
+            SixteenwiseDirection::EastSouthEast
+                .unit_vector::<f64>()
+                .nearest_sixteenwise_direction(),
+            Some(SixteenwiseDirection::EastSouthEast)
         );
     }
 
