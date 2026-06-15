@@ -87,6 +87,30 @@ impl CardinalDirection {
             },
         }
     }
+
+    /// Returns the sign vector pointing in this direction: each coordinate is
+    /// `-1`, `0`, or `1`, matching the sign of the respective coordinate of
+    /// [`unit_vector`](Self::unit_vector).
+    pub fn sign_vector<T: CoordNum>(self) -> Coord<T> {
+        match self {
+            CardinalDirection::North => Coord {
+                x: T::zero(),
+                y: T::one(),
+            },
+            CardinalDirection::East => Coord {
+                x: T::one(),
+                y: T::zero(),
+            },
+            CardinalDirection::South => Coord {
+                x: T::zero(),
+                y: T::zero() - T::one(),
+            },
+            CardinalDirection::West => Coord {
+                x: T::zero() - T::one(),
+                y: T::zero(),
+            },
+        }
+    }
 }
 
 impl OrdinalDirection {
@@ -109,6 +133,30 @@ impl OrdinalDirection {
             OrdinalDirection::NorthWest => Coord {
                 x: T::from(-FRAC_1_SQRT_2).unwrap(),
                 y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+        }
+    }
+
+    /// Returns the sign vector pointing in this direction: each coordinate is
+    /// `-1`, `0`, or `1`, matching the sign of the respective coordinate of
+    /// [`unit_vector`](Self::unit_vector).
+    pub fn sign_vector<T: CoordNum>(self) -> Coord<T> {
+        match self {
+            OrdinalDirection::NorthEast => Coord {
+                x: T::one(),
+                y: T::one(),
+            },
+            OrdinalDirection::SouthEast => Coord {
+                x: T::one(),
+                y: T::zero() - T::one(),
+            },
+            OrdinalDirection::SouthWest => Coord {
+                x: T::zero() - T::one(),
+                y: T::zero() - T::one(),
+            },
+            OrdinalDirection::NorthWest => Coord {
+                x: T::zero() - T::one(),
+                y: T::one(),
             },
         }
     }
@@ -150,6 +198,46 @@ impl EightwiseDirection {
             EightwiseDirection::NorthWest => Coord {
                 x: T::from(-FRAC_1_SQRT_2).unwrap(),
                 y: T::from(FRAC_1_SQRT_2).unwrap(),
+            },
+        }
+    }
+
+    /// Returns the sign vector pointing in this direction: each coordinate is
+    /// `-1`, `0`, or `1`, matching the sign of the respective coordinate of
+    /// [`unit_vector`](Self::unit_vector).
+    pub fn sign_vector<T: CoordNum>(self) -> Coord<T> {
+        match self {
+            EightwiseDirection::North => Coord {
+                x: T::zero(),
+                y: T::one(),
+            },
+            EightwiseDirection::NorthEast => Coord {
+                x: T::one(),
+                y: T::one(),
+            },
+            EightwiseDirection::East => Coord {
+                x: T::one(),
+                y: T::zero(),
+            },
+            EightwiseDirection::SouthEast => Coord {
+                x: T::one(),
+                y: T::zero() - T::one(),
+            },
+            EightwiseDirection::South => Coord {
+                x: T::zero(),
+                y: T::zero() - T::one(),
+            },
+            EightwiseDirection::SouthWest => Coord {
+                x: T::zero() - T::one(),
+                y: T::zero() - T::one(),
+            },
+            EightwiseDirection::West => Coord {
+                x: T::zero() - T::one(),
+                y: T::zero(),
+            },
+            EightwiseDirection::NorthWest => Coord {
+                x: T::zero() - T::one(),
+                y: T::one(),
             },
         }
     }
@@ -577,6 +665,22 @@ mod tests {
                 .unit_vector::<f64>()
                 .nearest_sixteenwise_direction(),
             Some(SixteenwiseDirection::EastSouthEast)
+        );
+    }
+
+    #[test]
+    fn sign_vectors_use_integer_components() {
+        assert_eq!(
+            CardinalDirection::South.sign_vector(),
+            coord! { x: 0i32, y: -1i32 }
+        );
+        assert_eq!(
+            OrdinalDirection::SouthWest.sign_vector(),
+            coord! { x: -1i32, y: -1i32 }
+        );
+        assert_eq!(
+            EightwiseDirection::West.sign_vector(),
+            coord! { x: -1i64, y: 0i64 }
         );
     }
 
