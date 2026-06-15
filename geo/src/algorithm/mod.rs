@@ -45,6 +45,13 @@ pub use chamberlain_duquette_area::ChamberlainDuquetteArea;
 pub mod closest_point;
 pub use closest_point::ClosestPoint;
 
+/// Compass directions and snapping of `Coord`s onto the nearest direction.
+pub mod compass;
+pub use compass::{
+    CardinalDirection, EightwiseDirection, NearestCompassDirection, OrdinalDirection,
+    SixteenwiseDirection,
+};
+
 /// Calculate the concave hull of a `Geometry`.
 pub mod concave_hull;
 pub use concave_hull::ConcaveHull;
