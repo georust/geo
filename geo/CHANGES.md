@@ -12,6 +12,8 @@
   - <https://github.com/georust/geo/pull/1535>
 - Add `RectOps` trait with RectOps::rect_union()` and `RectOps::rect_intersection()` operations.
   - <https://github.com/georust/geo/pull/1542>
+- Speed up `Relate` operations.
+  - <https://github.com/georust/geo/pull/1521>
 
 ## 0.33.1 - 2026-4-20
 
@@ -59,8 +61,6 @@
   - Preprocessing cost to construct these types, but provide a significant performance boost for intersects and contains_properly checks
   - <https://github.com/georust/geo/issues/1466>
   - <https://github.com/georust/geo/pull/1467>
-- Speed up `Relate` operations.
-  - <https://github.com/georust/geo/pull/1521>
 
 ## 0.32.0 - 2025-12-05
 
