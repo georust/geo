@@ -18,53 +18,27 @@ pub enum CardinalDirection {
     West,
 }
 
-/// One of the four ordinal (intercardinal) directions of the compass:
-/// northeast, southeast, southwest, and northwest.
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
-pub enum OrdinalDirection {
-    NorthEast,
-    SouthEast,
-    SouthWest,
-    NorthWest,
-}
-
-/// One of the directions on an eight-point (eight-wise) compass: cardinal and
-/// ordinal directions together in one set. Also known as the principal winds.
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
-pub enum EightwiseDirection {
-    North,
-    NorthEast,
-    East,
-    SouthEast,
-    South,
-    SouthWest,
-    West,
-    NorthWest,
-}
-
-/// One of the directions on a sixteen-point (sixteen-wise) compass: eight
-/// principal winds together with eight half-winds.
-#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
-pub enum SixteenwiseDirection {
-    North,
-    NorthNorthEast,
-    NorthEast,
-    EastNorthEast,
-    East,
-    EastSouthEast,
-    SouthEast,
-    SouthSouthEast,
-    South,
-    SouthSouthWest,
-    SouthWest,
-    WestSouthWest,
-    West,
-    WestNorthWest,
-    NorthWest,
-    NorthNorthWest,
-}
-
 impl CardinalDirection {
+    /// Turn to the next cardinal direction clockwise.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            CardinalDirection::North => CardinalDirection::West,
+            CardinalDirection::East => CardinalDirection::North,
+            CardinalDirection::South => CardinalDirection::East,
+            CardinalDirection::West => CardinalDirection::South,
+        }
+    }
+
+    /// Turn to the next cardinal direction counterclockwise.
+    pub fn turn_ccw(self) -> Self {
+        match self {
+            CardinalDirection::North => CardinalDirection::East,
+            CardinalDirection::East => CardinalDirection::South,
+            CardinalDirection::South => CardinalDirection::West,
+            CardinalDirection::West => CardinalDirection::North,
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordNum>(self) -> Coord<T> {
@@ -113,7 +87,37 @@ impl CardinalDirection {
     }
 }
 
+/// One of the four ordinal (intercardinal) directions of the compass:
+/// northeast, southeast, southwest, and northwest.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
+pub enum OrdinalDirection {
+    NorthEast,
+    SouthEast,
+    SouthWest,
+    NorthWest,
+}
+
 impl OrdinalDirection {
+    /// Turn to the next ordinal direction clockwise.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            OrdinalDirection::NorthEast => OrdinalDirection::NorthWest,
+            OrdinalDirection::SouthEast => OrdinalDirection::NorthEast,
+            OrdinalDirection::SouthWest => OrdinalDirection::SouthEast,
+            OrdinalDirection::NorthWest => OrdinalDirection::SouthWest,
+        }
+    }
+
+    /// Turn to the next ordinal direction counterclockwise.
+    pub fn turn_ccw(self) -> Self {
+        match self {
+            OrdinalDirection::NorthEast => OrdinalDirection::SouthEast,
+            OrdinalDirection::SouthEast => OrdinalDirection::SouthWest,
+            OrdinalDirection::SouthWest => OrdinalDirection::NorthWest,
+            OrdinalDirection::NorthWest => OrdinalDirection::NorthEast,
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
@@ -160,9 +164,51 @@ impl OrdinalDirection {
             },
         }
     }
+}
+
+/// One of the directions on an eight-point (eight-wise) compass: cardinal and
+/// ordinal directions together in one set. Also known as the principal winds.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
+pub enum EightwiseDirection {
+    North,
+    NorthEast,
+    East,
+    SouthEast,
+    South,
+    SouthWest,
+    West,
+    NorthWest,
 }
 
 impl EightwiseDirection {
+    /// Turn to the next eight-wise direction clockwise.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            EightwiseDirection::North => EightwiseDirection::NorthWest,
+            EightwiseDirection::NorthEast => EightwiseDirection::North,
+            EightwiseDirection::East => EightwiseDirection::NorthEast,
+            EightwiseDirection::SouthEast => EightwiseDirection::East,
+            EightwiseDirection::South => EightwiseDirection::SouthEast,
+            EightwiseDirection::SouthWest => EightwiseDirection::South,
+            EightwiseDirection::West => EightwiseDirection::SouthWest,
+            EightwiseDirection::NorthWest => EightwiseDirection::West,
+        }
+    }
+
+    /// Turn to the next eight-wise direction counterclockwise.
+    pub fn turn_ccw(self) -> Self {
+        match self {
+            EightwiseDirection::North => EightwiseDirection::NorthEast,
+            EightwiseDirection::NorthEast => EightwiseDirection::East,
+            EightwiseDirection::East => EightwiseDirection::SouthEast,
+            EightwiseDirection::SouthEast => EightwiseDirection::South,
+            EightwiseDirection::South => EightwiseDirection::SouthWest,
+            EightwiseDirection::SouthWest => EightwiseDirection::West,
+            EightwiseDirection::West => EightwiseDirection::NorthWest,
+            EightwiseDirection::NorthWest => EightwiseDirection::North,
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
@@ -243,7 +289,73 @@ impl EightwiseDirection {
     }
 }
 
+/// One of the directions on a sixteen-point (sixteen-wise) compass: eight
+/// principal winds together with eight half-winds.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
+pub enum SixteenwiseDirection {
+    North,
+    NorthNorthEast,
+    NorthEast,
+    EastNorthEast,
+    East,
+    EastSouthEast,
+    SouthEast,
+    SouthSouthEast,
+    South,
+    SouthSouthWest,
+    SouthWest,
+    WestSouthWest,
+    West,
+    WestNorthWest,
+    NorthWest,
+    NorthNorthWest,
+}
+
 impl SixteenwiseDirection {
+    /// Turn to the next sixteen-wise direction clockwise.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            SixteenwiseDirection::North => SixteenwiseDirection::NorthNorthWest,
+            SixteenwiseDirection::NorthNorthEast => SixteenwiseDirection::North,
+            SixteenwiseDirection::NorthEast => SixteenwiseDirection::NorthNorthEast,
+            SixteenwiseDirection::EastNorthEast => SixteenwiseDirection::NorthEast,
+            SixteenwiseDirection::East => SixteenwiseDirection::EastNorthEast,
+            SixteenwiseDirection::EastSouthEast => SixteenwiseDirection::East,
+            SixteenwiseDirection::SouthEast => SixteenwiseDirection::EastSouthEast,
+            SixteenwiseDirection::SouthSouthEast => SixteenwiseDirection::SouthEast,
+            SixteenwiseDirection::South => SixteenwiseDirection::SouthSouthEast,
+            SixteenwiseDirection::SouthSouthWest => SixteenwiseDirection::South,
+            SixteenwiseDirection::SouthWest => SixteenwiseDirection::SouthSouthWest,
+            SixteenwiseDirection::WestSouthWest => SixteenwiseDirection::SouthWest,
+            SixteenwiseDirection::West => SixteenwiseDirection::WestSouthWest,
+            SixteenwiseDirection::WestNorthWest => SixteenwiseDirection::West,
+            SixteenwiseDirection::NorthWest => SixteenwiseDirection::WestNorthWest,
+            SixteenwiseDirection::NorthNorthWest => SixteenwiseDirection::NorthWest,
+        }
+    }
+
+    /// Turn to the next sixteen-wise direction counterclockwise.
+    pub fn turn_ccw(self) -> Self {
+        match self {
+            SixteenwiseDirection::North => SixteenwiseDirection::NorthNorthEast,
+            SixteenwiseDirection::NorthNorthEast => SixteenwiseDirection::NorthEast,
+            SixteenwiseDirection::NorthEast => SixteenwiseDirection::EastNorthEast,
+            SixteenwiseDirection::EastNorthEast => SixteenwiseDirection::East,
+            SixteenwiseDirection::East => SixteenwiseDirection::EastSouthEast,
+            SixteenwiseDirection::EastSouthEast => SixteenwiseDirection::SouthEast,
+            SixteenwiseDirection::SouthEast => SixteenwiseDirection::SouthSouthEast,
+            SixteenwiseDirection::SouthSouthEast => SixteenwiseDirection::South,
+            SixteenwiseDirection::South => SixteenwiseDirection::SouthSouthWest,
+            SixteenwiseDirection::SouthSouthWest => SixteenwiseDirection::SouthWest,
+            SixteenwiseDirection::SouthWest => SixteenwiseDirection::WestSouthWest,
+            SixteenwiseDirection::WestSouthWest => SixteenwiseDirection::West,
+            SixteenwiseDirection::West => SixteenwiseDirection::WestNorthWest,
+            SixteenwiseDirection::WestNorthWest => SixteenwiseDirection::NorthWest,
+            SixteenwiseDirection::NorthWest => SixteenwiseDirection::NorthNorthWest,
+            SixteenwiseDirection::NorthNorthWest => SixteenwiseDirection::North,
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
@@ -695,6 +807,102 @@ mod tests {
         assert_eq!(
             coord! { x: 0i32, y: 0i32 }.nearest_sixteenwise_direction(),
             None
+        );
+    }
+
+    #[test]
+    fn turn_cw_and_turn_ccw_are_inverses() {
+        for direction in [
+            CardinalDirection::North,
+            CardinalDirection::East,
+            CardinalDirection::South,
+            CardinalDirection::West,
+        ] {
+            assert_eq!(direction.turn_ccw().turn_cw(), direction);
+            assert_eq!(direction.turn_cw().turn_ccw(), direction);
+        }
+        for direction in [
+            OrdinalDirection::NorthEast,
+            OrdinalDirection::SouthEast,
+            OrdinalDirection::SouthWest,
+            OrdinalDirection::NorthWest,
+        ] {
+            assert_eq!(direction.turn_ccw().turn_cw(), direction);
+            assert_eq!(direction.turn_cw().turn_ccw(), direction);
+        }
+        for direction in [
+            EightwiseDirection::North,
+            EightwiseDirection::NorthEast,
+            EightwiseDirection::East,
+            EightwiseDirection::SouthEast,
+            EightwiseDirection::South,
+            EightwiseDirection::SouthWest,
+            EightwiseDirection::West,
+            EightwiseDirection::NorthWest,
+        ] {
+            assert_eq!(direction.turn_ccw().turn_cw(), direction);
+            assert_eq!(direction.turn_cw().turn_ccw(), direction);
+        }
+        for direction in [
+            SixteenwiseDirection::North,
+            SixteenwiseDirection::NorthNorthEast,
+            SixteenwiseDirection::NorthEast,
+            SixteenwiseDirection::EastNorthEast,
+            SixteenwiseDirection::East,
+            SixteenwiseDirection::EastSouthEast,
+            SixteenwiseDirection::SouthEast,
+            SixteenwiseDirection::SouthSouthEast,
+            SixteenwiseDirection::South,
+            SixteenwiseDirection::SouthSouthWest,
+            SixteenwiseDirection::SouthWest,
+            SixteenwiseDirection::WestSouthWest,
+            SixteenwiseDirection::West,
+            SixteenwiseDirection::WestNorthWest,
+            SixteenwiseDirection::NorthWest,
+            SixteenwiseDirection::NorthNorthWest,
+        ] {
+            assert_eq!(direction.turn_ccw().turn_cw(), direction);
+            assert_eq!(direction.turn_cw().turn_ccw(), direction);
+        }
+    }
+
+    #[test]
+    fn turn_cw_cycles_through_all_directions() {
+        assert_eq!(
+            (0..4).fold(CardinalDirection::North, |d, _| d.turn_cw()),
+            CardinalDirection::North
+        );
+        assert_eq!(
+            (0..4).fold(OrdinalDirection::NorthEast, |d, _| d.turn_cw()),
+            OrdinalDirection::NorthEast
+        );
+        assert_eq!(
+            (0..8).fold(EightwiseDirection::North, |d, _| d.turn_cw()),
+            EightwiseDirection::North
+        );
+        assert_eq!(
+            (0..16).fold(SixteenwiseDirection::North, |d, _| d.turn_cw()),
+            SixteenwiseDirection::North
+        );
+    }
+
+    #[test]
+    fn turn_ccw_cycles_through_all_directions() {
+        assert_eq!(
+            (0..4).fold(CardinalDirection::North, |d, _| d.turn_ccw()),
+            CardinalDirection::North
+        );
+        assert_eq!(
+            (0..4).fold(OrdinalDirection::NorthEast, |d, _| d.turn_ccw()),
+            OrdinalDirection::NorthEast
+        );
+        assert_eq!(
+            (0..8).fold(EightwiseDirection::North, |d, _| d.turn_ccw()),
+            EightwiseDirection::North
+        );
+        assert_eq!(
+            (0..16).fold(SixteenwiseDirection::North, |d, _| d.turn_ccw()),
+            SixteenwiseDirection::North
         );
     }
 }
