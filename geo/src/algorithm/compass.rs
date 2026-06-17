@@ -180,6 +180,28 @@ pub enum EightwiseDirection {
     NorthWest,
 }
 
+impl From<CardinalDirection> for EightwiseDirection {
+    fn from(direction: CardinalDirection) -> Self {
+        match direction {
+            CardinalDirection::North => EightwiseDirection::North,
+            CardinalDirection::East => EightwiseDirection::East,
+            CardinalDirection::South => EightwiseDirection::South,
+            CardinalDirection::West => EightwiseDirection::West,
+        }
+    }
+}
+
+impl From<OrdinalDirection> for EightwiseDirection {
+    fn from(direction: OrdinalDirection) -> Self {
+        match direction {
+            OrdinalDirection::NorthEast => EightwiseDirection::NorthEast,
+            OrdinalDirection::SouthEast => EightwiseDirection::SouthEast,
+            OrdinalDirection::SouthWest => EightwiseDirection::SouthWest,
+            OrdinalDirection::NorthWest => EightwiseDirection::NorthWest,
+        }
+    }
+}
+
 impl EightwiseDirection {
     /// Turn to the next eight-wise direction clockwise.
     pub fn turn_cw(self) -> Self {
@@ -309,6 +331,33 @@ pub enum SixteenwiseDirection {
     WestNorthWest,
     NorthWest,
     NorthNorthWest,
+}
+
+impl From<CardinalDirection> for SixteenwiseDirection {
+    fn from(direction: CardinalDirection) -> Self {
+        EightwiseDirection::from(direction).into()
+    }
+}
+
+impl From<OrdinalDirection> for SixteenwiseDirection {
+    fn from(direction: OrdinalDirection) -> Self {
+        EightwiseDirection::from(direction).into()
+    }
+}
+
+impl From<EightwiseDirection> for SixteenwiseDirection {
+    fn from(direction: EightwiseDirection) -> Self {
+        match direction {
+            EightwiseDirection::North => SixteenwiseDirection::North,
+            EightwiseDirection::NorthEast => SixteenwiseDirection::NorthEast,
+            EightwiseDirection::East => SixteenwiseDirection::East,
+            EightwiseDirection::SouthEast => SixteenwiseDirection::SouthEast,
+            EightwiseDirection::South => SixteenwiseDirection::South,
+            EightwiseDirection::SouthWest => SixteenwiseDirection::SouthWest,
+            EightwiseDirection::West => SixteenwiseDirection::West,
+            EightwiseDirection::NorthWest => SixteenwiseDirection::NorthWest,
+        }
+    }
 }
 
 impl SixteenwiseDirection {
@@ -807,6 +856,30 @@ mod tests {
         assert_eq!(
             coord! { x: 0i32, y: 0i32 }.nearest_sixteenwise_direction(),
             None
+        );
+    }
+
+    #[test]
+    fn coarser_directions_convert_to_finer() {
+        assert_eq!(
+            EightwiseDirection::from(CardinalDirection::North),
+            EightwiseDirection::North
+        );
+        assert_eq!(
+            SixteenwiseDirection::from(CardinalDirection::West),
+            SixteenwiseDirection::West
+        );
+        assert_eq!(
+            EightwiseDirection::from(OrdinalDirection::SouthWest),
+            EightwiseDirection::SouthWest
+        );
+        assert_eq!(
+            SixteenwiseDirection::from(OrdinalDirection::NorthEast),
+            SixteenwiseDirection::NorthEast
+        );
+        assert_eq!(
+            SixteenwiseDirection::from(EightwiseDirection::SouthEast),
+            SixteenwiseDirection::SouthEast
         );
     }
 
