@@ -42,6 +42,12 @@ use crate::kernels::*;
 pub trait ConvexHull<'a, T> {
     type Scalar: GeoNum;
     fn convex_hull(&'a self) -> Polygon<Self::Scalar>;
+
+    /// Returns the indices of the input coords (as yielded by
+    /// [`CoordsIter::exterior_coords_iter`]) that form the convex hull, in CCW
+    /// order and closed (the first index is repeated at the end). Useful for
+    /// carrying per-vertex data into the hull without rebuilding a coord buffer.
+    fn convex_hull_idx(&'a self) -> Vec<usize>;
 }
 
 use crate::algorithm::CoordsIter;
@@ -57,6 +63,11 @@ where
     fn convex_hull(&'a self) -> Polygon<T> {
         let mut exterior: Vec<_> = self.exterior_coords_iter().collect();
         Polygon::new(quick_hull(&mut exterior), vec![])
+    }
+
+    fn convex_hull_idx(&'a self) -> Vec<usize> {
+        let coords: Vec<Coord<T>> = self.exterior_coords_iter().collect();
+        qhull::quick_hull_indices(&coords)
     }
 }
 
@@ -114,36 +125,12 @@ fn swap_with_first_and_remove<'a, T>(slice: &mut &'a mut [T], idx: usize) -> &'a
     h
 }
 
-/// Index-tracking analogue of [`ConvexHull`]. Returns input-relative indices
-/// of the hull-perimeter coords, in CCW order, closed (first index repeated
-/// at the end).
-///
-/// Useful when per-vertex data alongside the input coords needs to be carried
-/// into the hull output without rebuilding a coordinate buffer.
-pub trait ConvexHullIdx<'a, T> {
-    type Scalar: GeoNum;
-    fn convex_hull_idx(&'a self) -> Vec<usize>;
-}
-
-impl<'a, T, G> ConvexHullIdx<'a, T> for G
-where
-    T: GeoNum,
-    G: CoordsIter<Scalar = T>,
-{
-    type Scalar = T;
-
-    fn convex_hull_idx(&'a self) -> Vec<usize> {
-        let coords: Vec<Coord<T>> = self.exterior_coords_iter().collect();
-        qhull::quick_hull_indices(&coords)
-    }
-}
-
 #[cfg(test)]
 mod test;
 
 #[cfg(test)]
 mod idx_tests {
-    use super::{ConvexHull, ConvexHullIdx};
+    use super::ConvexHull;
     use crate::algorithm::CoordsIter;
     use crate::{MultiPoint, Point, line_string, polygon};
 

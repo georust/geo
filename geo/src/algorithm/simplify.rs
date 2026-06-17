@@ -142,6 +142,33 @@ where
     vec![first, last]
 }
 
+/// Per-ring retained-index output for the index-returning simplification
+/// methods (`simplify_idx`, `simplify_vw_idx`, `simplify_vw_preserve_idx`) when
+/// applied to a `Polygon`. The exterior and interior ring indices are kept
+/// distinct rather than flattened into a single `Vec<usize>`; each index is
+/// relative to its own ring's coordinate sequence.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PolygonIndices {
+    pub exterior: Vec<usize>,
+    pub interiors: Vec<Vec<usize>>,
+}
+
+// Indices are relative to this ring's own coord sequence, not polygon-global.
+fn rdp_indices<T, const INITIAL_MIN: usize>(ring: &LineString<T>, epsilon: T) -> Vec<usize>
+where
+    T: GeoFloat,
+{
+    calculate_rdp_indices::<_, INITIAL_MIN>(
+        &ring
+            .0
+            .iter()
+            .enumerate()
+            .map(|(index, &coord)| RdpIndex { index, coord })
+            .collect::<Vec<RdpIndex<T>>>(),
+        epsilon,
+    )
+}
+
 /// Simplifies a geometry.
 ///
 /// The [Ramer–Douglas–Peucker
@@ -159,6 +186,9 @@ where
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait Simplify<T, Epsilon = T> {
+    /// The index-output type of [`Simplify::simplify_idx`], which varies by geometry.
+    type Output;
+
     /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// # Examples
@@ -189,6 +219,33 @@ pub trait Simplify<T, Epsilon = T> {
     fn simplify(&self, epsilon: T) -> Self
     where
         T: GeoFloat;
+
+    /// Returns the indices of the points retained by [`Simplify::simplify`],
+    /// relative to the input geometry. [`Self::Output`] is `Vec<usize>` for
+    /// `LineString`, `Vec<Vec<usize>>` for `MultiLineString`, [`PolygonIndices`]
+    /// for `Polygon`, and `Vec<PolygonIndices>` for `MultiPolygon`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::Simplify;
+    /// use geo::line_string;
+    ///
+    /// let line_string = line_string![
+    ///     (x: 0.0, y: 0.0),
+    ///     (x: 5.0, y: 4.0),
+    ///     (x: 11.0, y: 5.5),
+    ///     (x: 17.3, y: 3.2),
+    ///     (x: 27.8, y: 0.1),
+    /// ];
+    ///
+    /// let indices = line_string.simplify_idx(1.0);
+    ///
+    /// assert_eq!(indices, vec![0_usize, 1, 2, 4]);
+    /// ```
+    fn simplify_idx(&self, epsilon: T) -> Self::Output
+    where
+        T: GeoFloat;
 }
 
 /// Simplifies a geometry, returning the retained _indices_ of the input.
@@ -203,12 +260,17 @@ pub trait Simplify<T, Epsilon = T> {
 /// discarded.
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
+#[deprecated(
+    since = "0.34.0",
+    note = "Please use the `simplify_idx` method from the `Simplify` trait instead"
+)]
 pub trait SimplifyIdx<T, Epsilon = T> {
     /// Returns the simplified indices of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
     /// # Examples
     ///
     /// ```
+    /// #![allow(deprecated)]
     /// use geo::SimplifyIdx;
     /// use geo::line_string;
     ///
@@ -240,31 +302,27 @@ impl<T> Simplify<T> for LineString<T>
 where
     T: GeoFloat,
 {
+    type Output = Vec<usize>;
+
     fn simplify(&self, epsilon: T) -> Self {
         LineString::from(rdp::<_, _, LINE_STRING_INITIAL_MIN>(
             self.coords_iter(),
             epsilon,
         ))
     }
+
+    fn simplify_idx(&self, epsilon: T) -> Vec<usize> {
+        rdp_indices::<_, LINE_STRING_INITIAL_MIN>(self, epsilon)
+    }
 }
 
+#[allow(deprecated)]
 impl<T> SimplifyIdx<T> for LineString<T>
 where
     T: GeoFloat,
 {
     fn simplify_idx(&self, epsilon: T) -> Vec<usize> {
-        calculate_rdp_indices::<_, LINE_STRING_INITIAL_MIN>(
-            &self
-                .0
-                .iter()
-                .enumerate()
-                .map(|(idx, coord)| RdpIndex {
-                    index: idx,
-                    coord: *coord,
-                })
-                .collect::<Vec<RdpIndex<T>>>(),
-            epsilon,
-        )
+        Simplify::simplify_idx(self, epsilon)
     }
 }
 
@@ -272,8 +330,16 @@ impl<T> Simplify<T> for MultiLineString<T>
 where
     T: GeoFloat,
 {
+    type Output = Vec<Vec<usize>>;
+
     fn simplify(&self, epsilon: T) -> Self {
         MultiLineString::new(self.iter().map(|l| l.simplify(epsilon)).collect())
+    }
+
+    fn simplify_idx(&self, epsilon: T) -> Vec<Vec<usize>> {
+        self.iter()
+            .map(|l| Simplify::simplify_idx(l, epsilon))
+            .collect()
     }
 }
 
@@ -281,6 +347,8 @@ impl<T> Simplify<T> for Polygon<T>
 where
     T: GeoFloat,
 {
+    type Output = PolygonIndices;
+
     fn simplify(&self, epsilon: T) -> Self {
         Polygon::new(
             LineString::from(rdp::<_, _, POLYGON_INITIAL_MIN>(
@@ -295,14 +363,33 @@ where
                 .collect(),
         )
     }
+
+    fn simplify_idx(&self, epsilon: T) -> PolygonIndices {
+        PolygonIndices {
+            exterior: rdp_indices::<_, POLYGON_INITIAL_MIN>(self.exterior(), epsilon),
+            interiors: self
+                .interiors()
+                .iter()
+                .map(|l| rdp_indices::<_, POLYGON_INITIAL_MIN>(l, epsilon))
+                .collect(),
+        }
+    }
 }
 
 impl<T> Simplify<T> for MultiPolygon<T>
 where
     T: GeoFloat,
 {
+    type Output = Vec<PolygonIndices>;
+
     fn simplify(&self, epsilon: T) -> Self {
         MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
+    }
+
+    fn simplify_idx(&self, epsilon: T) -> Vec<PolygonIndices> {
+        self.iter()
+            .map(|p| Simplify::simplify_idx(p, epsilon))
+            .collect()
     }
 }
 
@@ -460,7 +547,7 @@ mod test {
             (x: 10., y: 10.),
             (x: 10., y: 0.),
         ];
-        let indices = ls.simplify_idx(-1.0);
+        let indices = Simplify::simplify_idx(&ls, -1.0);
         assert_eq!(vec![0usize, 1, 2, 3, 4], indices);
     }
 

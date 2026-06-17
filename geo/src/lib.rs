@@ -288,6 +288,15 @@ use std::cmp::Ordering;
 
 pub use crate::algorithm::sweep::Intersections;
 pub use crate::indexed::PreparedGeometry;
+
+// Deprecated index traits, kept reachable at the crate root for migration but
+// deliberately not re-exported through `algorithm` (and thus not in the
+// prelude), so the consolidated `simplify_idx` / `simplify_vw_idx` methods on
+// `Simplify` / `SimplifyVw` don't collide with them under `use geo::prelude::*`.
+#[allow(deprecated)]
+pub use crate::algorithm::simplify::SimplifyIdx;
+#[allow(deprecated)]
+pub use crate::algorithm::simplify_vw::SimplifyVwIdx;
 pub use geo_types::{CoordFloat, CoordNum, coord, line_string, point, polygon, wkt};
 
 pub mod geometry;

@@ -456,6 +456,9 @@ where
 ///
 /// An epsilon less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVw<T, Epsilon = T> {
+    /// The index-output type of [`SimplifyVw::simplify_vw_idx`], which varies by geometry.
+    type Output;
+
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
@@ -490,6 +493,33 @@ pub trait SimplifyVw<T, Epsilon = T> {
     fn simplify_vw(&self, epsilon: T) -> Self
     where
         T: CoordFloat;
+
+    /// Returns the indices of the points retained by [`SimplifyVw::simplify_vw`],
+    /// relative to the input geometry. [`Self::Output`] is `Vec<usize>` for
+    /// `LineString`, `Vec<Vec<usize>>` for `MultiLineString`, [`PolygonIndices`]
+    /// for `Polygon`, and `Vec<PolygonIndices>` for `MultiPolygon`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::SimplifyVw;
+    /// use geo::line_string;
+    ///
+    /// let line_string = line_string![
+    ///     (x: 5.0, y: 2.0),
+    ///     (x: 3.0, y: 8.0),
+    ///     (x: 6.0, y: 20.0),
+    ///     (x: 7.0, y: 25.0),
+    ///     (x: 10.0, y: 10.0),
+    /// ];
+    ///
+    /// let indices = line_string.simplify_vw_idx(30.0);
+    ///
+    /// assert_eq!(indices, vec![0_usize, 3, 4]);
+    /// ```
+    fn simplify_vw_idx(&self, epsilon: T) -> Self::Output
+    where
+        T: CoordFloat;
 }
 
 /// Simplifies a geometry, returning the retained _indices_ of the output
@@ -503,6 +533,10 @@ pub trait SimplifyVw<T, Epsilon = T> {
 /// If the area of this triangle is less than `epsilon`, we will remove the point.
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
+#[deprecated(
+    since = "0.34.0",
+    note = "Please use the `simplify_vw_idx` method from the `SimplifyVw` trait instead"
+)]
 pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
@@ -511,6 +545,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
+    /// #![allow(deprecated)]
     /// use geo::SimplifyVwIdx;
     /// use geo::line_string;
     ///
@@ -546,6 +581,9 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVwPreserve<T, Epsilon = T> {
+    /// The index-output type of [`SimplifyVwPreserve::simplify_vw_preserve_idx`], which varies by geometry.
+    type Output;
+
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
     /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm.
     ///
@@ -605,15 +643,31 @@ pub trait SimplifyVwPreserve<T, Epsilon = T> {
     fn simplify_vw_preserve(&self, epsilon: T) -> Self
     where
         T: CoordFloat + RTreeNum;
+
+    /// Returns the indices of the points retained by
+    /// [`SimplifyVwPreserve::simplify_vw_preserve`], relative to the input
+    /// geometry. [`Self::Output`] is `Vec<usize>` for `LineString`,
+    /// `Vec<Vec<usize>>` for `MultiLineString`, [`PolygonIndices`] for
+    /// `Polygon`, and `Vec<PolygonIndices>` for `MultiPolygon`.
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Self::Output
+    where
+        T: GeoFloat + RTreeNum;
 }
 
 impl<T> SimplifyVwPreserve<T> for LineString<T>
 where
     T: GeoFloat + RTreeNum,
 {
+    type Output = Vec<usize>;
+
     fn simplify_vw_preserve(&self, epsilon: T) -> LineString<T> {
         let mut simplified = vwp_wrapper::<_, 2, 4>(self, None, epsilon);
         LineString::from(simplified.pop().unwrap())
+    }
+
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<usize> {
+        let mut indices = vwp_wrapper_indices::<_, 2, 4>(self, None, epsilon);
+        indices.pop().unwrap()
     }
 }
 
@@ -621,6 +675,8 @@ impl<T> SimplifyVwPreserve<T> for MultiLineString<T>
 where
     T: GeoFloat + RTreeNum,
 {
+    type Output = Vec<Vec<usize>>;
+
     fn simplify_vw_preserve(&self, epsilon: T) -> MultiLineString<T> {
         MultiLineString::new(
             self.0
@@ -629,12 +685,21 @@ where
                 .collect(),
         )
     }
+
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<Vec<usize>> {
+        self.0
+            .iter()
+            .map(|l| l.simplify_vw_preserve_idx(epsilon))
+            .collect()
+    }
 }
 
 impl<T> SimplifyVwPreserve<T> for Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
+    type Output = PolygonIndices;
+
     fn simplify_vw_preserve(&self, epsilon: T) -> Polygon<T> {
         let mut simplified =
         // min_points was formerly 6, but that's too conservative for small polygons
@@ -643,129 +708,7 @@ where
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
     }
-}
 
-impl<T> SimplifyVwPreserve<T> for MultiPolygon<T>
-where
-    T: GeoFloat + RTreeNum,
-{
-    fn simplify_vw_preserve(&self, epsilon: T) -> MultiPolygon<T> {
-        MultiPolygon::new(
-            self.0
-                .iter()
-                .map(|p| p.simplify_vw_preserve(epsilon))
-                .collect(),
-        )
-    }
-}
-
-impl<T> SimplifyVw<T> for LineString<T>
-where
-    T: CoordFloat,
-{
-    fn simplify_vw(&self, epsilon: T) -> LineString<T> {
-        LineString::from(visvalingam(self, epsilon))
-    }
-}
-
-impl<T> SimplifyVwIdx<T> for LineString<T>
-where
-    T: CoordFloat,
-{
-    fn simplify_vw_idx(&self, epsilon: T) -> Vec<usize> {
-        visvalingam_indices(self, epsilon)
-    }
-}
-
-impl<T> SimplifyVw<T> for MultiLineString<T>
-where
-    T: CoordFloat,
-{
-    fn simplify_vw(&self, epsilon: T) -> MultiLineString<T> {
-        MultiLineString::new(self.iter().map(|l| l.simplify_vw(epsilon)).collect())
-    }
-}
-
-impl<T> SimplifyVw<T> for Polygon<T>
-where
-    T: CoordFloat,
-{
-    fn simplify_vw(&self, epsilon: T) -> Polygon<T> {
-        Polygon::new(
-            self.exterior().simplify_vw(epsilon),
-            self.interiors()
-                .iter()
-                .map(|l| l.simplify_vw(epsilon))
-                .collect(),
-        )
-    }
-}
-
-impl<T> SimplifyVw<T> for MultiPolygon<T>
-where
-    T: CoordFloat,
-{
-    fn simplify_vw(&self, epsilon: T) -> MultiPolygon<T> {
-        MultiPolygon::new(self.iter().map(|p| p.simplify_vw(epsilon)).collect())
-    }
-}
-
-/// Per-ring index output for [`SimplifyVwPreserveIdx`] applied to a `Polygon`.
-///
-/// The topology-preserving Visvalingam-Whyatt variant runs across all rings of
-/// a polygon together (shared R-tree), so the output keeps the exterior and
-/// interior boundaries distinct rather than flattening into a single
-/// `Vec<usize>`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct PolygonIndices {
-    pub exterior: Vec<usize>,
-    pub interiors: Vec<Vec<usize>>,
-}
-
-/// Index-tracking analogue of [`SimplifyVwPreserve`]. Returns input-relative
-/// indices of vertices retained by the topology-preserving
-/// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263)
-/// algorithm.
-///
-/// `Output` is `Vec<usize>` for `LineString`, `Vec<Vec<usize>>` for
-/// `MultiLineString`, [`PolygonIndices`] for `Polygon`, and
-/// `Vec<PolygonIndices>` for `MultiPolygon`.
-pub trait SimplifyVwPreserveIdx<T, Epsilon = T> {
-    type Output;
-    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Self::Output
-    where
-        T: GeoFloat + RTreeNum;
-}
-
-impl<T> SimplifyVwPreserveIdx<T> for LineString<T>
-where
-    T: GeoFloat + RTreeNum,
-{
-    type Output = Vec<usize>;
-    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<usize> {
-        let mut indices = vwp_wrapper_indices::<_, 2, 4>(self, None, epsilon);
-        indices.pop().unwrap()
-    }
-}
-
-impl<T> SimplifyVwPreserveIdx<T> for MultiLineString<T>
-where
-    T: GeoFloat + RTreeNum,
-{
-    type Output = Vec<Vec<usize>>;
-    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<Vec<usize>> {
-        self.0
-            .iter()
-            .map(|ls| ls.simplify_vw_preserve_idx(epsilon))
-            .collect()
-    }
-}
-
-impl<T> SimplifyVwPreserveIdx<T> for Polygon<T>
-where
-    T: GeoFloat + RTreeNum,
-{
-    type Output = PolygonIndices;
     fn simplify_vw_preserve_idx(&self, epsilon: T) -> PolygonIndices {
         let mut indices_per_ring =
             vwp_wrapper_indices::<_, 4, 5>(self.exterior(), Some(self.interiors()), epsilon);
@@ -777,15 +720,112 @@ where
     }
 }
 
-impl<T> SimplifyVwPreserveIdx<T> for MultiPolygon<T>
+impl<T> SimplifyVwPreserve<T> for MultiPolygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
     type Output = Vec<PolygonIndices>;
+
+    fn simplify_vw_preserve(&self, epsilon: T) -> MultiPolygon<T> {
+        MultiPolygon::new(
+            self.0
+                .iter()
+                .map(|p| p.simplify_vw_preserve(epsilon))
+                .collect(),
+        )
+    }
+
     fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<PolygonIndices> {
         self.0
             .iter()
             .map(|p| p.simplify_vw_preserve_idx(epsilon))
+            .collect()
+    }
+}
+
+impl<T> SimplifyVw<T> for LineString<T>
+where
+    T: CoordFloat,
+{
+    type Output = Vec<usize>;
+
+    fn simplify_vw(&self, epsilon: T) -> LineString<T> {
+        LineString::from(visvalingam(self, epsilon))
+    }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> Vec<usize> {
+        visvalingam_indices(self, epsilon)
+    }
+}
+
+#[allow(deprecated)]
+impl<T> SimplifyVwIdx<T> for LineString<T>
+where
+    T: CoordFloat,
+{
+    fn simplify_vw_idx(&self, epsilon: T) -> Vec<usize> {
+        SimplifyVw::simplify_vw_idx(self, epsilon)
+    }
+}
+
+impl<T> SimplifyVw<T> for MultiLineString<T>
+where
+    T: CoordFloat,
+{
+    type Output = Vec<Vec<usize>>;
+
+    fn simplify_vw(&self, epsilon: T) -> MultiLineString<T> {
+        MultiLineString::new(self.iter().map(|l| l.simplify_vw(epsilon)).collect())
+    }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> Vec<Vec<usize>> {
+        self.iter()
+            .map(|l| SimplifyVw::simplify_vw_idx(l, epsilon))
+            .collect()
+    }
+}
+
+impl<T> SimplifyVw<T> for Polygon<T>
+where
+    T: CoordFloat,
+{
+    type Output = PolygonIndices;
+
+    fn simplify_vw(&self, epsilon: T) -> Polygon<T> {
+        Polygon::new(
+            self.exterior().simplify_vw(epsilon),
+            self.interiors()
+                .iter()
+                .map(|l| l.simplify_vw(epsilon))
+                .collect(),
+        )
+    }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> PolygonIndices {
+        PolygonIndices {
+            exterior: SimplifyVw::simplify_vw_idx(self.exterior(), epsilon),
+            interiors: self
+                .interiors()
+                .iter()
+                .map(|l| SimplifyVw::simplify_vw_idx(l, epsilon))
+                .collect(),
+        }
+    }
+}
+
+impl<T> SimplifyVw<T> for MultiPolygon<T>
+where
+    T: CoordFloat,
+{
+    type Output = Vec<PolygonIndices>;
+
+    fn simplify_vw(&self, epsilon: T) -> MultiPolygon<T> {
+        MultiPolygon::new(self.iter().map(|p| p.simplify_vw(epsilon)).collect())
+    }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> Vec<PolygonIndices> {
+        self.iter()
+            .map(|p| SimplifyVw::simplify_vw_idx(p, epsilon))
             .collect()
     }
 }
@@ -1084,8 +1124,8 @@ mod test {
 
 #[cfg(test)]
 mod idx_tests {
-    use super::{PolygonIndices, SimplifyVwPreserveIdx};
-    use crate::{MultiLineString, MultiPolygon, Polygon, line_string, polygon};
+    use super::SimplifyVwPreserve;
+    use crate::{MultiLineString, MultiPolygon, Polygon, PolygonIndices, line_string, polygon};
 
     #[test]
     fn simplify_vw_preserve_idx_linestring() {

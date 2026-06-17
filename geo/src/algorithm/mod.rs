@@ -69,7 +69,7 @@ pub use convert_angle_unit::{ToDegrees, ToRadians};
 
 /// Calculate the convex hull of a `Geometry`.
 pub mod convex_hull;
-pub use convex_hull::{ConvexHull, ConvexHullIdx};
+pub use convex_hull::ConvexHull;
 
 /// Cross track distance
 pub mod cross_track_distance;
@@ -260,11 +260,11 @@ pub use affine_ops::{AffineOps, AffineTransform};
 
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
-pub use simplify::{Simplify, SimplifyIdx};
+pub use simplify::{PolygonIndices, Simplify};
 
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplify_vw;
-pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve, SimplifyVwPreserveIdx};
+pub use simplify_vw::{SimplifyVw, SimplifyVwPreserve};
 
 /// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
 #[allow(dead_code)]
