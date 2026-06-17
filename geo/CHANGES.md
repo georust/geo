@@ -12,6 +12,8 @@
   - <https://github.com/georust/geo/pull/1535>
 - Add `RectOps` trait with RectOps::rect_union()` and `RectOps::rect_intersection()` operations.
   - <https://github.com/georust/geo/pull/1542>
+- Add snappable cardinal, ordinal, eightwise, sixteenwise compass directions.
+  - <https://github.com/georust/geo/pull/1546>
 
 ## 0.33.1 - 2026-4-20
 
