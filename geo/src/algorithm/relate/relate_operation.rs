@@ -378,7 +378,7 @@ mod test {
     use crate::Relate;
 
     use super::*;
-    use geo_types::{Geometry, line_string, polygon};
+    use geo_types::{Geometry, LineString, Polygon, line_string, polygon};
     use std::str::FromStr;
 
     #[test]
@@ -484,5 +484,33 @@ mod test {
         let de9im_eq = "T*F**FFF*";
         assert!(polyrelation.matches(de9im_eq).unwrap());
         assert!(lsrelation.matches(de9im_eq).unwrap());
+    }
+
+    #[test]
+    fn relate_with_nan_does_not_panic() {
+        let nan_ring = Polygon::new(LineString::from(vec![(f64::NAN, f64::NAN)]), vec![]);
+        let _ = nan_ring.relate(&nan_ring);
+    }
+
+    #[test]
+    fn relate_with_inf_does_not_panic() {
+        let inf_ring = Polygon::new(
+            LineString::from(vec![
+                (0.0, 0.0),
+                (f64::INFINITY, 0.0),
+                (f64::INFINITY, f64::INFINITY),
+                (0.0, f64::INFINITY),
+                (0.0, 0.0),
+            ]),
+            vec![],
+        );
+        let valid = polygon![
+            (x: 1.0, y: 1.0),
+            (x: 2.0, y: 1.0),
+            (x: 2.0, y: 2.0),
+            (x: 1.0, y: 2.0),
+            (x: 1.0, y: 1.0),
+        ];
+        let _ = inf_ring.relate(&valid);
     }
 }
