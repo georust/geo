@@ -248,7 +248,7 @@ impl<C: Cross> SweepLineIndex<C> {
 
         for segment in segments.into_iter() {
             let line = segment.line();
-            let (inserted_x, deleted_x) = if line.start.x < line.end.x {
+            let (inserted_x, deleted_x) = if line.start.x.total_cmp(&line.end.x).is_lt() {
                 (line.start.x, line.end.x)
             } else {
                 (line.end.x, line.start.x)

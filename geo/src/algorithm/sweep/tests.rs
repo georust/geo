@@ -137,6 +137,34 @@ fn should_not_panic() {
     verify_intersections(&segments);
 }
 
+/// Every `SweepLineInterval` must have `inserted_x <= deleted_x` under `total_cmp`.
+/// Plain `<` conflates `-0.0` and `0.0` and violates the invariant.
+#[test]
+fn sweep_line_interval_ordering_holds_for_signed_zero() {
+    use std::cmp::Ordering;
+
+    let cases: [Line<f64>; 6] = [
+        Line::from([(-0.0, 0.0), (0.0, 1.0)]),
+        Line::from([(0.0, 0.0), (-0.0, 1.0)]),
+        Line::from([(-1.0, 0.0), (1.0, 1.0)]),
+        Line::from([(1.0, 0.0), (-1.0, 1.0)]),
+        Line::from([(3.0, 0.0), (3.0, 1.0)]),
+        Line::from([(-0.0, 0.0), (-0.0, 1.0)]),
+    ];
+
+    let index = SweepLineIndex::new(cases.iter().copied());
+
+    for interval in &index.inserted_intervals {
+        assert_ne!(
+            interval.inserted_x.total_cmp(&interval.deleted_x),
+            Ordering::Greater,
+            "inserted_x={} deleted_x={}",
+            interval.inserted_x,
+            interval.deleted_x,
+        );
+    }
+}
+
 #[test]
 fn test_iterator_behavior() {
     let input = vec![
