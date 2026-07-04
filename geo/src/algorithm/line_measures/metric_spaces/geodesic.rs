@@ -3,6 +3,11 @@ use crate::Point;
 use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
 use std::sync::LazyLock;
 
+/// Clamp to `[-90, 90]`. The Karney solver returns `NaN` outside that range.
+fn clamp_latitude(lat: f64) -> f64 {
+    lat.clamp(-90.0, 90.0)
+}
+
 /// Use the [`Geodesic`] constant (an instance of `GeodesicMeasure`) rather than building your own
 /// customized [`GeodesicMeasure`] for standard ellipsoidal Earth measurements.
 ///
@@ -141,9 +146,12 @@ where
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn bearing(&self, origin: Point<f64>, destination: Point<f64>) -> f64 {
-        let (azi1, _, _) =
-            self.geoid
-                .inverse(origin.y(), origin.x(), destination.y(), destination.x());
+        let (azi1, _, _) = self.geoid.inverse(
+            clamp_latitude(origin.y()),
+            origin.x(),
+            clamp_latitude(destination.y()),
+            destination.x(),
+        );
         (azi1 + 360.0) % 360.0
     }
 }
@@ -190,7 +198,9 @@ where
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn destination(&self, origin: Point<f64>, bearing: f64, distance: f64) -> Point<f64> {
-        let (lat, lon) = self.geoid.direct(origin.y(), origin.x(), bearing, distance);
+        let (lat, lon) =
+            self.geoid
+                .direct(clamp_latitude(origin.y()), origin.x(), bearing, distance);
         Point::new(lon, lat)
     }
 }
@@ -231,8 +241,12 @@ where
     /// [geodesic line]: https://en.wikipedia.org/wiki/Geodesics_on_an_ellipsoid
     /// [Karney (2013)]:  https://arxiv.org/pdf/1109.4448.pdf
     fn distance(&self, origin: Point<f64>, destination: Point<f64>) -> f64 {
-        self.geoid
-            .inverse(origin.y(), origin.x(), destination.y(), destination.x())
+        self.geoid.inverse(
+            clamp_latitude(origin.y()),
+            origin.x(),
+            clamp_latitude(destination.y()),
+            destination.x(),
+        )
     }
 }
 
@@ -325,8 +339,12 @@ where
             return end;
         }
 
-        let (total_distance, azi1, _azi2, _a12) =
-            self.geoid.inverse(start.y(), start.x(), end.y(), end.x());
+        let (total_distance, azi1, _azi2, _a12) = self.geoid.inverse(
+            clamp_latitude(start.y()),
+            start.x(),
+            clamp_latitude(end.y()),
+            end.x(),
+        );
         let distance = total_distance * ratio_from_start;
         self.destination(start, azi1, distance)
     }
@@ -352,8 +370,12 @@ where
         max_distance: f64,
         include_ends: bool,
     ) -> impl Iterator<Item = Point<f64>> {
-        let (total_distance, azi1, _azi2, _a12) =
-            self.geoid.inverse(start.y(), start.x(), end.y(), end.x());
+        let (total_distance, azi1, _azi2, _a12) = self.geoid.inverse(
+            clamp_latitude(start.y()),
+            start.x(),
+            clamp_latitude(end.y()),
+            end.x(),
+        );
 
         if total_distance <= max_distance {
             return if include_ends {
@@ -370,9 +392,12 @@ where
         let mut points = if include_ends { vec![start] } else { vec![] };
 
         while current_step < 1.0 {
-            let (lat2, lon2) =
-                self.geoid
-                    .direct(start.y(), start.x(), azi1, total_distance * current_step);
+            let (lat2, lon2) = self.geoid.direct(
+                clamp_latitude(start.y()),
+                start.x(),
+                azi1,
+                total_distance * current_step,
+            );
             let point = Point::new(lon2, lat2);
             points.push(point);
             current_step += interval;
@@ -534,5 +559,40 @@ mod tests {
         let mars_geoid = GeodesicMeasure::new(mars_equatorial_radius, mars_flattening);
 
         assert_relative_eq!(70684.36315529353, mars_geoid.distance(start, finish));
+    }
+
+    mod out_of_range_latitude {
+        use super::*;
+
+        #[test]
+        fn distance_past_south_pole_is_not_nan() {
+            let past_pole = Point::new(0.0, -90.000_000_04);
+            let paris = Point::new(2.3522, 48.8566);
+            let distance = Geodesic.distance(past_pole, paris);
+            assert!(!distance.is_nan());
+        }
+
+        #[test]
+        fn distance_past_north_pole_is_not_nan() {
+            let past_pole = Point::new(0.0, 90.000_000_04);
+            let sydney = Point::new(151.2093, -33.8688);
+            let distance = Geodesic.distance(past_pole, sydney);
+            assert!(!distance.is_nan());
+        }
+
+        #[test]
+        fn bearing_past_pole_is_not_nan() {
+            let past_pole = Point::new(0.0, -90.000_000_04);
+            let paris = Point::new(2.3522, 48.8566);
+            let bearing = Geodesic.bearing(past_pole, paris);
+            assert!(!bearing.is_nan());
+        }
+
+        #[test]
+        fn destination_from_past_pole_is_not_nan() {
+            let past_pole = Point::new(0.0, -90.000_000_04);
+            let result = Geodesic.destination(past_pole, 45.0, 100_000.0);
+            assert!(!result.x().is_nan() && !result.y().is_nan());
+        }
     }
 }
