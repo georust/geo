@@ -1,52 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
 use geo::{Dbscan, Point, point};
-use rand::SeedableRng;
-use rand::rngs::StdRng;
-use rand_distr::{Distribution, Normal};
-use std::f64::consts::PI;
-
-/// Generate test data similar to sklearn's make_moons
-/// Creates two interleaving half circles
-fn make_moons(num_points: usize, noise: f64, seed: u64) -> Vec<Point<f64>> {
-    let mut rng = StdRng::seed_from_u64(seed);
-    let mut points = Vec::with_capacity(num_points);
-
-    // Split points between outer and inner semicircles
-    let n_samples_out = num_points / 2;
-    let n_samples_in = num_points - n_samples_out;
-
-    // Outer semicircle: parametric form with θ from 0 to π
-    for i in 0..n_samples_out {
-        let theta = (i as f64) * PI / (n_samples_out - 1) as f64;
-        let x = theta.cos();
-        let y = theta.sin();
-        points.push(point!(x: x, y: y));
-    }
-
-    // Inner semicircle: offset and flipped to interleave
-    for i in 0..n_samples_in {
-        let theta = (i as f64) * PI / (n_samples_in - 1) as f64;
-        let x = 1.0 - theta.cos();
-        let y = 1.0 - theta.sin() - 0.5;
-        points.push(point!(x: x, y: y));
-    }
-
-    // Add Gaussian noise if specified
-    if noise > 0.0 {
-        let normal = Normal::new(0.0, noise).unwrap();
-        for point in &mut points {
-            let noise_x = normal.sample(&mut rng);
-            let noise_y = normal.sample(&mut rng);
-            *point = point!(x: point.x() + noise_x, y: point.y() + noise_y);
-        }
-    }
-
-    // Shuffle points to mix the two semicircles
-    use rand::seq::SliceRandom;
-    points.shuffle(&mut rng);
-
-    points
-}
+use geo_benches::utils::random::make_moons;
 
 /// Standardise points to have zero mean and unit variance (like sklearn's StandardScaler)
 fn standardise_points(points: &mut [Point<f64>]) {
