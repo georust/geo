@@ -126,6 +126,208 @@ fn test_boruvka_mst_connectivity() {
     }
 }
 
+/// Test the dendrogram (label step) with a simple 4-point example.
+///
+/// Points form two pairs: {0,1} close together, {2,3} close together,
+/// with the pairs far apart. The MST should merge each pair first,
+/// then merge the two pairs.
+#[test]
+fn test_label_dendrogram() {
+    // Manually constructed MST:
+    //   (0,1) at weight 1.0
+    //   (2,3) at weight 1.0
+    //   (1,2) at weight 10.0
+    let mst = vec![
+        MstEdge {
+            u: 0,
+            v: 1,
+            weight: 1.0,
+        },
+        MstEdge {
+            u: 2,
+            v: 3,
+            weight: 1.0,
+        },
+        MstEdge {
+            u: 1,
+            v: 2,
+            weight: 10.0,
+        },
+    ];
+
+    let dendrogram = label(&mst, 4);
+
+    // Should have 3 entries (n-1 merges)
+    assert_eq!(dendrogram.len(), 3);
+
+    // First two merges at distance 1.0 (pairs), final merge at 10.0
+    // The order of the first two is implementation-defined (both at
+    // distance 1.0), but both should have size 2. The final merge
+    // should have size 4.
+    let sizes: Vec<usize> = dendrogram.iter().map(|e| e.size).collect();
+    let distances: Vec<f64> = dendrogram.iter().map(|e| e.distance).collect();
+
+    // First two merges create size-2 clusters
+    assert_eq!(sizes[0], 2);
+    assert_eq!(sizes[1], 2);
+    assert_relative_eq!(distances[0], 1.0, epsilon = 1e-12);
+    assert_relative_eq!(distances[1], 1.0, epsilon = 1e-12);
+
+    // Final merge creates the root with all 4 points
+    assert_eq!(sizes[2], 4);
+    assert_relative_eq!(distances[2], 10.0, epsilon = 1e-12);
+}
+
+/// Test condense_tree with a hand-crafted dendrogram.
+///
+/// Dendrogram for 7 points (adapted from petal-clustering's condense_mst
+/// test):
+///
+///             node 12
+///           /          \           distance = 8.0
+///       node 10      node 11
+///       /    \        /    \       distance = 4.0
+///    node 7  node 8  node 9  pt 6
+///    /  \    /  \    /  \          distance = 2.0
+///   0    1  2    3  4    5
+///
+/// With min_cluster_size=3, nodes 7, 8, 9 (size 2 each) are too small
+/// to be clusters. The condensed tree should have two child clusters
+/// under the root, with their points falling out individually.
+#[test]
+fn test_condense_tree_structure() {
+    use DendrogramNode::{Point as P, Virtual as V};
+    let dendrogram: Vec<DendrogramEntry<f64>> = vec![
+        // entry 0 -> node 7: merge points 0,1
+        DendrogramEntry {
+            left: P(0),
+            right: P(1),
+            distance: 2.0,
+            size: 2,
+        },
+        // entry 1 -> node 8: merge points 2,3
+        DendrogramEntry {
+            left: P(2),
+            right: P(3),
+            distance: 2.0,
+            size: 2,
+        },
+        // entry 2 -> node 9: merge points 4,5
+        DendrogramEntry {
+            left: P(4),
+            right: P(5),
+            distance: 2.0,
+            size: 2,
+        },
+        // entry 3 -> node 10: merge virtual entries 0,1 (size 4)
+        DendrogramEntry {
+            left: V(0),
+            right: V(1),
+            distance: 4.0,
+            size: 4,
+        },
+        // entry 4 -> node 11: merge virtual entry 2 + point 6 (size 3)
+        DendrogramEntry {
+            left: V(2),
+            right: P(6),
+            distance: 4.0,
+            size: 3,
+        },
+        // entry 5 -> node 12: merge virtual entries 3,4 (size 7)
+        DendrogramEntry {
+            left: V(3),
+            right: V(4),
+            distance: 8.0,
+            size: 7,
+        },
+    ];
+
+    let condensed = condense_tree(&dendrogram, 3, 7);
+
+    // Should have exactly 2 cluster entries + 7 point fall-out entries = 9
+    let cluster_entries: Vec<_> = condensed.iter().filter(|e| e.child_size > 1).collect();
+    let point_entries: Vec<_> = condensed.iter().filter(|e| e.child_size == 1).collect();
+
+    assert_eq!(
+        cluster_entries.len(),
+        2,
+        "should have 2 child cluster entries"
+    );
+    assert_eq!(point_entries.len(), 7, "all 7 points should fall out");
+
+    // The two cluster children should have sizes 4 and 3
+    let mut child_sizes: Vec<usize> = cluster_entries.iter().map(|e| e.child_size).collect();
+    child_sizes.sort();
+    assert_eq!(child_sizes, vec![3, 4]);
+
+    // Both cluster entries should have lambda = 1/8 = 0.125
+    for entry in &cluster_entries {
+        assert_relative_eq!(entry.lambda, 0.125, epsilon = 1e-10);
+    }
+
+    // All point fall-out entries should have lambda = 1/4 = 0.25
+    // (they fall out when the size-2 sub-clusters are too small)
+    for entry in &point_entries {
+        assert_relative_eq!(entry.lambda, 0.25, epsilon = 1e-10);
+    }
+
+    // Every point 0..7 should appear exactly once
+    let mut point_children: Vec<usize> = point_entries.iter().map(|e| e.child).collect();
+    point_children.sort();
+    assert_eq!(point_children, vec![0, 1, 2, 3, 4, 5, 6]);
+}
+
+/// Test that condense_tree correctly handles a single-cluster case
+/// (no split large enough to produce two child clusters).
+#[test]
+fn test_condense_tree_single_cluster() {
+    use DendrogramNode::{Point as P, Virtual as V};
+    // 5 points, dendrogram merges them pairwise then together
+    let dendrogram: Vec<DendrogramEntry<f64>> = vec![
+        DendrogramEntry {
+            left: P(0),
+            right: P(1),
+            distance: 1.0,
+            size: 2,
+        },
+        DendrogramEntry {
+            left: P(2),
+            right: P(3),
+            distance: 1.0,
+            size: 2,
+        },
+        // virtual entry 2: merge V(0) + point 4 (size 3)
+        DendrogramEntry {
+            left: V(0),
+            right: P(4),
+            distance: 2.0,
+            size: 3,
+        },
+        // root: merge V(1) + V(2) (size 5)
+        DendrogramEntry {
+            left: V(1),
+            right: V(2),
+            distance: 5.0,
+            size: 5,
+        },
+    ];
+
+    let condensed = condense_tree(&dendrogram, 3, 5);
+
+    // No split produces two children >= min_cluster_size (3), so
+    // the root keeps absorbing. All points should fall out of the root.
+    let cluster_entries: Vec<_> = condensed.iter().filter(|e| e.child_size > 1).collect();
+
+    // The root (node 8) splits into node 7 (size 3) and node 6 (size 2).
+    // Node 7 is >= 3 but node 6 is not, so node 6's points fall out and
+    // node 7 inherits the root label. Then node 7 splits into node 5
+    // (size 2, < 3) and point 4. Neither is >= 3, so their points fall out
+    // of the root too.
+    //
+    // This means there are no true splits – no cluster children.
+    assert_eq!(cluster_entries.len(), 0, "no true split should occur");
+}
+
 #[test]
 fn compute_core_data_retains_knn_indices() {
     use crate::Point;
