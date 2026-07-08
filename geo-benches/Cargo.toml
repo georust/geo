@@ -161,6 +161,11 @@ path = "src/dbscan.rs"
 harness = false
 
 [[bench]]
+name = "hdbscan"
+path = "src/hdbscan.rs"
+harness = false
+
+[[bench]]
 name = "kmeans"
 path = "src/kmeans.rs"
 harness = false

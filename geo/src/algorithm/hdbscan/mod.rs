@@ -10,18 +10,396 @@
 //! *Density-Based Clustering Based on Hierarchical Density Estimates.*
 //! In Advances in Knowledge Discovery and Data Mining (PAKDD 2013).
 
-// Temporary allowance while the algorithm is built up over several
-// commits; removed in the commit that adds the public API.
-#![allow(dead_code)]
-
 use crate::Distance;
 use crate::Euclidean;
 use crate::GeoFloat;
+use crate::MultiPoint;
 use crate::Point;
 use crate::algorithm::ball_tree::BallTree;
 use crate::algorithm::ball_tree::NodeKind;
 use std::collections::HashMap;
 use std::collections::HashSet;
+
+/// Result of an HDBSCAN clustering run.
+///
+/// Contains both cluster labels and GLOSH outlier scores for every input point.
+#[derive(Debug, Clone, PartialEq)]
+pub struct HdbscanResult<T> {
+    /// Cluster assignment for each input point, in input order.
+    /// `Some(id)` for clustered points, `None` for noise.
+    pub labels: Vec<Option<usize>>,
+
+    /// GLOSH (Global-Local Outlier Scores from Hierarchies) outlier score for
+    /// each input point, in the range [0, 1]. Higher values indicate stronger
+    /// outliers.
+    pub outlier_scores: Vec<T>,
+}
+
+/// Errors that can occur during [`hdbscan`](Hdbscan::hdbscan) clustering.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum HdbscanError {
+    /// `min_cluster_size` is out of range.
+    ///
+    /// `min_cluster_size` must be at least 2 and no greater than the number
+    /// of input points.
+    InvalidMinClusterSize {
+        /// The supplied `min_cluster_size`.
+        min_cluster_size: usize,
+        /// The number of input points.
+        n: usize,
+    },
+    /// `min_samples` is out of range.
+    ///
+    /// `min_samples` must be at least 1 and no greater than `n - 1`, since
+    /// the core distance is the distance to the `min_samples`-th nearest
+    /// neighbour excluding the point itself, and only `n - 1` other points
+    /// exist.
+    InvalidMinSamples {
+        /// The supplied `min_samples`.
+        min_samples: usize,
+        /// The number of input points.
+        n: usize,
+    },
+    /// The minimum spanning tree could not connect all input points.
+    ///
+    /// HDBSCAN builds a single spanning tree over the mutual-reachability
+    /// graph. If the input contains non-finite coordinates (NaN or infinity),
+    /// or coordinates so large in magnitude that squared distances overflow
+    /// to infinity, the tree is left disconnected and any clustering would be
+    /// meaningless. Clean or rescale the input.
+    DisconnectedSpanningTree {
+        /// The number of spanning-tree edges that were found.
+        edges: usize,
+        /// The number of edges required to span all points (`n - 1`).
+        expected: usize,
+    },
+}
+
+impl std::fmt::Display for HdbscanError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            HdbscanError::InvalidMinClusterSize {
+                min_cluster_size,
+                n,
+            } => write!(
+                f,
+                "invalid min_cluster_size {min_cluster_size}: must be in 2..={n} (number of input points)"
+            ),
+            HdbscanError::InvalidMinSamples { min_samples, n } => write!(
+                f,
+                "invalid min_samples {min_samples}: must be in 1..={} (n - 1, where n = {n} is the number of input points)",
+                n.saturating_sub(1)
+            ),
+            HdbscanError::DisconnectedSpanningTree { edges, expected } => write!(
+                f,
+                "could not connect all input points: found {edges} spanning-tree edges, expected {expected}. Input may contain non-finite or extremely large coordinates"
+            ),
+        }
+    }
+}
+
+impl std::error::Error for HdbscanError {}
+
+/// Perform [HDBSCAN](https://en.wikipedia.org/wiki/HDBSCAN) (Hierarchical Density-Based Spatial Clustering of Applications with Noise) clustering on a set of points.
+///
+/// HDBSCAN extends DBSCAN by converting it into a hierarchical clustering
+/// algorithm, then extracting a flat clustering based on cluster stability.
+/// Unlike DBSCAN, it does not require an epsilon parameter and can find
+/// clusters of varying densities.
+///
+/// The central concept is the *mutual reachability distance* between two
+/// points *a* and *b*: `max(core_dist(a), core_dist(b), dist(a, b))`, where
+/// `core_dist(p)` is the distance from *p* to its *k*-th nearest neighbour
+/// (with *k* = `min_samples`). This inflates distances in sparse regions
+/// while leaving dense regions unchanged: in effect, a point in a sparse
+/// region is treated as farther from everything than it geometrically is.
+/// The minimum spanning tree (MST) of the resulting complete graph – the
+/// mutual reachability graph – therefore captures the density-based
+/// cluster structure of the data.
+///
+/// The MST makes it cheap to answer the question: "which points are grouped
+/// together if we only connect points closer than some threshold?" Imagine
+/// raising that threshold from zero: at first only the tightest pairs are
+/// connected; as it grows, small groups merge into larger ones, until every
+/// point belongs to a single group. Recording which groups merge at which
+/// threshold produces a tree, the *dendrogram*:
+///
+/// ```text
+///                    distance at which groups merge ──►
+///
+///  a ───┐
+///  b ───┴─────┐               {a,b} and {c,d} each merge at a small
+///  c ───┐     ├───────┐       distance; the two pairs join at a larger
+///  d ───┴─────┘       ├───    one; the isolated point e is absorbed
+///  e ─────────────────┘       last, at a much larger distance
+/// ```
+///
+/// This is a *single-linkage* hierarchy: the distance between two groups is
+/// simply the distance between their two closest members. Clusters that
+/// persist over a wide range of thresholds (like `{a, b}`) are "stable";
+/// short-lived groupings are artefacts of a particular threshold. HDBSCAN
+/// condenses the dendrogram and keeps only the most stable clusters, and
+/// points such as `e` that never joined a stable cluster become noise.
+///
+/// # Parameters
+///
+/// - `min_cluster_size`: The minimum number of points required to form a
+///   cluster. Larger values produce fewer, more conservative clusters.
+///   Also used as the number of neighbours for core distance computation
+///   when calling [`hdbscan`](Hdbscan::hdbscan).
+/// - `min_samples` (only on [`hdbscan_with_min_samples`](Hdbscan::hdbscan_with_min_samples)):
+///   The number of nearest neighbours (excluding the point itself) used to
+///   compute core distances. Controls how conservative the clustering is.
+///
+/// # Returns
+///
+/// A [`Result`] containing an [`HdbscanResult`] with cluster labels and
+/// GLOSH outlier scores, or an [`HdbscanError`] if parameters are invalid.
+/// Empty input is not an error; it yields an `HdbscanResult` with empty
+/// vectors.
+///
+/// # Errors
+///
+/// Returns [`HdbscanError::InvalidMinClusterSize`] when `min_cluster_size`
+/// is less than 2 or greater than the number of input points;
+/// [`HdbscanError::InvalidMinSamples`] when `min_samples` is less than 1 or
+/// greater than `n - 1` (the core distance is the distance to the
+/// `min_samples`-th nearest *other* point); and
+/// [`HdbscanError::DisconnectedSpanningTree`] when the input contains
+/// non-finite or extremely large coordinates that leave the
+/// mutual-reachability graph disconnected.
+///
+/// # Trait bounds
+///
+/// This trait requires `T: GeoFloat + Send + Sync`, whereas the sibling
+/// [`Dbscan`](crate::Dbscan) and `KMeans` traits require only `T: GeoFloat`.
+/// The extra `Send + Sync` bound is needed by the optional `multithreading`
+/// feature, which computes core distances across [`std::thread::scope`]
+/// worker threads. Keeping the bound unconditional (rather than gating it on
+/// the feature) keeps the feature additive. In practice `GeoFloat` is only
+/// implemented for `f32` and `f64`, both of which are `Send + Sync`, so this
+/// costs concrete callers nothing; only code generic over `T: GeoFloat` must
+/// add `+ Send + Sync` to call [`hdbscan`](Hdbscan::hdbscan).
+///
+/// # Algorithm
+///
+/// 1. **Compute core distances** – each point's distance to its
+///    `min_samples`-th nearest neighbour – using a
+///    [ball tree](https://en.wikipedia.org/wiki/Ball_tree) rather than
+///    brute-force search.
+/// 2. **Build the minimum spanning tree** of the mutual-reachability graph
+///    using [Borůvka's algorithm](https://en.wikipedia.org/wiki/Bor%C5%AFvka%27s_algorithm),
+///    again accelerated by the ball tree, so the complete graph's O(n²)
+///    pairwise distances are never materialised.
+/// 3. **Build the dendrogram.** Sort the MST edges by weight and merge
+///    components with a union-find structure, recording each merge (as in
+///    the diagram above).
+/// 4. **Condense the tree.** Walk the dendrogram from the top, lowering the
+///    threshold (the reverse of the direction the intro built it). A split
+///    counts as two new clusters only if both sides have at least
+///    `min_cluster_size` points; otherwise the smaller side "falls out" of
+///    the parent, which carries on. The result is a much smaller tree whose
+///    nodes are candidate clusters, each recording the threshold at which
+///    every point left it.
+/// 5. **Extract the most stable clusters.** Stability formalises "persists
+///    over a wide range of thresholds": each point contributes to a
+///    cluster's stability for as long as it remains inside it (the "excess
+///    of mass" criterion from the reference paper). A parent is selected
+///    only when its own stability exceeds the combined stability of its
+///    children; otherwise the children are kept. Points in no selected
+///    cluster are labelled noise.
+/// 6. **Score outliers.** [GLOSH](https://doi.org/10.1007/978-3-319-18123-3_2)
+///    compares the density at which each point fell out of its cluster with
+///    the highest density that cluster reached: points that persist into
+///    the dense core score near 0, points that leave while the cluster is
+///    still sparse score near 1.
+///
+/// For an accessible walk-through with visualisations, see
+/// [How HDBSCAN Works](https://hdbscan.readthedocs.io/en/latest/how_hdbscan_works.html).
+///
+/// # Examples
+///
+/// ```
+/// use geo::{Hdbscan, point};
+///
+/// let points = vec![
+///     // Cluster 1 (six points near the origin)
+///     point!(x: 0.0, y: 0.0),
+///     point!(x: 1.0, y: 0.0),
+///     point!(x: 0.0, y: 1.0),
+///     point!(x: 1.0, y: 1.0),
+///     point!(x: 0.5, y: 0.5),
+///     point!(x: 0.5, y: 0.0),
+///     // Cluster 2 (six points near (10, 10))
+///     point!(x: 10.0, y: 10.0),
+///     point!(x: 11.0, y: 10.0),
+///     point!(x: 10.0, y: 11.0),
+///     point!(x: 11.0, y: 11.0),
+///     point!(x: 10.5, y: 10.5),
+///     point!(x: 10.5, y: 10.0),
+/// ];
+///
+/// let result = points.hdbscan(5).unwrap();
+///
+/// // Both clusters are found
+/// assert!(result.labels[0].is_some());
+/// assert!(result.labels[6].is_some());
+/// // Points in cluster 1 share the same label
+/// assert_eq!(result.labels[0], result.labels[1]);
+/// // Points in cluster 2 share a different label
+/// assert_eq!(result.labels[6], result.labels[7]);
+/// // The two clusters have different labels
+/// assert_ne!(result.labels[0], result.labels[6]);
+/// ```
+pub trait Hdbscan<T>
+where
+    T: GeoFloat + Send + Sync,
+{
+    /// Perform HDBSCAN clustering using `min_cluster_size` for both the
+    /// minimum cluster size and the number of neighbours used to compute
+    /// core distances.
+    ///
+    /// See the [trait-level documentation](Hdbscan) for details and error
+    /// conditions.
+    fn hdbscan(&self, min_cluster_size: usize) -> Result<HdbscanResult<T>, HdbscanError> {
+        self.hdbscan_with_min_samples(min_cluster_size, min_cluster_size)
+    }
+
+    /// Perform HDBSCAN clustering with separate `min_cluster_size` and
+    /// `min_samples` parameters.
+    ///
+    /// `min_samples` controls the number of nearest neighbours (excluding the
+    /// point itself) used to compute core distances. See the
+    /// [trait-level documentation](Hdbscan) for details and error conditions.
+    fn hdbscan_with_min_samples(
+        &self,
+        min_cluster_size: usize,
+        min_samples: usize,
+    ) -> Result<HdbscanResult<T>, HdbscanError>;
+}
+
+impl<T> Hdbscan<T> for MultiPoint<T>
+where
+    T: GeoFloat + Send + Sync,
+{
+    fn hdbscan_with_min_samples(
+        &self,
+        min_cluster_size: usize,
+        min_samples: usize,
+    ) -> Result<HdbscanResult<T>, HdbscanError> {
+        hdbscan_impl(&self.0, min_cluster_size, min_samples)
+    }
+}
+
+impl<T> Hdbscan<T> for [Point<T>]
+where
+    T: GeoFloat + Send + Sync,
+{
+    fn hdbscan_with_min_samples(
+        &self,
+        min_cluster_size: usize,
+        min_samples: usize,
+    ) -> Result<HdbscanResult<T>, HdbscanError> {
+        hdbscan_impl(self, min_cluster_size, min_samples)
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Core implementation
+// ---------------------------------------------------------------------------
+
+fn hdbscan_impl<T: GeoFloat + Send + Sync>(
+    points: &[Point<T>],
+    min_cluster_size: usize,
+    min_samples: usize,
+) -> Result<HdbscanResult<T>, HdbscanError> {
+    let n = points.len();
+
+    // Check `min_cluster_size` before `min_samples` so that the default
+    // `hdbscan(k)` method – which forwards `k` to both parameters – surfaces
+    // the more user-facing `InvalidMinClusterSize` on `k < 2`.
+    if min_cluster_size < 2 {
+        return Err(HdbscanError::InvalidMinClusterSize {
+            min_cluster_size,
+            n,
+        });
+    }
+
+    if min_samples < 1 {
+        return Err(HdbscanError::InvalidMinSamples { min_samples, n });
+    }
+
+    if n == 0 {
+        return Ok(HdbscanResult {
+            labels: Vec::new(),
+            outlier_scores: Vec::new(),
+        });
+    }
+
+    if min_cluster_size > n {
+        return Err(HdbscanError::InvalidMinClusterSize {
+            min_cluster_size,
+            n,
+        });
+    }
+
+    // The core distance is the distance to the `min_samples`-th nearest
+    // neighbour excluding the point itself, so at least `min_samples` other
+    // points must exist. `n >= 1` here, so `n - 1` does not underflow.
+    if min_samples > n - 1 {
+        return Err(HdbscanError::InvalidMinSamples { min_samples, n });
+    }
+
+    // Build ball tree once for both core distances and MST construction
+    let tree = BallTree::new(points.iter().copied());
+
+    // 1. Compute core distances using ball tree k-NN
+    let core_data = compute_core_data(&tree, points, min_samples);
+
+    // 2. Build MST over the mutual reachability graph (dual-tree Boruvka)
+    let mst = boruvka_mst(&tree, points, &core_data);
+
+    // A spanning tree over n points has exactly n - 1 edges. Fewer means the
+    // mutual-reachability graph is disconnected, which happens when distances
+    // are non-finite or overflow to infinity (e.g. coordinates near 1e200).
+    // Bail out rather than proceed with a forest that downstream stages
+    // would mis-size. `n >= 2` here (min_cluster_size >= 2 and <= n).
+    if mst.len() != n - 1 {
+        return Err(HdbscanError::DisconnectedSpanningTree {
+            edges: mst.len(),
+            expected: n - 1,
+        });
+    }
+
+    // 3. Build dendrogram (label step): sort MST edges, merge via union-find
+    let dendrogram = label(&mst, n);
+
+    // 4. Condense the dendrogram
+    let condensed = condense_tree(&dendrogram, min_cluster_size, n);
+
+    // Steps 5-7 use HashMaps keyed by cluster ID. Cluster IDs are dense
+    // integers starting at n_points and incrementing, so these could be
+    // replaced with flat Vecs using offset indexing (id - n_points) for
+    // lower overhead. Left as-is because these stages are <1% of total
+    // runtime at scale.
+
+    // 5. Compute cluster stabilities and select clusters
+    let stability = get_stability(&condensed);
+    // Reverse child->parent map, shared by find_clusters and extract_labels.
+    let parent_of = build_parent_of(&condensed);
+    let (cluster_labels, is_cluster) = find_clusters(&condensed, &stability, &parent_of);
+
+    // 6. Extract flat labels from selected clusters
+    let labels = extract_labels(&condensed, &cluster_labels, &is_cluster, &parent_of, n);
+
+    // 7. Compute GLOSH outlier scores
+    let outlier_scores = glosh(&condensed, n);
+
+    Ok(HdbscanResult {
+        labels,
+        outlier_scores,
+    })
+}
 
 // ---------------------------------------------------------------------------
 // Step 1: Core distances via ball tree k-NN
