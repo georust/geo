@@ -14,9 +14,12 @@
 // commits; removed in the commit that adds the public API.
 #![allow(dead_code)]
 
+use crate::Distance;
+use crate::Euclidean;
 use crate::GeoFloat;
 use crate::Point;
 use crate::algorithm::ball_tree::BallTree;
+use crate::algorithm::ball_tree::NodeKind;
 
 // ---------------------------------------------------------------------------
 // Step 1: Core distances via ball tree k-NN
@@ -109,6 +112,10 @@ pub(crate) fn compute_core_data<T: GeoFloat + Send + Sync>(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Step 2: Boruvka's MST on the mutual reachability graph
+// ---------------------------------------------------------------------------
+
 /// Data returned by `compute_core_data`: one entry per input point.
 pub(crate) struct CoreData<T> {
     pub(crate) core_distances: Vec<T>,
@@ -119,6 +126,512 @@ pub(crate) struct CoreData<T> {
     pub(crate) knn_indices: Vec<usize>,
     /// Row length of `knn_indices` (`min_samples + 1`).
     pub(crate) knn_k: usize,
+}
+
+/// An edge in the minimum spanning tree.
+#[derive(Debug, Clone)]
+struct MstEdge<T> {
+    u: usize,
+    v: usize,
+    weight: T,
+}
+
+/// The lightest outgoing edge found so far for a given component during a
+/// Boruvka round.
+#[derive(Debug, Clone, Copy)]
+struct BestEdge<T> {
+    from: usize,
+    to: usize,
+    mrd: T,
+}
+
+/// Build MST using dual-tree Boruvka's algorithm with ball tree acceleration.
+///
+/// The mutual reachability distance is:
+///   mreach(i, j) = max(core_dist[i], core_dist[j], dist(i, j))
+///
+/// Each Boruvka round uses a dual-tree traversal over the ball tree to find,
+/// for every component, the lightest outgoing edge under MRD. Two tree nodes
+/// are pruned when: (a) all their points share the same component, or (b) the
+/// node-to-node Euclidean lower bound exceeds the current best candidate for
+/// the query subtree. Components halve each round, giving O(log n) rounds and
+/// O(n log n) amortised total work.
+fn boruvka_mst<T: GeoFloat>(
+    tree: &BallTree<T>,
+    points: &[Point<T>],
+    core_data: &CoreData<T>,
+) -> Vec<MstEdge<T>> {
+    let n = points.len();
+    if n <= 1 {
+        return Vec::new();
+    }
+
+    let num_nodes = tree.node_count();
+    let mut uf = UnionForest::new(n);
+    let mut edges = Vec::with_capacity(n - 1);
+    let mut point_components: Vec<usize> = (0..n).collect();
+    let mut component_of_node: Vec<Option<usize>> = vec![None; num_nodes];
+
+    // Parallel tree-position arrays: position `i` corresponds to
+    // `tree.node(0).points()[i]` and its original index is
+    // `tree.node(0).indices()[i]`. Keeping core distances and component labels
+    // in tree-position order turns the inner loops (process_leaves and
+    // update_component_of_node) into sequential cache-friendly walks instead
+    // of gathers through `core_distances[indices[j]]` and
+    // `point_components[indices[j]]`. Built before the initial
+    // update_component_of_node call, which now consumes the pos array too.
+    let tree_order: Vec<usize> = tree.node(0).indices().to_vec();
+    debug_assert_eq!(tree_order.len(), n);
+    let core_distances_pos: Vec<T> = tree_order
+        .iter()
+        .map(|&i| core_data.core_distances[i])
+        .collect();
+    let mut point_components_pos: Vec<usize> =
+        tree_order.iter().map(|&i| point_components[i]).collect();
+
+    update_component_of_node(tree, &point_components_pos, &mut component_of_node);
+
+    let mut bounds = vec![T::infinity(); num_nodes];
+    let mut best_edges: Vec<Option<BestEdge<T>>> = vec![None; n];
+
+    // Seed best_edges + bounds at the top of every Boruvka round using the
+    // stored k-NN data. In round 1, comp(p) = p so every cross-component
+    // top-k neighbour yields a real edge seed. In rounds 2+, seeds degrade
+    // gracefully as components grow: points whose top-k is entirely
+    // intra-component contribute nothing, leaving the round to run with
+    // the baseline infinity bound for those components. See
+    // `docs/superpowers/specs/2026-04-16-hdbscan-bound-seeding-design.md`.
+    loop {
+        // No-op on round 1 (best_edges was freshly allocated with Nones);
+        // clears accumulated candidates at the start of rounds 2+.
+        best_edges.fill(None);
+        seed_best_edges(
+            &core_data.knn_indices,
+            core_data.knn_k,
+            &core_data.core_distances,
+            &point_components,
+            &mut best_edges,
+        );
+        bounds.fill(T::infinity());
+        seed_bounds(tree, &best_edges, &point_components_pos, &mut bounds);
+
+        let mut state = DualTreeBoruvkaState {
+            tree,
+            core_distances_pos: &core_distances_pos,
+            point_components_pos: &point_components_pos,
+            component_of_node: &component_of_node,
+            bounds: &mut bounds,
+            best_edges: &mut best_edges,
+        };
+        let root_dist = state.min_node_dist(0, 0);
+        state.traverse(0, 0, root_dist);
+
+        let mut merged_any = false;
+        for edge in best_edges.iter().flatten() {
+            if uf.union(edge.from, edge.to).is_some() {
+                edges.push(MstEdge {
+                    u: edge.from,
+                    v: edge.to,
+                    weight: edge.mrd,
+                });
+                merged_any = true;
+            }
+        }
+
+        if !merged_any || edges.len() >= n - 1 {
+            break;
+        }
+
+        for (i, comp) in point_components.iter_mut().enumerate() {
+            *comp = uf.find(i);
+        }
+        for (pos, comp_pos) in point_components_pos.iter_mut().enumerate() {
+            *comp_pos = point_components[tree_order[pos]];
+        }
+        update_component_of_node(tree, &point_components_pos, &mut component_of_node);
+    }
+
+    edges
+}
+
+/// State for dual-tree Boruvka traversal.
+///
+/// Bundles the shared tree data (read-only during traversal) with the mutable
+/// per-round state: `bounds` tracks the tightest MRD candidate for each tree
+/// node's subtree, and `best_edges` tracks the lightest outgoing edge for each
+/// component.
+struct DualTreeBoruvkaState<'a, T: GeoFloat> {
+    tree: &'a BallTree<T>,
+    /// Core distances in tree-position order (parallel to
+    /// `BallTreeNode::points()` within each leaf). Lets the inner loop read
+    /// core_dist sequentially instead of gathering through
+    /// `core_distances[indices[j]]`.
+    core_distances_pos: &'a [T],
+    /// Point-to-component mapping in tree-position order. Same rationale as
+    /// `core_distances_pos`.
+    point_components_pos: &'a [usize],
+    component_of_node: &'a [Option<usize>],
+    /// Per-node bound: the maximum candidate MRD across all points in the
+    /// subtree. Used for distance-bound pruning. Allocated once, reset each
+    /// Boruvka round.
+    bounds: &'a mut [T],
+    /// Per-component best outgoing edge. Indexed by component root (a point
+    /// index in 0..n). Allocated once, reset each Boruvka round.
+    best_edges: &'a mut [Option<BestEdge<T>>],
+}
+
+impl<T: GeoFloat> DualTreeBoruvkaState<'_, T> {
+    /// Recursively traverse query and reference subtrees to find the best
+    /// inter-component edge under MRD for each component.
+    ///
+    /// `node_dist` is the minimum Euclidean distance between the two balls,
+    /// already computed by the caller (which needs it to order recursion).
+    /// Passing it in avoids recomputing the same sqrt-bearing bound at the
+    /// top of every call.
+    fn traverse(&mut self, query_idx: usize, ref_idx: usize, node_dist: T) {
+        // Same-component pruning: if every point in both subtrees belongs to
+        // the same component, no inter-component edge exists.
+        if let (Some(qc), Some(rc)) = (
+            self.component_of_node[query_idx],
+            self.component_of_node[ref_idx],
+        ) && qc == rc
+        {
+            return;
+        }
+
+        // Distance-bound pruning: if the minimum Euclidean distance between
+        // the two balls exceeds the best candidate for the query subtree,
+        // no point in the reference subtree can improve any candidate.
+        if node_dist >= self.bounds[query_idx] {
+            return;
+        }
+
+        let q_kind = self.tree.node(query_idx).kind();
+        let r_kind = self.tree.node(ref_idx).kind();
+
+        match (q_kind, r_kind) {
+            (NodeKind::Leaf, NodeKind::Leaf) => {
+                self.process_leaves(query_idx, ref_idx);
+            }
+            (
+                NodeKind::Leaf,
+                NodeKind::Branch {
+                    left: rl,
+                    right: rr,
+                },
+            ) => {
+                let dl = self.min_node_dist(query_idx, rl);
+                let dr = self.min_node_dist(query_idx, rr);
+                let ((first, df), (second, ds)) = if dl <= dr {
+                    ((rl, dl), (rr, dr))
+                } else {
+                    ((rr, dr), (rl, dl))
+                };
+                self.traverse(query_idx, first, df);
+                self.traverse(query_idx, second, ds);
+            }
+            (
+                NodeKind::Branch {
+                    left: ql,
+                    right: qr,
+                },
+                NodeKind::Leaf,
+            ) => {
+                let dl = self.min_node_dist(ql, ref_idx);
+                let dr = self.min_node_dist(qr, ref_idx);
+                let ((first, df), (second, ds)) = if dl <= dr {
+                    ((ql, dl), (qr, dr))
+                } else {
+                    ((qr, dr), (ql, dl))
+                };
+                self.traverse(first, ref_idx, df);
+                self.traverse(second, ref_idx, ds);
+                self.bounds[query_idx] = self.bounds[ql].max(self.bounds[qr]);
+            }
+            (
+                NodeKind::Branch {
+                    left: ql,
+                    right: qr,
+                },
+                NodeKind::Branch {
+                    left: rl,
+                    right: rr,
+                },
+            ) => {
+                let mut pairs = [
+                    (ql, rl, self.min_node_dist(ql, rl)),
+                    (ql, rr, self.min_node_dist(ql, rr)),
+                    (qr, rl, self.min_node_dist(qr, rl)),
+                    (qr, rr, self.min_node_dist(qr, rr)),
+                ];
+                pairs.sort_by(|a, b| a.2.total_cmp(&b.2));
+                for &(q, r, d) in &pairs {
+                    self.traverse(q, r, d);
+                }
+                self.bounds[query_idx] = self.bounds[ql].max(self.bounds[qr]);
+            }
+        }
+    }
+
+    /// Base case: process all point pairs from two leaf nodes.
+    ///
+    /// All per-point data is read from tree-position-ordered slices
+    /// (`points()`, `core_distances_pos`, `point_components_pos`) so the
+    /// inner loop walks contiguous memory instead of gathering through the
+    /// `indices` permutation. Only the rare best-edge write and the
+    /// pair-skip check use the original-index arrays.
+    fn process_leaves(&mut self, query_idx: usize, ref_idx: usize) {
+        let q_node = self.tree.node(query_idx);
+        let r_node = self.tree.node(ref_idx);
+        let q_range = q_node.position_range();
+        let r_range = r_node.position_range();
+        let q_points = q_node.points();
+        let r_points = r_node.points();
+        let q_orig = q_node.indices();
+        let r_orig = r_node.indices();
+
+        let q_core = &self.core_distances_pos[q_range.clone()];
+        let r_core = &self.core_distances_pos[r_range.clone()];
+        let q_comp_slice = &self.point_components_pos[q_range];
+        let r_comp_slice = &self.point_components_pos[r_range];
+
+        for i in 0..q_points.len() {
+            let q_comp = q_comp_slice[i];
+            let core_q = q_core[i];
+            let q_coord = q_points[i].0;
+            let q_oi = q_orig[i];
+
+            // Per-point pruning: if core_q already exceeds the best candidate
+            // for this component, no MRD involving q can improve it (since
+            // mrd >= core_q).
+            let q_best = self.best_edges[q_comp].map_or(T::infinity(), |e| e.mrd);
+            if core_q > q_best {
+                continue;
+            }
+
+            for j in 0..r_points.len() {
+                let r_oi = r_orig[j];
+                if q_oi == r_oi {
+                    continue;
+                }
+                let r_comp = r_comp_slice[j];
+                if q_comp == r_comp {
+                    continue;
+                }
+
+                let core_r = r_core[j];
+                // Per-point pruning on the reference side: if core_r already
+                // exceeds the best candidate for q's component, skip.
+                if core_r > q_best {
+                    continue;
+                }
+
+                // `Euclidean.distance` computes `hypot`, whereas the ball
+                // tree's k-NN distances and node bounds use
+                // `sqrt(dx * dx + dy * dy)`. The two can differ by ~1 ULP, but
+                // the pruning bound has geometric slack (centre distance minus
+                // radii), so the mismatch cannot cause an incorrect prune.
+                let d = Euclidean.distance(q_coord, r_points[j].0);
+                let mrd = d.max(core_q).max(core_r);
+
+                // The guard on q_comp is an optimisation: q_best is hoisted
+                // outside the inner loop, so we can skip the function call
+                // and array access entirely. An equivalent guard for r_comp
+                // is not hoisted because r_comp changes every inner iteration.
+                // update_best_edge performs its own internal comparison, so
+                // the unguarded call for r_comp is correct, just slightly
+                // less efficient.
+                if mrd < q_best {
+                    update_best_edge(self.best_edges, q_comp, q_oi, r_oi, mrd);
+                }
+                update_best_edge(self.best_edges, r_comp, r_oi, q_oi, mrd);
+            }
+        }
+
+        // Update the bound for the query node: the maximum candidate MRD
+        // across all points in this leaf.
+        let max_mrd = q_comp_slice.iter().fold(T::neg_infinity(), |acc, &q_comp| {
+            let candidate_mrd = self.best_edges[q_comp].map_or(T::infinity(), |e| e.mrd);
+            acc.max(candidate_mrd)
+        });
+        if max_mrd < self.bounds[query_idx] {
+            self.bounds[query_idx] = max_mrd;
+        }
+    }
+
+    /// Lower bound on the Euclidean distance between any two points in two
+    /// ball tree nodes.
+    #[inline]
+    fn min_node_dist(&self, a: usize, b: usize) -> T {
+        self.tree.node(a).min_distance_to(&self.tree.node(b))
+    }
+}
+
+/// Seed `best_edges` for a Boruvka round using the stored k-NN data.
+///
+/// For each point `p`, scans `p`'s top-k neighbours and keeps the tightest
+/// cross-component MRD. The seed is the true MRD of the chosen edge
+/// `(p, q)`, since by construction `dist(p, q) <= core(p)` for every
+/// `q` in `p`'s top-k, so `max(core(p), core(q), dist(p, q))` collapses
+/// to `max(core(p), core(q))`. `update_best_edge` arbitrates across
+/// multiple points sharing a component. Points whose entire k-NN lies
+/// inside `comp(p)` contribute no seed for this round, and the
+/// corresponding component falls back to `best_edges[comp] = None`
+/// (equivalent to `q_best = infinity` during traversal).
+///
+/// `knn_indices` is the flat row-major table (row `p` is
+/// `knn_indices[p * k..(p + 1) * k]`); `point_components` is indexed by
+/// original point index (NOT tree position). `core_distances` is likewise
+/// original-index order.
+fn seed_best_edges<T: GeoFloat>(
+    knn_indices: &[usize],
+    k: usize,
+    core_distances: &[T],
+    point_components: &[usize],
+    best_edges: &mut [Option<BestEdge<T>>],
+) {
+    debug_assert_eq!(knn_indices.len(), core_distances.len() * k);
+    debug_assert_eq!(point_components.len(), core_distances.len());
+    debug_assert_eq!(best_edges.len(), core_distances.len());
+
+    for (p, neighbours) in knn_indices.chunks(k).enumerate() {
+        let comp_p = point_components[p];
+        let core_p = core_distances[p];
+        let mut best: Option<(usize, T)> = None;
+        for &q in neighbours {
+            if q == p {
+                continue;
+            }
+            if point_components[q] == comp_p {
+                continue;
+            }
+            let mrd = core_p.max(core_distances[q]);
+            // Ties go to the first-seen neighbour. This matches
+            // `update_best_edge`'s strict-`<` convention, so every candidate
+            // evaluated by the traversal will tie-break the same way.
+            match best {
+                Some((_, m)) if m <= mrd => {}
+                _ => best = Some((q, mrd)),
+            }
+        }
+        if let Some((q, mrd)) = best {
+            update_best_edge(best_edges, comp_p, p, q, mrd);
+        }
+    }
+}
+
+/// Compute initial `bounds[node_idx]` for every tree node, bottom-up.
+///
+/// For a leaf node, the bound is the max over its points of
+/// `best_edges[comp(p)].mrd`, or infinity if some point's component has no
+/// seeded best edge. For an internal node, the bound is the max of its
+/// children's bounds. See the design spec for the correctness argument.
+///
+/// Uses recursion. The ball tree's depth is O(log n) for balanced inputs, so
+/// stack usage is bounded. If future balls produce pathologically deep trees,
+/// convert to an explicit post-order traversal.
+fn seed_bounds<T: GeoFloat>(
+    tree: &BallTree<T>,
+    best_edges: &[Option<BestEdge<T>>],
+    point_components_pos: &[usize],
+    bounds: &mut [T],
+) {
+    fn recurse<T: GeoFloat>(
+        tree: &BallTree<T>,
+        node_idx: usize,
+        best_edges: &[Option<BestEdge<T>>],
+        point_components_pos: &[usize],
+        bounds: &mut [T],
+    ) -> T {
+        let node = tree.node(node_idx);
+        let bound = match node.kind() {
+            NodeKind::Leaf => {
+                let range = node.position_range();
+                let mut max_mrd = T::neg_infinity();
+                for pos in range {
+                    let comp = point_components_pos[pos];
+                    let mrd = best_edges[comp].map_or(T::infinity(), |e| e.mrd);
+                    if mrd > max_mrd {
+                        max_mrd = mrd;
+                    }
+                }
+                max_mrd
+            }
+            NodeKind::Branch { left, right } => {
+                let lb = recurse(tree, left, best_edges, point_components_pos, bounds);
+                let rb = recurse(tree, right, best_edges, point_components_pos, bounds);
+                lb.max(rb)
+            }
+        };
+        bounds[node_idx] = bound;
+        bound
+    }
+
+    if !bounds.is_empty() {
+        recurse(tree, 0, best_edges, point_components_pos, bounds);
+    }
+}
+
+/// Update the best outgoing edge for a component if the given MRD is lower
+/// than the current best.
+#[inline]
+fn update_best_edge<T: GeoFloat>(
+    best: &mut [Option<BestEdge<T>>],
+    comp: usize,
+    from: usize,
+    to: usize,
+    mrd: T,
+) {
+    if best[comp].is_none_or(|existing| mrd < existing.mrd) {
+        best[comp] = Some(BestEdge { from, to, mrd });
+    }
+}
+
+/// Update the component-of-node array after components have been merged.
+///
+/// A node's component is set to a component ID when all points in its subtree
+/// share the same component, or `None` when the subtree spans multiple
+/// components. Nodes are processed in reverse index order (children before
+/// parents) so that internal nodes can be computed from their children.
+///
+/// `point_components_pos` is the component label per point in tree-position
+/// order (parallel to `BallTreeNode::points()`), so a leaf's points are read
+/// sequentially over `position_range()` rather than gathered through the
+/// `indices()` permutation.
+fn update_component_of_node<T: GeoFloat>(
+    tree: &BallTree<T>,
+    point_components_pos: &[usize],
+    component_of_node: &mut [Option<usize>],
+) {
+    for node_idx in (0..tree.node_count()).rev() {
+        let node = tree.node(node_idx);
+        match node.kind() {
+            NodeKind::Leaf => {
+                let mut comp = None;
+                let mut all_same = true;
+                for pos in node.position_range() {
+                    let c = point_components_pos[pos];
+                    match comp {
+                        None => comp = Some(c),
+                        Some(prev) if prev != c => {
+                            all_same = false;
+                            break;
+                        }
+                        Some(_) => {} // Same component as before; continue
+                    }
+                }
+                component_of_node[node_idx] = if all_same { comp } else { None };
+            }
+            NodeKind::Branch { left, right } => {
+                let lc = component_of_node[left];
+                let rc = component_of_node[right];
+                component_of_node[node_idx] = match (lc, rc) {
+                    (Some(l), Some(r)) if l == r => Some(l),
+                    (Some(_), Some(_)) | (Some(_), None) | (None, Some(_)) | (None, None) => None,
+                };
+            }
+        }
+    }
 }
 
 // ---------------------------------------------------------------------------
