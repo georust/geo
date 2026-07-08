@@ -21,6 +21,7 @@ use crate::Point;
 use crate::algorithm::ball_tree::BallTree;
 use crate::algorithm::ball_tree::NodeKind;
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 // ---------------------------------------------------------------------------
 // Step 1: Core distances via ball tree k-NN
@@ -1018,6 +1019,368 @@ fn emit_fallout<T: GeoFloat>(
             }
         }
     }
+}
+
+// ---------------------------------------------------------------------------
+// Step 5: Compute stability and select clusters
+// ---------------------------------------------------------------------------
+
+/// Compute the stability of each cluster in the condensed tree.
+///
+/// Following the reference HDBSCAN, a cluster's stability is
+///
+/// ```text
+/// sum over every condensed-tree row with this cluster as parent of
+///     (lambda_row - lambda_birth) * child_size
+/// ```
+///
+/// where `lambda_birth` is the lambda at which the cluster was created (the
+/// lambda of the entry where this cluster appears as a child; zero for the
+/// root, which never appears as a child). Both point fall-out rows
+/// (`child_size == 1`) and cluster-split rows (`child_size > 1`) contribute:
+/// the split rows credit the parent for the mass still present when it
+/// splits. Omitting the split term biases excess-of-mass selection towards
+/// children and over-fragments the output.
+fn get_stability<T: GeoFloat>(condensed: &[CondensedEntry<T>]) -> HashMap<usize, T> {
+    // Pass 1: Find lambda_birth for each cluster: the lambda of the entry
+    // where the cluster first appears as a child. Must be fully built before
+    // we can compute stability, since a parent's birth may appear anywhere
+    // in the condensed list.
+    let mut lambda_birth: HashMap<usize, T> = HashMap::new();
+    for entry in condensed {
+        if entry.child_size > 1 {
+            lambda_birth.entry(entry.child).or_insert(entry.lambda);
+        }
+    }
+
+    // Pass 2: Accumulate stability and ensure all clusters have entries.
+    let mut stability: HashMap<usize, T> = HashMap::new();
+    for entry in condensed {
+        // Ensure every cluster appears as a key: parents always, and
+        // cluster-children so that leaf clusters seed a zero entry.
+        stability.entry(entry.parent).or_insert(T::zero());
+        if entry.child_size > 1 {
+            stability.entry(entry.child).or_insert(T::zero());
+        }
+
+        let birth = lambda_birth
+            .get(&entry.parent)
+            .copied()
+            .unwrap_or(T::zero());
+        let child_size = T::from(entry.child_size).expect("child_size fits in T");
+        let contribution = (entry.lambda - birth) * child_size;
+        let s = stability.entry(entry.parent).or_insert(T::zero());
+        *s = *s + contribution;
+    }
+
+    stability
+}
+
+/// Map each cluster-child to its parent cluster in the condensed tree.
+///
+/// Both `find_clusters` and `extract_labels` need this reverse mapping; it is
+/// built once in `hdbscan_impl` and shared by reference.
+fn build_parent_of<T>(condensed: &[CondensedEntry<T>]) -> HashMap<usize, usize> {
+    let mut parent_of: HashMap<usize, usize> = HashMap::new();
+    for entry in condensed {
+        if entry.child_size > 1 {
+            parent_of.insert(entry.child, entry.parent);
+        }
+    }
+    parent_of
+}
+
+/// Select clusters using the excess-of-mass method.
+///
+/// Returns:
+/// - `cluster_labels`: mapping from condensed-tree cluster IDs to flat
+///   cluster IDs (0, 1, 2, ...)
+/// - `is_cluster`: set of condensed-tree cluster IDs that are selected
+fn find_clusters<T: GeoFloat>(
+    condensed: &[CondensedEntry<T>],
+    stability: &HashMap<usize, T>,
+    parent_of: &HashMap<usize, usize>,
+) -> (HashMap<usize, usize>, HashSet<usize>) {
+    // Identify all cluster nodes (those that appear as parents, or as
+    // children with size > 1), tracking which appear as a cluster-child.
+    let mut all_clusters: HashSet<usize> = HashSet::new();
+    let mut cluster_children: HashSet<usize> = HashSet::new();
+    for entry in condensed {
+        all_clusters.insert(entry.parent);
+        if entry.child_size > 1 {
+            all_clusters.insert(entry.child);
+            cluster_children.insert(entry.child);
+        }
+    }
+
+    // The root(s): parent clusters that never appear as a cluster-child.
+    // Reference HDBSCAN (with the default `allow_single_cluster = false`)
+    // excludes the root from selection, so points that reach it without
+    // passing through a selected cluster are labelled noise. A complete MST
+    // yields exactly one root; a disconnected forest – which finding 4
+    // rejects – would yield one root per component, and excluding all of
+    // them is the correct generalisation.
+    let roots: HashSet<usize> = all_clusters
+        .iter()
+        .filter(|c| !cluster_children.contains(c))
+        .copied()
+        .collect();
+
+    // Build parent->children mapping (clusters only).
+    let mut children: HashMap<usize, Vec<usize>> = HashMap::new();
+    for entry in condensed {
+        if entry.child_size > 1 {
+            children.entry(entry.parent).or_default().push(entry.child);
+        }
+    }
+
+    // Selectable (non-root) leaves: clusters with no cluster-children.
+    let leaves: Vec<usize> = all_clusters
+        .iter()
+        .filter(|c| !roots.contains(c) && !children.contains_key(c))
+        .copied()
+        .collect();
+
+    // Bottom-up pass: propagate total stability in topological order (each
+    // cluster after all its children, tracked by unprocessed-child in-degree)
+    // and record which clusters "win" – are at least as stable as their
+    // combined children. Winners are *not* deselected here; a separate
+    // top-down pass resolves the final selection in one O(c) sweep, avoiding
+    // the O(c^2) cost of re-walking each winning ancestor's whole subtree.
+    let mut total_stability: HashMap<usize, T> = stability.clone();
+    let mut won: HashSet<usize> = HashSet::new();
+
+    // In-degree: number of cluster children not yet processed.
+    let mut in_degree: HashMap<usize, usize> = HashMap::new();
+    for (cluster, child_list) in &children {
+        in_degree.insert(*cluster, child_list.len());
+    }
+
+    // Seed the queue with leaves (clusters with no children / in-degree 0).
+    let mut queue: Vec<usize> = leaves;
+
+    while let Some(cluster) = queue.pop() {
+        // The root is excluded from selection and, having no parent,
+        // propagates nothing.
+        if roots.contains(&cluster) {
+            continue;
+        }
+        match children.get(&cluster) {
+            Some(child_list) => {
+                let children_stability: T = child_list
+                    .iter()
+                    .map(|c| *total_stability.get(c).unwrap_or(&T::zero()))
+                    .fold(T::zero(), |acc, x| acc + x);
+                let self_stability = *stability.get(&cluster).unwrap_or(&T::zero());
+                if self_stability >= children_stability {
+                    won.insert(cluster);
+                    total_stability.insert(cluster, self_stability);
+                } else {
+                    total_stability.insert(cluster, children_stability);
+                }
+            }
+            // A leaf cluster has no children to be more stable than it, so it
+            // always wins.
+            None => {
+                won.insert(cluster);
+            }
+        }
+
+        // Decrement parent's in-degree; enqueue when all children are done.
+        if let Some(&parent) = parent_of.get(&cluster) {
+            let deg = in_degree.get_mut(&parent).unwrap();
+            *deg -= 1;
+            if *deg == 0 {
+                queue.push(parent);
+            }
+        }
+    }
+
+    // Top-down pass: on each root-to-leaf path the topmost winner is selected
+    // and everything below it is deselected. Descend from the roots' children;
+    // the first winner on a path is added and its subtree is not explored.
+    let mut is_cluster: HashSet<usize> = HashSet::new();
+    let mut stack: Vec<usize> = roots
+        .iter()
+        .filter_map(|r| children.get(r))
+        .flatten()
+        .copied()
+        .collect();
+    while let Some(cluster) = stack.pop() {
+        if won.contains(&cluster) {
+            is_cluster.insert(cluster);
+        } else if let Some(child_list) = children.get(&cluster) {
+            stack.extend(child_list.iter().copied());
+        }
+    }
+
+    // Assign sequential IDs to selected clusters
+    let mut cluster_labels = HashMap::new();
+    let mut selected: Vec<usize> = is_cluster.iter().copied().collect();
+    selected.sort();
+    for (id, c) in selected.into_iter().enumerate() {
+        cluster_labels.insert(c, id);
+    }
+
+    (cluster_labels, is_cluster)
+}
+
+// ---------------------------------------------------------------------------
+// Step 6: Extract flat cluster labels
+// ---------------------------------------------------------------------------
+
+/// Assign each point to its nearest selected ancestor cluster.
+fn extract_labels<T: GeoFloat>(
+    condensed: &[CondensedEntry<T>],
+    cluster_labels: &HashMap<usize, usize>,
+    is_cluster: &HashSet<usize>,
+    parent_of: &HashMap<usize, usize>,
+    n: usize,
+) -> Vec<Option<usize>> {
+    // For each point, find the deepest selected cluster it belongs to.
+    // A point belongs to a cluster if it appears (directly or transitively)
+    // as a child_size==1 entry under that cluster.
+
+    // Build a map: for each cluster, find its nearest selected ancestor
+    let mut cluster_to_selected: HashMap<usize, Option<usize>> = HashMap::new();
+
+    // Seed the cache with every selected cluster's own label.
+    for &cluster in is_cluster {
+        cluster_to_selected.insert(cluster, cluster_labels.get(&cluster).copied());
+    }
+
+    // Now assign labels to points. `child_size == 1` uniquely identifies a
+    // point-fallout entry in the condensed tree: only `emit_fallout` creates
+    // entries with size 1, and they always carry an original point index in
+    // `child`. Cluster-child entries (from the `(true, true)` branch of
+    // `condense_tree`) always have `child_size >= min_cluster_size >= 2`.
+    let mut labels = vec![None; n];
+    // Post-condition guard: every one of the `n` input points must appear
+    // exactly once as a `child_size == 1` entry. Holds by construction
+    // (`emit_fallout` walks every leaf of each subtree) but a debug assert
+    // catches regressions where a condense-tree code path forgets to emit.
+    #[cfg(debug_assertions)]
+    let mut seen = vec![false; n];
+    for entry in condensed {
+        if entry.child_size == 1 {
+            #[cfg(debug_assertions)]
+            {
+                debug_assert!(
+                    entry.child < n,
+                    "condensed-tree child index {} out of range (n = {n})",
+                    entry.child
+                );
+                debug_assert!(
+                    !seen[entry.child],
+                    "point {} emitted twice in condensed tree",
+                    entry.child
+                );
+                seen[entry.child] = true;
+            }
+            let label = find_selected_ancestor(entry.parent, parent_of, &mut cluster_to_selected);
+            labels[entry.child] = label;
+        }
+    }
+    #[cfg(debug_assertions)]
+    debug_assert!(
+        seen.iter().all(|&b| b),
+        "not every input point was emitted by the condensed tree"
+    );
+
+    labels
+}
+
+/// Walk up the condensed-tree parent chain from `start` until a cached entry
+/// or a root is reached, then back-fill the cache for every cluster visited.
+/// Iterative to avoid unbounded recursion on deep hierarchies, matching the
+/// stack-based pattern in [`emit_fallout`].
+///
+/// `extract_labels` pre-seeds the cache with every selected cluster's label,
+/// so a selected ancestor is always found via the cache; a chain that reaches
+/// a root (never selected, never cached) yields `None` – the point is noise.
+fn find_selected_ancestor(
+    start: usize,
+    parent_of: &HashMap<usize, usize>,
+    cluster_to_selected: &mut HashMap<usize, Option<usize>>,
+) -> Option<usize> {
+    let mut chain = Vec::new();
+    let mut current = start;
+    let result = loop {
+        if let Some(&cached) = cluster_to_selected.get(&current) {
+            break cached;
+        }
+        chain.push(current);
+        match parent_of.get(&current) {
+            Some(&parent) => current = parent,
+            // Root: not selected, so points routed here are noise.
+            None => break None,
+        }
+    };
+    for c in chain {
+        cluster_to_selected.insert(c, result);
+    }
+    result
+}
+
+// ---------------------------------------------------------------------------
+// Step 7: GLOSH outlier scores
+// ---------------------------------------------------------------------------
+
+/// Compute GLOSH outlier scores for every point.
+///
+/// Following the reference HDBSCAN, the score is computed purely from the
+/// condensed tree and is independent of the flat cluster selection, so noise
+/// points are scored too (rather than hard-coded to 1.0). For a point that
+/// falls out of condensed-tree cluster `C` at lambda `lambda_p`,
+///
+/// ```text
+/// score = (lambda_max(C) - lambda_p) / lambda_max(C)
+/// ```
+///
+/// where `lambda_max(C)` is the deepest lambda anywhere in the subtree rooted
+/// at `C` – the highest density any descendant reaches. A point sitting at
+/// the densest core scores 0; a point that drops out while the rest of its
+/// neighbourhood persists to much higher density scores near 1.
+fn glosh<T: GeoFloat>(condensed: &[CondensedEntry<T>], n: usize) -> Vec<T> {
+    // Pass 1: each cluster's direct "death" lambda – the maximum lambda over
+    // the condensed-tree rows that have it as parent.
+    let mut deaths: HashMap<usize, T> = HashMap::new();
+    for entry in condensed {
+        let d = deaths.entry(entry.parent).or_insert(T::zero());
+        *d = (*d).max(entry.lambda);
+    }
+
+    // Pass 2: propagate deaths up so `deaths[c]` becomes the maximum lambda
+    // across the whole subtree rooted at `c`. `condense_tree` emits rows in
+    // DFS pre-order (a cluster's rows precede all of its descendants' rows),
+    // so iterating in reverse visits descendants before ancestors and one
+    // pass suffices.
+    for entry in condensed.iter().rev() {
+        if entry.child_size > 1 {
+            let child_death = deaths.get(&entry.child).copied().unwrap_or(T::zero());
+            let d = deaths.entry(entry.parent).or_insert(T::zero());
+            *d = (*d).max(child_death);
+        }
+    }
+
+    // Score each point from its direct parent cluster's subtree-max lambda.
+    // `child_size == 1` uniquely identifies point-fallout entries (see the
+    // note in `extract_labels`); every point appears in exactly one.
+    let mut scores = vec![T::zero(); n];
+    for entry in condensed {
+        if entry.child_size == 1 {
+            let lambda_max = deaths.get(&entry.parent).copied().unwrap_or(T::zero());
+            // `lambda_max` is finite (condense_tree caps zero-distance merges);
+            // a zero denominator only arises for fully degenerate input, where
+            // the score is defined as 0.
+            scores[entry.child] = if lambda_max > T::zero() {
+                (lambda_max - entry.lambda) / lambda_max
+            } else {
+                T::zero()
+            };
+        }
+    }
+    scores
 }
 
 #[cfg(test)]
