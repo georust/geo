@@ -132,17 +132,11 @@ mod test;
 mod idx_tests {
     use super::ConvexHull;
     use crate::algorithm::CoordsIter;
-    use crate::{MultiPoint, Point, line_string, polygon};
+    use crate::{MultiPoint, wkt};
 
     // Four square corners + one strictly interior point at index 4.
     fn fixture() -> MultiPoint<f64> {
-        MultiPoint::from(vec![
-            Point::new(0.0, 0.0),
-            Point::new(10.0, 0.0),
-            Point::new(10.0, 10.0),
-            Point::new(0.0, 10.0),
-            Point::new(5.0, 5.0),
-        ])
+        wkt!(MULTIPOINT(0. 0.,10. 0.,10. 10.,0. 10.,5. 5.))
     }
 
     #[test]
@@ -166,34 +160,16 @@ mod idx_tests {
 
     #[test]
     fn convex_hull_idx_polygon() {
-        let p = polygon![
-            (x: 0., y: 0.),
-            (x: 10., y: 0.),
-            (x: 10., y: 10.),
-            (x: 0., y: 10.),
-            (x: 0., y: 0.),
-        ];
-        let indices = p.convex_hull_idx();
-        let coords: Vec<_> = p.exterior_coords_iter().collect();
-        for &i in &indices {
-            assert!(i < coords.len(), "index {} out of range", i);
-        }
-        assert!(indices.len() >= 4);
+        let p = wkt!(POLYGON((0. 0.,10. 0.,10. 10.,0. 10.,0. 0.)));
+        // CCW hull perimeter, closed: corners at exterior-coord indices
+        // 1 (10 0), 2 (10 10), 3 (0 10), 0 (0 0), back to 1.
+        assert_eq!(p.convex_hull_idx(), vec![1, 2, 3, 0, 1]);
     }
 
     #[test]
     fn convex_hull_idx_linestring() {
-        let ls = line_string![
-            (x: 0., y: 0.),
-            (x: 10., y: 0.),
-            (x: 5., y: 5.),
-            (x: 10., y: 10.),
-            (x: 0., y: 10.),
-        ];
-        let indices = ls.convex_hull_idx();
-        assert!(
-            !indices.contains(&2),
-            "interior vertex should be dropped from hull"
-        );
+        // Index 2 (5 5) is strictly interior and must be dropped.
+        let ls = wkt!(LINESTRING(0. 0.,10. 0.,5. 5.,10. 10.,0. 10.));
+        assert_eq!(ls.convex_hull_idx(), vec![1, 3, 4, 0, 1]);
     }
 }
