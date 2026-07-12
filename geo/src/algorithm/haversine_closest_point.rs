@@ -101,14 +101,9 @@ where
             return Closest::SinglePoint(p1);
         }
 
-        let pi = T::from(std::f64::consts::PI).unwrap();
         let crs_ad = Haversine.bearing(p1, *from).to_radians();
         let crs_ab = Haversine.bearing(p1, p2).to_radians();
-        let crs_ba = if crs_ab > T::zero() {
-            crs_ab - pi
-        } else {
-            crs_ab + pi
-        };
+        let crs_ba = Haversine.bearing(p2, p1).to_radians();
         let crs_bd = Haversine.bearing(p2, *from).to_radians();
         let d_crs1 = crs_ad - crs_ab;
         let d_crs2 = crs_bd - crs_ba;
@@ -360,6 +355,8 @@ where
 
 #[cfg(test)]
 mod test {
+    use crate::line_measures::InterpolatePoint;
+
     use wkt::TryFromWkt;
 
     use super::*;
@@ -481,6 +478,35 @@ mod test {
                 Point::new(5.481_094_923_165_54, 82.998_280_987_615_33),
                 epsilon = 1.0e-6
             );
+        } else {
+            panic!("Did not get Closest::SinglePoint!");
+        }
+    }
+
+    #[test]
+    fn point_to_line_high_latitude_midpoint() {
+        let p_1 = Point::new(0.0, 80.0);
+        let p_2 = Point::new(179.99, 80.0);
+        let line = Line::new(p_1, p_2);
+        let p_from = Haversine.point_at_ratio_between(p_1, p_2, 0.5);
+
+        let pt = match line.haversine_closest_point(&p_from) {
+            Closest::Intersection(pt) | Closest::SinglePoint(pt) => pt,
+            Closest::Indeterminate => panic!("Did not get a closest point!"),
+        };
+
+        assert_relative_eq!(pt, p_from, epsilon = 1.0e-6);
+    }
+
+    #[test]
+    fn point_to_line_high_latitude_outside_arc() {
+        let p_1 = Point::new(0.0, 80.0);
+        let p_2 = Point::new(179.99, 80.0);
+        let line = Line::new(p_1, p_2);
+        let p_from = Point::new(0.0, 70.0);
+
+        if let Closest::SinglePoint(pt) = line.haversine_closest_point(&p_from) {
+            assert_relative_eq!(pt, p_1);
         } else {
             panic!("Did not get Closest::SinglePoint!");
         }

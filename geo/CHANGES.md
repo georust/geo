@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- FIX: `Line::haversine_closest_point` no longer returns an endpoint for valid high-latitude projections.
+  - <https://github.com/georust/geo/issues/1325>
 - Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
   - <https://github.com/georust/geo/pull/1533>
 - Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.
