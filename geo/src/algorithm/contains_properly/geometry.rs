@@ -26,7 +26,7 @@ where
 impl_contains_properly_geometry_for!(Point<T>);
 impl_contains_properly_geometry_for!(MultiPoint<T>);
 
-impl_contains_properly_geometry_for!(Line<T>);
+// impl_contains_properly_geometry_for!(Line<T>);
 impl_contains_properly_geometry_for!(LineString<T>);
 impl_contains_properly_geometry_for!(MultiLineString<T>);
 
