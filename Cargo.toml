@@ -7,6 +7,7 @@ members = [
   "geo-traits",
   "geo-types",
   "jts-test-runner",
+  "geo/examples/web-app"
 ]
 
 [patch.crates-io]
