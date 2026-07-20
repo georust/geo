@@ -235,11 +235,11 @@ where
 //     stop: since a self-intersection causes removal of the spatially previous point, THAT could
 //     lead to a further self-intersection without the possibility of removing more points,
 //     potentially leaving the geometry in an invalid state.
-fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
+fn vwp_wrapper_indices<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     exterior: &LineString<T>,
     interiors: Option<&[LineString<T>]>,
     epsilon: T,
-) -> Vec<Vec<Coord<T>>>
+) -> Vec<Vec<usize>>
 where
     T: GeoFloat + RTreeNum,
 {
@@ -259,18 +259,36 @@ where
     );
 
     // Simplify shell
-    rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
+    rings.push(visvalingam_preserve_indices::<T, INITIAL_MIN, MIN_POINTS>(
         exterior, epsilon, &mut tree,
     ));
     // Simplify interior rings, if any
     if let Some(interior_rings) = interiors {
         for ring in interior_rings {
-            rings.push(visvalingam_preserve::<T, INITIAL_MIN, MIN_POINTS>(
+            rings.push(visvalingam_preserve_indices::<T, INITIAL_MIN, MIN_POINTS>(
                 ring, epsilon, &mut tree,
             ))
         }
     }
     rings
+}
+
+fn vwp_wrapper<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
+    exterior: &LineString<T>,
+    interiors: Option<&[LineString<T>]>,
+    epsilon: T,
+) -> Vec<Vec<Coord<T>>>
+where
+    T: GeoFloat + RTreeNum,
+{
+    let indices_per_ring =
+        vwp_wrapper_indices::<T, INITIAL_MIN, MIN_POINTS>(exterior, interiors, epsilon);
+    let rings = std::iter::once(exterior).chain(interiors.iter().flat_map(|i| i.iter()));
+    indices_per_ring
+        .into_iter()
+        .zip(rings)
+        .map(|(idx, ring)| idx.into_iter().map(|i| ring.0[i]).collect())
+        .collect()
 }
 
 /// Visvalingam-Whyatt with self-intersection detection to preserve topologies
@@ -285,16 +303,16 @@ where
 //     stop: since a self-intersection causes removal of the spatially previous point, THAT could
 //     lead to a further self-intersection without the possibility of removing more points,
 //     potentially leaving the geometry in an invalid state.
-fn visvalingam_preserve<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
+fn visvalingam_preserve_indices<T, const INITIAL_MIN: usize, const MIN_POINTS: usize>(
     orig: &LineString<T>,
     epsilon: T,
     tree: &mut RTree<CachedEnvelope<Line<T>>>,
-) -> Vec<Coord<T>>
+) -> Vec<usize>
 where
     T: GeoFloat + RTreeNum,
 {
     if orig.0.len() < 3 || epsilon <= T::zero() {
-        return orig.0.to_vec();
+        return (0..orig.0.len()).collect();
     }
     let max = orig.0.len();
     let mut counter = orig.0.len();
@@ -382,11 +400,11 @@ where
         // this may add new triangles to the heap
         recompute_triangles(&smallest, orig, &mut pq, ll, left, right, rr, max, epsilon);
     }
-    // Filter out the points that have been deleted, returning remaining points
-    orig.0
+    // Filter out the points that have been deleted, returning indices of remaining points
+    adjacent
         .iter()
-        .zip(adjacent.iter())
-        .filter_map(|(tup, adj)| if *adj != (0, 0) { Some(*tup) } else { None })
+        .enumerate()
+        .filter_map(|(idx, adj)| if *adj != (0, 0) { Some(idx) } else { None })
         .collect()
 }
 
@@ -438,6 +456,9 @@ where
 ///
 /// An epsilon less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVw<T, Epsilon = T> {
+    /// The index-output type of [`SimplifyVw::simplify_vw_idx`], which varies by geometry.
+    type IndexOutput;
+
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
     /// See [here](https://bost.ocks.org/mike/simplify/) for a graphical explanation
@@ -472,6 +493,33 @@ pub trait SimplifyVw<T, Epsilon = T> {
     fn simplify_vw(&self, epsilon: T) -> Self
     where
         T: CoordFloat;
+
+    /// Returns the indices of the points retained by [`SimplifyVw::simplify_vw`],
+    /// relative to the input geometry. [`Self::IndexOutput`] is `Vec<usize>` for
+    /// `LineString`, `Vec<Vec<usize>>` for `MultiLineString`, [`PolygonIndices`]
+    /// for `Polygon`, and `Vec<PolygonIndices>` for `MultiPolygon`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use geo::SimplifyVw;
+    /// use geo::line_string;
+    ///
+    /// let line_string = line_string![
+    ///     (x: 5.0, y: 2.0),
+    ///     (x: 3.0, y: 8.0),
+    ///     (x: 6.0, y: 20.0),
+    ///     (x: 7.0, y: 25.0),
+    ///     (x: 10.0, y: 10.0),
+    /// ];
+    ///
+    /// let indices = line_string.simplify_vw_idx(30.0);
+    ///
+    /// assert_eq!(indices, vec![0_usize, 3, 4]);
+    /// ```
+    fn simplify_vw_idx(&self, epsilon: T) -> Self::IndexOutput
+    where
+        T: CoordFloat;
 }
 
 /// Simplifies a geometry, returning the retained _indices_ of the output
@@ -485,6 +533,10 @@ pub trait SimplifyVw<T, Epsilon = T> {
 /// If the area of this triangle is less than `epsilon`, we will remove the point.
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
+#[deprecated(
+    since = "0.34.0",
+    note = "Please use the `simplify_vw_idx` method from the `SimplifyVw` trait instead"
+)]
 pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// Returns the simplified representation of a geometry, using the [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm
     ///
@@ -493,6 +545,7 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
     /// # Examples
     ///
     /// ```
+    /// #![allow(deprecated)]
     /// use geo::SimplifyVwIdx;
     /// use geo::line_string;
     ///
@@ -528,6 +581,9 @@ pub trait SimplifyVwIdx<T, Epsilon = T> {
 ///
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait SimplifyVwPreserve<T, Epsilon = T> {
+    /// The index-output type of [`SimplifyVwPreserve::simplify_vw_preserve_idx`], which varies by geometry.
+    type IndexOutput;
+
     /// Returns the simplified representation of a geometry, using a topology-preserving variant of the
     /// [Visvalingam-Whyatt](http://www.tandfonline.com/doi/abs/10.1179/000870493786962263) algorithm.
     ///
@@ -587,15 +643,31 @@ pub trait SimplifyVwPreserve<T, Epsilon = T> {
     fn simplify_vw_preserve(&self, epsilon: T) -> Self
     where
         T: CoordFloat + RTreeNum;
+
+    /// Returns the indices of the points retained by
+    /// [`SimplifyVwPreserve::simplify_vw_preserve`], relative to the input
+    /// geometry. [`Self::IndexOutput`] is `Vec<usize>` for `LineString`,
+    /// `Vec<Vec<usize>>` for `MultiLineString`, [`PolygonIndices`] for
+    /// `Polygon`, and `Vec<PolygonIndices>` for `MultiPolygon`.
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Self::IndexOutput
+    where
+        T: GeoFloat + RTreeNum;
 }
 
 impl<T> SimplifyVwPreserve<T> for LineString<T>
 where
     T: GeoFloat + RTreeNum,
 {
+    type IndexOutput = Vec<usize>;
+
     fn simplify_vw_preserve(&self, epsilon: T) -> LineString<T> {
         let mut simplified = vwp_wrapper::<_, 2, 4>(self, None, epsilon);
         LineString::from(simplified.pop().unwrap())
+    }
+
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<usize> {
+        let mut indices = vwp_wrapper_indices::<_, 2, 4>(self, None, epsilon);
+        indices.pop().unwrap()
     }
 }
 
@@ -603,6 +675,8 @@ impl<T> SimplifyVwPreserve<T> for MultiLineString<T>
 where
     T: GeoFloat + RTreeNum,
 {
+    type IndexOutput = Vec<Vec<usize>>;
+
     fn simplify_vw_preserve(&self, epsilon: T) -> MultiLineString<T> {
         MultiLineString::new(
             self.0
@@ -611,12 +685,21 @@ where
                 .collect(),
         )
     }
+
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<Vec<usize>> {
+        self.0
+            .iter()
+            .map(|l| l.simplify_vw_preserve_idx(epsilon))
+            .collect()
+    }
 }
 
 impl<T> SimplifyVwPreserve<T> for Polygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
+    type IndexOutput = PolygonIndices;
+
     fn simplify_vw_preserve(&self, epsilon: T) -> Polygon<T> {
         let mut simplified =
         // min_points was formerly 6, but that's too conservative for small polygons
@@ -625,12 +708,21 @@ where
         let interiors = simplified.into_iter().map(LineString::from).collect();
         Polygon::new(exterior, interiors)
     }
+
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> PolygonIndices {
+        let mut indices_per_ring =
+            vwp_wrapper_indices::<_, 4, 5>(self.exterior(), Some(self.interiors()), epsilon);
+        let exterior = indices_per_ring.remove(0);
+        PolygonIndices::new(exterior, indices_per_ring)
+    }
 }
 
 impl<T> SimplifyVwPreserve<T> for MultiPolygon<T>
 where
     T: GeoFloat + RTreeNum,
 {
+    type IndexOutput = Vec<PolygonIndices>;
+
     fn simplify_vw_preserve(&self, epsilon: T) -> MultiPolygon<T> {
         MultiPolygon::new(
             self.0
@@ -639,23 +731,37 @@ where
                 .collect(),
         )
     }
+
+    fn simplify_vw_preserve_idx(&self, epsilon: T) -> Vec<PolygonIndices> {
+        self.0
+            .iter()
+            .map(|p| p.simplify_vw_preserve_idx(epsilon))
+            .collect()
+    }
 }
 
 impl<T> SimplifyVw<T> for LineString<T>
 where
     T: CoordFloat,
 {
+    type IndexOutput = Vec<usize>;
+
     fn simplify_vw(&self, epsilon: T) -> LineString<T> {
         LineString::from(visvalingam(self, epsilon))
     }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> Vec<usize> {
+        visvalingam_indices(self, epsilon)
+    }
 }
 
+#[allow(deprecated)]
 impl<T> SimplifyVwIdx<T> for LineString<T>
 where
     T: CoordFloat,
 {
     fn simplify_vw_idx(&self, epsilon: T) -> Vec<usize> {
-        visvalingam_indices(self, epsilon)
+        SimplifyVw::simplify_vw_idx(self, epsilon)
     }
 }
 
@@ -663,8 +769,16 @@ impl<T> SimplifyVw<T> for MultiLineString<T>
 where
     T: CoordFloat,
 {
+    type IndexOutput = Vec<Vec<usize>>;
+
     fn simplify_vw(&self, epsilon: T) -> MultiLineString<T> {
         MultiLineString::new(self.iter().map(|l| l.simplify_vw(epsilon)).collect())
+    }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> Vec<Vec<usize>> {
+        self.iter()
+            .map(|l| SimplifyVw::simplify_vw_idx(l, epsilon))
+            .collect()
     }
 }
 
@@ -672,6 +786,8 @@ impl<T> SimplifyVw<T> for Polygon<T>
 where
     T: CoordFloat,
 {
+    type IndexOutput = PolygonIndices;
+
     fn simplify_vw(&self, epsilon: T) -> Polygon<T> {
         Polygon::new(
             self.exterior().simplify_vw(epsilon),
@@ -681,14 +797,32 @@ where
                 .collect(),
         )
     }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> PolygonIndices {
+        PolygonIndices::new(
+            SimplifyVw::simplify_vw_idx(self.exterior(), epsilon),
+            self.interiors()
+                .iter()
+                .map(|l| SimplifyVw::simplify_vw_idx(l, epsilon))
+                .collect(),
+        )
+    }
 }
 
 impl<T> SimplifyVw<T> for MultiPolygon<T>
 where
     T: CoordFloat,
 {
+    type IndexOutput = Vec<PolygonIndices>;
+
     fn simplify_vw(&self, epsilon: T) -> MultiPolygon<T> {
         MultiPolygon::new(self.iter().map(|p| p.simplify_vw(epsilon)).collect())
+    }
+
+    fn simplify_vw_idx(&self, epsilon: T) -> Vec<PolygonIndices> {
+        self.iter()
+            .map(|p| SimplifyVw::simplify_vw_idx(p, epsilon))
+            .collect()
     }
 }
 
@@ -942,5 +1076,66 @@ mod test {
             )]),
             epsilon = 1e-6
         );
+    }
+}
+
+#[cfg(test)]
+mod idx_tests {
+    use super::SimplifyVwPreserve;
+    use crate::{PolygonIndices, wkt};
+
+    #[test]
+    fn simplify_vw_preserve_idx_linestring() {
+        let ls = wkt!(LINESTRING(
+            10. 60.,135. 68.,94. 48.,126. 31.,280. 19.,117. 48.,300. 40.,301. 10.
+        ));
+        let indices: Vec<usize> = ls.simplify_vw_preserve_idx(668.6);
+        assert_eq!(indices, vec![0, 3, 4, 5, 6, 7]);
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_polygon_with_hole() {
+        // outer[2] retention is the shared-rtree signal: dropping it would
+        // self-intersect against the inner ring.
+        let poly = wkt!(POLYGON(
+            (-54.4921875 21.289374355860424,-33.5 56.9449741808516,-22.5 44.08758502824516,-19.5 23.241346102386135,-54.4921875 21.289374355860424),
+            (-24.451171875 35.266685523707665,-40.0 45.,-29.513671875 47.32027765985069,-22.869140625 43.80817468459856,-24.451171875 35.266685523707665)
+        ));
+
+        let result: PolygonIndices = poly.simplify_vw_preserve_idx(95.4);
+
+        assert_eq!(result.exterior(), [0, 1, 2, 3, 4]);
+        assert_eq!(result.interiors(), [vec![0, 1, 3, 4]]);
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_polygon_identity() {
+        let poly = wkt!(POLYGON((0. 0.,10. 0.,10. 10.,0. 10.,0. 0.)));
+        let result: PolygonIndices = poly.simplify_vw_preserve_idx(0.0);
+        assert_eq!(result.exterior(), [0, 1, 2, 3, 4]);
+        assert!(result.interiors().is_empty());
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_multilinestring() {
+        let mls = wkt!(MULTILINESTRING((0. 0.,5. 0.,10. 0.),(0. 10.,10. 10.)));
+        let result: Vec<Vec<usize>> = mls.simplify_vw_preserve_idx(0.0);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0], vec![0, 1, 2]);
+        assert_eq!(result[1], vec![0, 1]);
+    }
+
+    #[test]
+    fn simplify_vw_preserve_idx_multipolygon() {
+        let mp = wkt!(MULTIPOLYGON(
+            ((0. 0.,10. 0.,10. 10.,0. 10.,0. 0.)),
+            ((20. 20.,30. 20.,30. 30.,20. 30.,20. 20.))
+        ));
+        let result: Vec<PolygonIndices> = mp.simplify_vw_preserve_idx(0.0);
+        assert_eq!(result.len(), 2);
+        assert_eq!(result[0].exterior(), [0, 1, 2, 3, 4]);
+        assert!(result[0].interiors().is_empty());
+        assert_eq!(result[1].exterior(), [0, 1, 2, 3, 4]);
+        assert!(result[1].interiors().is_empty());
     }
 }
