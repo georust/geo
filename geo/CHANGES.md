@@ -25,6 +25,7 @@
   - <https://github.com/georust/geo/pull/1521>
 - FIX: `InterpolatePoint::points_along_line` no longer appends a duplicate final vertex (and zero-length segment) for `Haversine`, `Geodesic`, and `Rhumb`.
   - <https://github.com/georust/geo/pull/1559>
+- Update the `rstar` dependency to 0.13.
 
 ## 0.33.1 - 2026-4-20
 

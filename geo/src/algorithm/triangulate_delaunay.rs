@@ -629,7 +629,7 @@ pub(crate) fn snap_or_register_point<T: SpadeTriangulationFloat>(
     snap_radius: T,
 ) -> Coord<T> {
     known_points
-        .nearest_neighbor(&point)
+        .nearest_neighbor(point)
         // only snap if closest is within snap radius
         .filter(|nearest_point| Euclidean.distance(**nearest_point, point) < snap_radius)
         .cloned()

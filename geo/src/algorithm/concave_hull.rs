@@ -366,7 +366,7 @@ where
     let bbox = AABB::from_corners(point!([min_x, min_y]), point!([max_x, max_y]));
 
     // Iterate over all lines in the hull which intersect with the bounding box
-    let hull_lines = current_hull_tree.locate_in_envelope_intersecting(&bbox);
+    let hull_lines = current_hull_tree.locate_in_envelope_intersecting(bbox);
     for hull_line in hull_lines {
         // Skip lines which share an endpoint
         if hull_line.start == line.start
@@ -633,7 +633,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coord, line_string, polygon};
+    use crate::{Relate, coord, line_string, polygon};
 
     #[test]
     fn test_concavity() {
@@ -723,6 +723,10 @@ mod tests {
         ]
         .into();
         let hull = mp.concave_hull();
+        // The bottom edge runs straight from (0, 0) to (4, 0). The intermediate
+        // points (2, 0) and (3, 0) are collinear, so whether they are retained as
+        // explicit vertices depends on R-tree iteration order, which changed in
+        // rstar 0.13. Compare topologically rather than by exact vertex list.
         let correct_hull = polygon![
             (x: 4.0, y: 0.0),
             (x: 4.0, y: 5.0),
@@ -734,7 +738,7 @@ mod tests {
             (x: 3.0, y: 0.0),
             (x: 4.0, y: 0.0),
         ];
-        assert_eq!(hull, correct_hull);
+        assert!(hull.relate(&correct_hull).is_equal_topo());
     }
 
     #[test]
