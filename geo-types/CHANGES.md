@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Document that the inherent `GeometryCollection::is_empty` is a purely structural check (zero geometries) and does not recurse into element emptiness, unlike `geo::HasDimensions::is_empty`.
+  - <https://github.com/georust/geo/issues/1431>
+
+## 0.7.19 - 2026-04-15
+
 - POSSIBLY BREAKING: `Triangle::from([a, b, c])` now enforces CCW winding (same as `Triangle::new`).
 - Add `Triangle::unchecked_winding(v1, v2, v3)` for callers that have pre-verified CCW order or don't require a specific winding.
 - Add `Triangle::v1()`, `Triangle::v2()`, `Triangle::v3()` getters.

@@ -1,6 +1,6 @@
-//! Repair invalid polygons using constrained Delaunay triangulation.
-//!
-//! This module implements the polygon repair algorithm described in:
+//! This module provides the [`MakeValid`] trait, which repairs invalid
+//! polygons using a constrained Delaunay triangulation. It implements the
+//! *prepair* algorithm described in:
 //!
 //! > Ledoux, H., Arroyo Ohori, K., and Meijers, M. (2014). A
 //! > triangulation-based approach to automatically repair GIS polygons.

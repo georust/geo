@@ -4,6 +4,37 @@
 
 - Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
   - <https://github.com/georust/geo/pull/1472>
+- FIX: `Line::haversine_closest_point` no longer returns an endpoint for valid high-latitude projections.
+  - <https://github.com/georust/geo/issues/1325>
+- Add index-returning methods `Simplify::simplify_idx`, `SimplifyVw::simplify_vw_idx`, `SimplifyVwPreserve::simplify_vw_preserve_idx`, and `ConvexHull::convex_hull_idx`, returning input-relative indices of the retained vertices. Adds the `PolygonIndices` type and the `quick_hull_indices` free function.
+  - <https://github.com/georust/geo/issues/1537>
+  - BREAKING: `Simplify`, `SimplifyVw`, and `SimplifyVwPreserve` (in `geo::algorithm::{simplify, simplify_vw}`) each gain an associated `Output` type and a required `*_idx` method, and `ConvexHull` (in `geo::algorithm::convex_hull`) gains a required `convex_hull_idx` method. Manual implementors of these traits must add the new associated type and method; callers that only use the provided methods are unaffected.
+- DEPRECATED: the standalone `SimplifyIdx` and `SimplifyVwIdx` traits; use the `simplify_idx` / `simplify_vw_idx` methods on `Simplify` / `SimplifyVw` instead.
+  - <https://github.com/georust/geo/issues/1537>
+  - BREAKING: `SimplifyIdx` and `SimplifyVwIdx` are no longer re-exported from `geo::algorithm` or the `geo::prelude`, so their `simplify_idx` / `simplify_vw_idx` methods no longer collide with the new same-named methods on `Simplify` / `SimplifyVw` under `use geo::prelude::*`. They remain reachable (deprecated) at the crate root as `geo::SimplifyIdx` / `geo::SimplifyVwIdx`; update `use geo::algorithm::SimplifyIdx` (or prelude-glob) imports accordingly.
+- Remove unused `utils::least_and_greatest_index`.
+- Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
+  - <https://github.com/georust/geo/pull/1533>
+- Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.
+  - <https://github.com/georust/geo/pull/1534>
+- Rename `TriangulateEarcut::earcut_triangles_raw` to `TriangulateEarcut::earcut_triangulation`
+  - <https://github.com/georust/geo/pull/1534>
+- FIX: `Haversine::distance` no longer returns NaN on nearly antipodal points.
+  - <https://github.com/georust/geo/pull/1535>
+- Add `RectOps` trait with RectOps::rect_union()` and `RectOps::rect_intersection()` operations.
+  - <https://github.com/georust/geo/pull/1542>
+- Speed up `Relate` operations.
+  - <https://github.com/georust/geo/pull/1521>
+- FIX: `InterpolatePoint::points_along_line` no longer appends a duplicate final vertex (and zero-length segment) for `Haversine`, `Geodesic`, and `Rhumb`.
+  - <https://github.com/georust/geo/pull/1559>
+
+## 0.33.1 - 2026-4-20
+
+- Fix build breakage introduced by semver incompatible earcut dependency release
+  - <https://github.com/georust/geo/pull/1527>
+
+## 0.33.0 - 2026-4-15
+
 - Polygon validation now uses `PreparedGeometry` to cache R-tree structures for interior/exterior containment checks, improving validation speed for polygons with many holes.
   - <https://github.com/georust/geo/pull/1501>
 - Update `i_overlay` to 4.4 and enable OGC-compliant polygon extraction for all boolean operations, fixing cases where holes sharing vertices produced invalid geometry.
@@ -21,6 +52,7 @@
   - <https://github.com/georust/geo/pull/1499>
 - Bump `float_next_after` dependency to 2.0.0
 - Bump geo MSRV to 1.88
+- Bump geo-types to 0.7.19
 - Update `earcutr` dependency to 0.5.0
 - POSSIBLY BREAKING: `Triangle`s returned by `earcut_triangles` are now oriented CCW.
 - POSSIBLY BREAKING: `earcut_triangles_raw` now omits the redundant "closing" coordinate from `vertices`.

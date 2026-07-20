@@ -233,4 +233,104 @@ mod tests {
             assert_eq!(points, vec![]);
         }
     }
+
+    mod regular_spacing {
+        use super::*;
+        use crate::Distance;
+
+        // A line longer than `max_distance` must be split into equal sub-segments: the two ends
+        // plus the interior points, with no interior point coincident with `end`. Every gap is a
+        // full step - greater than half of `max_distance` (so there is no zero-length final
+        // segment) and never more than `max_distance` (the documented contract).
+        fn assert_regular<MS>(space: &MS, start: Point, end: Point, max_distance: f64)
+        where
+            MS: Distance<f64, Point, Point> + InterpolatePoint<f64>,
+        {
+            assert!(space.distance(start, end) > max_distance);
+
+            let with_ends: Vec<Point> = space
+                .points_along_line(start, end, max_distance, true)
+                .collect();
+            let without_ends: Vec<Point> = space
+                .points_along_line(start, end, max_distance, false)
+                .collect();
+
+            assert_eq!(with_ends[0], start);
+            assert_eq!(*with_ends.last().unwrap(), end);
+            assert_eq!(with_ends.len(), without_ends.len() + 2);
+            assert!(with_ends.len() >= 3);
+
+            for gap in with_ends.windows(2) {
+                let seg = space.distance(gap[0], gap[1]);
+                assert!(seg > max_distance / 2.0, "degenerate segment of {seg}");
+                assert!(
+                    seg <= max_distance * (1.0 + 1e-6),
+                    "segment {seg} exceeds max"
+                );
+            }
+        }
+
+        #[test]
+        fn no_duplicate_end_vertex() {
+            // New York -> London at 300 km steps: the float accumulator drifted below 1.0 and
+            // appended a final interior point equal to `end` for Haversine and Geodesic.
+            let nyc = Point::new(-74.006, 40.7128);
+            let london = Point::new(-0.1278, 51.5074);
+            assert_regular(&Haversine, nyc, london, 300_000.0);
+            assert_regular(&Geodesic, nyc, london, 300_000.0);
+            assert_regular(&Rhumb, nyc, london, 300_000.0);
+
+            assert_eq!(
+                Haversine
+                    .points_along_line(nyc, london, 300_000.0, true)
+                    .count(),
+                20
+            );
+            assert_eq!(
+                Geodesic
+                    .points_along_line(nyc, london, 300_000.0, true)
+                    .count(),
+                20
+            );
+            assert_eq!(
+                Rhumb
+                    .points_along_line(nyc, london, 300_000.0, true)
+                    .count(),
+                21
+            );
+
+            // Euclidean was already correct via `densify_between`; it must satisfy the same
+            // invariant (units here are coordinate degrees).
+            let (a, b) = (Point::new(0.0, 0.0), Point::new(0.0, 80.0));
+            assert_regular(&Euclidean, a, b, 7.0);
+            assert_eq!(Euclidean.points_along_line(a, b, 7.0, true).count(), 13);
+        }
+
+        #[test]
+        fn regular_spacing_battery() {
+            // Before the fix, ~40% of random lines produced a spurious duplicate end vertex in
+            // each of the three affected metric spaces. Deterministic LCG for reproducibility.
+            let mut state: u64 = 0x1234_5678_9abc_def0;
+            let mut rnd = || {
+                state = state
+                    .wrapping_mul(6364136223846793005)
+                    .wrapping_add(1442695040888963407);
+                (state >> 11) as f64 / (1u64 << 53) as f64
+            };
+            for _ in 0..500 {
+                let start = Point::new(rnd() * 360.0 - 180.0, rnd() * 160.0 - 80.0);
+                let end = Point::new(rnd() * 360.0 - 180.0, rnd() * 160.0 - 80.0);
+                let max_distance = 100_000.0 + rnd() * 2_000_000.0;
+                if Haversine.distance(start, end) > max_distance {
+                    assert_regular(&Haversine, start, end, max_distance);
+                }
+                if Geodesic.distance(start, end) > max_distance {
+                    assert_regular(&Geodesic, start, end, max_distance);
+                }
+                if Rhumb.distance(start, end) > max_distance {
+                    assert_regular(&Rhumb, start, end, max_distance);
+                }
+            }
+        }
+    }
 }

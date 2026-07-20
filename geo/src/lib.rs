@@ -130,7 +130,7 @@
 //!
 //! ## Triangulation
 //!
-//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `earcutr` feature, which is enabled by default
+//! - **[`TriangulateEarcut`](triangulate_earcut)**: Triangulate polygons using the earcut algorithm. Requires the `earcut` feature, which is enabled by default
 //! - **[`TriangulateDelaunay`](triangulate_delaunay)**: Produce constrained or unconstrained Delaunay triangulations of polygons. Requires the `spade` feature, which is enabled by default
 //! - **[`Voronoi`](voronoi)**: Produce the Voronoi Diagram of a triangulation
 //!
@@ -152,6 +152,8 @@
 //!
 //! - **[`BoundingRect`]**: Calculate the axis-aligned
 //!   bounding rectangle of a geometry
+//! - **[`RectOps`]**: Union and intersection of axis-aligned
+//!   rectangles
 //! - **[`MinimumRotatedRect`]**: Calculate the
 //!   minimum bounding box of a geometry
 //! - **[`ConcaveHull`]**: Calculate the concave hull of a
@@ -187,6 +189,7 @@
 //! - **[`Transform`]**: Transform a geometry using Proj
 //! - **[`RemoveRepeatedPoints`]**: Remove repeated points from a geometry
 //! - **[`Validation`]**: Checks if the geometry is well formed. Some algorithms may not work correctly with invalid geometries
+//! - **[`MakeValid`]**: Repair an invalid [`Polygon`] or [`MultiPolygon`], using constrained Delaunay triangulation (the _prepair_ algorithm) to produce valid geometry (requires the `spade` feature, enabled by default)
 //!
 //! # Indexed Geometries
 //!
@@ -199,12 +202,26 @@
 //! - provides fast [`ContainsProperly`] methods between themselves and [`Intersects`] with other geometries
 //! - see [`monotone_chain`] for deeper explanation on the concepts behind this
 //!
+//! ## Interval-tree backed MultiPolygon
+//! - **[`IntervalTreeMultiPolygon`](indexed::IntervalTreeMultiPolygon)**: A [`MultiPolygon`] backed by
+//!   a y-axis [interval tree] for fast point-in-polygon containment queries. Build the index once from
+//!   a [`MultiPolygon`] and reuse it across many [`Contains`] checks against [`Point`] or [`Coord`] —
+//!   useful when classifying many points against the same fixed boundary, or repeatedly probing a
+//!   single complex polygon. See [`indexed::IntervalTreeMultiPolygon`] for an example.
+//!
+//! [interval tree]: https://en.wikipedia.org/wiki/Interval_tree
+//!
 //! # Spatial Indexing
 //!
 //! `geo` geometries ([`Point`], [`Line`], [`LineString`], [`Polygon`], [`MultiPolygon`]) can be used with the [rstar](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#usage)
 //! R*-tree crate for fast distance and nearest-neighbour queries. Multi- geometries can be added to the tree by iterating over
 //! their members and adding them. Note in particular the availability of the [`bulk_load`](https://docs.rs/rstar/0.12.0/rstar/struct.RTree.html#method.bulk_load)
 //! method and [`GeomWithData`](https://docs.rs/rstar/0.12.0/rstar/primitives/struct.GeomWithData.html) struct.
+//!
+//! For point-only data, the [`BallTree`] provides an alternative spatial index with nearest-neighbour,
+//! k-nearest-neighbours, and radius search queries. Construct one via [`BallTree::new`] (wrapping
+//! each point in a [`PointWithData`] when you need an associated payload), or [`BallTreeBuilder`]
+//! for a configurable leaf size.
 //!
 //! # Features
 //!
@@ -271,6 +288,15 @@ use std::cmp::Ordering;
 
 pub use crate::algorithm::sweep::Intersections;
 pub use crate::indexed::PreparedGeometry;
+
+// Deprecated index traits, kept reachable at the crate root for migration but
+// deliberately not re-exported through `algorithm` (and thus not in the
+// prelude), so the consolidated `simplify_idx` / `simplify_vw_idx` methods on
+// `Simplify` / `SimplifyVw` don't collide with them under `use geo::prelude::*`.
+#[allow(deprecated)]
+pub use crate::algorithm::simplify::SimplifyIdx;
+#[allow(deprecated)]
+pub use crate::algorithm::simplify_vw::SimplifyVwIdx;
 pub use geo_types::{CoordFloat, CoordNum, coord, line_string, point, polygon, wkt};
 
 pub mod geometry;

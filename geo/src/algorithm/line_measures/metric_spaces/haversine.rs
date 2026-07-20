@@ -271,7 +271,8 @@ impl<F: CoordFloat + FromPrimitive> Distance<F, Point<F>, Point<F>> for Haversin
         let delta_lambda = (destination.x() - origin.x()).to_radians();
         let a = (delta_theta / two).sin().powi(2)
             + theta1.cos() * theta2.cos() * (delta_lambda / two).sin().powi(2);
-        let c = two * a.sqrt().asin();
+        let a_clamped = a.min(F::one());
+        let c = two * a_clamped.sqrt().asin();
         F::from(self.radius).unwrap() * c
     }
 }
@@ -380,15 +381,18 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for HaversineMeasure {
         }
 
         let number_of_points = (total_distance / max_distance).ceil();
-        let interval = F::one() / number_of_points;
+        // Iterate over an integer step count; accumulating a float step drifts below 1.0 and
+        // pushes a final interior point coincident with `end` (cf. `densify_between`).
+        let n = number_of_points
+            .to_u64()
+            .expect("unreasonable number of segments");
+        let frac = F::one() / number_of_points;
 
-        let mut current_step = interval;
         let mut points = if include_ends { vec![start] } else { vec![] };
 
-        while current_step < F::one() {
-            let point = calculation.point_at_ratio(current_step);
-            points.push(point);
-            current_step = current_step + interval;
+        for step in 1..n {
+            let ratio = frac * F::from(step).unwrap();
+            points.push(calculation.point_at_ratio(ratio));
         }
 
         if include_ends {
@@ -572,7 +576,17 @@ mod tests {
                 distance.round()
             );
         }
+
+        #[test]
+        fn near_antipodal_points() {
+            let d: f64 = Haversine.distance(
+                Point::new(-121.96981239217565, 65.09034271683089),
+                Point::new(58.03018760782425, -65.0903427168311),
+            );
+            assert_relative_eq!(d, 20015114.442035925);
+        }
     }
+
     mod interpolate_point {
         use super::*;
 

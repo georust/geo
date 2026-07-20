@@ -105,20 +105,23 @@ impl<T: CoordFloat + FromPrimitive> RhumbCalculations<T> {
         }
 
         let number_of_points = (total_delta / max_delta).ceil();
-        let interval = T::one() / number_of_points;
+        // Iterate over an integer step count; accumulating a float step drifts below 1.0 and
+        // pushes a final interior point coincident with `end` (cf. `densify_between`).
+        let n = number_of_points
+            .to_u64()
+            .expect("unreasonable number of segments");
+        let frac = T::one() / number_of_points;
 
-        let mut current_step = interval;
         let mut points = if include_ends {
             vec![self.from]
         } else {
             vec![]
         };
 
-        while current_step < T::one() {
-            let delta = total_delta * current_step;
+        for step in 1..n {
+            let delta = total_delta * (frac * T::from(step).unwrap());
             let point = calculate_destination(delta, lambda1, self.phi1, theta);
             points.push(point);
-            current_step = current_step + interval;
         }
 
         if include_ends {

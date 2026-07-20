@@ -2,6 +2,10 @@
 pub mod kernels;
 pub use kernels::{Kernel, Orientation};
 
+/// Nearest-neighbour queries on point sets using a ball tree.
+pub mod ball_tree;
+pub use ball_tree::{BallTree, BallTreeBuilder, BallTreePoint, PointWithData};
+
 /// Calculate the area of the surface of a `Geometry`.
 pub mod area;
 pub use area::Area;
@@ -13,6 +17,10 @@ pub use bool_ops::{BooleanOps, OpType, unary_union};
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;
 pub use bounding_rect::BoundingRect;
+
+/// Union and intersection of axis-aligned rectangles.
+pub mod rect_ops;
+pub use rect_ops::RectOps;
 
 pub mod buffer;
 pub use buffer::Buffer;
@@ -252,11 +260,11 @@ pub use affine_ops::{AffineOps, AffineTransform};
 
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
-pub use simplify::{Simplify, SimplifyIdx};
+pub use simplify::{PolygonIndices, Simplify};
 
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplify_vw;
-pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
+pub use simplify_vw::{SimplifyVw, SimplifyVwPreserve};
 
 /// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
 #[allow(dead_code)]
