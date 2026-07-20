@@ -351,25 +351,33 @@ impl_euclidean_distance_for_polygonlike_geometry!(&Rect<F>,      [&Point<F>, &Li
 // └───────────────────────────────────────────┘
 
 /// Euclidean distance implementation for multi geometry types.
+///
+/// Rather than folding the minimum over full member-to-target distance
+/// computations, members are first sorted by the distance between their
+/// bounding rectangle and the target's bounding rectangle. The exact distance
+/// is then only computed while a member's bounding-rectangle distance could
+/// still improve on the running minimum; the remaining members are skipped.
 macro_rules! impl_euclidean_distance_for_iter_geometry {
     ($iter_geometry:ty,  [$($to_geometry:ty),*]) => {
         impl<F: GeoFloat> Distance<F, $iter_geometry, $iter_geometry> for Euclidean {
             fn distance(&self, origin: $iter_geometry, destination: $iter_geometry) -> F {
-                origin
-                    .iter()
-                    .fold(Bounded::max_value(), |accum: F, member| {
-                        accum.min(self.distance(member, destination))
-                    })
+                bbox_pruned_min_distance(
+                    origin.iter(),
+                    destination.bounding_rect().into(),
+                    |member| member.bounding_rect().into(),
+                    |member| self.distance(member, destination),
+                )
              }
         }
         $(
             impl<F: GeoFloat> Distance<F, $iter_geometry, $to_geometry> for Euclidean {
                 fn distance(&self, iter_geometry: $iter_geometry, to_geometry: $to_geometry) -> F {
-                    iter_geometry
-                        .iter()
-                        .fold(Bounded::max_value(), |accum: F, member| {
-                            accum.min(self.distance(member, to_geometry))
-                        })
+                    bbox_pruned_min_distance(
+                        iter_geometry.iter(),
+                        to_geometry.bounding_rect().into(),
+                        |member| member.bounding_rect().into(),
+                        |member| self.distance(member, to_geometry),
+                    )
                 }
             }
             symmetric_distance_impl!(GeoFloat, $to_geometry, $iter_geometry);
@@ -437,6 +445,71 @@ impl<F: GeoFloat> Distance<F, &Geometry<F>, &Geometry<F>> for Euclidean {
 // ┌───────────────────────────┐
 // │ Implementations utilities │
 // └───────────────────────────┘
+
+/// Minimum distance between two axis-aligned rectangles
+///
+/// Returns zero if the rectangles overlap or touch
+#[inline]
+fn rect_rect_distance<F: GeoFloat>(a: Rect<F>, b: Rect<F>) -> F {
+    let dx = (a.min().x - b.max().x)
+        .max(b.min().x - a.max().x)
+        .max(F::zero());
+    let dy = (a.min().y - b.max().y)
+        .max(b.min().y - a.max().y)
+        .max(F::zero());
+    dx.hypot(dy)
+}
+
+/// Minimum distance from a collection of members to a target geometry, with
+/// bounding-rectangle pruning
+///
+/// The distance between two bounding rectangles is a lower bound on the
+/// distance between the geometries they enclose. Members are sorted by that
+/// lower bound, ascending, and the exact member-to-target distance is only
+/// computed while the bound could still improve on the running minimum: the
+/// first member whose bound reaches the current minimum ends the search, as
+/// every subsequent member's bound is at least as large.
+///
+/// Members without a bounding rectangle (empty geometries) are assigned a zero
+/// bound so they are never pruned; their distance is delegated to the
+/// member-to-target implementation, preserving its handling of empty inputs.
+/// If the target has no bounding rectangle, no pruning occurs.
+fn bbox_pruned_min_distance<F: GeoFloat, M>(
+    members: impl Iterator<Item = M>,
+    target_rect: Option<Rect<F>>,
+    member_rect: impl Fn(&M) -> Option<Rect<F>>,
+    member_distance: impl Fn(M) -> F,
+) -> F {
+    let Some(target_rect) = target_rect else {
+        return members.fold(Bounded::max_value(), |acc: F, member| {
+            acc.min(member_distance(member))
+        });
+    };
+    let mut candidates: Vec<(F, M)> = members
+        .map(|member| {
+            let lower_bound = member_rect(&member)
+                .map(|rect| rect_rect_distance(rect, target_rect))
+                .unwrap_or_else(F::zero);
+            (lower_bound, member)
+        })
+        .collect();
+    candidates.sort_unstable_by(|a, b| a.0.total_cmp(&b.0));
+
+    let mut min_distance: F = Bounded::max_value();
+    for (lower_bound, member) in candidates {
+        // A non-finite bound (coordinate overflow in the bound computation, or
+        // NaN coordinates) proves nothing about the member's distance, so only
+        // finite bounds may end the search
+        if lower_bound.is_finite() && lower_bound >= min_distance {
+            break;
+        }
+        min_distance = min_distance.min(member_distance(member));
+        if min_distance == F::zero() {
+            break;
+        }
+    }
+    min_distance
+}
 
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
@@ -863,6 +936,7 @@ fn disjoint_segment_distance<F: GeoFloat>(a: &Line<F>, b: &Line<F>) -> F {
 mod test {
     use super::*;
     use crate::orient::{Direction, Orient};
+    use crate::wkt;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::{coord, polygon, private_utils::line_segment_distance};
 
@@ -1154,6 +1228,45 @@ mod test {
         let mp = MultiPoint::new(v);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(Euclidean.distance(&p, &mp), 64.03124237432849)
+    }
+    #[test]
+    // The member whose bounding rectangle is closest to the target is not the
+    // closest member: the first member's bounding rectangle has corner (1, 1)
+    // (lower bound ~1.414 from the origin) but the diagonal segment it
+    // contains is ~7.78 away. The bounding-rectangle pruning must still visit
+    // the second member (true distance 3), and must prune the third (lower
+    // bound 20)
+    fn multi_geometry_distance_bbox_pruning_visits_true_nearest() {
+        let mls = wkt! { MULTILINESTRING(
+            (1.0 10.0,10.0 1.0),
+            (3.0 0.0,4.0 0.0),
+            (20.0 0.0,21.0 0.0)
+        ) };
+        let p = wkt! { POINT(0.0 0.0) };
+        assert_relative_eq!(Euclidean.distance(&p, &mls), 3.0);
+        assert_relative_eq!(Euclidean.distance(&mls, &p), 3.0);
+    }
+    #[test]
+    // A member intersecting the target yields zero distance regardless of the
+    // other members
+    fn multi_geometry_distance_intersecting_member() {
+        let mp = wkt! { MULTIPOLYGON(
+            ((100.0 0.0,101.0 0.0,101.0 1.0,100.0 1.0,100.0 0.0)),
+            ((0.0 0.0,2.0 0.0,2.0 2.0,0.0 2.0,0.0 0.0))
+        ) };
+        let target = wkt! { POLYGON((1.0 1.0,3.0 1.0,3.0 3.0,1.0 3.0,1.0 1.0)) };
+        assert_relative_eq!(Euclidean.distance(&mp, &target), 0.0);
+    }
+    #[test]
+    // An empty member must not be pruned: its distance is delegated to the
+    // member-to-target implementation, which returns zero for empty inputs
+    fn multi_geometry_distance_empty_member() {
+        let mls = MultiLineString::new(vec![
+            LineString::new(vec![]),
+            LineString::from(vec![(50.0, 50.0), (60.0, 60.0)]),
+        ]);
+        let p = Point::new(0.0, 0.0);
+        assert_relative_eq!(Euclidean.distance(&p, &mls), 0.0);
     }
     #[test]
     fn distance_line_test() {

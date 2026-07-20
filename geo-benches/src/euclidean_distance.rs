@@ -85,6 +85,35 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
     );
 
     c.bench_function(
+        "MultiPolygon Euclidean distance bbox pruning f64",
+        |bencher| {
+            // A 10x10 grid of 64-gon polygons; the target polygon sits to the
+            // left of the grid, so all but the nearest members can be skipped
+            // using the distance between bounding rectangles as a lower bound.
+            let n_sides = 64;
+            let circle = |cx: f64, cy: f64, r: f64| -> Polygon<f64> {
+                let ring: LineString<f64> = (0..=n_sides)
+                    .map(|i| {
+                        let theta = std::f64::consts::TAU * (i % n_sides) as f64 / n_sides as f64;
+                        (cx + r * theta.cos(), cy + r * theta.sin())
+                    })
+                    .collect::<Vec<_>>()
+                    .into();
+                Polygon::new(ring, vec![])
+            };
+            let members: Vec<Polygon<f64>> = (0..10)
+                .flat_map(|gx| (0..10).map(move |gy| ((gx * 10 + 20) as f64, (gy * 10) as f64)))
+                .map(|(cx, cy)| circle(cx, cy, 3.0))
+                .collect();
+            let multi_polygon = geo::MultiPolygon::new(members);
+            let target = circle(0.0, 0.0, 3.0);
+            bencher.iter(|| {
+                criterion::black_box(Euclidean.distance(&multi_polygon, &target));
+            });
+        },
+    );
+
+    c.bench_function(
         "LineString Euclidean distance separable overlapping projections f64",
         |bencher| {
             // Two dense zigzag linestrings, separated along the x axis but offset
