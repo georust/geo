@@ -713,10 +713,7 @@ where
         let mut indices_per_ring =
             vwp_wrapper_indices::<_, 4, 5>(self.exterior(), Some(self.interiors()), epsilon);
         let exterior = indices_per_ring.remove(0);
-        PolygonIndices {
-            exterior,
-            interiors: indices_per_ring,
-        }
+        PolygonIndices::new(exterior, indices_per_ring)
     }
 }
 
@@ -802,14 +799,13 @@ where
     }
 
     fn simplify_vw_idx(&self, epsilon: T) -> PolygonIndices {
-        PolygonIndices {
-            exterior: SimplifyVw::simplify_vw_idx(self.exterior(), epsilon),
-            interiors: self
-                .interiors()
+        PolygonIndices::new(
+            SimplifyVw::simplify_vw_idx(self.exterior(), epsilon),
+            self.interiors()
                 .iter()
                 .map(|l| SimplifyVw::simplify_vw_idx(l, epsilon))
                 .collect(),
-        }
+        )
     }
 }
 
@@ -1108,16 +1104,16 @@ mod idx_tests {
 
         let result: PolygonIndices = poly.simplify_vw_preserve_idx(95.4);
 
-        assert_eq!(result.exterior, vec![0, 1, 2, 3, 4]);
-        assert_eq!(result.interiors, vec![vec![0, 1, 3, 4]]);
+        assert_eq!(result.exterior(), [0, 1, 2, 3, 4]);
+        assert_eq!(result.interiors(), [vec![0, 1, 3, 4]]);
     }
 
     #[test]
     fn simplify_vw_preserve_idx_polygon_identity() {
         let poly = wkt!(POLYGON((0. 0.,10. 0.,10. 10.,0. 10.,0. 0.)));
         let result: PolygonIndices = poly.simplify_vw_preserve_idx(0.0);
-        assert_eq!(result.exterior, vec![0, 1, 2, 3, 4]);
-        assert!(result.interiors.is_empty());
+        assert_eq!(result.exterior(), [0, 1, 2, 3, 4]);
+        assert!(result.interiors().is_empty());
     }
 
     #[test]
@@ -1137,9 +1133,9 @@ mod idx_tests {
         ));
         let result: Vec<PolygonIndices> = mp.simplify_vw_preserve_idx(0.0);
         assert_eq!(result.len(), 2);
-        assert_eq!(result[0].exterior, vec![0, 1, 2, 3, 4]);
-        assert!(result[0].interiors.is_empty());
-        assert_eq!(result[1].exterior, vec![0, 1, 2, 3, 4]);
-        assert!(result[1].interiors.is_empty());
+        assert_eq!(result[0].exterior(), [0, 1, 2, 3, 4]);
+        assert!(result[0].interiors().is_empty());
+        assert_eq!(result[1].exterior(), [0, 1, 2, 3, 4]);
+        assert!(result[1].interiors().is_empty());
     }
 }

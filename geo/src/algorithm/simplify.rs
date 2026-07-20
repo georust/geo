@@ -149,8 +149,29 @@ where
 /// relative to its own ring's coordinate sequence.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PolygonIndices {
-    pub exterior: Vec<usize>,
-    pub interiors: Vec<Vec<usize>>,
+    exterior: Vec<usize>,
+    interiors: Vec<Vec<usize>>,
+}
+
+impl PolygonIndices {
+    pub(crate) fn new(exterior: Vec<usize>, interiors: Vec<Vec<usize>>) -> Self {
+        Self {
+            exterior,
+            interiors,
+        }
+    }
+
+    /// The retained indices of the polygon's exterior ring, relative to the
+    /// exterior ring's own coordinate sequence.
+    pub fn exterior(&self) -> &[usize] {
+        &self.exterior
+    }
+
+    /// The retained indices of the polygon's interior rings, one `Vec` per
+    /// interior ring, each relative to its own ring's coordinate sequence.
+    pub fn interiors(&self) -> &[Vec<usize>] {
+        &self.interiors
+    }
 }
 
 // Indices are relative to this ring's own coord sequence, not polygon-global.
@@ -365,14 +386,13 @@ where
     }
 
     fn simplify_idx(&self, epsilon: T) -> PolygonIndices {
-        PolygonIndices {
-            exterior: rdp_indices::<_, POLYGON_INITIAL_MIN>(self.exterior(), epsilon),
-            interiors: self
-                .interiors()
+        PolygonIndices::new(
+            rdp_indices::<_, POLYGON_INITIAL_MIN>(self.exterior(), epsilon),
+            self.interiors()
                 .iter()
                 .map(|l| rdp_indices::<_, POLYGON_INITIAL_MIN>(l, epsilon))
                 .collect(),
-        }
+        )
     }
 }
 
