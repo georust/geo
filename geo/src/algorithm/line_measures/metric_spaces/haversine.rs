@@ -381,15 +381,18 @@ impl<F: CoordFloat + FromPrimitive> InterpolatePoint<F> for HaversineMeasure {
         }
 
         let number_of_points = (total_distance / max_distance).ceil();
-        let interval = F::one() / number_of_points;
+        // Iterate over an integer step count; accumulating a float step drifts below 1.0 and
+        // pushes a final interior point coincident with `end` (cf. `densify_between`).
+        let n = number_of_points
+            .to_u64()
+            .expect("unreasonable number of segments");
+        let frac = F::one() / number_of_points;
 
-        let mut current_step = interval;
         let mut points = if include_ends { vec![start] } else { vec![] };
 
-        while current_step < F::one() {
-            let point = calculation.point_at_ratio(current_step);
-            points.push(point);
-            current_step = current_step + interval;
+        for step in 1..n {
+            let ratio = frac * F::from(step).unwrap();
+            points.push(calculation.point_at_ratio(ratio));
         }
 
         if include_ends {
