@@ -187,7 +187,7 @@ where
 /// An `epsilon` less than or equal to zero will return an unaltered version of the geometry.
 pub trait Simplify<T, Epsilon = T> {
     /// The index-output type of [`Simplify::simplify_idx`], which varies by geometry.
-    type Output;
+    type IndexOutput;
 
     /// Returns the simplified representation of a geometry, using the [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer–Douglas–Peucker_algorithm) algorithm
     ///
@@ -221,7 +221,7 @@ pub trait Simplify<T, Epsilon = T> {
         T: GeoFloat;
 
     /// Returns the indices of the points retained by [`Simplify::simplify`],
-    /// relative to the input geometry. [`Self::Output`] is `Vec<usize>` for
+    /// relative to the input geometry. [`Self::IndexOutput`] is `Vec<usize>` for
     /// `LineString`, `Vec<Vec<usize>>` for `MultiLineString`, [`PolygonIndices`]
     /// for `Polygon`, and `Vec<PolygonIndices>` for `MultiPolygon`.
     ///
@@ -243,7 +243,7 @@ pub trait Simplify<T, Epsilon = T> {
     ///
     /// assert_eq!(indices, vec![0_usize, 1, 2, 4]);
     /// ```
-    fn simplify_idx(&self, epsilon: T) -> Self::Output
+    fn simplify_idx(&self, epsilon: T) -> Self::IndexOutput
     where
         T: GeoFloat;
 }
@@ -302,7 +302,7 @@ impl<T> Simplify<T> for LineString<T>
 where
     T: GeoFloat,
 {
-    type Output = Vec<usize>;
+    type IndexOutput = Vec<usize>;
 
     fn simplify(&self, epsilon: T) -> Self {
         LineString::from(rdp::<_, _, LINE_STRING_INITIAL_MIN>(
@@ -330,7 +330,7 @@ impl<T> Simplify<T> for MultiLineString<T>
 where
     T: GeoFloat,
 {
-    type Output = Vec<Vec<usize>>;
+    type IndexOutput = Vec<Vec<usize>>;
 
     fn simplify(&self, epsilon: T) -> Self {
         MultiLineString::new(self.iter().map(|l| l.simplify(epsilon)).collect())
@@ -347,7 +347,7 @@ impl<T> Simplify<T> for Polygon<T>
 where
     T: GeoFloat,
 {
-    type Output = PolygonIndices;
+    type IndexOutput = PolygonIndices;
 
     fn simplify(&self, epsilon: T) -> Self {
         Polygon::new(
@@ -380,7 +380,7 @@ impl<T> Simplify<T> for MultiPolygon<T>
 where
     T: GeoFloat,
 {
-    type Output = Vec<PolygonIndices>;
+    type IndexOutput = Vec<PolygonIndices>;
 
     fn simplify(&self, epsilon: T) -> Self {
         MultiPolygon::new(self.iter().map(|p| p.simplify(epsilon)).collect())
