@@ -448,11 +448,11 @@ fn nearest_neighbour_distance<F: GeoFloat>(geom1: &LineString<F>, geom2: &LineSt
     geom2
         .points()
         .fold(Bounded::max_value(), |acc: F, point| {
-            let nearest = tree_a.nearest_neighbor(&point).unwrap();
+            let nearest = tree_a.nearest_neighbor(point).unwrap();
             acc.min(Euclidean.distance(nearest as &Line<F>, &point))
         })
         .min(geom1.points().fold(Bounded::max_value(), |acc, point| {
-            let nearest = tree_b.nearest_neighbor(&point).unwrap();
+            let nearest = tree_b.nearest_neighbor(point).unwrap();
             acc.min(Euclidean.distance(nearest as &Line<F>, &point))
         }))
 }
