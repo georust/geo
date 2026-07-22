@@ -2,26 +2,13 @@ use super::{GeometryIndex, Validation};
 use crate::algorithm::validation::line_string::InvalidLineString;
 use crate::{GeoFloat, MultiLineString};
 
-use std::fmt;
-
 /// A [`MultiLineString`] is valid if each [`LineString`](crate::LineString) in it is valid.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidMultiLineString {
     /// Which element is invalid, and what was invalid about it.
-    InvalidLineString(GeometryIndex, InvalidLineString),
+    #[error("line string at index {} is invalid: {}", .0.0, .1)]
+    InvalidLineString(GeometryIndex, #[source] InvalidLineString),
 }
-
-impl fmt::Display for InvalidMultiLineString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidMultiLineString::InvalidLineString(idx, err) => {
-                write!(f, "line string at index {} is invalid: {}", idx.0, err)
-            }
-        }
-    }
-}
-
-impl std::error::Error for InvalidMultiLineString {}
 
 impl<F: GeoFloat> Validation for MultiLineString<F> {
     type Error = InvalidMultiLineString;

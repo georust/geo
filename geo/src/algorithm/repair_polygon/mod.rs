@@ -195,40 +195,24 @@ mod tests;
 // ====== Error ======
 
 /// Errors that can occur during polygon repair.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, thiserror::Error)]
 pub enum RepairPolygonError {
     /// A coordinate value was NaN.
+    #[error("coordinate value is NaN")]
     CoordinateIsNaN,
     /// A coordinate value was too large for the triangulation kernel.
+    #[error("coordinate value exceeds triangulation kernel limit")]
     CoordinateTooLarge,
     /// A coordinate value was too small (non-zero but below the
     /// triangulation kernel's minimum representable value).
+    #[error("coordinate value is non-zero but below triangulation kernel minimum")]
     CoordinateTooSmall,
     /// An internal constraint edge could not be inserted into the
     /// triangulation. This typically indicates a numerical precision
     /// issue in the input geometry.
+    #[error("internal constraint edge insertion failed")]
     ConstraintFailure,
 }
-
-impl std::fmt::Display for RepairPolygonError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::CoordinateIsNaN => write!(f, "coordinate value is NaN"),
-            Self::CoordinateTooLarge => {
-                write!(f, "coordinate value exceeds triangulation kernel limit")
-            }
-            Self::CoordinateTooSmall => write!(
-                f,
-                "coordinate value is non-zero but below triangulation kernel minimum"
-            ),
-            Self::ConstraintFailure => {
-                write!(f, "internal constraint edge insertion failed")
-            }
-        }
-    }
-}
-
-impl std::error::Error for RepairPolygonError {}
 
 impl From<TriangulationError> for RepairPolygonError {
     fn from(err: TriangulationError) -> Self {

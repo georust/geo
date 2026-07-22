@@ -3,43 +3,22 @@ use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
 use crate::{GeoFloat, MultiPolygon, Relate};
 
-use std::fmt;
-
 /// A [`MultiPolygon`] is valid if:
 /// - [x] all its polygons are valid,
 /// - [x] elements do not overlaps (i.e. their interiors must not intersect)
 /// - [x] elements touch only at points
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidMultiPolygon {
     /// For a [`MultiPolygon`] to be valid, each member [`Polygon`](crate::Polygon) must be valid.
-    InvalidPolygon(GeometryIndex, InvalidPolygon),
+    #[error("polygon at index {} is invalid: {}", .0.0, .1)]
+    InvalidPolygon(GeometryIndex, #[source] InvalidPolygon),
     /// No [`Polygon`](crate::Polygon) in a valid [`MultiPolygon`] may overlap (2-dimensional intersection)
+    #[error("polygons at indices {} and {} overlap", .0.0, .1.0)]
     ElementsOverlaps(GeometryIndex, GeometryIndex),
     /// No [`Polygon`](crate::Polygon) in a valid [`MultiPolygon`] may touch on a line (1-dimensional intersection)
+    #[error("polygons at indices {} and {} touch on a line", .0.0, .1.0)]
     ElementsTouchOnALine(GeometryIndex, GeometryIndex),
 }
-
-impl fmt::Display for InvalidMultiPolygon {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidMultiPolygon::InvalidPolygon(idx, err) => {
-                write!(f, "polygon at index {} is invalid: {}", idx.0, err)
-            }
-            InvalidMultiPolygon::ElementsOverlaps(idx1, idx2) => {
-                write!(f, "polygons at indices {} and {} overlap", idx1.0, idx2.0)
-            }
-            InvalidMultiPolygon::ElementsTouchOnALine(idx1, idx2) => {
-                write!(
-                    f,
-                    "polygons at indices {} and {} touch on a line",
-                    idx1.0, idx2.0
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for InvalidMultiPolygon {}
 
 impl<F: GeoFloat> Validation for MultiPolygon<F> {
     type Error = InvalidMultiPolygon;

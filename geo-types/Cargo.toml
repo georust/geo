@@ -12,7 +12,7 @@ edition = "2021"
 
 [features]
 default = ["std"]
-std = ["approx?/std", "num-traits/std", "serde?/std"]
+std = ["approx?/std", "num-traits/std", "serde?/std", "thiserror/std"]
 multithreading = ["rayon"]
 serde = [ "dep:serde", "rstar_0_8?/serde", "rstar_0_9?/serde", "rstar_0_10?/serde", "rstar_0_11?/serde", "rstar_0_12?/serde", "rstar_0_13?/serde"]
 
@@ -47,6 +47,7 @@ rstar_0_12 = { package = "rstar", version = "0.12", optional = true }
 rstar_0_13 = { package = "rstar", version = "0.13", optional = true }
 serde = { version = "1", optional = true, default-features = false, features = ["alloc", "derive"] }
 spade_2 = { package = "spade", version = "2", optional = true }
+thiserror = { version = "2.0", default-features = false }
 
 [dev-dependencies]
 approx = ">= 0.4.0, < 0.6.0"

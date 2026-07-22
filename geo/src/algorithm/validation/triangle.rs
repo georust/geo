@@ -1,37 +1,18 @@
 use super::{CoordIndex, Validation, utils};
 use crate::{CoordFloat, Triangle};
 
-use std::fmt;
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidTriangle {
     /// A valid [`Triangle`] must have finite coordinates.
+    #[error("coordinate at index {} is non-finite", .0.0)]
     NonFiniteCoord(CoordIndex),
     /// A valid [`Triangle`] must have distinct points.
+    #[error("coordinates at indices {} and {} are identical", .0.0, .1.0)]
     IdenticalCoords(CoordIndex, CoordIndex),
     /// A valid [`Triangle`] must have non-collinear points.
+    #[error("triangle has collinear coordinates")]
     CollinearCoords,
 }
-
-impl fmt::Display for InvalidTriangle {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidTriangle::NonFiniteCoord(idx) => {
-                write!(f, "coordinate at index {} is non-finite", idx.0)
-            }
-            InvalidTriangle::IdenticalCoords(idx1, idx2) => {
-                write!(
-                    f,
-                    "coordinates at indices {} and {} are identical",
-                    idx1.0, idx2.0
-                )
-            }
-            InvalidTriangle::CollinearCoords => write!(f, "triangle has collinear coordinates"),
-        }
-    }
-}
-
-impl std::error::Error for InvalidTriangle {}
 
 impl<F: CoordFloat> Validation for Triangle<F> {
     type Error = InvalidTriangle;

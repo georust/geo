@@ -1,26 +1,12 @@
 use super::{CoordIndex, Validation, utils};
 use crate::{GeoFloat, Rect};
 
-use std::fmt;
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidRect {
     /// A valid [`Rect`] must have finite coordinates.
     /// Index `0` means the min coordinate, index `1` means the max coordinate.
+    #[error("coordinate at rect's {} is non-finite", if .0.0 == 0 { "min" } else { "max" })]
     NonFiniteCoord(CoordIndex),
-}
-
-impl std::error::Error for InvalidRect {}
-
-impl fmt::Display for InvalidRect {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidRect::NonFiniteCoord(idx) => {
-                let corner = if idx.0 == 0 { "min" } else { "max" };
-                write!(f, "coordinate at rect's {corner} is non-finite")
-            }
-        }
-    }
 }
 impl<F: GeoFloat> Validation for Rect<F> {
     type Error = InvalidRect;

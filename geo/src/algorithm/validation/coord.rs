@@ -1,23 +1,12 @@
 use super::{Validation, utils};
 use crate::{Coord, GeoFloat};
 
-use std::fmt;
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidCoord {
     /// A valid [`Coord`] must be finite.
+    #[error("coordinate was non-finite")]
     NonFinite,
 }
-
-impl fmt::Display for InvalidCoord {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidCoord::NonFinite => write!(f, "coordinite was non-finite"),
-        }
-    }
-}
-
-impl std::error::Error for InvalidCoord {}
 
 impl<F: GeoFloat> Validation for Coord<F> {
     type Error = InvalidCoord;

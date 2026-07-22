@@ -1,30 +1,15 @@
 use super::{CoordIndex, Validation, utils};
 use crate::{GeoFloat, HasDimensions, LineString};
 
-use std::fmt;
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidLineString {
     /// A valid [`LineString`] must have at least 2 distinct points to be valid - it must have a non-zero length.
+    #[error("line string must have at least 2 distinct points")]
     TooFewPoints,
     /// A valid [`LineString`] must have finite coordinates.
+    #[error("coordinate at index {} is non-finite", .0.0)]
     NonFiniteCoord(CoordIndex),
 }
-
-impl fmt::Display for InvalidLineString {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidLineString::TooFewPoints => {
-                write!(f, "line string must have at least 2 distinct points")
-            }
-            InvalidLineString::NonFiniteCoord(idx) => {
-                write!(f, "coordinate at index {} is non-finite", idx.0)
-            }
-        }
-    }
-}
-
-impl std::error::Error for InvalidLineString {}
 
 impl<F: GeoFloat> Validation for LineString<F> {
     type Error = InvalidLineString;
