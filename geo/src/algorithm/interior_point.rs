@@ -853,4 +853,80 @@ mod test {
         // check collection
         assert_eq!(collection.interior_point().unwrap(), point!(x: 6., y: 0.));
     }
+
+    #[test]
+    fn degenerate_multipolygon_does_not_panic() {
+        let poly1 = Polygon::new(LineString::from(vec![(0.0, 0.0)]), vec![]);
+        let poly2 = Polygon::new(LineString::from(vec![(0.0, 0.0)]), vec![]);
+        let mp = MultiPolygon::new(vec![poly1, poly2]);
+        let _ = mp.interior_point();
+    }
+
+    #[test]
+    fn two_vertex_polygon_does_not_panic() {
+        let poly = Polygon::new(LineString::from(vec![(0.0, 0.0), (1.0, 0.0)]), vec![]);
+        let _ = poly.interior_point();
+    }
+
+    #[test]
+    fn overlapping_vertical_segments_do_not_panic() {
+        let poly1 = Polygon::new(
+            LineString::from(vec![(0.0, 0.0), (0.0, 1.0), (0.0, 0.0)]),
+            vec![],
+        );
+        let poly2 = Polygon::new(
+            LineString::from(vec![(0.0, 0.5), (0.0, 1.5), (0.0, 0.5)]),
+            vec![],
+        );
+        let mp = MultiPolygon::new(vec![poly1, poly2]);
+        let _ = mp.interior_point();
+    }
+
+    #[test]
+    fn collinear_overlapping_polygons_do_not_panic() {
+        let poly1 = Polygon::new(
+            LineString::from(vec![(0.0, 0.0), (1.0, 0.0), (2.0, 0.0), (0.0, 0.0)]),
+            vec![],
+        );
+        let poly2 = Polygon::new(
+            LineString::from(vec![(1.0, 0.0), (2.0, 0.0), (3.0, 0.0), (1.0, 0.0)]),
+            vec![],
+        );
+        let mp = MultiPolygon::new(vec![poly1, poly2]);
+        let _ = mp.interior_point();
+    }
+
+    #[test]
+    fn single_point_multipolygon_does_not_panic() {
+        let mp = MultiPolygon::new(vec![
+            Polygon::new(LineString::from(vec![(0.0, 0.0)]), vec![]),
+            Polygon::new(LineString::from(vec![(1.0, 1.0)]), vec![]),
+            Polygon::new(LineString::from(vec![(0.0, 0.0)]), vec![]),
+        ]);
+        let _ = mp.interior_point();
+    }
+
+    #[test]
+    fn polygon_with_empty_interior_rings_does_not_panic() {
+        // Regression: fuzz_ewkb_decode.
+        let poly = Polygon::new(
+            LineString::from(vec![
+                (1.0609978955e-314, 5e-324),
+                (2.75635648582e-312, 0.0),
+                (0.0, -7.291122019556398e-304),
+                (0.0, 0.0),
+                (-0.0, 0.0),
+                (0.0, 6.37e-322),
+                (1.0609978955e-314, 5e-324),
+            ]),
+            vec![
+                LineString::new(vec![]),
+                LineString::new(vec![]),
+                LineString::new(vec![]),
+                LineString::new(vec![]),
+                LineString::new(vec![]),
+            ],
+        );
+        let _ = poly.interior_point();
+    }
 }
