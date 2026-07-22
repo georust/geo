@@ -8,6 +8,7 @@
 - Add `rstar` support for `Rect`.
   - <https://github.com/georust/geo/pull/1549>
 - Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls.
+- Add `Geometry::static_name()` to get the type of geometry like `Point` and `MultiLineString` as a static string.
 
 ## 0.7.19 - 2026-04-15
 
