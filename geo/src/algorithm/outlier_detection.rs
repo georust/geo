@@ -212,7 +212,7 @@ where
         .iter()
         .map(|point| {
             let neighbours = tree
-                .nearest_neighbor_iter_with_distance_2(point)
+                .nearest_neighbor_iter_with_distance_2(*point)
                 .take(k_neighbours)
                 .collect::<Vec<_>>();
             let kth_dist = neighbours.last().map(|(_, d)| *d).unwrap();

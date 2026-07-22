@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- FIX: `Line::haversine_closest_point` no longer returns an endpoint for valid high-latitude projections.
+  - <https://github.com/georust/geo/issues/1325>
+- Add index-returning methods `Simplify::simplify_idx`, `SimplifyVw::simplify_vw_idx`, `SimplifyVwPreserve::simplify_vw_preserve_idx`, and `ConvexHull::convex_hull_idx`, returning input-relative indices of the retained vertices. Adds the `PolygonIndices` type and the `quick_hull_indices` free function.
+  - <https://github.com/georust/geo/issues/1537>
+  - BREAKING: `Simplify`, `SimplifyVw`, and `SimplifyVwPreserve` (in `geo::algorithm::{simplify, simplify_vw}`) each gain an associated `Output` type and a required `*_idx` method, and `ConvexHull` (in `geo::algorithm::convex_hull`) gains a required `convex_hull_idx` method. Manual implementors of these traits must add the new associated type and method; callers that only use the provided methods are unaffected.
+- DEPRECATED: the standalone `SimplifyIdx` and `SimplifyVwIdx` traits; use the `simplify_idx` / `simplify_vw_idx` methods on `Simplify` / `SimplifyVw` instead.
+  - <https://github.com/georust/geo/issues/1537>
+  - BREAKING: `SimplifyIdx` and `SimplifyVwIdx` are no longer re-exported from `geo::algorithm` or the `geo::prelude`, so their `simplify_idx` / `simplify_vw_idx` methods no longer collide with the new same-named methods on `Simplify` / `SimplifyVw` under `use geo::prelude::*`. They remain reachable (deprecated) at the crate root as `geo::SimplifyIdx` / `geo::SimplifyVwIdx`; update `use geo::algorithm::SimplifyIdx` (or prelude-glob) imports accordingly.
+- Remove unused `utils::least_and_greatest_index`.
 - Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
   - <https://github.com/georust/geo/pull/1533>
 - Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.
@@ -14,6 +23,9 @@
   - <https://github.com/georust/geo/pull/1542>
 - Speed up `Relate` operations.
   - <https://github.com/georust/geo/pull/1521>
+- FIX: `InterpolatePoint::points_along_line` no longer appends a duplicate final vertex (and zero-length segment) for `Haversine`, `Geodesic`, and `Rhumb`.
+  - <https://github.com/georust/geo/pull/1559>
+- Update the `rstar` dependency to 0.13.
 
 ## 0.33.1 - 2026-4-20
 
@@ -61,6 +73,7 @@
   - Preprocessing cost to construct these types, but provide a significant performance boost for intersects and contains_properly checks
   - <https://github.com/georust/geo/issues/1466>
   - <https://github.com/georust/geo/pull/1467>
+- Add `Substring` / `SubstringableLine` traits for extracting the section of a `Line` or `LineString` between two distance- or ratio-along-line bounds. Generic over any metric space implementing `InterpolatePoint + Length` (Euclidean, Haversine, Geodesic, Rhumb).
 
 ## 0.32.0 - 2025-12-05
 

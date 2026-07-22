@@ -4,6 +4,7 @@
 
 - Document that the inherent `GeometryCollection::is_empty` is a purely structural check (zero geometries) and does not recurse into element emptiness, unlike `geo::HasDimensions::is_empty`.
   - <https://github.com/georust/geo/issues/1431>
+- Add support for `rstar` 0.13 via the `rstar_0_13` feature, alongside the existing `rstar` versions.
 
 ## 0.7.19 - 2026-04-15
 

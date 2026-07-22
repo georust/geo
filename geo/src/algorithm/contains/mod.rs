@@ -31,6 +31,14 @@
 ///
 /// // Point in Polygon
 /// assert!(polygon.contains(&point!(x: 1., y: 1.)));
+///
+/// // A `LineString`'s endpoints belong to its *boundary*, not its interior,
+/// // so a point at an endpoint is not contained, while a point along the
+/// // interior is (a consequence of the [DE-9IM] semantics described above):
+/// let path = line_string![(x: 0., y: 0.), (x: 2., y: 0.), (x: 2., y: 2.)];
+/// assert!(path.contains(&point!(x: 1., y: 0.)));   // interior point
+/// assert!(!path.contains(&point!(x: 0., y: 0.)));  // start endpoint
+/// assert!(!path.contains(&point!(x: 2., y: 2.)));  // end endpoint
 /// ```
 ///
 /// # Performance Note

@@ -1,6 +1,7 @@
 use super::super::{Bearing, Destination, Distance, InterpolatePoint};
 use crate::Point;
 use geographiclib_rs::{DirectGeodesic, InverseGeodesic};
+use num_traits::ToPrimitive;
 use std::sync::LazyLock;
 
 /// Use the [`Geodesic`] constant (an instance of `GeodesicMeasure`) rather than building your own
@@ -364,18 +365,23 @@ where
         }
 
         let number_of_points = (total_distance / max_distance).ceil();
-        let interval = 1.0 / number_of_points;
+        // Iterate over an integer step count; accumulating a float step drifts below 1.0 and
+        // pushes a final interior point coincident with `end` (cf. `densify_between`).
+        let n = number_of_points
+            .to_u64()
+            .expect("unreasonable number of segments");
+        let frac = 1.0 / number_of_points;
 
-        let mut current_step = interval;
         let mut points = if include_ends { vec![start] } else { vec![] };
 
-        while current_step < 1.0 {
-            let (lat2, lon2) =
-                self.geoid
-                    .direct(start.y(), start.x(), azi1, total_distance * current_step);
-            let point = Point::new(lon2, lat2);
-            points.push(point);
-            current_step += interval;
+        for step in 1..n {
+            let (lat2, lon2) = self.geoid.direct(
+                start.y(),
+                start.x(),
+                azi1,
+                total_distance * (frac * step as f64),
+            );
+            points.push(Point::new(lon2, lat2));
         }
 
         if include_ends {

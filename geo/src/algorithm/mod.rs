@@ -215,7 +215,7 @@ pub use line_measures::metric_spaces::{
 };
 pub use line_measures::{
     Bearing, Densify, Destination, Distance, InterpolatableLine, InterpolateLine, InterpolatePoint,
-    Length,
+    Length, Substring, SubstringError, SubstringableLine,
 };
 
 /// Split a LineString into n segments
@@ -260,11 +260,11 @@ pub use affine_ops::{AffineOps, AffineTransform};
 
 /// Simplify `Geometries` using the Ramer-Douglas-Peucker algorithm.
 pub mod simplify;
-pub use simplify::{Simplify, SimplifyIdx};
+pub use simplify::{PolygonIndices, Simplify};
 
 /// Simplify `Geometries` using the Visvalingam-Whyatt algorithm. Includes a topology-preserving variant.
 pub mod simplify_vw;
-pub use simplify_vw::{SimplifyVw, SimplifyVwIdx, SimplifyVwPreserve};
+pub use simplify_vw::{SimplifyVw, SimplifyVwPreserve};
 
 /// Stitch together triangles with adjacent sides. Alternative to unioning triangles via BooleanOps.
 #[allow(dead_code)]
