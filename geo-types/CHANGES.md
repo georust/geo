@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Derive error types via `thiserror` instead of hand-written `Display`/`Error` impls. `Error` and the deprecated `InvalidRectCoordinatesError` now implement `core::error::Error` unconditionally (previously only under the `std` feature).
 - Document that the inherent `GeometryCollection::is_empty` is a purely structural check (zero geometries) and does not recurse into element emptiness, unlike `geo::HasDimensions::is_empty`.
   - <https://github.com/georust/geo/issues/1431>
 - Add support for `rstar` 0.13 via the `rstar_0_13` feature, alongside the existing `rstar` versions.

@@ -44,20 +44,11 @@ pub struct TestCase {
     operation: Operation,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, thiserror::Error)]
+#[error("failed {:?}: \"{}\" with error: {}", .test_case.test_id, .test_case.description, .error_description)]
 pub struct TestFailure {
     error_description: String,
     test_case: TestCase,
-}
-
-impl std::fmt::Display for TestFailure {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
-        write!(
-            f,
-            "failed {:?}: \"{}\" with error: {}",
-            &self.test_case.test_id, &self.test_case.description, &self.error_description
-        )
-    }
 }
 
 impl TestRunner {

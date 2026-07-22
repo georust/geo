@@ -1,24 +1,10 @@
-use core::fmt;
-
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Expected a {expected}, but found a {found}")]
     MismatchedGeometry {
         expected: &'static str,
         found: &'static str,
     },
-}
-
-#[cfg(feature = "std")]
-impl std::error::Error for Error {}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Error::MismatchedGeometry { expected, found } => {
-                write!(f, "Expected a {expected}, but found a {found}")
-            }
-        }
-    }
 }
 
 #[cfg(test)]

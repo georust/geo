@@ -107,45 +107,19 @@ use crate::{
 ///
 /// This wraps [`TriangulationError`] (which can occur during the underlying
 /// Delaunay triangulation) and adds Voronoi-specific error variants.
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug, thiserror::Error)]
 pub enum VoronoiError {
     /// Error during the underlying Delaunay triangulation.
-    Triangulation(TriangulationError),
+    #[error("triangulation error: {0}")]
+    Triangulation(#[source] TriangulationError),
     /// Input points are collinear; Voronoi cells cannot be computed.
     /// Use [`Voronoi::voronoi_edges`] instead to get perpendicular bisectors.
+    #[error("input points are collinear; Voronoi cells cannot be computed")]
     CollinearInput,
     /// Fewer than 2 unique vertices were provided.
     /// At least 2 vertices are required to compute a Voronoi diagram.
+    #[error("fewer than 2 unique vertices; cannot compute Voronoi diagram")]
     InsufficientVertices,
-}
-
-impl std::fmt::Display for VoronoiError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            VoronoiError::Triangulation(e) => write!(f, "triangulation error: {e}"),
-            VoronoiError::CollinearInput => {
-                write!(
-                    f,
-                    "input points are collinear; Voronoi cells cannot be computed"
-                )
-            }
-            VoronoiError::InsufficientVertices => {
-                write!(
-                    f,
-                    "fewer than 2 unique vertices; cannot compute Voronoi diagram"
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for VoronoiError {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            VoronoiError::Triangulation(e) => Some(e),
-            VoronoiError::CollinearInput | VoronoiError::InsufficientVertices => None,
-        }
-    }
 }
 
 impl From<TriangulationError> for VoronoiError {
