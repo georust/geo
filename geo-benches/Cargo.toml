@@ -32,12 +32,18 @@ serde_json = "1.0.81"
 wkt = "0.14.0"
 
 [[bench]]
-name = "boolean_ops"
-path = "src/boolean_ops.rs"
-harness = false
-[[bench]]
 name = "area"
 path = "src/area.rs"
+harness = false
+
+[[bench]]
+name = "ball_tree"
+path = "src/ball_tree.rs"
+harness = false
+
+[[bench]]
+name = "boolean_ops"
+path = "src/boolean_ops.rs"
 harness = false
 
 [[bench]]
@@ -171,6 +177,6 @@ path = "src/voronoi.rs"
 harness = false
 
 [[bench]]
-name = "ball_tree"
-path = "src/ball_tree.rs"
+name = "validation"
+path = "src/validation.rs"
 harness = false

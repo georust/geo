@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
+  - <https://github.com/georust/geo/pull/1472>
 - FIX: `Line::haversine_closest_point` no longer returns an endpoint for valid high-latitude projections.
   - <https://github.com/georust/geo/issues/1325>
 - Add index-returning methods `Simplify::simplify_idx`, `SimplifyVw::simplify_vw_idx`, `SimplifyVwPreserve::simplify_vw_preserve_idx`, and `ConvexHull::convex_hull_idx`, returning input-relative indices of the retained vertices. Adds the `PolygonIndices` type and the `quick_hull_indices` free function.
