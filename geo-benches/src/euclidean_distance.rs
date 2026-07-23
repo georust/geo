@@ -1,6 +1,6 @@
 use criterion::{criterion_group, criterion_main};
 use geo::algorithm::{ConvexHull, Distance, Euclidean};
-use geo::{Polygon, polygon};
+use geo::{LineString, Polygon, polygon};
 
 fn criterion_benchmark(c: &mut criterion::Criterion) {
     c.bench_function("Polygon Euclidean distance RTree f64", |bencher| {
@@ -80,6 +80,30 @@ fn criterion_benchmark(c: &mut criterion::Criterion) {
             .convex_hull();
             bencher.iter(|| {
                 criterion::black_box(Euclidean.distance(&poly1, &poly2));
+            });
+        },
+    );
+
+    c.bench_function(
+        "LineString Euclidean distance separable overlapping projections f64",
+        |bencher| {
+            // Two dense zigzag linestrings, separated along the x axis but offset
+            // along y so that their projections onto the axis connecting the two
+            // bounding-box centroids overlap over half of each geometry. This
+            // exercises the prefix-pruning step of the separable fast path, which
+            // would otherwise scan the overlapping region quadratically.
+            let n = 1_000;
+            let a: LineString<f64> = (0..n)
+                .map(|i| (0.5 * (i % 2) as f64, i as f64 * 0.02))
+                .collect::<Vec<_>>()
+                .into();
+            let y_offset = n as f64 * 0.02 * 0.5;
+            let b: LineString<f64> = (0..n)
+                .map(|i| (2.0 + 0.5 * (i % 2) as f64, y_offset + i as f64 * 0.02))
+                .collect::<Vec<_>>()
+                .into();
+            bencher.iter(|| {
+                criterion::black_box(Euclidean.distance(&a, &b));
             });
         },
     );
