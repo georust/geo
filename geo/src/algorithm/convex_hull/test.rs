@@ -301,3 +301,13 @@ fn collection() {
         ]
     );
 }
+
+#[test]
+fn convex_hull_with_nan_does_not_panic() {
+    let pts = MultiPoint::new(vec![
+        Point::new(0.0, 0.0),
+        Point::new(f64::NAN, 1.0),
+        Point::new(1.0, 1.0),
+    ]);
+    let _ = pts.convex_hull();
+}

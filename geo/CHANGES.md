@@ -27,6 +27,9 @@
 - FIX: `InterpolatePoint::points_along_line` no longer appends a duplicate final vertex (and zero-length segment) for `Haversine`, `Geodesic`, and `Rhumb`.
   - <https://github.com/georust/geo/pull/1559>
 - Update the `rstar` dependency to 0.13.
+- FIX: `lex_cmp` uses `total_cmp` and no longer panics on `NaN` coordinates.
+- BREAKING: Tightens the bound on `Contains<MultiPoint<T>> for MultiPoint<T>` from `T: CoordNum` to `T: GeoNum`
+  - <https://github.com/georust/geo/pull/1555>
 
 ## 0.33.1 - 2026-4-20
 
