@@ -9,7 +9,6 @@ use crate::{CoordFloat, GeoFloat, GeoNum};
 use num_traits::{Bounded, Float};
 use rstar::RTree;
 use rstar::primitives::CachedEnvelope;
-use std::ops::ControlFlow;
 
 // Distance is a symmetric operation, so we can implement it once for both
 macro_rules! symmetric_distance_impl {
@@ -352,25 +351,33 @@ impl_euclidean_distance_for_polygonlike_geometry!(&Rect<F>,      [&Point<F>, &Li
 // └───────────────────────────────────────────┘
 
 /// Euclidean distance implementation for multi geometry types.
+///
+/// Rather than folding the minimum over full member-to-target distance
+/// computations, members are first sorted by the distance between their
+/// bounding rectangle and the target's bounding rectangle. The exact distance
+/// is then only computed while a member's bounding-rectangle distance could
+/// still improve on the running minimum; the remaining members are skipped.
 macro_rules! impl_euclidean_distance_for_iter_geometry {
     ($iter_geometry:ty,  [$($to_geometry:ty),*]) => {
         impl<F: GeoFloat> Distance<F, $iter_geometry, $iter_geometry> for Euclidean {
             fn distance(&self, origin: $iter_geometry, destination: $iter_geometry) -> F {
-                origin
-                    .iter()
-                    .fold(Bounded::max_value(), |accum: F, member| {
-                        accum.min(self.distance(member, destination))
-                    })
+                bbox_pruned_min_distance(
+                    origin.iter(),
+                    destination.bounding_rect().into(),
+                    |member| member.bounding_rect().into(),
+                    |member| self.distance(member, destination),
+                )
              }
         }
         $(
             impl<F: GeoFloat> Distance<F, $iter_geometry, $to_geometry> for Euclidean {
                 fn distance(&self, iter_geometry: $iter_geometry, to_geometry: $to_geometry) -> F {
-                    iter_geometry
-                        .iter()
-                        .fold(Bounded::max_value(), |accum: F, member| {
-                            accum.min(self.distance(member, to_geometry))
-                        })
+                    bbox_pruned_min_distance(
+                        iter_geometry.iter(),
+                        to_geometry.bounding_rect().into(),
+                        |member| member.bounding_rect().into(),
+                        |member| self.distance(member, to_geometry),
+                    )
                 }
             }
             symmetric_distance_impl!(GeoFloat, $to_geometry, $iter_geometry);
@@ -438,6 +445,71 @@ impl<F: GeoFloat> Distance<F, &Geometry<F>, &Geometry<F>> for Euclidean {
 // ┌───────────────────────────┐
 // │ Implementations utilities │
 // └───────────────────────────┘
+
+/// Minimum distance between two axis-aligned rectangles
+///
+/// Returns zero if the rectangles overlap or touch
+#[inline]
+fn rect_rect_distance<F: GeoFloat>(a: Rect<F>, b: Rect<F>) -> F {
+    let dx = (a.min().x - b.max().x)
+        .max(b.min().x - a.max().x)
+        .max(F::zero());
+    let dy = (a.min().y - b.max().y)
+        .max(b.min().y - a.max().y)
+        .max(F::zero());
+    dx.hypot(dy)
+}
+
+/// Minimum distance from a collection of members to a target geometry, with
+/// bounding-rectangle pruning
+///
+/// The distance between two bounding rectangles is a lower bound on the
+/// distance between the geometries they enclose. Members are sorted by that
+/// lower bound, ascending, and the exact member-to-target distance is only
+/// computed while the bound could still improve on the running minimum: the
+/// first member whose bound reaches the current minimum ends the search, as
+/// every subsequent member's bound is at least as large.
+///
+/// Members without a bounding rectangle (empty geometries) are assigned a zero
+/// bound so they are never pruned; their distance is delegated to the
+/// member-to-target implementation, preserving its handling of empty inputs.
+/// If the target has no bounding rectangle, no pruning occurs.
+fn bbox_pruned_min_distance<F: GeoFloat, M>(
+    members: impl Iterator<Item = M>,
+    target_rect: Option<Rect<F>>,
+    member_rect: impl Fn(&M) -> Option<Rect<F>>,
+    member_distance: impl Fn(M) -> F,
+) -> F {
+    let Some(target_rect) = target_rect else {
+        return members.fold(Bounded::max_value(), |acc: F, member| {
+            acc.min(member_distance(member))
+        });
+    };
+    let mut candidates: Vec<(F, M)> = members
+        .map(|member| {
+            let lower_bound = member_rect(&member)
+                .map(|rect| rect_rect_distance(rect, target_rect))
+                .unwrap_or_else(F::zero);
+            (lower_bound, member)
+        })
+        .collect();
+    candidates.sort_unstable_by(|a, b| a.0.total_cmp(&b.0));
+
+    let mut min_distance: F = Bounded::max_value();
+    for (lower_bound, member) in candidates {
+        // A non-finite bound (coordinate overflow in the bound computation, or
+        // NaN coordinates) proves nothing about the member's distance, so only
+        // finite bounds may end the search
+        if lower_bound.is_finite() && lower_bound >= min_distance {
+            break;
+        }
+        min_distance = min_distance.min(member_distance(member));
+        if min_distance == F::zero() {
+            break;
+        }
+    }
+    min_distance
+}
 
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
@@ -571,10 +643,17 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
     let p_coords = &linestring_p.0;
     let q_coords = &linestring_q.0;
 
+    // Closed-ring detection is invariant for the whole search: compute it once here
+    // rather than on every distance evaluation in the inner loop
+    let p_closed = p_coords.first() == p_coords.last();
+    let q_closed = q_coords.first() == q_coords.last();
+
     // Step 1: Project all vertices into 1D space
     // This gives us intercepts + index of original vertex
-    let mut projected_vertices_p = calculate_vertex_intercepts(p_coords, slope, use_x_projection);
-    let mut projected_vertices_q = calculate_vertex_intercepts(q_coords, slope, use_x_projection);
+    let mut projected_vertices_p =
+        calculate_vertex_intercepts(p_coords, slope, use_x_projection, p_closed);
+    let mut projected_vertices_q =
+        calculate_vertex_intercepts(q_coords, slope, use_x_projection, q_closed);
 
     // Step 2: Sort vertices by intercepts for spatial locality
     projected_vertices_p.sort_unstable_by(|a, b| a.intercept.total_cmp(&b.intercept));
@@ -594,13 +673,15 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
     };
     // the geometry whose midpoint has the lower projection value becomes
     // the "left" geometry.
-    let (left_intercepts, right_intercepts, left_coords, right_coords) =
+    let (left_intercepts, right_intercepts, left_coords, right_coords, left_closed, right_closed) =
         if centroid_p_projection < centroid_q_projection {
             (
                 &projected_vertices_p,
                 &projected_vertices_q,
                 p_coords,
                 q_coords,
+                p_closed,
+                q_closed,
             )
         } else {
             (
@@ -608,6 +689,8 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
                 &projected_vertices_p,
                 q_coords,
                 p_coords,
+                q_closed,
+                p_closed,
             )
         };
 
@@ -626,15 +709,27 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
         .first()
         .expect("right intercepts should not be empty")
         .vertex_idx;
-    let min_distance =
-        get_min_segment_distance(left_coords, highest_left, right_coords, lowest_right);
+    let min_distance = get_min_segment_distance(
+        left_coords,
+        highest_left,
+        left_closed,
+        right_coords,
+        lowest_right,
+        right_closed,
+    );
 
     // Step 4b: calculate the upper bound for a projection delta that could yield a smaller distance
     // This threshold allows us to skip vertex pairs that are too far apart by breaking early
     // this is the key piece of the algorithm!
-    let max_projection_delta = min_distance * (F::one() + (slope * slope)).sqrt();
+    // The scale factor is constant for the whole search, so compute it once. Note that
+    // min_distance * scale is preferred over sqrt(min_distance² * (1 + slope²)): the squared
+    // form overflows to infinity for min_distance beyond ~1e154, which would silently disable
+    // pruning
+    let projection_scale = (F::one() + slope * slope).sqrt();
+    let mut min_distance = min_distance;
+    let mut max_projection_delta = min_distance * projection_scale;
 
-    // Step 5: minimum distance calculation. This is a bit hairy as an iterator, but the logic is straightforward:
+    // Step 5: minimum distance calculation.
     //
     // First: geometry vertex order: the vertices are ordered by their intercepts, NOT in original order!
     // We iterate through left geometry vertices in reverse (high→low intercept values)
@@ -644,55 +739,54 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
     // 2. As we iterate, the gap between projection values grows
     // 3. We break whenever the gap exceeds our threshold
     // 4. If we find a new minimum distance, store it and update the threshold.
-    let result = left_intercepts.iter().rev().try_fold(
-        (min_distance, max_projection_delta),
-        |(min_dist, max_delta), vertex1| {
-            // Outer loop early termination: skip if remaining vertices are too far away.
-            // Uses strict inequality to check if the best-case scenario (smallest possible gap)
-            // is already too large, in which case we can skip the entire inner loop.
-            if right_intercepts[0].intercept - vertex1.intercept > max_delta {
-                return ControlFlow::Break((min_dist, max_delta));
+    for vertex1 in left_intercepts.iter().rev() {
+        // Outer loop early termination: all remaining left vertices have even lower
+        // intercepts, so once the smallest right intercept is already beyond the
+        // threshold, no closer pair can exist and we can stop entirely.
+        if right_intercepts[0].intercept - vertex1.intercept > max_projection_delta {
+            break;
+        }
+
+        // The distance bound is symmetric in the intercept difference, so right
+        // vertices whose intercepts lie *below* vertex1's by more than the threshold
+        // cannot yield a closer pair either. When the two projections overlap, that
+        // prefix can be long: locate its end by binary search instead of evaluating
+        // full segment distances for it. The cheap first-element check skips the
+        // search in the common non-overlapping case
+        let start = if vertex1.intercept - right_intercepts[0].intercept > max_projection_delta {
+            right_intercepts
+                .partition_point(|v| vertex1.intercept - v.intercept > max_projection_delta)
+        } else {
+            0
+        };
+
+        for vertex2 in &right_intercepts[start..] {
+            // Inner loop early termination: skip vertices beyond threshold.
+            // Uses non-strict inequality (>=) as we iterate through increasingly distant points:
+            // Once we reach OR exceed the threshold, this point and all subsequent points are too far.
+            if vertex2.intercept - vertex1.intercept >= max_projection_delta {
+                break;
             }
 
-            // Inner loop with early termination
-            let inner_result = right_intercepts.iter().try_fold(
-                (min_dist, max_delta),
-                |(mut min_d, mut max_d), vertex2| {
-                    // Inner loop early termination: skip vertices beyond threshold.
-                    // Uses non-strict inequality (>=) as we iterate through increasingly distant points:
-                    // Once we reach OR exceed the threshold, this point and all subsequent points are too far.
-                    if vertex2.intercept - vertex1.intercept >= max_d {
-                        return ControlFlow::Break((min_d, max_d));
-                    }
-
-                    // Calculate minimum distance between segments adjacent to these vertices
-                    let dist = get_min_segment_distance(
-                        left_coords,
-                        vertex1.vertex_idx,
-                        right_coords,
-                        vertex2.vertex_idx,
-                    );
-
-                    if dist < min_d {
-                        min_d = dist;
-                        // Update threshold when we find a closer distance
-                        max_d = (min_d * min_d * (F::one() + slope * slope)).sqrt();
-                    }
-                    ControlFlow::Continue((min_d, max_d))
-                },
+            // Calculate minimum distance between segments adjacent to these vertices
+            let dist = get_min_segment_distance(
+                left_coords,
+                vertex1.vertex_idx,
+                left_closed,
+                right_coords,
+                vertex2.vertex_idx,
+                right_closed,
             );
 
-            let (new_min, new_delta) = match inner_result {
-                ControlFlow::Continue(values) | ControlFlow::Break(values) => values,
-            };
-
-            ControlFlow::Continue((new_min, new_delta))
-        },
-    );
-
-    match result {
-        ControlFlow::Continue((min, _)) | ControlFlow::Break((min, _)) => min,
+            if dist < min_distance {
+                min_distance = dist;
+                // Update threshold when we find a closer distance
+                max_projection_delta = min_distance * projection_scale;
+            }
+        }
     }
+
+    min_distance
 }
 
 /// Projects vertices into 1D space (their intercept, given a slope and axis)
@@ -707,12 +801,12 @@ fn calculate_vertex_intercepts<F: GeoFloat>(
     coords: &[Coord<F>],
     perpendicular_slope: F,
     use_x_intercept: bool,
+    is_closed: bool,
 ) -> Vec<ProjectedVertex<F>> {
     // If this is a closed ring (polygon exterior/interior), skip the duplicate closing vertex.
     // For open LineStrings, we must include the last vertex; otherwise the fast path can miss
     // the true nearest neighbour.
     // We maintain the original index for later segment construction.
-    let is_closed = coords.first() == coords.last();
     let coords = if is_closed {
         &coords[..coords.len().saturating_sub(1)]
     } else {
@@ -750,92 +844,99 @@ fn calculate_vertex_intercepts<F: GeoFloat>(
 ///
 /// # Algorithm
 ///
-/// For each vertex, we identify 2 adjacent segments:
+/// For each vertex, we identify the adjacent segments:
 /// - Closed ring (polygon): prev and next with wraparound
-/// - Open linestring at endpoint: duplicate the single adjacent segment
+/// - Open linestring at endpoint: the single adjacent segment
 /// - Open linestring at middle vertex: prev and next without wraparound
 ///
-/// Then we compute distances between all 4 combinations.
-///
-/// # Edge Cases
-///
-/// - Closed rings: last coordinate duplicates first, vertices wrap around
-/// - Open linestrings at endpoints: both array entries contain the same segment
-#[inline(always)]
+/// Then we compute distances between all combinations (at most 4)
+#[inline]
 fn get_min_segment_distance<F: GeoFloat>(
     coords_p: &[Coord<F>],
     vertex_idx_p: usize,
+    is_closed_p: bool,
     coords_q: &[Coord<F>],
     vertex_idx_q: usize,
+    is_closed_q: bool,
 ) -> F {
-    // Detect if geometry is closed (ring) or open (linestring)
-    let is_closed_p = coords_p.first() == coords_p.last();
-    let is_closed_q = coords_q.first() == coords_q.last();
+    let (first_p, second_p) = adjacent_segments(coords_p, vertex_idx_p, is_closed_p);
+    let (first_q, second_q) = adjacent_segments(coords_q, vertex_idx_q, is_closed_q);
 
-    // Helper to compute adjacent segment indices for a vertex
-    let get_segment_indices =
-        |coords: &[Coord<F>], vertex_idx: usize, is_closed: bool| -> (usize, usize) {
-            if is_closed {
-                // Closed ring: wraparound logic
-                let n = coords.len() - 1; // Exclude duplicate closing vertex
-                let prev = if vertex_idx == 0 {
-                    n - 1
-                } else {
-                    vertex_idx - 1
-                };
-                let next = if vertex_idx >= n - 1 {
-                    0
-                } else {
-                    vertex_idx + 1
-                };
-                (prev, next)
-            } else {
-                // Open linestring: duplicate segment at endpoints
-                let n = coords.len();
-                if vertex_idx == 0 {
-                    // First vertex: both prev and next use segment [0,1]
-                    (0, 1)
-                } else if vertex_idx == n - 1 {
-                    // Last vertex: both prev and next use segment [n-2, n-1]
-                    (n - 2, n - 1)
-                } else {
-                    // Middle vertex: normal prev/next
-                    (vertex_idx - 1, vertex_idx + 1)
-                }
-            }
-        };
-
-    // Get segment indices for both geometries
-    let (prev_idx_p, next_idx_p) = get_segment_indices(coords_p, vertex_idx_p, is_closed_p);
-    let (prev_idx_q, next_idx_q) = get_segment_indices(coords_q, vertex_idx_q, is_closed_q);
-
-    // Build segment arrays
-    // separate arrays means it's easy to compute the cross product, and we won't have to alter
-    // the iterator if we ever expand the number of segments
-    let segments_p = [
-        Line::new(coords_p[prev_idx_p], coords_p[vertex_idx_p]),
-        Line::new(coords_p[vertex_idx_p], coords_p[next_idx_p]),
-    ];
-    let segments_q = [
-        Line::new(coords_q[prev_idx_q], coords_q[vertex_idx_q]),
-        Line::new(coords_q[vertex_idx_q], coords_q[next_idx_q]),
-    ];
+    let segments_p = [Some(first_p), second_p];
+    let segments_q = [Some(first_q), second_q];
 
     // Find minimum distance between all segment combinations
     segments_p
         .iter()
+        .flatten()
         .flat_map(|seg_p| {
             segments_q
                 .iter()
-                .map(move |seg_q| Euclidean.distance(seg_p, seg_q))
+                .flatten()
+                .map(move |seg_q| disjoint_segment_distance(seg_p, seg_q))
         })
         .fold(Bounded::max_value(), |acc, dist| acc.min(dist))
+}
+
+/// Returns the segment(s) adjacent to a vertex
+///
+/// Closed rings always have two adjacent segments (with wraparound); open
+/// linestring endpoints have exactly one
+#[inline]
+fn adjacent_segments<F: GeoFloat>(
+    coords: &[Coord<F>],
+    vertex_idx: usize,
+    is_closed: bool,
+) -> (Line<F>, Option<Line<F>>) {
+    if is_closed {
+        // Closed ring: wraparound logic. Exclude the duplicate closing vertex
+        let n = coords.len() - 1;
+        let prev = if vertex_idx == 0 {
+            n - 1
+        } else {
+            vertex_idx - 1
+        };
+        let next = if vertex_idx >= n - 1 {
+            0
+        } else {
+            vertex_idx + 1
+        };
+        (
+            Line::new(coords[prev], coords[vertex_idx]),
+            Some(Line::new(coords[vertex_idx], coords[next])),
+        )
+    } else if vertex_idx == 0 {
+        (Line::new(coords[0], coords[1]), None)
+    } else if vertex_idx == coords.len() - 1 {
+        (Line::new(coords[vertex_idx - 1], coords[vertex_idx]), None)
+    } else {
+        (
+            Line::new(coords[vertex_idx - 1], coords[vertex_idx]),
+            Some(Line::new(coords[vertex_idx], coords[vertex_idx + 1])),
+        )
+    }
+}
+
+/// Minimum distance between two segments that are known not to intersect
+///
+/// The separable fast path is only entered when the two geometries' bounding
+/// boxes are strictly separated along an axis, so segments drawn from opposite
+/// geometries can never intersect. This lets us skip the robust intersection
+/// predicate that the generic Line-Line distance must evaluate first
+#[inline]
+fn disjoint_segment_distance<F: GeoFloat>(a: &Line<F>, b: &Line<F>) -> F {
+    use geo_types::private_utils::line_segment_distance;
+    line_segment_distance(a.start, b.start, b.end)
+        .min(line_segment_distance(a.end, b.start, b.end))
+        .min(line_segment_distance(b.start, a.start, a.end))
+        .min(line_segment_distance(b.end, a.start, a.end))
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::orient::{Direction, Orient};
+    use crate::wkt;
     use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
     use geo_types::{coord, polygon, private_utils::line_segment_distance};
 
@@ -1127,6 +1228,45 @@ mod test {
         let mp = MultiPoint::new(v);
         let p = Point::new(50.0, 50.0);
         assert_relative_eq!(Euclidean.distance(&p, &mp), 64.03124237432849)
+    }
+    #[test]
+    // The member whose bounding rectangle is closest to the target is not the
+    // closest member: the first member's bounding rectangle has corner (1, 1)
+    // (lower bound ~1.414 from the origin) but the diagonal segment it
+    // contains is ~7.78 away. The bounding-rectangle pruning must still visit
+    // the second member (true distance 3), and must prune the third (lower
+    // bound 20)
+    fn multi_geometry_distance_bbox_pruning_visits_true_nearest() {
+        let mls = wkt! { MULTILINESTRING(
+            (1.0 10.0,10.0 1.0),
+            (3.0 0.0,4.0 0.0),
+            (20.0 0.0,21.0 0.0)
+        ) };
+        let p = wkt! { POINT(0.0 0.0) };
+        assert_relative_eq!(Euclidean.distance(&p, &mls), 3.0);
+        assert_relative_eq!(Euclidean.distance(&mls, &p), 3.0);
+    }
+    #[test]
+    // A member intersecting the target yields zero distance regardless of the
+    // other members
+    fn multi_geometry_distance_intersecting_member() {
+        let mp = wkt! { MULTIPOLYGON(
+            ((100.0 0.0,101.0 0.0,101.0 1.0,100.0 1.0,100.0 0.0)),
+            ((0.0 0.0,2.0 0.0,2.0 2.0,0.0 2.0,0.0 0.0))
+        ) };
+        let target = wkt! { POLYGON((1.0 1.0,3.0 1.0,3.0 3.0,1.0 3.0,1.0 1.0)) };
+        assert_relative_eq!(Euclidean.distance(&mp, &target), 0.0);
+    }
+    #[test]
+    // An empty member must not be pruned: its distance is delegated to the
+    // member-to-target implementation, which returns zero for empty inputs
+    fn multi_geometry_distance_empty_member() {
+        let mls = MultiLineString::new(vec![
+            LineString::new(vec![]),
+            LineString::from(vec![(50.0, 50.0), (60.0, 60.0)]),
+        ]);
+        let p = Point::new(0.0, 0.0);
+        assert_relative_eq!(Euclidean.distance(&p, &mls), 0.0);
     }
     #[test]
     fn distance_line_test() {
