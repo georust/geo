@@ -1,31 +1,16 @@
 use super::{CoordIndex, Validation, utils};
 use crate::{GeoFloat, Line};
 
-use std::fmt;
-
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidLine {
     /// A valid [`Line`] must have at least 2 distinct points to be valid - it must have a non-zero length.
+    #[error("line has identical coordinates")]
     IdenticalCoords,
 
     /// A valid [`Line`] must have finite coordinates.
+    #[error("{} coordinate is non-finite", if .0.0 == 0 { "start" } else { "end" })]
     NonFiniteCoord(CoordIndex),
 }
-
-impl fmt::Display for InvalidLine {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidLine::IdenticalCoords => write!(f, "line has identical coordinates"),
-            InvalidLine::NonFiniteCoord(idx) => write!(
-                f,
-                "{} coordinate is non-finite",
-                if idx.0 == 0 { "start" } else { "end" }
-            ),
-        }
-    }
-}
-
-impl std::error::Error for InvalidLine {}
 
 impl<F: GeoFloat> Validation for Line<F> {
     type Error = InvalidLine;

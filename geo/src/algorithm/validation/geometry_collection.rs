@@ -1,25 +1,12 @@
 use super::{GeometryIndex, InvalidGeometry, Validation};
 use crate::{GeoFloat, GeometryCollection};
 
-use std::fmt;
-
 /// A [`GeometryCollection`] is valid if all its elements are valid.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidGeometryCollection {
     /// Which element is invalid, and what was invalid about it.
-    InvalidGeometry(GeometryIndex, Box<InvalidGeometry>),
-}
-
-impl std::error::Error for InvalidGeometryCollection {}
-
-impl fmt::Display for InvalidGeometryCollection {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidGeometryCollection::InvalidGeometry(idx, err) => {
-                write!(f, "geometry at index {} is invalid: {}", idx.0, err)
-            }
-        }
-    }
+    #[error("geometry at index {} is invalid: {}", .0.0, .1)]
+    InvalidGeometry(GeometryIndex, #[source] Box<InvalidGeometry>),
 }
 
 impl<F: GeoFloat> Validation for GeometryCollection<F> {

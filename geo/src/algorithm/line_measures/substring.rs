@@ -22,41 +22,21 @@ use crate::algorithm::vector_ops::Vector2DOps;
 use geo_types::{Coord, CoordFloat, Line, LineString};
 
 /// Errors returned by substring extraction. See [`SubstringableLine`].
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum SubstringError {
     /// Input line string contains no coordinates.
+    #[error("LineString contains no coordinates")]
     EmptyLineString,
     /// Input line string contains a single vertex (no segments).
+    #[error("LineString contains only a single vertex")]
     SingleVertex,
     /// Input contains a non-finite coordinate (NaN or infinity).
+    #[error("input contains a non-finite coordinate")]
     NonFiniteCoordinate,
     /// Range invalid: `start > end`, or `start`/`end` is not finite.
+    #[error("invalid range: start must be <= end and both must be finite")]
     InvalidRange,
 }
-
-impl std::fmt::Display for SubstringError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            SubstringError::EmptyLineString => {
-                write!(f, "LineString contains no coordinates")
-            }
-            SubstringError::SingleVertex => {
-                write!(f, "LineString contains only a single vertex")
-            }
-            SubstringError::NonFiniteCoordinate => {
-                write!(f, "input contains a non-finite coordinate")
-            }
-            SubstringError::InvalidRange => {
-                write!(
-                    f,
-                    "invalid range: start must be <= end and both must be finite"
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for SubstringError {}
 
 /// A linear geometry from which a sub-linestring can be extracted between
 /// two distance-along-line (or ratio-along-line) bounds.

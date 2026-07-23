@@ -1,26 +1,13 @@
 use super::{GeometryIndex, InvalidPoint, Validation};
 use crate::{GeoFloat, MultiPoint};
 
-use std::fmt;
-
 /// A [`MultiPoint`] is valid if each [`Point`](crate::Point) in it is valid.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidMultiPoint {
     /// Which element is invalid, and what was invalid about it.
-    InvalidPoint(GeometryIndex, InvalidPoint),
+    #[error("point at index {} is invalid: {}", .0.0, .1)]
+    InvalidPoint(GeometryIndex, #[source] InvalidPoint),
 }
-
-impl fmt::Display for InvalidMultiPoint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidMultiPoint::InvalidPoint(idx, err) => {
-                write!(f, "point at index {} is invalid: {}", idx.0, err)
-            }
-        }
-    }
-}
-
-impl std::error::Error for InvalidMultiPoint {}
 
 impl<F: GeoFloat> Validation for MultiPoint<F> {
     type Error = InvalidMultiPoint;

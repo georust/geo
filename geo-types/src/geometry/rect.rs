@@ -485,19 +485,9 @@ mod approx_integration {
     since = "0.6.2",
     note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
 )]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, thiserror::Error)]
+#[error("{}", RECT_INVALID_BOUNDS_ERROR)]
 pub struct InvalidRectCoordinatesError;
-
-#[cfg(feature = "std")]
-#[allow(deprecated)]
-impl std::error::Error for InvalidRectCoordinatesError {}
-
-#[allow(deprecated)]
-impl core::fmt::Display for InvalidRectCoordinatesError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{RECT_INVALID_BOUNDS_ERROR}")
-    }
-}
 
 #[cfg(test)]
 mod test {

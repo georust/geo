@@ -229,7 +229,8 @@ impl<T> std::ops::IndexMut<CoordPos> for LocationArray<T> {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
+#[error("invalid input:  {message}")]
 pub struct InvalidInputError {
     message: String,
 }
@@ -237,13 +238,6 @@ pub struct InvalidInputError {
 impl InvalidInputError {
     fn new(message: String) -> Self {
         Self { message }
-    }
-}
-
-impl std::error::Error for InvalidInputError {}
-impl std::fmt::Display for InvalidInputError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "invalid input:  {}", self.message)
     }
 }
 
