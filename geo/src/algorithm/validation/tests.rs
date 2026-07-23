@@ -16,8 +16,8 @@ mod simply_connected_interior {
 
     use crate::algorithm::validation::polygon::InvalidPolygon;
     use crate::algorithm::validation::{RingRole, Validation};
-    use crate::coord;
-    use crate::geometry::{LineString, Polygon};
+    use crate::geometry::Polygon;
+    use crate::wkt;
     use geo_test_fixtures::checkerboard::{box_ring, create_checkerboard};
 
     /// Two L-shaped holes sharing vertices at (2,2) and (3,3).
@@ -26,29 +26,13 @@ mod simply_connected_interior {
     /// "corridor" that cuts through the interior.
     #[test]
     fn two_holes_sharing_two_vertices() {
-        let exterior = box_ring(0.0, 0.0, 5.0, 5.0);
-
-        let top_l = LineString::new(vec![
-            coord! { x: 1.0, y: 2.0 },
-            coord! { x: 2.0, y: 2.0 },
-            coord! { x: 2.0, y: 3.0 },
-            coord! { x: 3.0, y: 3.0 },
-            coord! { x: 3.0, y: 4.0 },
-            coord! { x: 1.0, y: 4.0 },
-            coord! { x: 1.0, y: 2.0 },
-        ]);
-
-        let bottom_l = LineString::new(vec![
-            coord! { x: 2.0, y: 1.0 },
-            coord! { x: 4.0, y: 1.0 },
-            coord! { x: 4.0, y: 3.0 },
-            coord! { x: 3.0, y: 3.0 },
-            coord! { x: 3.0, y: 2.0 },
-            coord! { x: 2.0, y: 2.0 },
-            coord! { x: 2.0, y: 1.0 },
-        ]);
-
-        let polygon = Polygon::new(exterior, vec![top_l, bottom_l]);
+        let polygon = wkt!(POLYGON(
+            (0. 0., 5. 0., 5. 5., 0. 5., 0. 0.),
+            // top L
+            (1. 2., 2. 2., 2. 3., 3. 3., 3. 4., 1. 4., 1. 2.),
+            // bottom L
+            (2. 1., 4. 1., 4. 3., 3. 3., 3. 2., 2. 2., 2. 1.)
+        ));
 
         let errors = polygon.validation_errors();
         assert_eq!(errors.len(), 1);
@@ -144,28 +128,12 @@ mod simply_connected_interior {
     /// the interior is still connected around the perimeter.
     #[test]
     fn three_holes_meeting_at_vertex_valid() {
-        let exterior = box_ring(-1.1, -1.1, 1.1, 1.1);
-
-        let hole_a = LineString::new(vec![
-            coord! { x: 0.0, y: 0.0 },
-            coord! { x: 0.5, y: 0.8660254037844386 },
-            coord! { x: 1.0, y: 0.0 },
-            coord! { x: 0.0, y: 0.0 },
-        ]);
-        let hole_b = LineString::new(vec![
-            coord! { x: 0.0, y: 0.0 },
-            coord! { x: -1.0, y: 0.0 },
-            coord! { x: -0.5, y: 0.8660254037844386 },
-            coord! { x: 0.0, y: 0.0 },
-        ]);
-        let hole_c = LineString::new(vec![
-            coord! { x: 0.0, y: 0.0 },
-            coord! { x: 0.5, y: -0.8660254037844386 },
-            coord! { x: -0.5, y: -0.8660254037844386 },
-            coord! { x: 0.0, y: 0.0 },
-        ]);
-
-        let polygon = Polygon::new(exterior, vec![hole_a, hole_b, hole_c]);
+        let polygon = wkt!(POLYGON(
+            (-1.1 -1.1, 1.1 -1.1, 1.1 1.1, -1.1 1.1, -1.1 -1.1),
+            (0. 0., 0.5 0.8660254037844386, 1. 0., 0. 0.),
+            (0. 0., -1. 0., -0.5 0.8660254037844386, 0. 0.),
+            (0. 0., 0.5 -0.8660254037844386, -0.5 -0.8660254037844386, 0. 0.)
+        ));
         assert!(
             polygon.is_valid(),
             "Polygon with 3 holes meeting at one vertex (wedge pattern) should be valid",
@@ -178,38 +146,17 @@ mod simply_connected_interior {
     /// forming cycle A-B-C-D-A. This encloses the center region.
     #[test]
     fn four_holes_forming_cycle() {
-        let exterior = box_ring(-10.0, -10.0, 10.0, 10.0);
-
-        // A: bottom, shares (-8,-8) with B, (8,-8) with D
-        let hole_a = LineString::new(vec![
-            coord! { x: -8.0, y: -8.0 },
-            coord! { x: 0.0, y: -4.0 },
-            coord! { x: 8.0, y: -8.0 },
-            coord! { x: -8.0, y: -8.0 },
-        ]);
-        // B: left, shares (-8,8) with C, (-8,-8) with A
-        let hole_b = LineString::new(vec![
-            coord! { x: -8.0, y: 8.0 },
-            coord! { x: -4.0, y: 0.0 },
-            coord! { x: -8.0, y: -8.0 },
-            coord! { x: -8.0, y: 8.0 },
-        ]);
-        // C: top, shares (8,8) with D, (-8,8) with B
-        let hole_c = LineString::new(vec![
-            coord! { x: 8.0, y: 8.0 },
-            coord! { x: 0.0, y: 4.0 },
-            coord! { x: -8.0, y: 8.0 },
-            coord! { x: 8.0, y: 8.0 },
-        ]);
-        // D: right, shares (8,-8) with A, (8,8) with C
-        let hole_d = LineString::new(vec![
-            coord! { x: 8.0, y: -8.0 },
-            coord! { x: 4.0, y: 0.0 },
-            coord! { x: 8.0, y: 8.0 },
-            coord! { x: 8.0, y: -8.0 },
-        ]);
-
-        let polygon = Polygon::new(exterior, vec![hole_a, hole_b, hole_c, hole_d]);
+        let polygon = wkt!(POLYGON(
+            (-10. -10., 10. -10., 10. 10., -10. 10., -10. -10.),
+            // A: bottom, shares (-8,-8) with B, (8,-8) with D
+            (-8. -8., 0. -4., 8. -8., -8. -8.),
+            // B: left, shares (-8,8) with C, (-8,-8) with A
+            (-8. 8., -4. 0., -8. -8., -8. 8.),
+            // C: top, shares (8,8) with D, (-8,8) with B
+            (8. 8., 0. 4., -8. 8., 8. 8.),
+            // D: right, shares (8,-8) with A, (8,8) with C
+            (8. -8., 4. 0., 8. 8., 8. -8.)
+        ));
 
         let errors = polygon.validation_errors();
         assert_eq!(errors.len(), 1);
@@ -231,31 +178,15 @@ mod simply_connected_interior {
     /// enclosing the central triangle and disconnecting the interior.
     #[test]
     fn three_holes_forming_triangle_cycle() {
-        let exterior = box_ring(0.0, 0.0, 20.0, 20.0);
-
-        // H0: bottom-left, shares (4,10) with H2 and (10,2) with H1
-        let hole_0 = LineString::new(vec![
-            coord! { x: 4.0, y: 10.0 },
-            coord! { x: 2.0, y: 2.0 },
-            coord! { x: 10.0, y: 2.0 },
-            coord! { x: 4.0, y: 10.0 },
-        ]);
-        // H1: bottom-right, shares (10,2) with H0 and (16,10) with H2
-        let hole_1 = LineString::new(vec![
-            coord! { x: 10.0, y: 2.0 },
-            coord! { x: 18.0, y: 2.0 },
-            coord! { x: 16.0, y: 10.0 },
-            coord! { x: 10.0, y: 2.0 },
-        ]);
-        // H2: top, shares (16,10) with H1 and (4,10) with H0
-        let hole_2 = LineString::new(vec![
-            coord! { x: 16.0, y: 10.0 },
-            coord! { x: 10.0, y: 18.0 },
-            coord! { x: 4.0, y: 10.0 },
-            coord! { x: 16.0, y: 10.0 },
-        ]);
-
-        let polygon = Polygon::new(exterior, vec![hole_0, hole_1, hole_2]);
+        let polygon = wkt!(POLYGON(
+            (0. 0., 20. 0., 20. 20., 0. 20., 0. 0.),
+            // H0: bottom-left, shares (4,10) with H2 and (10,2) with H1
+            (4. 10., 2. 2., 10. 2., 4. 10.),
+            // H1: bottom-right, shares (10,2) with H0 and (16,10) with H2
+            (10. 2., 18. 2., 16. 10., 10. 2.),
+            // H2: top, shares (16,10) with H1 and (4,10) with H0
+            (16. 10., 10. 18., 4. 10., 16. 10.)
+        ));
 
         let errors = polygon.validation_errors();
         assert_eq!(errors.len(), 1);
@@ -273,22 +204,11 @@ mod simply_connected_interior {
     /// distinct coordinates, disconnecting the interior.
     #[test]
     fn hole_chain_with_vertex_on_edge_touch() {
-        let exterior = box_ring(0.0, 0.0, 20.0, 15.0);
-
-        let hole_0 = LineString::new(vec![
-            coord! { x: 0.0, y: 5.0 },
-            coord! { x: 10.0, y: 5.0 },
-            coord! { x: 5.0, y: 10.0 },
-            coord! { x: 0.0, y: 5.0 },
-        ]);
-        let hole_1 = LineString::new(vec![
-            coord! { x: 10.0, y: 5.0 },
-            coord! { x: 20.0, y: 5.0 },
-            coord! { x: 15.0, y: 10.0 },
-            coord! { x: 10.0, y: 5.0 },
-        ]);
-
-        let polygon = Polygon::new(exterior, vec![hole_0, hole_1]);
+        let polygon = wkt!(POLYGON(
+            (0. 0., 20. 0., 20. 15., 0. 15., 0. 0.),
+            (0. 5., 10. 5., 5. 10., 0. 5.),
+            (10. 5., 20. 5., 15. 10., 10. 5.)
+        ));
 
         let errors = polygon.validation_errors();
         assert_eq!(errors.len(), 1);
