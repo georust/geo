@@ -1,6 +1,7 @@
 //! Internal utility functions, types, and data structures.
 
-use geo_types::{Coord, CoordFloat, CoordNum};
+use crate::GeoNum;
+use geo_types::{Coord, CoordFloat};
 use num_traits::FromPrimitive;
 
 /// Partition a mutable slice in-place so that it contains all elements for
@@ -89,12 +90,9 @@ use std::cmp::Ordering;
 
 /// Compare two coordinates lexicographically: first by the
 /// x coordinate, and break ties with the y coordinate.
-/// Expects none of coordinates to be uncomparable (eg. nan)
 #[inline]
-pub fn lex_cmp<T: CoordNum>(p: &Coord<T>, q: &Coord<T>) -> Ordering {
-    p.x.partial_cmp(&q.x)
-        .unwrap()
-        .then(p.y.partial_cmp(&q.y).unwrap())
+pub fn lex_cmp<T: GeoNum>(p: &Coord<T>, q: &Coord<T>) -> Ordering {
+    p.x.total_cmp(&q.x).then(p.y.total_cmp(&q.y))
 }
 
 /// Compute index of the least point in slice. Comparison is
@@ -102,7 +100,7 @@ pub fn lex_cmp<T: CoordNum>(p: &Coord<T>, q: &Coord<T>) -> Ordering {
 ///
 /// Should only be called on a non-empty slice with no `nan`
 /// coordinates.
-pub fn least_index<T: CoordNum>(pts: &[Coord<T>]) -> usize {
+pub fn least_index<T: GeoNum>(pts: &[Coord<T>]) -> usize {
     pts.iter()
         .enumerate()
         .min_by(|(_, p), (_, q)| lex_cmp(p, q))
