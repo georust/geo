@@ -13,10 +13,7 @@ where
     T: CoordNum,
 {
     fn contains(&self, coord: &Coord<T>) -> bool {
-        coord.x > self.min().x
-            && coord.x < self.max().x
-            && coord.y > self.min().y
-            && coord.y < self.max().y
+        geo_types::private_utils::rect_contains_coord(self, coord)
     }
 }
 
