@@ -36,20 +36,15 @@ where
 
 // ====== Error ========
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum TriangulationError {
-    SpadeError(spade::InsertionError),
+    #[error("error during spade triangulation: {0}")]
+    SpadeError(#[source] spade::InsertionError),
+    #[error("loop trap: triangulation did not terminate")]
     LoopTrap,
+    #[error("failed to insert a constraint edge into the triangulation")]
     ConstraintFailure,
 }
-
-impl std::fmt::Display for TriangulationError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-
-impl std::error::Error for TriangulationError {}
 
 pub type TriangulationResult<T> = Result<T, TriangulationError>;
 

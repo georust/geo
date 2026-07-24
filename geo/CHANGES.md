@@ -29,6 +29,7 @@
 - FIX: `lex_cmp` uses `total_cmp` and no longer panics on `NaN` coordinates.
 - BREAKING: Tightens the bound on `Contains<MultiPoint<T>> for MultiPoint<T>` from `T: CoordNum` to `T: GeoNum`
   - <https://github.com/georust/geo/pull/1555>
+- Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls.
 
 ## 0.33.1 - 2026-4-20
 

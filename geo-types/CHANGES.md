@@ -7,6 +7,7 @@
 - Add support for `rstar` 0.13 via the `rstar_0_13` feature, alongside the existing `rstar` versions.
 - Add `rstar` support for `Rect`.
   - <https://github.com/georust/geo/pull/1549>
+- Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls.
 
 ## 0.7.19 - 2026-04-15
 

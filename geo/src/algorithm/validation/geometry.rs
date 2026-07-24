@@ -7,56 +7,31 @@ use super::{
 use crate::{GeoFloat, Geometry};
 
 use crate::geometry_cow::GeometryCow;
-use std::fmt;
 
 /// A [`Geometry`] is valid if its inner variant is valid.
 /// e.g. `Geometry::Polygon(polygon)` is valid if and only if `polygon` is valid.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidGeometry {
-    InvalidPoint(InvalidPoint),
-    InvalidLine(InvalidLine),
-    InvalidLineString(InvalidLineString),
-    InvalidPolygon(InvalidPolygon),
-    InvalidMultiPoint(InvalidMultiPoint),
-    InvalidMultiLineString(InvalidMultiLineString),
-    InvalidMultiPolygon(InvalidMultiPolygon),
-    InvalidGeometryCollection(InvalidGeometryCollection),
-    InvalidRect(InvalidRect),
-    InvalidTriangle(InvalidTriangle),
-}
-
-impl fmt::Display for InvalidGeometry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidGeometry::InvalidPoint(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidLine(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidLineString(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidPolygon(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidMultiPoint(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidMultiLineString(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidMultiPolygon(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidGeometryCollection(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidRect(err) => write!(f, "{err}"),
-            InvalidGeometry::InvalidTriangle(err) => write!(f, "{err}"),
-        }
-    }
-}
-
-impl std::error::Error for InvalidGeometry {
-    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-        match self {
-            InvalidGeometry::InvalidPoint(err) => Some(err),
-            InvalidGeometry::InvalidLine(err) => Some(err),
-            InvalidGeometry::InvalidLineString(err) => Some(err),
-            InvalidGeometry::InvalidPolygon(err) => Some(err),
-            InvalidGeometry::InvalidMultiPoint(err) => Some(err),
-            InvalidGeometry::InvalidMultiLineString(err) => Some(err),
-            InvalidGeometry::InvalidMultiPolygon(err) => Some(err),
-            InvalidGeometry::InvalidGeometryCollection(err) => Some(err),
-            InvalidGeometry::InvalidRect(err) => Some(err),
-            InvalidGeometry::InvalidTriangle(err) => Some(err),
-        }
-    }
+    #[error(transparent)]
+    InvalidPoint(#[from] InvalidPoint),
+    #[error(transparent)]
+    InvalidLine(#[from] InvalidLine),
+    #[error(transparent)]
+    InvalidLineString(#[from] InvalidLineString),
+    #[error(transparent)]
+    InvalidPolygon(#[from] InvalidPolygon),
+    #[error(transparent)]
+    InvalidMultiPoint(#[from] InvalidMultiPoint),
+    #[error(transparent)]
+    InvalidMultiLineString(#[from] InvalidMultiLineString),
+    #[error(transparent)]
+    InvalidMultiPolygon(#[from] InvalidMultiPolygon),
+    #[error(transparent)]
+    InvalidGeometryCollection(#[from] InvalidGeometryCollection),
+    #[error(transparent)]
+    InvalidRect(#[from] InvalidRect),
+    #[error(transparent)]
+    InvalidTriangle(#[from] InvalidTriangle),
 }
 
 impl<F: GeoFloat> Validation for Geometry<F> {
