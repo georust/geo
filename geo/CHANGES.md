@@ -2,7 +2,6 @@
 
 ## Unreleased
 
-- Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls. The error variants for the underlying-triangulation cases (`VoronoiError::Triangulation`, `TriangulationError::SpadeError`) and the nested validation errors now expose the wrapped error through `Error::source()`. `InvalidGeometry` variants are now `#[error(transparent)]` and gain `From` conversions from each inner validation error (e.g. `From<InvalidPolygon> for InvalidGeometry`).
 - FIX: `Line::haversine_closest_point` no longer returns an endpoint for valid high-latitude projections.
   - <https://github.com/georust/geo/issues/1325>
 - Add index-returning methods `Simplify::simplify_idx`, `SimplifyVw::simplify_vw_idx`, `SimplifyVwPreserve::simplify_vw_preserve_idx`, and `ConvexHull::convex_hull_idx`, returning input-relative indices of the retained vertices. Adds the `PolygonIndices` type and the `quick_hull_indices` free function.
@@ -30,6 +29,7 @@
 - FIX: `lex_cmp` uses `total_cmp` and no longer panics on `NaN` coordinates.
 - BREAKING: Tightens the bound on `Contains<MultiPoint<T>> for MultiPoint<T>` from `T: CoordNum` to `T: GeoNum`
   - <https://github.com/georust/geo/pull/1555>
+- Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls.
 
 ## 0.33.1 - 2026-4-20
 
