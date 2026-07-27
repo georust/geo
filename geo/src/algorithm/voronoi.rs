@@ -90,18 +90,15 @@ use crate::algorithm::triangulate_delaunay::{
     DelaunayTriangulationConfig, SpadeTriangulationFloat,
 };
 use crate::algorithm::vector_ops::Vector2DOps;
-use crate::line_intersection::{LineIntersection, line_intersection};
 use crate::utils::lex_cmp;
-use geo_types::{Coord, Line, LineString, Point, Polygon, Rect};
+use geo_types::{Coord, Line, LineString, Polygon, Rect};
 use num_traits::Float;
 use spade::Triangulation;
 use spade::handles::{VoronoiVertex::Inner, VoronoiVertex::Outer};
 
 use crate::algorithm::bool_ops::BoolOpsNum;
 use crate::algorithm::triangulate_delaunay::TriangulationError;
-use crate::{
-    BooleanOps, BoundingRect, Contains, Distance, Euclidean, TriangulateDelaunayUnconstrained,
-};
+use crate::{BooleanOps, BoundingRect, Contains, TriangulateDelaunayUnconstrained};
 
 /// Error type for Voronoi diagram computation.
 ///
@@ -391,59 +388,15 @@ where
                 [Inner(from), Outer(edge)] | [Outer(edge), Inner(from)] => {
                     let start = from.circumcenter();
                     let dir = edge.direction_vector();
-
-                    // Create a line extending beyond bounds in direction of outer edge
-                    let extended_end = Point::new(
-                        start.x + dir.x * (width + height),
-                        start.y + dir.y * (width + height),
-                    );
-                    let infinite_voronoi_edge =
-                        Line::new(Point::new(start.x, start.y), extended_end);
-
-                    // Manual line-bbox intersection is simpler than BooleanOps here:
-                    // BooleanOps operates on polygons, not line strings, and for a single
-                    // ray-rectangle intersection the geometric calculation is straightforward.
-                    //
-                    // Check intersection with each bounding box edge
-                    // Improper intersections (at bbox corners or ray origin) are handled correctly:
-                    // - Corner hits produce duplicate points; min_by distance deduplicates
-                    // - Collinear rays (edge parallel to bbox side) are dropped; this case is
-                    //   geometrically degenerate and would require exact float alignment,
-                    //   so is almost certainly not a problem for non-adversarial inputs
-                    let intersections = bounds
-                        .to_lines()
-                        .iter()
-                        .filter_map(|edge| line_intersection(infinite_voronoi_edge, *edge))
-                        .filter_map(|inter| match inter {
-                            LineIntersection::SinglePoint {
-                                intersection,
-                                is_proper: _,
-                            } => Some(intersection),
-                            LineIntersection::Collinear { intersection: _ } => None,
-                        })
-                        .collect::<Vec<_>>();
-                    // Because we extend our infinite edge well beyond the bounding box
-                    // we should always expect to see at least one infinite edge intersection
-                    debug_assert!(
-                        !intersections.is_empty(),
-                        "No infinite edges intersect the bounding box. Degenerate or invalid geometry?"
-                    );
-
-                    // Take the closest intersection to the start point
-                    if let Some(intersection) = intersections.into_iter().min_by(|a, b| {
-                        let dist_a: T = Euclidean
-                            .distance(&Point::new(start.x, start.y), &Point::new(a.x, a.y));
-                        let dist_b: T = Euclidean
-                            .distance(&Point::new(start.x, start.y), &Point::new(b.x, b.y));
-                        dist_a.total_cmp(&dist_b)
-                    }) {
-                        edges.push(Line::new(
-                            Coord {
-                                x: start.x,
-                                y: start.y,
-                            },
-                            intersection,
-                        ));
+                    if let Some(clipped) = clip_ray_to_rect(
+                        Coord {
+                            x: start.x,
+                            y: start.y,
+                        },
+                        Coord { x: dir.x, y: dir.y },
+                        bounds,
+                    ) {
+                        edges.push(clipped);
                     }
                 }
                 [Outer(edge1), Outer(_)] => {
@@ -701,6 +654,51 @@ where
     Rect::new((min_x, min_y), (max_x, max_y))
 }
 
+fn clip_ray_to_rect<T>(start: Coord<T>, direction: Coord<T>, bounds: Rect<T>) -> Option<Line<T>>
+where
+    T: SpadeTriangulationFloat,
+{
+    if direction.x == T::zero() && direction.y == T::zero() {
+        return None;
+    }
+
+    let mut t_min = T::zero();
+    let mut t_max = T::infinity();
+
+    // Intersect the ray `start + t * direction` (`t >= 0`) with both rectangular slabs.
+    for (origin, direction, min, max) in [
+        (start.x, direction.x, bounds.min().x, bounds.max().x),
+        (start.y, direction.y, bounds.min().y, bounds.max().y),
+    ] {
+        if direction == T::zero() {
+            if origin < min || origin > max {
+                return None;
+            }
+            continue;
+        }
+
+        let t1 = (min - origin) / direction;
+        let t2 = (max - origin) / direction;
+        t_min = Float::max(t_min, Float::min(t1, t2));
+        t_max = Float::min(t_max, Float::max(t1, t2));
+
+        if t_min >= t_max {
+            return None;
+        }
+    }
+
+    Some(Line::new(
+        Coord {
+            x: start.x + direction.x * t_min,
+            y: start.y + direction.y * t_min,
+        },
+        Coord {
+            x: start.x + direction.x * t_max,
+            y: start.y + direction.y * t_max,
+        },
+    ))
+}
+
 /// Compute a padded bounding box around the base bounds.
 ///
 /// Padding is calculated as `padding_factor * max(width, height)` and applied
@@ -742,6 +740,65 @@ mod tests {
             result.relate(&expected).is_equal_topo(),
             "Expected {expected:?}, got {result:?}"
         );
+    }
+
+    #[test]
+    fn clip_ray_to_rect_cases() {
+        let bounds = Rect::new((0.0, 0.0), (2.0, 2.0));
+        let coord = |x, y| Coord { x, y };
+        let cases = [
+            (
+                "outside entering",
+                coord(-1.0, 1.0),
+                coord(1.0, 0.0),
+                Some(Line::new(coord(0.0, 1.0), coord(2.0, 1.0))),
+            ),
+            (
+                "inside",
+                coord(1.0, 1.0),
+                coord(1.0, 0.0),
+                Some(Line::new(coord(1.0, 1.0), coord(2.0, 1.0))),
+            ),
+            ("outside outward", coord(-1.0, 1.0), coord(-1.0, 0.0), None),
+            ("parallel outside", coord(-1.0, 1.0), coord(0.0, 1.0), None),
+            (
+                "through opposite corners",
+                coord(-1.0, -1.0),
+                coord(1.0, 1.0),
+                Some(Line::new(coord(0.0, 0.0), coord(2.0, 2.0))),
+            ),
+            (
+                "tangent at one corner",
+                coord(-1.0, 1.0),
+                coord(1.0, 1.0),
+                None,
+            ),
+        ];
+
+        for (name, start, direction, expected) in cases {
+            assert_eq!(
+                clip_ray_to_rect(start, direction, bounds),
+                expected,
+                "{name}"
+            );
+        }
+    }
+
+    #[test]
+    fn voronoi_edges_circumcenter_outside_bounds() {
+        let triangle = wkt!(POLYGON((0.0 0.0, 1.0 0.1, 2.0 0.0, 0.0 0.0)));
+
+        let edges = triangle.voronoi_edges().unwrap();
+
+        assert_eq!(edges.len(), 2);
+        assert!(edges.iter().all(|edge| edge.start != edge.end));
+        for coord in edges
+            .iter()
+            .flat_map(|edge| [edge.start, edge.end].into_iter())
+        {
+            assert!((-1.0 - 1e-12..=3.0 + 1e-12).contains(&coord.x));
+            assert!((-1.0 - 1e-12..=1.1 + 1e-12).contains(&coord.y));
+        }
     }
 
     #[test]
