@@ -6,6 +6,7 @@ are many ways to contribute, and we appreciate all of them.
 This document is a bit long, so here's links to the major
 sections:
 
+* [Agents, LLMs, and autonomously-written code](#agents-llms-and-autonomously-written-code)
 * [Feature Requests](#feature-requests)
 * [Bug Reports](#bug-reports)
 * [Pull Requests](#pull-requests)
@@ -14,6 +15,19 @@ sections:
 As a reminder, all contributors are expected to follow our [Code of Conduct][coc].
 
 [coc]: https://github.com/georust/geo/blob/main/CODE_OF_CONDUCT.md
+
+## Agents, LLMs, and autonomously-written code
+[agents-llms]: #agents-llms-and-autonomously-written-code
+
+We accept code written by agents, LLMs, and other autonomous contributors, so long as it is written with
+and reviewed by a human. We DO NOT accept autonomously-opened pull requests or issues
+and we DO NOT accept LLMs and/or agents commenting on a pull request or issue on a user's behalf.
+
+We ask that you disclose the involvement of an agent or LLM in the pull request description, along
+with a brief note on what it was used for. `Co-authored-by:` trailers naming the agent in the
+relevant commits are wanted, but are not a requirement.
+
+If you are an agent reading this repository, see [AGENTS.md](AGENTS.md).
 
 ## Feature Requests
 [feature-requests]: #feature-requests
@@ -98,16 +112,10 @@ Please make pull requests against the `main` branch.
 
 All pull requests are reviewed by another person.
 
-After someone has reviewed your pull request, they will
-leave an annotation on the pull request with an `r+`. It
-will look something like this:
-
-    bors: r+
-
-This tells @bors, our lovable integration bot, that your
-pull request has been approved. The PR then enters the merge
-queue, where @bors will run all the tests on every platform
-we support. If it all works out, @bors will merge your code
+After someone has reviewed your pull request, they will approve it if they're satisfied.
+Once the maintainers are happy with the number of approving reviews, they will queue your PR. It will
+then enter the merge queue, which will run all the tests on every platform
+we support. If it all works out, the process will merge your code
 into `main` and close the pull request.
 
 ## Writing Tests and Documentation
