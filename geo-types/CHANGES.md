@@ -1,14 +1,17 @@
 # Changes
 
-## Unreleased
+## 0.7.20 - 2026-07-31
 
-- Document that the inherent `GeometryCollection::is_empty` is a purely structural check (zero geometries) and does not recurse into element emptiness, unlike `geo::HasDimensions::is_empty`.
-  - <https://github.com/georust/geo/issues/1431>
 - Add support for `rstar` 0.13 via the `rstar_0_13` feature, alongside the existing `rstar` versions.
+  - <https://github.com/georust/geo/pull/1536>
 - Add `rstar` support for `Rect`.
   - <https://github.com/georust/geo/pull/1549>
 - Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls.
+  - <https://github.com/georust/geo/pull/1563>
 - Add `Geometry::static_name()` to get the type of geometry like `Point` and `MultiLineString` as a static string.
+  - <https://github.com/georust/geo/pull/1562>
+- Document that the inherent `GeometryCollection::is_empty` is a purely structural check (zero geometries) and does not recurse into element emptiness, unlike `geo::HasDimensions::is_empty`.
+  - <https://github.com/georust/geo/pull/1545>
 
 ## 0.7.19 - 2026-04-15
 
