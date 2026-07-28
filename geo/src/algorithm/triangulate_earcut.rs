@@ -8,7 +8,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{coord, polygon, Triangle, TriangulateEarcut};
+    /// use geo::{polygon, wkt, TriangulateEarcut};
     ///
     /// let square_polygon = polygon![
     ///     (x: 0., y: 0.), // SW
@@ -22,16 +22,8 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///
     /// assert_eq!(
     ///     vec![
-    ///         Triangle(
-    ///             coord! { x: 0., y: 0. }, // SW
-    ///             coord! { x: 10., y: 0. }, // SE
-    ///             coord! { x: 10., y: 10. }, // NE
-    ///         ),
-    ///         Triangle(
-    ///             coord! { x: 10., y: 10. }, // NE
-    ///             coord! { x: 0., y: 10. }, // NW
-    ///             coord! { x: 0., y: 0. }, // SW
-    ///         ),
+    ///         wkt!(TRIANGLE(10.0 10.0,0.0 0.0,10.0 0.0)), // NE-SW-SE
+    ///         wkt!(TRIANGLE(10.0 10.0,0.0 10.0,0.0 0.0)), // NE-NW-SW
     ///     ],
     ///     triangles,
     /// );
@@ -43,7 +35,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// # Examples
     ///
     /// ```
-    /// use geo::{coord, polygon, Triangle, TriangulateEarcut};
+    /// use geo::{polygon, wkt, TriangulateEarcut};
     ///
     /// let square_polygon = polygon![
     ///     (x: 0., y: 0.), // SW
@@ -56,20 +48,12 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     /// let mut triangles_iter = square_polygon.earcut_triangles_iter();
     ///
     /// assert_eq!(
-    ///     Some(Triangle(
-    ///         coord! { x: 0., y: 0. }, // SW
-    ///         coord! { x: 10., y: 0. }, // SE
-    ///         coord! { x: 10., y: 10. }, // NE
-    ///     )),
+    ///     Some(wkt!(TRIANGLE(10.0 10.0,0.0 0.0,10.0 0.0))), // NE-SW-SE
     ///     triangles_iter.next(),
     /// );
     ///
     /// assert_eq!(
-    ///     Some(Triangle(
-    ///         coord! { x: 10., y: 10. }, // NE
-    ///         coord! { x: 0., y: 10. }, // NW
-    ///         coord! { x: 0., y: 0. }, // SW
-    ///     )),
+    ///     Some(wkt!(TRIANGLE(10.0 10.0,0.0 10.0,0.0 0.0))), // NE-NW-SW
     ///     triangles_iter.next(),
     /// );
     ///
@@ -114,7 +98,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///         ],
     ///         triangle_indices: vec![
     ///             2, 3, 0, // NE-NW-SW
-    ///             0, 1, 2, // SW-SE-NE
+    ///             2, 0, 1, // NE-SW-SE
     ///         ],
     ///     },
     ///     triangles_raw,
@@ -145,7 +129,7 @@ pub trait TriangulateEarcut<T: CoordFloat> {
     ///
     /// let triangulation = square.earcut_triangulation_ref(&mut earcutter);
     /// assert_eq!(triangulation.vertices(), &[[0., 0.], [10., 0.], [10., 10.], [0., 10.]]);
-    /// assert_eq!(triangulation.triangle_indices(), &[2, 3, 0, 0, 1, 2]);
+    /// assert_eq!(triangulation.triangle_indices(), &[2, 3, 0, 2, 0, 1]);
     ///
     /// let triangulation = triangle.earcut_triangulation_ref(&mut earcutter);
     /// assert_eq!(triangulation.vertices(), &[[0., 0.], [10., 0.], [10., 10.]]);
@@ -354,7 +338,7 @@ mod test {
 
         assert_eq!(
             &[
-                wkt!(TRIANGLE(0.0 0.0,10.0 0.0,10.0 10.0)),
+                wkt!(TRIANGLE(10.0 10.0,0.0 0.0,10.0 0.0)),
                 wkt!(TRIANGLE(10.0 10.0,0.0 10.0,0.0 0.0))
             ][..],
             &triangles,
@@ -372,7 +356,7 @@ mod test {
             triangles.vertices,
             vec![[0., 0.], [10., 0.], [10., 10.], [0., 10.]] // exterior
         );
-        assert_eq!(triangles.triangle_indices, vec![2, 3, 0, 0, 1, 2]);
+        assert_eq!(triangles.triangle_indices, vec![2, 3, 0, 2, 0, 1]);
     }
 
     #[test]
@@ -407,7 +391,7 @@ mod test {
         assert_eq!(
             triangles.triangle_indices,
             vec![
-                0, 4, 7, 5, 4, 0, 3, 0, 7, 5, 0, 1, 2, 3, 7, 6, 5, 1, 2, 7, 6, 6, 1, 2
+                0, 4, 7, 5, 4, 0, 5, 0, 1, 5, 1, 2, 3, 0, 7, 3, 7, 6, 6, 5, 2, 6, 2, 3
             ]
         );
     }
@@ -425,7 +409,7 @@ mod test {
             triangulation.vertices(),
             &[[0., 0.], [10., 0.], [10., 10.], [0., 10.]][..]
         );
-        assert_eq!(triangulation.triangle_indices(), &[2, 3, 0, 0, 1, 2][..]);
+        assert_eq!(triangulation.triangle_indices(), &[2, 3, 0, 2, 0, 1][..]);
     }
 
     #[test]
