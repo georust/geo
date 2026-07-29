@@ -56,6 +56,14 @@ impl CardinalDirection {
         }
     }
 
+    /// Returns the axis this direction lies on.
+    pub fn axis(self) -> CardinalAxis {
+        match self {
+            CardinalDirection::North | CardinalDirection::South => CardinalAxis::North_South,
+            CardinalDirection::East | CardinalDirection::West => CardinalAxis::East_West,
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordNum>(self) -> Coord<T> {
@@ -101,6 +109,51 @@ impl CardinalDirection {
                 y: T::zero(),
             },
         }
+    }
+}
+
+/// One of the two axes spanned by the cardinal directions: north–south and
+/// east–west.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
+#[allow(non_camel_case_types)]
+pub enum CardinalAxis {
+    North_South,
+    East_West,
+}
+
+impl CardinalAxis {
+    /// All cardinal axes, in clockwise order starting from north–south.
+    pub const ALL: [Self; 2] = [Self::North_South, Self::East_West];
+
+    /// Returns the next cardinal axis clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            CardinalAxis::North_South => CardinalAxis::East_West,
+            CardinalAxis::East_West => CardinalAxis::North_South,
+        }
+    }
+
+    /// Returns the next cardinal axis counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
+        self.turn_cw()
+    }
+
+    /// Returns the two cardinal directions that lie on this axis.
+    pub fn directions(self) -> [CardinalDirection; 2] {
+        match self {
+            CardinalAxis::North_South => [CardinalDirection::North, CardinalDirection::South],
+            CardinalAxis::East_West => [CardinalDirection::East, CardinalDirection::West],
+        }
+    }
+}
+
+impl From<CardinalDirection> for CardinalAxis {
+    fn from(direction: CardinalDirection) -> Self {
+        direction.axis()
     }
 }
 
@@ -157,6 +210,18 @@ impl OrdinalDirection {
         }
     }
 
+    /// Returns the axis this direction lies on.
+    pub fn axis(self) -> OrdinalAxis {
+        match self {
+            OrdinalDirection::NorthEast | OrdinalDirection::SouthWest => {
+                OrdinalAxis::NorthEast_SouthWest
+            }
+            OrdinalDirection::SouthEast | OrdinalDirection::NorthWest => {
+                OrdinalAxis::SouthEast_NorthWest
+            }
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
@@ -202,6 +267,55 @@ impl OrdinalDirection {
                 y: T::one(),
             },
         }
+    }
+}
+
+/// One of the two axes spanned by the ordinal directions: northeast–southwest
+/// and northwest–southeast.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
+#[allow(non_camel_case_types)]
+pub enum OrdinalAxis {
+    NorthEast_SouthWest,
+    SouthEast_NorthWest,
+}
+
+impl OrdinalAxis {
+    /// All ordinal axes, in clockwise order starting from northeast–southwest.
+    pub const ALL: [Self; 2] = [Self::NorthEast_SouthWest, Self::SouthEast_NorthWest];
+
+    /// Returns the next ordinal axis clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            OrdinalAxis::NorthEast_SouthWest => OrdinalAxis::SouthEast_NorthWest,
+            OrdinalAxis::SouthEast_NorthWest => OrdinalAxis::NorthEast_SouthWest,
+        }
+    }
+
+    /// Returns the next ordinal axis counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
+        self.turn_cw()
+    }
+
+    /// Returns the two ordinal directions that lie on this axis.
+    pub fn directions(self) -> [OrdinalDirection; 2] {
+        match self {
+            OrdinalAxis::NorthEast_SouthWest => {
+                [OrdinalDirection::NorthEast, OrdinalDirection::SouthWest]
+            }
+            OrdinalAxis::SouthEast_NorthWest => {
+                [OrdinalDirection::SouthEast, OrdinalDirection::NorthWest]
+            }
+        }
+    }
+}
+
+impl From<OrdinalDirection> for OrdinalAxis {
+    fn from(direction: OrdinalDirection) -> Self {
+        direction.axis()
     }
 }
 
@@ -300,6 +414,20 @@ impl EightwiseDirection {
         }
     }
 
+    /// Returns the axis this direction lies on.
+    pub fn axis(self) -> EightwiseAxis {
+        match self {
+            EightwiseDirection::North | EightwiseDirection::South => EightwiseAxis::North_South,
+            EightwiseDirection::NorthEast | EightwiseDirection::SouthWest => {
+                EightwiseAxis::NorthEast_SouthWest
+            }
+            EightwiseDirection::East | EightwiseDirection::West => EightwiseAxis::East_West,
+            EightwiseDirection::SouthEast | EightwiseDirection::NorthWest => {
+                EightwiseAxis::SouthEast_NorthWest
+            }
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
@@ -376,6 +504,88 @@ impl EightwiseDirection {
                 x: T::zero() - T::one(),
                 y: T::one(),
             },
+        }
+    }
+}
+
+/// One of the four axes spanned by the eight-wise directions.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
+#[allow(non_camel_case_types)]
+pub enum EightwiseAxis {
+    North_South,
+    NorthEast_SouthWest,
+    East_West,
+    SouthEast_NorthWest,
+}
+
+impl EightwiseAxis {
+    /// All eight-wise axes, in clockwise order starting from north–south.
+    pub const ALL: [Self; 4] = [
+        Self::North_South,
+        Self::NorthEast_SouthWest,
+        Self::East_West,
+        Self::SouthEast_NorthWest,
+    ];
+
+    /// Returns the next eight-wise axis clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            EightwiseAxis::North_South => EightwiseAxis::NorthEast_SouthWest,
+            EightwiseAxis::NorthEast_SouthWest => EightwiseAxis::East_West,
+            EightwiseAxis::East_West => EightwiseAxis::SouthEast_NorthWest,
+            EightwiseAxis::SouthEast_NorthWest => EightwiseAxis::North_South,
+        }
+    }
+
+    /// Returns the next eight-wise axis counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
+        match self {
+            EightwiseAxis::North_South => EightwiseAxis::SouthEast_NorthWest,
+            EightwiseAxis::NorthEast_SouthWest => EightwiseAxis::North_South,
+            EightwiseAxis::East_West => EightwiseAxis::NorthEast_SouthWest,
+            EightwiseAxis::SouthEast_NorthWest => EightwiseAxis::East_West,
+        }
+    }
+
+    /// Returns the two eight-wise directions that lie on this axis.
+    pub fn directions(self) -> [EightwiseDirection; 2] {
+        match self {
+            EightwiseAxis::North_South => [EightwiseDirection::North, EightwiseDirection::South],
+            EightwiseAxis::NorthEast_SouthWest => {
+                [EightwiseDirection::NorthEast, EightwiseDirection::SouthWest]
+            }
+            EightwiseAxis::East_West => [EightwiseDirection::East, EightwiseDirection::West],
+            EightwiseAxis::SouthEast_NorthWest => {
+                [EightwiseDirection::SouthEast, EightwiseDirection::NorthWest]
+            }
+        }
+    }
+}
+
+impl From<EightwiseDirection> for EightwiseAxis {
+    fn from(direction: EightwiseDirection) -> Self {
+        direction.axis()
+    }
+}
+
+impl From<CardinalAxis> for EightwiseAxis {
+    fn from(axis: CardinalAxis) -> Self {
+        match axis {
+            CardinalAxis::North_South => EightwiseAxis::North_South,
+            CardinalAxis::East_West => EightwiseAxis::East_West,
+        }
+    }
+}
+
+impl From<OrdinalAxis> for EightwiseAxis {
+    fn from(axis: OrdinalAxis) -> Self {
+        match axis {
+            OrdinalAxis::NorthEast_SouthWest => EightwiseAxis::NorthEast_SouthWest,
+            OrdinalAxis::SouthEast_NorthWest => EightwiseAxis::SouthEast_NorthWest,
         }
     }
 }
@@ -520,6 +730,34 @@ impl SixteenwiseDirection {
         }
     }
 
+    /// Returns the axis this direction lies on.
+    pub fn axis(self) -> SixteenwiseAxis {
+        match self {
+            SixteenwiseDirection::North | SixteenwiseDirection::South => {
+                SixteenwiseAxis::North_South
+            }
+            SixteenwiseDirection::NorthNorthEast | SixteenwiseDirection::SouthSouthWest => {
+                SixteenwiseAxis::NorthNorthEast_SouthSouthWest
+            }
+            SixteenwiseDirection::NorthEast | SixteenwiseDirection::SouthWest => {
+                SixteenwiseAxis::NorthEast_SouthWest
+            }
+            SixteenwiseDirection::EastNorthEast | SixteenwiseDirection::WestSouthWest => {
+                SixteenwiseAxis::EastNorthEast_WestSouthWest
+            }
+            SixteenwiseDirection::East | SixteenwiseDirection::West => SixteenwiseAxis::East_West,
+            SixteenwiseDirection::EastSouthEast | SixteenwiseDirection::WestNorthWest => {
+                SixteenwiseAxis::EastSouthEast_WestNorthWest
+            }
+            SixteenwiseDirection::SouthEast | SixteenwiseDirection::NorthWest => {
+                SixteenwiseAxis::SouthEast_NorthWest
+            }
+            SixteenwiseDirection::SouthSouthEast | SixteenwiseDirection::NorthNorthWest => {
+                SixteenwiseAxis::SouthSouthEast_NorthNorthWest
+            }
+        }
+    }
+
     /// Returns the unit vector pointing in this direction, with `x` increasing
     /// towards east and `y` increasing towards north.
     pub fn unit_vector<T: CoordFloat>(self) -> Coord<T> {
@@ -589,6 +827,129 @@ impl SixteenwiseDirection {
                 y: T::from(COS_22_5_DEG).unwrap(),
             },
         }
+    }
+}
+
+/// One of the eight axes spanned by the sixteen-wise directions.
+#[derive(PartialEq, Eq, Clone, Copy, Debug, Hash)]
+#[allow(non_camel_case_types)]
+pub enum SixteenwiseAxis {
+    North_South,
+    NorthNorthEast_SouthSouthWest,
+    NorthEast_SouthWest,
+    EastNorthEast_WestSouthWest,
+    East_West,
+    EastSouthEast_WestNorthWest,
+    SouthEast_NorthWest,
+    SouthSouthEast_NorthNorthWest,
+}
+
+impl SixteenwiseAxis {
+    /// All sixteen-wise axes, in clockwise order starting from north–south.
+    pub const ALL: [Self; 8] = [
+        Self::North_South,
+        Self::NorthNorthEast_SouthSouthWest,
+        Self::NorthEast_SouthWest,
+        Self::EastNorthEast_WestSouthWest,
+        Self::East_West,
+        Self::EastSouthEast_WestNorthWest,
+        Self::SouthEast_NorthWest,
+        Self::SouthSouthEast_NorthNorthWest,
+    ];
+
+    /// Returns the next sixteen-wise axis clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_cw(self) -> Self {
+        match self {
+            SixteenwiseAxis::North_South => SixteenwiseAxis::NorthNorthEast_SouthSouthWest,
+            SixteenwiseAxis::NorthNorthEast_SouthSouthWest => SixteenwiseAxis::NorthEast_SouthWest,
+            SixteenwiseAxis::NorthEast_SouthWest => SixteenwiseAxis::EastNorthEast_WestSouthWest,
+            SixteenwiseAxis::EastNorthEast_WestSouthWest => SixteenwiseAxis::East_West,
+            SixteenwiseAxis::East_West => SixteenwiseAxis::EastSouthEast_WestNorthWest,
+            SixteenwiseAxis::EastSouthEast_WestNorthWest => SixteenwiseAxis::SouthEast_NorthWest,
+            SixteenwiseAxis::SouthEast_NorthWest => SixteenwiseAxis::SouthSouthEast_NorthNorthWest,
+            SixteenwiseAxis::SouthSouthEast_NorthNorthWest => SixteenwiseAxis::North_South,
+        }
+    }
+
+    /// Returns the next sixteen-wise axis counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
+        match self {
+            SixteenwiseAxis::North_South => SixteenwiseAxis::SouthSouthEast_NorthNorthWest,
+            SixteenwiseAxis::NorthNorthEast_SouthSouthWest => SixteenwiseAxis::North_South,
+            SixteenwiseAxis::NorthEast_SouthWest => SixteenwiseAxis::NorthNorthEast_SouthSouthWest,
+            SixteenwiseAxis::EastNorthEast_WestSouthWest => SixteenwiseAxis::NorthEast_SouthWest,
+            SixteenwiseAxis::East_West => SixteenwiseAxis::EastNorthEast_WestSouthWest,
+            SixteenwiseAxis::EastSouthEast_WestNorthWest => SixteenwiseAxis::East_West,
+            SixteenwiseAxis::SouthEast_NorthWest => SixteenwiseAxis::EastSouthEast_WestNorthWest,
+            SixteenwiseAxis::SouthSouthEast_NorthNorthWest => SixteenwiseAxis::SouthEast_NorthWest,
+        }
+    }
+
+    /// Returns the two sixteen-wise directions that lie on this axis.
+    pub fn directions(self) -> [SixteenwiseDirection; 2] {
+        match self {
+            SixteenwiseAxis::North_South => {
+                [SixteenwiseDirection::North, SixteenwiseDirection::South]
+            }
+            SixteenwiseAxis::NorthNorthEast_SouthSouthWest => [
+                SixteenwiseDirection::NorthNorthEast,
+                SixteenwiseDirection::SouthSouthWest,
+            ],
+            SixteenwiseAxis::NorthEast_SouthWest => [
+                SixteenwiseDirection::NorthEast,
+                SixteenwiseDirection::SouthWest,
+            ],
+            SixteenwiseAxis::EastNorthEast_WestSouthWest => [
+                SixteenwiseDirection::EastNorthEast,
+                SixteenwiseDirection::WestSouthWest,
+            ],
+            SixteenwiseAxis::East_West => [SixteenwiseDirection::East, SixteenwiseDirection::West],
+            SixteenwiseAxis::EastSouthEast_WestNorthWest => [
+                SixteenwiseDirection::EastSouthEast,
+                SixteenwiseDirection::WestNorthWest,
+            ],
+            SixteenwiseAxis::SouthEast_NorthWest => [
+                SixteenwiseDirection::SouthEast,
+                SixteenwiseDirection::NorthWest,
+            ],
+            SixteenwiseAxis::SouthSouthEast_NorthNorthWest => [
+                SixteenwiseDirection::SouthSouthEast,
+                SixteenwiseDirection::NorthNorthWest,
+            ],
+        }
+    }
+}
+
+impl From<SixteenwiseDirection> for SixteenwiseAxis {
+    fn from(direction: SixteenwiseDirection) -> Self {
+        direction.axis()
+    }
+}
+
+impl From<EightwiseAxis> for SixteenwiseAxis {
+    fn from(axis: EightwiseAxis) -> Self {
+        match axis {
+            EightwiseAxis::North_South => SixteenwiseAxis::North_South,
+            EightwiseAxis::NorthEast_SouthWest => SixteenwiseAxis::NorthEast_SouthWest,
+            EightwiseAxis::East_West => SixteenwiseAxis::East_West,
+            EightwiseAxis::SouthEast_NorthWest => SixteenwiseAxis::SouthEast_NorthWest,
+        }
+    }
+}
+
+impl From<CardinalAxis> for SixteenwiseAxis {
+    fn from(axis: CardinalAxis) -> Self {
+        EightwiseAxis::from(axis).into()
+    }
+}
+
+impl From<OrdinalAxis> for SixteenwiseAxis {
+    fn from(axis: OrdinalAxis) -> Self {
+        EightwiseAxis::from(axis).into()
     }
 }
 
@@ -996,6 +1357,54 @@ mod tests {
             SixteenwiseDirection::from(EightwiseDirection::SouthEast),
             SixteenwiseDirection::SouthEast
         );
+    }
+
+    #[test]
+    fn axis_pairs_opposite_directions() {
+        for direction in CardinalDirection::ALL {
+            let [a, b] = direction.axis().directions();
+            assert_eq!(a.opposite(), b);
+            assert!(a == direction || b == direction);
+            assert_eq!(CardinalAxis::from(direction), direction.axis());
+        }
+        for direction in OrdinalDirection::ALL {
+            let [a, b] = direction.axis().directions();
+            assert_eq!(a.opposite(), b);
+            assert!(a == direction || b == direction);
+            assert_eq!(OrdinalAxis::from(direction), direction.axis());
+        }
+        for direction in EightwiseDirection::ALL {
+            let [a, b] = direction.axis().directions();
+            assert_eq!(a.opposite(), b);
+            assert!(a == direction || b == direction);
+            assert_eq!(EightwiseAxis::from(direction), direction.axis());
+        }
+        for direction in SixteenwiseDirection::ALL {
+            let [a, b] = direction.axis().directions();
+            assert_eq!(a.opposite(), b);
+            assert!(a == direction || b == direction);
+            assert_eq!(SixteenwiseAxis::from(direction), direction.axis());
+        }
+    }
+
+    #[test]
+    fn axis_turns_are_inverses() {
+        for axis in CardinalAxis::ALL {
+            assert_eq!(axis.turn_ccw().turn_cw(), axis);
+            assert_eq!(axis.turn_cw().turn_ccw(), axis);
+        }
+        for axis in OrdinalAxis::ALL {
+            assert_eq!(axis.turn_ccw().turn_cw(), axis);
+            assert_eq!(axis.turn_cw().turn_ccw(), axis);
+        }
+        for axis in EightwiseAxis::ALL {
+            assert_eq!(axis.turn_ccw().turn_cw(), axis);
+            assert_eq!(axis.turn_cw().turn_ccw(), axis);
+        }
+        for axis in SixteenwiseAxis::ALL {
+            assert_eq!(axis.turn_ccw().turn_cw(), axis);
+            assert_eq!(axis.turn_cw().turn_ccw(), axis);
+        }
     }
 
     #[test]
