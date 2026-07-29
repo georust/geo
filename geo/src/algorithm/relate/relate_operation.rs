@@ -1,4 +1,5 @@
 use super::{EdgeEndBuilder, IntersectionMatrix};
+use crate::Relate;
 use crate::dimensions::{Dimensions, HasDimensions};
 use crate::relate::geomgraph::{
     CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, Label,
@@ -6,8 +7,7 @@ use crate::relate::geomgraph::{
     index::SegmentIntersector,
     node_map::{NodeFactory, NodeMap},
 };
-use crate::{Coord, GeoFloat, GeometryCow};
-use crate::{CoordinatePosition, Relate};
+use crate::{Coord, GeoFloat};
 
 use geo_types::Rect;
 
@@ -312,28 +312,34 @@ where
         isolated_edge_labels: &mut Vec<Label>,
     ) {
         for edge in this_graph.edges() {
-            let mut mut_edge = edge.borrow_mut();
-            if mut_edge.is_isolated() {
-                Self::label_isolated_edge(&mut mut_edge, target_index, target_graph.geometry());
-                isolated_edge_labels.push(mut_edge.label().clone());
-            }
+            // Note: the position lookup below queries `target_graph`, which borrows its own edges,
+            // so make sure we're not holding a borrow of *this* graph's edge across it.
+            let coord = {
+                let edge = edge.borrow();
+                if !edge.is_isolated() {
+                    continue;
+                }
+                *edge.coords().first().expect("can't create empty edge")
+            };
+            let position = Self::isolated_edge_position(coord, target_graph);
+
+            let mut edge = edge.borrow_mut();
+            edge.label_mut().set_all_positions(target_index, position);
+            isolated_edge_labels.push(edge.label().clone());
         }
     }
 
-    /// Label an isolated edge of a graph with its relationship to the target geometry.
+    /// The position of an isolated edge relative to the target geometry.
     /// If the target has dim 2 or 1, the edge can either be in the interior or the exterior.
     /// If the target has dim 0, the edge must be in the exterior
-    fn label_isolated_edge(edge: &mut Edge<F>, target_index: usize, target: &GeometryCow<F>) {
-        if target.dimensions() > Dimensions::ZeroDimensional {
+    fn isolated_edge_position(coord: Coord<F>, target_graph: &GeometryGraph<F>) -> CoordPos {
+        if target_graph.geometry().dimensions() > Dimensions::ZeroDimensional {
             // An isolated edge doesn't cross any boundary, so it's either wholly inside, or wholly
             // outside of the geometry. As such, we can use any point from the edge to infer the
             // position of the edge as a whole.
-            let coord = edge.coords().first().expect("can't create empty edge");
-            let position = target.coordinate_position(coord);
-            edge.label_mut().set_all_positions(target_index, position);
+            target_graph.coordinate_position(coord)
         } else {
-            edge.label_mut()
-                .set_all_positions(target_index, CoordPos::Outside);
+            CoordPos::Outside
         }
     }
 
@@ -344,17 +350,15 @@ where
     /// complete the labelling we need to check for nodes that lie in the interior of edges, and in
     /// the interior of areas.
     fn label_isolated_nodes(&mut self, graph_a: &GeometryGraph<F>, graph_b: &GeometryGraph<F>) {
-        let geometry_a = graph_a.geometry();
-        let geometry_b = graph_b.geometry();
         for (node, _edges) in self.nodes.iter_mut() {
             let label = node.label();
             // isolated nodes should always have at least one geometry in their label
             debug_assert!(label.geometry_count() > 0, "node with empty label found");
             if node.is_isolated() {
                 if label.is_empty(0) {
-                    Self::label_isolated_node(node, 0, geometry_a)
+                    Self::label_isolated_node(node, 0, graph_a)
                 } else {
-                    Self::label_isolated_node(node, 1, geometry_b)
+                    Self::label_isolated_node(node, 1, graph_b)
                 }
             }
         }
@@ -363,9 +367,9 @@ where
     fn label_isolated_node(
         node: &mut CoordNode<F>,
         target_index: usize,
-        geometry: &GeometryCow<F>,
+        target_graph: &GeometryGraph<F>,
     ) {
-        let position = geometry.coordinate_position(node.coordinate());
+        let position = target_graph.coordinate_position(*node.coordinate());
         node.label_mut().set_all_positions(target_index, position);
     }
 }

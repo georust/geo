@@ -7,10 +7,13 @@ use super::{
 };
 
 use crate::HasDimensions;
-use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
+use crate::algorithm::kernels::Kernel;
+use crate::coordinate_position::CoordinatePosition;
+use crate::intersects::value_in_between;
+use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Orientation, Point, Polygon};
 
 use crate::relate::geomgraph::RobustLineIntersector;
-use rstar::{RTree, RTreeNum};
+use rstar::{AABB, RTree, RTreeNum};
 use std::cell::RefCell;
 use std::sync::Arc;
 
@@ -38,6 +41,13 @@ where
     parent_geometry: GeometryCow<'a, F>,
     tree: Arc<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
+    /// `true` if every component of `parent_geometry` is 2-dimensional (a Polygon, Rect or
+    /// Triangle), meaning all of the geometry's topology is captured by the edges in `tree`.
+    ///
+    /// Point components contribute no edges at all, and the boundary/interior distinction for
+    /// 1-dimensional components isn't recoverable from the tree alone, so
+    /// [`Self::coordinate_position`] can only use `tree` when this is `true`.
+    is_areal: bool,
     planar_graph: PlanarGraph<F>,
 }
 
@@ -90,6 +100,7 @@ where
             parent_geometry: self.parent_geometry.clone(),
             tree: self.tree.clone(),
             use_boundary_determination_rule: self.use_boundary_determination_rule,
+            is_areal: self.is_areal,
             planar_graph,
         }
     }
@@ -124,6 +135,7 @@ where
             arg_index,
             parent_geometry,
             use_boundary_determination_rule: true,
+            is_areal: true,
             tree: Arc::new(RTree::new()),
             planar_graph: PlanarGraph::new(),
         };
@@ -137,6 +149,117 @@ where
 
     pub(crate) fn geometry(&self) -> &GeometryCow<'_, F> {
         &self.parent_geometry
+    }
+
+    /// Equivalent to `self.geometry().coordinate_position(&coord)`, but uses the graph's spatial
+    /// index to avoid visiting every segment of the geometry.
+    ///
+    /// The index only helps for wholly areal geometries (see [`Self::is_areal`]) and for coords
+    /// which don't lie *on* the geometry; anything else delegates to the unindexed
+    /// [`CoordinatePosition`] implementation.
+    pub(crate) fn coordinate_position(&self, coord: Coord<F>) -> CoordPos {
+        if !self.is_areal {
+            return self.parent_geometry.coordinate_position(&coord);
+        }
+
+        // Cast a ray rightwards from `coord` and inspect only the ring segments it can cross,
+        // rather than every segment of the geometry.
+        //
+        // Each crossing is a transition between the interior and the exterior of one of the
+        // geometry's rings, and each ring edge is labeled with which of its sides is `Inside`. So
+        // if we accumulate a "depth" of +1 for every crossing where the side facing `coord` is
+        // `Inside`, and -1 where it is `Outside`, we end up with the number of areal components
+        // covering `coord` - zero out at infinity, where the ray starts. That's order independent,
+        // so the segments can be visited in whatever order the index yields them.
+        //
+        // Using the labeled sides (rather than a winding number or a crossing count) keeps this
+        // agnostic to the winding order of the rings - which the graph makes no assumptions about
+        // - and handles a hole or an overlapping sibling polygon without needing to know which
+        // ring belongs to which polygon.
+        //
+        // Which segments count as crossings follows the same edge crossing rules as the
+        // winding-number test in `coord_pos_relative_to_ring`:
+        //   1. an upward edge includes its starting endpoint, and excludes its final endpoint;
+        //   2. a downward edge excludes its starting endpoint, and includes its final endpoint;
+        //   3. horizontal edges are excluded
+        //   4. the edge-ray intersection point must be strictly right of the coord.
+        let ray = AABB::from_corners(
+            coord,
+            Coord {
+                x: F::infinity(),
+                y: coord.y,
+            },
+        );
+
+        let edges = self.edges();
+        let mut depth = 0i32;
+        for segment in self.tree.locate_in_envelope_intersecting(ray) {
+            let (start, end, left, right) = {
+                let edge = edges[segment.edge_idx].borrow();
+                let coords = edge.coords();
+                let label = edge.label();
+                (
+                    coords[segment.segment_idx],
+                    coords[segment.segment_idx + 1],
+                    label.position(self.arg_index, Direction::Left),
+                    label.position(self.arg_index, Direction::Right),
+                )
+            };
+
+            // The orientation of `coord` relative to the segment tells us both whether the ray
+            // crosses it, and - since `Left` and `Right` are relative to the segment's direction -
+            // which of the segment's labeled sides faces `coord`.
+            //
+            // A collinear segment which brackets `coord` means `coord` is *on* one of the rings.
+            // Whether that makes it `OnBoundary` depends on how many other components' boundaries
+            // it lies on (the "mod 2" rule), which a ray cast can't tell us, so we fall back to
+            // the unindexed implementation. This is rare, and never happens for the isolated edges
+            // which motivate this method, since an edge touching the target's boundary would have
+            // been noded as an intersection. Note that the branches below already bracket
+            // `coord.y` within the segment, leaving only x to be checked.
+            let side_facing_coord = if start.y <= coord.y {
+                if end.y < coord.y {
+                    continue;
+                }
+                match F::Ker::orient2d(start, end, coord) {
+                    // An upward crossing: `coord` lies to the left of the segment.
+                    Orientation::CounterClockwise if end.y != coord.y => left,
+                    Orientation::Collinear if value_in_between(coord.x, start.x, end.x) => {
+                        return self.parent_geometry.coordinate_position(&coord);
+                    }
+                    _ => continue,
+                }
+            } else if end.y <= coord.y {
+                match F::Ker::orient2d(start, end, coord) {
+                    // A downward crossing: `coord` lies to the right of the segment.
+                    Orientation::Clockwise => right,
+                    Orientation::Collinear if value_in_between(coord.x, start.x, end.x) => {
+                        return self.parent_geometry.coordinate_position(&coord);
+                    }
+                    _ => continue,
+                }
+            } else {
+                continue;
+            };
+
+            match side_facing_coord {
+                Some(CoordPos::Inside) => depth += 1,
+                Some(CoordPos::Outside) => depth -= 1,
+                // Every ring edge has both of its sides labeled, so this is unreachable, but
+                // deferring to the unindexed implementation is a cheap way to stay correct if it
+                // ever isn't.
+                other => {
+                    debug_assert!(false, "areal graph had a non-areal edge: {other:?}");
+                    return self.parent_geometry.coordinate_position(&coord);
+                }
+            }
+        }
+
+        if depth > 0 {
+            CoordPos::Inside
+        } else {
+            CoordPos::Outside
+        }
     }
 
     /// Determine whether a component (node or edge) that appears multiple times in elements
@@ -264,6 +387,7 @@ where
         if line_string.is_empty() {
             return;
         }
+        self.is_areal = false;
 
         let mut coords: Vec<Coord<F>> = Vec::with_capacity(line_string.0.len());
         for coord in &line_string.0 {
@@ -292,6 +416,7 @@ where
     }
 
     fn add_line(&mut self, line: &Line<F>) {
+        self.is_areal = false;
         self.insert_boundary_point(line.start);
         self.insert_boundary_point(line.end);
 
@@ -309,6 +434,7 @@ where
     /// Add a point computed externally.  The point is assumed to be a
     /// Point Geometry part, which has a location of INTERIOR.
     fn add_point(&mut self, point: &Point<F>) {
+        self.is_areal = false;
         self.insert_point(self.arg_index, (*point).into(), CoordPos::Inside);
     }
 
@@ -428,5 +554,121 @@ where
         } else {
             self.insert_point(self.arg_index, coord, position)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{Geometry, MultiPolygon, wkt};
+
+    /// `GeometryGraph::coordinate_position` must agree with the unindexed
+    /// `CoordinatePosition` implementation for every coord.
+    fn assert_agrees_with_unindexed(geometry: Geometry, coords: impl IntoIterator<Item = Coord>) {
+        let geometry = GeometryCow::from(&geometry);
+        let graph = GeometryGraph::new(0, geometry.clone());
+
+        for coord in coords {
+            assert_eq!(
+                graph.coordinate_position(coord),
+                geometry.coordinate_position(&coord),
+                "disagreed about {coord:?} in {geometry:?}"
+            );
+        }
+    }
+
+    /// A lattice of coords covering `geometry`'s bounding rect (plus a margin), which hits
+    /// vertices, ring interiors and horizontal ring segments as well as generic points.
+    fn probe_coords(geometry: &Geometry, steps: i32) -> Vec<Coord> {
+        use crate::BoundingRect;
+        let rect = geometry.bounding_rect().unwrap();
+        let step_x = rect.width() / f64::from(steps);
+        let step_y = rect.height() / f64::from(steps);
+
+        (-1..=steps + 1)
+            .flat_map(move |x_step| {
+                (-1..=steps + 1).map(move |y_step| Coord {
+                    x: rect.min().x + step_x * f64::from(x_step),
+                    y: rect.min().y + step_y * f64::from(y_step),
+                })
+            })
+            .collect()
+    }
+
+    #[test]
+    fn polygon_with_hole() {
+        let polygon = wkt!(POLYGON(
+            (0. 0., 4. 0., 4. 4., 0. 4., 0. 0.),
+            (1. 1., 1. 3., 3. 3., 3. 1., 1. 1.)
+        ));
+        assert_agrees_with_unindexed(polygon.clone().into(), probe_coords(&polygon.into(), 8));
+    }
+
+    #[test]
+    fn reversed_winding_order() {
+        // Same as `polygon_with_hole`, but with both rings wound the other way, which flips the
+        // sign of a winding number without changing the geometry.
+        let polygon = wkt!(POLYGON(
+            (0. 0., 0. 4., 4. 4., 4. 0., 0. 0.),
+            (1. 1., 3. 1., 3. 3., 1. 3., 1. 1.)
+        ));
+        assert_agrees_with_unindexed(polygon.clone().into(), probe_coords(&polygon.into(), 8));
+    }
+
+    #[test]
+    fn multi_polygon_with_island_in_hole() {
+        let multi_polygon = wkt!(MULTIPOLYGON(
+            ((0. 0., 8. 0., 8. 8., 0. 8., 0. 0.), (2. 2., 2. 6., 6. 6., 6. 2., 2. 2.)),
+            ((3. 3., 5. 3., 5. 5., 3. 5., 3. 3.))
+        ));
+        assert_agrees_with_unindexed(
+            multi_polygon.clone().into(),
+            probe_coords(&multi_polygon.into(), 12),
+        );
+    }
+
+    #[test]
+    fn multi_polygon_with_overlapping_polygons() {
+        // Invalid, but relate has historically treated a coord covered by two overlapping
+        // polygons as `Inside` rather than applying the "mod 2" rule to their interiors.
+        let multi_polygon = wkt!(MULTIPOLYGON(
+            ((0. 0., 4. 0., 4. 4., 0. 4., 0. 0.)),
+            ((2. 2., 6. 2., 6. 6., 2. 6., 2. 2.))
+        ));
+        assert_agrees_with_unindexed(
+            multi_polygon.clone().into(),
+            probe_coords(&multi_polygon.into(), 10),
+        );
+    }
+
+    #[test]
+    fn non_areal_geometries_fall_back() {
+        // These have no areal edges to ray cast against, so they must be delegated.
+        for geometry in [
+            wkt!(POINT(1. 1.)).into(),
+            wkt!(MULTIPOINT(1. 1., 2. 2.)).into(),
+            wkt!(LINESTRING(0. 0., 2. 2., 4. 0.)).into(),
+            Geometry::GeometryCollection(wkt!(GEOMETRYCOLLECTION(
+                POLYGON((0. 0., 4. 0., 4. 4., 0. 4., 0. 0.)),
+                POINT(6. 6.)
+            ))),
+        ] {
+            let coords = probe_coords(&geometry, 6);
+            assert_agrees_with_unindexed(geometry, coords);
+        }
+    }
+
+    #[test]
+    fn real_world_polygons() {
+        let norway: Geometry = crate::Polygon::new(geo_test_fixtures::norway_main(), vec![]).into();
+        assert_agrees_with_unindexed(norway.clone(), probe_coords(&norway, 40));
+
+        // Two overlapping polygons.
+        let overlapping: Geometry = MultiPolygon(vec![
+            crate::Polygon::new(geo_test_fixtures::poly1(), vec![]),
+            crate::Polygon::new(geo_test_fixtures::poly2(), vec![]),
+        ])
+        .into();
+        assert_agrees_with_unindexed(overlapping.clone(), probe_coords(&overlapping, 40));
     }
 }
