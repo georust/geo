@@ -12,7 +12,7 @@ use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 use crate::relate::geomgraph::RobustLineIntersector;
 use rstar::{RTree, RTreeNum};
 use std::cell::RefCell;
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// The computation of the [`IntersectionMatrix`](crate::algorithm::relate::IntersectionMatrix) relies on the use of a
 /// structure called a "topology graph". The topology graph contains nodes (CoordNode) and
@@ -36,7 +36,7 @@ where
 {
     arg_index: usize,
     parent_geometry: GeometryCow<'a, F>,
-    tree: Rc<RTree<Segment<F>>>,
+    tree: Arc<RTree<Segment<F>>>,
     use_boundary_determination_rule: bool,
     planar_graph: PlanarGraph<F>,
 }
@@ -124,11 +124,11 @@ where
             arg_index,
             parent_geometry,
             use_boundary_determination_rule: true,
-            tree: Rc::new(RTree::new()),
+            tree: Arc::new(RTree::new()),
             planar_graph: PlanarGraph::new(),
         };
         graph.add_geometry(&graph.parent_geometry.clone());
-        graph.tree = Rc::new(graph.build_tree());
+        graph.tree = Arc::new(graph.build_tree());
         // TODO: don't pass in line intersector here - in theory we'll want pluggable line intersectors
         // and the type (Robust) shouldn't be hard coded here.
         graph.compute_self_nodes(Box::new(RobustLineIntersector::new()));

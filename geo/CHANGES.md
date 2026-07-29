@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- `PreparedGeometry` is now `Send`, so it can be moved between threads.
 - FIX: `Line::haversine_closest_point` no longer returns an endpoint for valid high-latitude projections.
   - <https://github.com/georust/geo/issues/1325>
 - Add index-returning methods `Simplify::simplify_idx`, `SimplifyVw::simplify_vw_idx`, `SimplifyVwPreserve::simplify_vw_preserve_idx`, and `ConvexHull::convex_hull_idx`, returning input-relative indices of the retained vertices. Adds the `PolygonIndices` type and the `quick_hull_indices` free function.

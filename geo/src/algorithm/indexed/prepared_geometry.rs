@@ -136,6 +136,27 @@ mod tests {
     use crate::{polygon, wkt};
 
     #[test]
+    fn clone_and_send() {
+        fn send(_send: impl Send) {}
+        let polygon: Polygon = wkt!(POLYGON EMPTY);
+        let prepared = PreparedGeometry::from(polygon);
+        send(prepared.clone())
+    }
+
+    #[test]
+    fn moved_across_threads() {
+        let polygon = wkt!(POLYGON((0.0 0.0,2.0 0.0,1.0 1.0,0.0 0.0)));
+        let prepared = PreparedGeometry::from(polygon);
+
+        std::thread::spawn(move || {
+            let line = wkt!(LINESTRING(0.0 0.0,3.0 3.0));
+            assert!(prepared.relate(&line).is_intersects());
+        })
+        .join()
+        .unwrap();
+    }
+
+    #[test]
     fn relate() {
         let p1 = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
         let p2 = polygon![(x: 0.5, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
