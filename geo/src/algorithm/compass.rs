@@ -19,8 +19,25 @@ pub enum CardinalDirection {
 }
 
 impl CardinalDirection {
-    /// Turn to the next cardinal direction clockwise.
+    /// All cardinal directions, in clockwise order starting from north.
+    pub const ALL: [Self; 4] = [Self::North, Self::East, Self::South, Self::West];
+
+    /// Returns the next cardinal direction clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
     pub fn turn_cw(self) -> Self {
+        match self {
+            CardinalDirection::North => CardinalDirection::East,
+            CardinalDirection::East => CardinalDirection::South,
+            CardinalDirection::South => CardinalDirection::West,
+            CardinalDirection::West => CardinalDirection::North,
+        }
+    }
+
+    /// Returns the next cardinal direction counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
         match self {
             CardinalDirection::North => CardinalDirection::West,
             CardinalDirection::East => CardinalDirection::North,
@@ -29,13 +46,13 @@ impl CardinalDirection {
         }
     }
 
-    /// Turn to the next cardinal direction counterclockwise.
-    pub fn turn_ccw(self) -> Self {
+    /// Returns the opposite cardinal direction.
+    pub fn opposite(self) -> Self {
         match self {
-            CardinalDirection::North => CardinalDirection::East,
-            CardinalDirection::East => CardinalDirection::South,
-            CardinalDirection::South => CardinalDirection::West,
-            CardinalDirection::West => CardinalDirection::North,
+            CardinalDirection::North => CardinalDirection::South,
+            CardinalDirection::East => CardinalDirection::West,
+            CardinalDirection::South => CardinalDirection::North,
+            CardinalDirection::West => CardinalDirection::East,
         }
     }
 
@@ -98,8 +115,30 @@ pub enum OrdinalDirection {
 }
 
 impl OrdinalDirection {
-    /// Turn to the next ordinal direction clockwise.
+    /// All ordinal directions, in clockwise order starting from northeast.
+    pub const ALL: [Self; 4] = [
+        Self::NorthEast,
+        Self::SouthEast,
+        Self::SouthWest,
+        Self::NorthWest,
+    ];
+
+    /// Returns the next ordinal direction clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
     pub fn turn_cw(self) -> Self {
+        match self {
+            OrdinalDirection::NorthEast => OrdinalDirection::SouthEast,
+            OrdinalDirection::SouthEast => OrdinalDirection::SouthWest,
+            OrdinalDirection::SouthWest => OrdinalDirection::NorthWest,
+            OrdinalDirection::NorthWest => OrdinalDirection::NorthEast,
+        }
+    }
+
+    /// Returns the next ordinal direction counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
         match self {
             OrdinalDirection::NorthEast => OrdinalDirection::NorthWest,
             OrdinalDirection::SouthEast => OrdinalDirection::NorthEast,
@@ -108,13 +147,13 @@ impl OrdinalDirection {
         }
     }
 
-    /// Turn to the next ordinal direction counterclockwise.
-    pub fn turn_ccw(self) -> Self {
+    /// Returns the opposite ordinal direction.
+    pub fn opposite(self) -> Self {
         match self {
-            OrdinalDirection::NorthEast => OrdinalDirection::SouthEast,
-            OrdinalDirection::SouthEast => OrdinalDirection::SouthWest,
-            OrdinalDirection::SouthWest => OrdinalDirection::NorthWest,
-            OrdinalDirection::NorthWest => OrdinalDirection::NorthEast,
+            OrdinalDirection::NorthEast => OrdinalDirection::SouthWest,
+            OrdinalDirection::SouthEast => OrdinalDirection::NorthWest,
+            OrdinalDirection::SouthWest => OrdinalDirection::NorthEast,
+            OrdinalDirection::NorthWest => OrdinalDirection::SouthEast,
         }
     }
 
@@ -203,8 +242,38 @@ impl From<OrdinalDirection> for EightwiseDirection {
 }
 
 impl EightwiseDirection {
-    /// Turn to the next eight-wise direction clockwise.
+    /// All eight-wise directions, in clockwise order starting from north.
+    pub const ALL: [Self; 8] = [
+        Self::North,
+        Self::NorthEast,
+        Self::East,
+        Self::SouthEast,
+        Self::South,
+        Self::SouthWest,
+        Self::West,
+        Self::NorthWest,
+    ];
+
+    /// Returns the next eight-wise direction clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
     pub fn turn_cw(self) -> Self {
+        match self {
+            EightwiseDirection::North => EightwiseDirection::NorthEast,
+            EightwiseDirection::NorthEast => EightwiseDirection::East,
+            EightwiseDirection::East => EightwiseDirection::SouthEast,
+            EightwiseDirection::SouthEast => EightwiseDirection::South,
+            EightwiseDirection::South => EightwiseDirection::SouthWest,
+            EightwiseDirection::SouthWest => EightwiseDirection::West,
+            EightwiseDirection::West => EightwiseDirection::NorthWest,
+            EightwiseDirection::NorthWest => EightwiseDirection::North,
+        }
+    }
+
+    /// Returns the next eight-wise direction counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
         match self {
             EightwiseDirection::North => EightwiseDirection::NorthWest,
             EightwiseDirection::NorthEast => EightwiseDirection::North,
@@ -217,17 +286,17 @@ impl EightwiseDirection {
         }
     }
 
-    /// Turn to the next eight-wise direction counterclockwise.
-    pub fn turn_ccw(self) -> Self {
+    /// Returns the opposite eight-wise direction.
+    pub fn opposite(self) -> Self {
         match self {
-            EightwiseDirection::North => EightwiseDirection::NorthEast,
-            EightwiseDirection::NorthEast => EightwiseDirection::East,
-            EightwiseDirection::East => EightwiseDirection::SouthEast,
-            EightwiseDirection::SouthEast => EightwiseDirection::South,
-            EightwiseDirection::South => EightwiseDirection::SouthWest,
-            EightwiseDirection::SouthWest => EightwiseDirection::West,
-            EightwiseDirection::West => EightwiseDirection::NorthWest,
-            EightwiseDirection::NorthWest => EightwiseDirection::North,
+            EightwiseDirection::North => EightwiseDirection::South,
+            EightwiseDirection::NorthEast => EightwiseDirection::SouthWest,
+            EightwiseDirection::East => EightwiseDirection::West,
+            EightwiseDirection::SouthEast => EightwiseDirection::NorthWest,
+            EightwiseDirection::South => EightwiseDirection::North,
+            EightwiseDirection::SouthWest => EightwiseDirection::NorthEast,
+            EightwiseDirection::West => EightwiseDirection::East,
+            EightwiseDirection::NorthWest => EightwiseDirection::SouthEast,
         }
     }
 
@@ -361,8 +430,54 @@ impl From<EightwiseDirection> for SixteenwiseDirection {
 }
 
 impl SixteenwiseDirection {
-    /// Turn to the next sixteen-wise direction clockwise.
+    /// All sixteen-wise directions, in clockwise order starting from north.
+    pub const ALL: [Self; 16] = [
+        Self::North,
+        Self::NorthNorthEast,
+        Self::NorthEast,
+        Self::EastNorthEast,
+        Self::East,
+        Self::EastSouthEast,
+        Self::SouthEast,
+        Self::SouthSouthEast,
+        Self::South,
+        Self::SouthSouthWest,
+        Self::SouthWest,
+        Self::WestSouthWest,
+        Self::West,
+        Self::WestNorthWest,
+        Self::NorthWest,
+        Self::NorthNorthWest,
+    ];
+
+    /// Returns the next sixteen-wise direction clockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
     pub fn turn_cw(self) -> Self {
+        match self {
+            SixteenwiseDirection::North => SixteenwiseDirection::NorthNorthEast,
+            SixteenwiseDirection::NorthNorthEast => SixteenwiseDirection::NorthEast,
+            SixteenwiseDirection::NorthEast => SixteenwiseDirection::EastNorthEast,
+            SixteenwiseDirection::EastNorthEast => SixteenwiseDirection::East,
+            SixteenwiseDirection::East => SixteenwiseDirection::EastSouthEast,
+            SixteenwiseDirection::EastSouthEast => SixteenwiseDirection::SouthEast,
+            SixteenwiseDirection::SouthEast => SixteenwiseDirection::SouthSouthEast,
+            SixteenwiseDirection::SouthSouthEast => SixteenwiseDirection::South,
+            SixteenwiseDirection::South => SixteenwiseDirection::SouthSouthWest,
+            SixteenwiseDirection::SouthSouthWest => SixteenwiseDirection::SouthWest,
+            SixteenwiseDirection::SouthWest => SixteenwiseDirection::WestSouthWest,
+            SixteenwiseDirection::WestSouthWest => SixteenwiseDirection::West,
+            SixteenwiseDirection::West => SixteenwiseDirection::WestNorthWest,
+            SixteenwiseDirection::WestNorthWest => SixteenwiseDirection::NorthWest,
+            SixteenwiseDirection::NorthWest => SixteenwiseDirection::NorthNorthWest,
+            SixteenwiseDirection::NorthNorthWest => SixteenwiseDirection::North,
+        }
+    }
+
+    /// Returns the next sixteen-wise direction counterclockwise.
+    ///
+    /// `x` is assumed to increase east and `y` is assumed to increase north.
+    pub fn turn_ccw(self) -> Self {
         match self {
             SixteenwiseDirection::North => SixteenwiseDirection::NorthNorthWest,
             SixteenwiseDirection::NorthNorthEast => SixteenwiseDirection::North,
@@ -383,25 +498,25 @@ impl SixteenwiseDirection {
         }
     }
 
-    /// Turn to the next sixteen-wise direction counterclockwise.
-    pub fn turn_ccw(self) -> Self {
+    /// Returns the opposite sixteen-wise direction.
+    pub fn opposite(self) -> Self {
         match self {
-            SixteenwiseDirection::North => SixteenwiseDirection::NorthNorthEast,
-            SixteenwiseDirection::NorthNorthEast => SixteenwiseDirection::NorthEast,
-            SixteenwiseDirection::NorthEast => SixteenwiseDirection::EastNorthEast,
-            SixteenwiseDirection::EastNorthEast => SixteenwiseDirection::East,
-            SixteenwiseDirection::East => SixteenwiseDirection::EastSouthEast,
-            SixteenwiseDirection::EastSouthEast => SixteenwiseDirection::SouthEast,
-            SixteenwiseDirection::SouthEast => SixteenwiseDirection::SouthSouthEast,
-            SixteenwiseDirection::SouthSouthEast => SixteenwiseDirection::South,
-            SixteenwiseDirection::South => SixteenwiseDirection::SouthSouthWest,
-            SixteenwiseDirection::SouthSouthWest => SixteenwiseDirection::SouthWest,
-            SixteenwiseDirection::SouthWest => SixteenwiseDirection::WestSouthWest,
-            SixteenwiseDirection::WestSouthWest => SixteenwiseDirection::West,
-            SixteenwiseDirection::West => SixteenwiseDirection::WestNorthWest,
-            SixteenwiseDirection::WestNorthWest => SixteenwiseDirection::NorthWest,
-            SixteenwiseDirection::NorthWest => SixteenwiseDirection::NorthNorthWest,
-            SixteenwiseDirection::NorthNorthWest => SixteenwiseDirection::North,
+            SixteenwiseDirection::North => SixteenwiseDirection::South,
+            SixteenwiseDirection::NorthNorthEast => SixteenwiseDirection::SouthSouthWest,
+            SixteenwiseDirection::NorthEast => SixteenwiseDirection::SouthWest,
+            SixteenwiseDirection::EastNorthEast => SixteenwiseDirection::WestSouthWest,
+            SixteenwiseDirection::East => SixteenwiseDirection::West,
+            SixteenwiseDirection::EastSouthEast => SixteenwiseDirection::WestNorthWest,
+            SixteenwiseDirection::SouthEast => SixteenwiseDirection::NorthWest,
+            SixteenwiseDirection::SouthSouthEast => SixteenwiseDirection::NorthNorthWest,
+            SixteenwiseDirection::South => SixteenwiseDirection::North,
+            SixteenwiseDirection::SouthSouthWest => SixteenwiseDirection::NorthNorthEast,
+            SixteenwiseDirection::SouthWest => SixteenwiseDirection::NorthEast,
+            SixteenwiseDirection::WestSouthWest => SixteenwiseDirection::EastNorthEast,
+            SixteenwiseDirection::West => SixteenwiseDirection::East,
+            SixteenwiseDirection::WestNorthWest => SixteenwiseDirection::EastSouthEast,
+            SixteenwiseDirection::NorthWest => SixteenwiseDirection::SouthEast,
+            SixteenwiseDirection::NorthNorthWest => SixteenwiseDirection::SouthSouthEast,
         }
     }
 
@@ -884,56 +999,56 @@ mod tests {
     }
 
     #[test]
+    fn opposite_reverses_direction() {
+        for direction in CardinalDirection::ALL {
+            assert_eq!(direction.opposite().opposite(), direction);
+            assert_eq!(direction.opposite(), direction.turn_cw().turn_cw());
+            assert_eq!(direction.opposite(), direction.turn_ccw().turn_ccw());
+        }
+        for direction in OrdinalDirection::ALL {
+            assert_eq!(direction.opposite().opposite(), direction);
+            assert_eq!(direction.opposite(), direction.turn_cw().turn_cw());
+            assert_eq!(direction.opposite(), direction.turn_ccw().turn_ccw());
+        }
+        for direction in EightwiseDirection::ALL {
+            assert_eq!(direction.opposite().opposite(), direction);
+            assert_eq!(
+                direction.opposite(),
+                (0..4).fold(direction, |d, _| d.turn_cw())
+            );
+            assert_eq!(
+                direction.opposite(),
+                (0..4).fold(direction, |d, _| d.turn_ccw())
+            );
+        }
+        for direction in SixteenwiseDirection::ALL {
+            assert_eq!(direction.opposite().opposite(), direction);
+            assert_eq!(
+                direction.opposite(),
+                (0..8).fold(direction, |d, _| d.turn_cw())
+            );
+            assert_eq!(
+                direction.opposite(),
+                (0..8).fold(direction, |d, _| d.turn_ccw())
+            );
+        }
+    }
+
+    #[test]
     fn turn_cw_and_turn_ccw_are_inverses() {
-        for direction in [
-            CardinalDirection::North,
-            CardinalDirection::East,
-            CardinalDirection::South,
-            CardinalDirection::West,
-        ] {
+        for direction in CardinalDirection::ALL {
             assert_eq!(direction.turn_ccw().turn_cw(), direction);
             assert_eq!(direction.turn_cw().turn_ccw(), direction);
         }
-        for direction in [
-            OrdinalDirection::NorthEast,
-            OrdinalDirection::SouthEast,
-            OrdinalDirection::SouthWest,
-            OrdinalDirection::NorthWest,
-        ] {
+        for direction in OrdinalDirection::ALL {
             assert_eq!(direction.turn_ccw().turn_cw(), direction);
             assert_eq!(direction.turn_cw().turn_ccw(), direction);
         }
-        for direction in [
-            EightwiseDirection::North,
-            EightwiseDirection::NorthEast,
-            EightwiseDirection::East,
-            EightwiseDirection::SouthEast,
-            EightwiseDirection::South,
-            EightwiseDirection::SouthWest,
-            EightwiseDirection::West,
-            EightwiseDirection::NorthWest,
-        ] {
+        for direction in EightwiseDirection::ALL {
             assert_eq!(direction.turn_ccw().turn_cw(), direction);
             assert_eq!(direction.turn_cw().turn_ccw(), direction);
         }
-        for direction in [
-            SixteenwiseDirection::North,
-            SixteenwiseDirection::NorthNorthEast,
-            SixteenwiseDirection::NorthEast,
-            SixteenwiseDirection::EastNorthEast,
-            SixteenwiseDirection::East,
-            SixteenwiseDirection::EastSouthEast,
-            SixteenwiseDirection::SouthEast,
-            SixteenwiseDirection::SouthSouthEast,
-            SixteenwiseDirection::South,
-            SixteenwiseDirection::SouthSouthWest,
-            SixteenwiseDirection::SouthWest,
-            SixteenwiseDirection::WestSouthWest,
-            SixteenwiseDirection::West,
-            SixteenwiseDirection::WestNorthWest,
-            SixteenwiseDirection::NorthWest,
-            SixteenwiseDirection::NorthNorthWest,
-        ] {
+        for direction in SixteenwiseDirection::ALL {
             assert_eq!(direction.turn_ccw().turn_cw(), direction);
             assert_eq!(direction.turn_cw().turn_ccw(), direction);
         }
