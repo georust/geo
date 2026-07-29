@@ -1,8 +1,8 @@
 use super::{EdgeEndBuilder, IntersectionMatrix};
 use crate::dimensions::{Dimensions, HasDimensions};
 use crate::relate::geomgraph::{
-    CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, LabeledEdgeEndBundleStar,
-    RobustLineIntersector,
+    CoordNode, CoordPos, Edge, EdgeEnd, EdgeEndBundleStar, GeometryGraph, Label,
+    LabeledEdgeEndBundleStar, RobustLineIntersector,
     index::SegmentIntersector,
     node_map::{NodeFactory, NodeMap},
 };
@@ -10,8 +10,6 @@ use crate::{Coord, GeoFloat, GeometryCow};
 use crate::{CoordinatePosition, Relate};
 
 use geo_types::Rect;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 /// Computes an [`IntersectionMatrix`] describing the topological relationship between two
 /// Geometries.
@@ -32,7 +30,6 @@ where
     geometry_b: &'a dyn Relate<F, Output = BBOX2>,
     nodes: NodeMap<F, RelateNodeFactory>,
     line_intersector: RobustLineIntersector,
-    isolated_edges: Vec<Rc<RefCell<Edge<F>>>>,
 }
 
 #[derive(PartialEq)]
@@ -61,7 +58,6 @@ where
             geometry_a,
             geometry_b,
             nodes: NodeMap::new(),
-            isolated_edges: vec![],
             line_intersector: RobustLineIntersector::new(),
         }
     }
@@ -116,7 +112,7 @@ where
 
         let mut nodes = NodeMap::new();
         std::mem::swap(&mut self.nodes, &mut nodes);
-        let labeled_node_edges = nodes
+        let labeled_node_edges: Vec<_> = nodes
             .into_iter()
             .map(|(node, edges)| (node, edges.into_labeled(&graph_a, &graph_b)))
             .collect();
@@ -131,14 +127,19 @@ where
         // We only need to check components contained in the input graphs, since, by definition,
         // isolated components will not have been replaced by new components formed by
         // intersections.
-        self.label_isolated_edges(&graph_a, &graph_b, 1);
-        self.label_isolated_edges(&graph_b, &graph_a, 0);
+        let mut isolated_edge_labels = vec![];
+        Self::append_isolated_edge_labels(&graph_a, &graph_b, 1, &mut isolated_edge_labels);
+        Self::append_isolated_edge_labels(&graph_b, &graph_a, 0, &mut isolated_edge_labels);
 
         debug!(
             "before update_intersection_matrix: {:?}",
             &intersection_matrix
         );
-        self.update_intersection_matrix(labeled_node_edges, &mut intersection_matrix);
+        Self::update_intersection_matrix(
+            &isolated_edge_labels,
+            &labeled_node_edges,
+            &mut intersection_matrix,
+        );
 
         intersection_matrix
     }
@@ -280,23 +281,19 @@ where
     }
 
     fn update_intersection_matrix(
-        &self,
-        labeled_node_edges: Vec<(CoordNode<F>, LabeledEdgeEndBundleStar<F>)>,
+        isolated_edge_labels: &[Label],
+        labeled_node_edges: &[(CoordNode<F>, LabeledEdgeEndBundleStar<F>)],
         intersection_matrix: &mut IntersectionMatrix,
     ) {
         debug!("before updated_intersection_matrix(isolated_edges): {intersection_matrix:?}",);
-        for isolated_edge in &self.isolated_edges {
-            let edge = isolated_edge.borrow();
-            Edge::<F>::update_intersection_matrix(edge.label(), intersection_matrix);
+        for label in isolated_edge_labels {
+            Edge::<F>::update_intersection_matrix(label, intersection_matrix);
             debug!(
-                "after isolated_edge update_intersection_matrix: {:?}, (isolated_edge: {:?}, label: {:?})",
-                intersection_matrix,
-                edge,
-                edge.label()
+                "after isolated_edge update_intersection_matrix: {intersection_matrix:?}, (label: {label:?})"
             );
         }
 
-        for (node, edges) in labeled_node_edges.iter() {
+        for (node, edges) in labeled_node_edges {
             node.update_intersection_matrix(intersection_matrix);
             edges.update_intersection_matrix(intersection_matrix);
         }
@@ -308,17 +305,17 @@ where
     /// By definition, "isolated" edges are guaranteed not to touch the boundary of the target
     /// (since if they did, they would have caused an intersection to be computed and hence would
     /// not be isolated).
-    fn label_isolated_edges(
-        &mut self,
+    fn append_isolated_edge_labels(
         this_graph: &GeometryGraph<F>,
         target_graph: &GeometryGraph<F>,
         target_index: usize,
+        isolated_edge_labels: &mut Vec<Label>,
     ) {
         for edge in this_graph.edges() {
             let mut mut_edge = edge.borrow_mut();
             if mut_edge.is_isolated() {
                 Self::label_isolated_edge(&mut mut_edge, target_index, target_graph.geometry());
-                self.isolated_edges.push(edge.clone());
+                isolated_edge_labels.push(mut_edge.label().clone());
             }
         }
     }
