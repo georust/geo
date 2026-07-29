@@ -210,6 +210,22 @@ impl<T: CoordNum> Geometry<T> {
             None
         }
     }
+
+    /// Get simple geometry type name as a string.
+    pub fn static_name(&self) -> &'static str {
+        match self {
+            Geometry::Point(_) => "Point",
+            Geometry::Line(_) => "Line",
+            Geometry::LineString(_) => "LineString",
+            Geometry::Polygon(_) => "Polygon",
+            Geometry::MultiPoint(_) => "MultiPoint",
+            Geometry::MultiLineString(_) => "MultiLineString",
+            Geometry::MultiPolygon(_) => "MultiPolygon",
+            Geometry::GeometryCollection(_) => "GeometryCollection",
+            Geometry::Rect(_) => "Rect",
+            Geometry::Triangle(_) => "Triangle",
+        }
+    }
 }
 
 macro_rules! try_from_geometry_impl {

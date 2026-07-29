@@ -6,7 +6,6 @@
 
 use crate::{CoordFloat, EARTH_FLATTENING, EQUATORIAL_EARTH_RADIUS, POLAR_EARTH_RADIUS, Point};
 use num_traits::FromPrimitive;
-use std::{error, fmt};
 
 /// Determine the distance between two geometries using [Vincenty’s formulae].
 ///
@@ -162,20 +161,9 @@ where
     }
 }
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Eq, PartialEq, Debug, thiserror::Error)]
+#[error("Vincenty algorithm failed to converge")]
 pub struct FailedToConvergeError;
-
-impl fmt::Display for FailedToConvergeError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Vincenty algorithm failed to converge")
-    }
-}
-
-impl error::Error for FailedToConvergeError {
-    fn description(&self) -> &str {
-        "Vincenty algorithm failed to converge"
-    }
-}
 
 #[cfg(test)]
 mod test {

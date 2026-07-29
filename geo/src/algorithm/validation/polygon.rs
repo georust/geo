@@ -9,7 +9,6 @@ use union_find::UnionFind;
 
 use std::cell::RefCell;
 use std::collections::{BTreeMap, BTreeSet};
-use std::fmt;
 
 /// A [`Polygon`] must follow these rules to be valid:
 /// - [x] the polygon boundary rings (the exterior shell ring and interior hole rings) are simple (do not cross or self-touch). Because of this a polygon cannnot have cut lines, spikes or loops. This implies that polygon holes must be represented as interior rings, rather than by the exterior ring self-touching (a so-called "inverted hole").
@@ -17,19 +16,25 @@ use std::fmt;
 /// - [x] boundary rings may touch at points but only as a tangent (i.e. not in a line)
 /// - [x] interior rings are contained in the exterior ring
 /// - [x] the polygon interior is simply connected (i.e. the rings must not touch in a way that splits the polygon into more than one part)
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum InvalidPolygon {
     /// A ring must have at least 4 points to be valid. Note that, in order to close the ring, the first and final points will be identical.
+    #[error("{0} must have at least 3 distinct points")]
     TooFewPointsInRing(RingRole),
     /// A ring has a self-intersection.
+    #[error("{0} has a self-intersection")]
     SelfIntersection(RingRole),
     /// One of the Polygon's coordinates is non-finite.
+    #[error("{} has a non-finite coordinate at index {}", .0, .1.0)]
     NonFiniteCoord(RingRole, CoordIndex),
     /// A polygon's interiors must be completely within its exterior.
+    #[error("{0} is not contained within the polygon's exterior")]
     InteriorRingNotContainedInExteriorRing(RingRole),
     /// A valid polygon's rings must not intersect one another. In this case, the intersection is 1-dimensional.
+    #[error("{0} and {1} intersect on a line")]
     IntersectingRingsOnALine(RingRole, RingRole),
     /// A valid polygon's rings must not intersect one another. In this case, the intersection is 2-dimensional.
+    #[error("{0} and {1} intersect on an area")]
     IntersectingRingsOnAnArea(RingRole, RingRole),
     /// The polygon interior is not simply connected because rings touch in a way that
     /// disconnects the interior into multiple regions.
@@ -40,41 +45,9 @@ pub enum InvalidPolygon {
     /// This can occur when:
     /// - Two rings share two or more vertices (creating a "corridor" that cuts through the interior)
     /// - Rings form a cycle of single-vertex touches that encloses part of the interior
+    #[error("{0} and {1} touch in a way that disconnects the polygon interior")]
     InteriorNotSimplyConnected(RingRole, RingRole),
 }
-
-impl fmt::Display for InvalidPolygon {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            InvalidPolygon::TooFewPointsInRing(ring) => {
-                write!(f, "{ring} must have at least 3 distinct points")
-            }
-            InvalidPolygon::SelfIntersection(ring) => {
-                write!(f, "{ring} has a self-intersection")
-            }
-            InvalidPolygon::NonFiniteCoord(ring, idx) => {
-                write!(f, "{ring} has a non-finite coordinate at index {}", idx.0)
-            }
-            InvalidPolygon::InteriorRingNotContainedInExteriorRing(ring) => {
-                write!(f, "{ring} is not contained within the polygon's exterior")
-            }
-            InvalidPolygon::IntersectingRingsOnALine(ring_1, ring_2) => {
-                write!(f, "{ring_1} and {ring_2} intersect on a line")
-            }
-            InvalidPolygon::IntersectingRingsOnAnArea(ring_1, ring_2) => {
-                write!(f, "{ring_1} and {ring_2} intersect on an area")
-            }
-            InvalidPolygon::InteriorNotSimplyConnected(ring_1, ring_2) => {
-                write!(
-                    f,
-                    "{ring_1} and {ring_2} touch in a way that disconnects the polygon interior"
-                )
-            }
-        }
-    }
-}
-
-impl std::error::Error for InvalidPolygon {}
 
 impl<F: GeoFloat> Validation for Polygon<F> {
     type Error = InvalidPolygon;

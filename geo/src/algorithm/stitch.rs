@@ -7,18 +7,11 @@ use crate::{Contains, GeoFloat};
 
 // ========= Error Type ============
 
-#[derive(Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum LineStitchingError {
+    #[error("{0}")]
     IncompleteRing(&'static str),
 }
-
-impl std::fmt::Display for LineStitchingError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{self:?}")
-    }
-}
-
-impl std::error::Error for LineStitchingError {}
 
 pub(crate) type TriangleStitchingResult<T> = Result<T, LineStitchingError>;
 

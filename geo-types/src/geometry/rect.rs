@@ -485,19 +485,60 @@ mod approx_integration {
     since = "0.6.2",
     note = "Use `Rect::new` instead, since `Rect::try_new` will never Error"
 )]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, thiserror::Error)]
+#[error("{}", RECT_INVALID_BOUNDS_ERROR)]
 pub struct InvalidRectCoordinatesError;
 
-#[cfg(feature = "std")]
-#[allow(deprecated)]
-impl std::error::Error for InvalidRectCoordinatesError {}
+#[cfg(any(
+    feature = "rstar_0_8",
+    feature = "rstar_0_9",
+    feature = "rstar_0_10",
+    feature = "rstar_0_11",
+    feature = "rstar_0_12",
+    feature = "rstar_0_13"
+))]
+macro_rules! impl_rstar_rect {
+    ($rstar:ident) => {
+        impl<T> ::$rstar::RTreeObject for Rect<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            type Envelope = ::$rstar::AABB<crate::Point<T>>;
 
-#[allow(deprecated)]
-impl core::fmt::Display for InvalidRectCoordinatesError {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "{RECT_INVALID_BOUNDS_ERROR}")
-    }
+            fn envelope(&self) -> Self::Envelope {
+                ::$rstar::AABB::from_corners(self.min().into(), self.max().into())
+            }
+        }
+
+        impl<T> ::$rstar::PointDistance for Rect<T>
+        where
+            T: ::num_traits::Float + ::$rstar::RTreeNum,
+        {
+            fn distance_2(&self, point: &crate::Point<T>) -> T {
+                use ::$rstar::RTreeObject;
+                self.envelope().distance_2(point)
+            }
+        }
+    };
 }
+
+#[cfg(feature = "rstar_0_8")]
+impl_rstar_rect!(rstar_0_8);
+
+#[cfg(feature = "rstar_0_9")]
+impl_rstar_rect!(rstar_0_9);
+
+#[cfg(feature = "rstar_0_10")]
+impl_rstar_rect!(rstar_0_10);
+
+#[cfg(feature = "rstar_0_11")]
+impl_rstar_rect!(rstar_0_11);
+
+#[cfg(feature = "rstar_0_12")]
+impl_rstar_rect!(rstar_0_12);
+
+#[cfg(feature = "rstar_0_13")]
+impl_rstar_rect!(rstar_0_13);
 
 #[cfg(test)]
 mod test {
@@ -545,5 +586,15 @@ mod test {
             Rect::new((0., 0.), (0., 0.)).center(),
             Coord::from((0., 0.))
         );
+    }
+
+    #[cfg(feature = "rstar_0_13")]
+    #[test]
+    fn rect_rstar_point_distance2() {
+        use rstar_0_13::PointDistance;
+
+        let r = Rect::new((0., 2.), (1., 3.));
+        assert_relative_eq!(r.distance_2(&crate::Point::new(0., 0.)), 4.);
+        assert_relative_eq!(r.distance_2(&crate::Point::new(0.5, 2.5)), 0.);
     }
 }

@@ -2,18 +2,20 @@ use crate::GeoFloat;
 use rand::distr::weighted::Error;
 
 /// Errors that can occur during k-means++ initialisation
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum KMeansInitError {
     /// Input data contains `NaN` coordinates
     ///
     /// This typically indicates invalid or corrupted input data. Check your point coordinates
     /// for NaN values before running k-means.
+    #[error("Input data contains NaN coordinates")]
     NaNCoordinate,
 
     /// Input data contains infinite coordinates
     ///
     /// This typically indicates invalid or corrupted input data. Check your point coordinates
     /// for infinite values before running k-means.
+    #[error("Input data contains infinite coordinates")]
     InfiniteCoordinate,
 
     /// All points are at identical locations, making clustering impossible
@@ -25,48 +27,26 @@ pub enum KMeansInitError {
     /// Consider:
     /// - Checking if your data has been properly loaded
     /// - Adding small random perturbations to break ties if appropriate.
+    #[error("All points are at identical locations, making clustering impossible")]
     DegenerateData,
 
     /// Failed to create weighted distribution for k-means++ sampling
     ///
     /// This error occurs when the random weighted sampling distribution cannot be constructed,
     /// typically because all weights sum to zero or contain invalid values.
+    #[error("Failed to create weighted distribution for k-means++ sampling: {error}")]
     WeightedDistributionFailed {
         /// The underlying error from rand's WeightedIndex
+        #[source]
         error: Error,
     },
 }
 
-impl std::fmt::Display for KMeansInitError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            KMeansInitError::NaNCoordinate => {
-                write!(f, "Input data contains NaN coordinates")
-            }
-            KMeansInitError::InfiniteCoordinate => {
-                write!(f, "Input data contains infinite coordinates")
-            }
-            KMeansInitError::DegenerateData => {
-                write!(
-                    f,
-                    "All points are at identical locations, making clustering impossible"
-                )
-            }
-            KMeansInitError::WeightedDistributionFailed { error } => {
-                write!(
-                    f,
-                    "Failed to create weighted distribution for k-means++ sampling: {}",
-                    error
-                )
-            }
-        }
-    }
-}
-
 /// Errors that can occur during k-means clustering
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum KMeansError<T: GeoFloat> {
     /// Invalid number of clusters requested
+    #[error("Invalid k={k}: must be > 0 and <= {n} (number of points)")]
     InvalidK {
         /// The requested number of clusters
         k: usize,
@@ -75,6 +55,7 @@ pub enum KMeansError<T: GeoFloat> {
     },
 
     /// An empty cluster was encountered and could not be recovered
+    #[error("Empty cluster {cluster_id} at iteration {iteration} could not be recovered")]
     EmptyCluster {
         /// The iteration number when the error occurred
         iteration: usize,
@@ -86,7 +67,8 @@ pub enum KMeansError<T: GeoFloat> {
     ///
     /// Contains specific information about the initialisation failure mode.
     /// See [`KMeansInitError`] for details on each failure type.
-    InitializationFailed(KMeansInitError),
+    #[error("K-means initialisation failed: {0}")]
+    InitializationFailed(#[source] KMeansInitError),
 
     /// Maximum iterations reached without convergence
     ///
@@ -105,6 +87,14 @@ pub enum KMeansError<T: GeoFloat> {
     /// - `max_centroid_shift` is large relative to tolerance
     /// - A significant number of points are still changing clusters
     /// - You require guaranteed convergence
+    #[error(
+        "k-means did not converge within {iterations} iterations. \
+         Final centroid shift: {:.6} (tolerance: {:.6}), \
+         {changed_assignments} points changed clusters in final iteration. \
+         Consider increasing max_iter or using the partial result.",
+        .max_centroid_shift.to_f64().expect("max_centroid_shift must be representable as f64"),
+        .tolerance.to_f64().expect("tolerance must be representable as f64")
+    )]
     MaxIterationsReached {
         /// Cluster assignments from the final iteration.
         ///
@@ -121,54 +111,3 @@ pub enum KMeansError<T: GeoFloat> {
         changed_assignments: usize,
     },
 }
-
-impl<T: GeoFloat> std::fmt::Display for KMeansError<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            KMeansError::InvalidK { k, n } => {
-                write!(
-                    f,
-                    "Invalid k={}: must be > 0 and <= {} (number of points)",
-                    k, n
-                )
-            }
-            KMeansError::EmptyCluster {
-                iteration,
-                cluster_id,
-            } => {
-                write!(
-                    f,
-                    "Empty cluster {} at iteration {} could not be recovered",
-                    cluster_id, iteration
-                )
-            }
-            KMeansError::InitializationFailed(init_error) => {
-                write!(f, "K-means initialisation failed: {}", init_error)
-            }
-            KMeansError::MaxIterationsReached {
-                iterations,
-                max_centroid_shift,
-                tolerance,
-                changed_assignments,
-                ..
-            } => {
-                let shift_f64 = max_centroid_shift
-                    .to_f64()
-                    .expect("max_centroid_shift must be representable as f64");
-                let tol_f64 = tolerance
-                    .to_f64()
-                    .expect("tolerance must be representable as f64");
-                write!(
-                    f,
-                    "k-means did not converge within {} iterations. \
-                     Final centroid shift: {:.6} (tolerance: {:.6}), \
-                     {} points changed clusters in final iteration. \
-                     Consider increasing max_iter or using the partial result.",
-                    iterations, shift_f64, tol_f64, changed_assignments
-                )
-            }
-        }
-    }
-}
-
-impl<T: GeoFloat> std::error::Error for KMeansError<T> {}

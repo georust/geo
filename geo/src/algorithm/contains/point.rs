@@ -2,7 +2,7 @@ use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::algorithm::{CoordsIter, HasDimensions};
 use crate::geometry::*;
 use crate::utils::lex_cmp;
-use crate::{CoordNum, GeoFloat};
+use crate::{CoordNum, GeoFloat, GeoNum};
 
 // ┌────────────────────────────────┐
 // │ Implementations for Point      │
@@ -169,7 +169,7 @@ where
 
 impl<T> Contains<MultiPoint<T>> for MultiPoint<T>
 where
-    T: CoordNum,
+    T: GeoNum,
 {
     fn contains(&self, multi_point: &MultiPoint<T>) -> bool {
         // sort both collections by x then y

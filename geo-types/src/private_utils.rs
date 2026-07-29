@@ -86,6 +86,38 @@ where
     s.abs() * dx.hypot(dy)
 }
 
+pub fn line_segment_distance_squared<T, C>(point: C, start: C, end: C) -> T
+where
+    T: CoordFloat,
+    C: Into<Coord<T>>,
+{
+    let point = point.into();
+    let start = start.into();
+    let end = end.into();
+
+    if start == end {
+        return line_euclidean_length_squared(Line::new(point, start));
+    }
+    let dx = end.x - start.x;
+    let dy = end.y - start.y;
+    let d_squared = dx * dx + dy * dy;
+    let r = ((point.x - start.x) * dx + (point.y - start.y) * dy) / d_squared;
+    if r <= T::zero() {
+        return line_euclidean_length_squared(Line::new(point, start));
+    }
+    if r >= T::one() {
+        return line_euclidean_length_squared(Line::new(point, end));
+    }
+    ((start.y - point.y) * dx - (start.x - point.x) * dy).powi(2) / d_squared
+}
+
+fn line_euclidean_length_squared<T>(line: Line<T>) -> T
+where
+    T: CoordFloat,
+{
+    line.dx().powi(2) + line.dy().powi(2)
+}
+
 pub fn line_euclidean_length<T>(line: Line<T>) -> T
 where
     T: CoordFloat,
@@ -173,4 +205,14 @@ where
         }
     }
     false
+}
+
+pub fn rect_contains_coord<T>(rect: &Rect<T>, coord: &Coord<T>) -> bool
+where
+    T: CoordNum,
+{
+    coord.x > rect.min().x
+        && coord.x < rect.max().x
+        && coord.y > rect.min().y
+        && coord.y < rect.max().y
 }
