@@ -94,7 +94,7 @@ where
         }
     }
 
-    pub(crate) fn edges(&self) -> &[Rc<RefCell<Edge<F>>>] {
+    pub(crate) fn edges(&self) -> &[RefCell<Edge<F>>] {
         self.planar_graph.edges()
     }
 

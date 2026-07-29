@@ -1,11 +1,8 @@
-use super::super::{Edge, GeometryGraph};
-use super::{EdgeSetIntersector, Segment, SegmentIntersector};
+use super::super::GeometryGraph;
+use super::{EdgeSetIntersector, SegmentIntersector};
 use crate::GeoFloat;
 
-use std::cell::RefCell;
-use std::rc::Rc;
-
-use rstar::{RTree, RTreeNum};
+use rstar::RTreeNum;
 
 pub(crate) struct RStarEdgeSetIntersector;
 
