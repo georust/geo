@@ -187,25 +187,28 @@ impl<F: GeoFloat> Validation for Polygon<F> {
         }
 
         // Check that the interior is simply connected.
+        //
+        // The graph omits empty rings, so its edge indices only line up with our
+        // ring roles once the empty interiors have been skipped.
+        let ring_roles: Vec<RingRole> = std::iter::once(RingRole::Exterior)
+            .chain(
+                self.interiors()
+                    .iter()
+                    .enumerate()
+                    .filter(|(_, ring)| !ring.is_empty())
+                    .map(|(interior_idx, _)| RingRole::Interior(interior_idx)),
+            )
+            .collect();
+
         let geometry_graph = GeometryGraph::new(0, self.into());
         if let Some((edge_a, edge_b)) = find_disconnecting_edges(&geometry_graph) {
-            let role_a = edge_index_to_ring_role(edge_a);
-            let role_b = edge_index_to_ring_role(edge_b);
-            handle_validation_error(InvalidPolygon::InteriorNotSimplyConnected(role_a, role_b))?;
+            handle_validation_error(InvalidPolygon::InteriorNotSimplyConnected(
+                ring_roles[edge_a],
+                ring_roles[edge_b],
+            ))?;
         }
 
         Ok(())
-    }
-}
-
-/// Convert a GeometryGraph edge index to a [`RingRole`].
-///
-/// Edge 0 is the exterior ring; edge N (N >= 1) is interior ring N-1.
-fn edge_index_to_ring_role(edge_idx: usize) -> RingRole {
-    if edge_idx == 0 {
-        RingRole::Exterior
-    } else {
-        RingRole::Interior(edge_idx - 1)
     }
 }
 
@@ -604,6 +607,56 @@ mod tests {
             &polygon,
             vec![InvalidPolygon::InteriorNotSimplyConnected(
                 RingRole::Interior(0),
+                RingRole::Interior(1)
+            )]
+        );
+    }
+
+    #[test]
+    fn test_polygon_invalid_hole_touches_exterior_at_two_points() {
+        // A hole spanning the full width of the exterior, touching its left edge
+        // at (0, 5) and its right edge at (10, 5), splits the interior into a
+        // northern and a southern region. This is probably the most common
+        // real-world disconnection.
+        let polygon = wkt!(
+            POLYGON(
+                (0. 0., 10. 0., 10. 10., 0. 10., 0. 0.),
+                (0. 5., 5. 2., 10. 5., 5. 8., 0. 5.)
+            )
+        );
+
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::InteriorNotSimplyConnected(
+                RingRole::Exterior,
+                RingRole::Interior(0)
+            )]
+        );
+    }
+
+    #[test]
+    fn test_polygon_invalid_disconnected_interior_with_empty_interior_rings() {
+        // Same disconnection as
+        // `test_polygon_invalid_hole_touches_exterior_at_two_points`, but with
+        // empty interior rings padded around the offending one.
+        //
+        // The GeometryGraph skips empty rings, so its edge indices don't line up
+        // with our interior ring indices. The reported `RingRole` must refer to
+        // the polygon's own indexing: the hole here is `Interior(1)`, not
+        // `Interior(0)`.
+        let polygon = Polygon::new(
+            wkt!(LINESTRING(0. 0., 10. 0., 10. 10., 0. 10., 0. 0.)),
+            vec![
+                wkt!(LINESTRING EMPTY),
+                wkt!(LINESTRING(0. 5., 5. 2., 10. 5., 5. 8., 0. 5.)),
+                wkt!(LINESTRING EMPTY),
+            ],
+        );
+
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::InteriorNotSimplyConnected(
+                RingRole::Exterior,
                 RingRole::Interior(1)
             )]
         );

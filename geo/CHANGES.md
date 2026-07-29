@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
+- BREAKING: adds the `InvalidPolygon::InteriorNotSimplyConnected` error variant.
   - <https://github.com/georust/geo/pull/1472>
 - FIX: `Line::haversine_closest_point` no longer returns an endpoint for valid high-latitude projections.
   - <https://github.com/georust/geo/issues/1325>
