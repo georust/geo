@@ -28,7 +28,7 @@ use-serde = ["serde"]
 __allow_deprecated_features = []
 
 [dependencies]
-earcut = { version = "0.4.9", optional = true }
+earcut = { version = "0.4.11", optional = true }
 spade = { version = "2.10.0", optional = true }
 float_next_after = "2.0.0"
 geo-types = { version = "0.7.19", features = ["approx", "rstar_0_13"] }
