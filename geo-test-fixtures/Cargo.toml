@@ -7,3 +7,4 @@ publish = false
 [dependencies]
 wkt = { version = "0.14.0" }
 geo-types = { path = "../geo-types" }
+geo = { path = "../geo" }

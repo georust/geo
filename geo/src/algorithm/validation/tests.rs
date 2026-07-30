@@ -3,6 +3,222 @@ fn jts_validation_tests() {
     jts_test_runner::assert_jts_tests_succeed("*Valid*");
 }
 
+mod simply_connected_interior {
+    //! Tests for simply connected interior validation.
+    //!
+    //! OGC Simple Feature Specification (ISO 19125-1), section 6.1.11.1 states:
+    //! "The interior of every Surface is a connected point set."
+    //!
+    //! These tests verify that we correctly detect polygons with disconnected
+    //! interiors, which can occur when:
+    //! - Two holes share 2+ vertices (creating a "corridor")
+    //! - Rings form a cycle of single-vertex touches that encloses part of the interior
+
+    use crate::algorithm::validation::polygon::InvalidPolygon;
+    use crate::algorithm::validation::{RingRole, Validation};
+    use crate::geometry::Polygon;
+    use crate::wkt;
+    use geo_test_fixtures::checkerboard::{box_ring, create_checkerboard};
+
+    /// Two L-shaped holes sharing vertices at (2,2) and (3,3).
+    ///
+    /// Simplest case: two holes share exactly 2 vertices, creating a
+    /// "corridor" that cuts through the interior.
+    #[test]
+    fn two_holes_sharing_two_vertices() {
+        let polygon = wkt!(POLYGON(
+            (0. 0., 5. 0., 5. 5., 0. 5., 0. 0.),
+            // top L
+            (1. 2., 2. 2., 2. 3., 3. 3., 3. 4., 1. 4., 1. 2.),
+            // bottom L
+            (2. 1., 4. 1., 4. 3., 3. 3., 3. 2., 2. 2., 2. 1.)
+        ));
+
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+        assert_eq!(
+            errors[0],
+            InvalidPolygon::InteriorNotSimplyConnected(
+                RingRole::Interior(0),
+                RingRole::Interior(1),
+            ),
+        );
+    }
+
+    /// Checkerboard level 0: 13 holes in a checkerboard pattern where
+    /// adjacent holes share single vertices at grid intersections.
+    #[test]
+    fn checkerboard_level_0() {
+        let (polygon, expected_area) = create_checkerboard(0);
+
+        assert_eq!(polygon.interiors().len(), 13);
+
+        use crate::algorithm::Area;
+        let actual_area = polygon.unsigned_area();
+        assert!(
+            (actual_area - expected_area).abs() < 1e-10,
+            "Area mismatch: expected {expected_area}, got {actual_area}",
+        );
+
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+        assert!(
+            matches!(errors[0], InvalidPolygon::InteriorNotSimplyConnected(_, _)),
+            "Expected InteriorNotSimplyConnected, got: {:?}",
+            errors[0],
+        );
+    }
+
+    /// Checkerboard level 1: nested checkerboard with level-0 inside one
+    /// of the "filled" squares.
+    #[test]
+    fn checkerboard_level_1() {
+        let (polygon, expected_area) = create_checkerboard(1);
+
+        assert_eq!(polygon.interiors().len(), 26);
+
+        use crate::algorithm::Area;
+        let actual_area = polygon.unsigned_area();
+        assert!(
+            (actual_area - expected_area).abs() < 1e-10,
+            "Area mismatch: expected {expected_area}, got {actual_area}",
+        );
+
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+        assert!(
+            matches!(errors[0], InvalidPolygon::InteriorNotSimplyConnected(_, _)),
+            "Expected InteriorNotSimplyConnected, got: {:?}",
+            errors[0],
+        );
+    }
+
+    /// Two holes sharing exactly ONE vertex is valid (interior remains connected).
+    #[test]
+    fn holes_sharing_one_vertex_is_valid() {
+        let exterior = box_ring(0.0, 0.0, 6.0, 6.0);
+        let hole1 = box_ring(1.0, 1.0, 3.0, 3.0);
+        let hole2 = box_ring(3.0, 3.0, 5.0, 5.0);
+
+        let polygon = Polygon::new(exterior, vec![hole1, hole2]);
+        assert!(
+            polygon.is_valid(),
+            "Polygon with two holes sharing 1 vertex should be valid",
+        );
+    }
+
+    /// Non-touching holes: always valid.
+    #[test]
+    fn separate_holes_is_valid() {
+        let exterior = box_ring(0.0, 0.0, 10.0, 10.0);
+        let hole1 = box_ring(1.0, 1.0, 3.0, 3.0);
+        let hole2 = box_ring(5.0, 5.0, 7.0, 7.0);
+        let hole3 = box_ring(1.0, 6.0, 3.0, 8.0);
+
+        let polygon = Polygon::new(exterior, vec![hole1, hole2, hole3]);
+        assert!(
+            polygon.is_valid(),
+            "Polygon with separate non-touching holes should be valid",
+        );
+    }
+
+    /// Three triangular holes meeting at a single vertex: valid.
+    ///
+    /// When three holes share a single vertex but don't share any edges,
+    /// the interior is still connected around the perimeter.
+    #[test]
+    fn three_holes_meeting_at_vertex_valid() {
+        let polygon = wkt!(POLYGON(
+            (-1.1 -1.1, 1.1 -1.1, 1.1 1.1, -1.1 1.1, -1.1 -1.1),
+            (0. 0., 0.5 0.8660254037844386, 1. 0., 0. 0.),
+            (0. 0., -1. 0., -0.5 0.8660254037844386, 0. 0.),
+            (0. 0., 0.5 -0.8660254037844386, -0.5 -0.8660254037844386, 0. 0.)
+        ));
+        assert!(
+            polygon.is_valid(),
+            "Polygon with 3 holes meeting at one vertex (wedge pattern) should be valid",
+        );
+    }
+
+    /// Four triangular holes forming a cycle through single touches.
+    ///
+    /// Each pair shares exactly one vertex at a different coordinate,
+    /// forming cycle A-B-C-D-A. This encloses the center region.
+    #[test]
+    fn four_holes_forming_cycle() {
+        let polygon = wkt!(POLYGON(
+            (-10. -10., 10. -10., 10. 10., -10. 10., -10. -10.),
+            // A: bottom, shares (-8,-8) with B, (8,-8) with D
+            (-8. -8., 0. -4., 8. -8., -8. -8.),
+            // B: left, shares (-8,8) with C, (-8,-8) with A
+            (-8. 8., -4. 0., -8. -8., -8. 8.),
+            // C: top, shares (8,8) with D, (-8,8) with B
+            (8. 8., 0. 4., -8. 8., 8. 8.),
+            // D: right, shares (8,-8) with A, (8,8) with C
+            (8. -8., 4. 0., 8. 8., 8. -8.)
+        ));
+
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+        assert!(
+            matches!(errors[0], InvalidPolygon::InteriorNotSimplyConnected(_, _)),
+            "Expected InteriorNotSimplyConnected, got: {:?}",
+            errors[0],
+        );
+    }
+
+    /// Three triangular holes forming a 3-node cycle through distinct touch points.
+    ///
+    /// Each pair shares exactly one vertex at a different coordinate:
+    /// - H0-H1 share (10, 2)
+    /// - H1-H2 share (16, 10)
+    /// - H2-H0 share (4, 10)
+    ///
+    /// This forms a cycle H0-H1-H2-H0 through three distinct coordinates,
+    /// enclosing the central triangle and disconnecting the interior.
+    #[test]
+    fn three_holes_forming_triangle_cycle() {
+        let polygon = wkt!(POLYGON(
+            (0. 0., 20. 0., 20. 20., 0. 20., 0. 0.),
+            // H0: bottom-left, shares (4,10) with H2 and (10,2) with H1
+            (4. 10., 2. 2., 10. 2., 4. 10.),
+            // H1: bottom-right, shares (10,2) with H0 and (16,10) with H2
+            (10. 2., 18. 2., 16. 10., 10. 2.),
+            // H2: top, shares (16,10) with H1 and (4,10) with H0
+            (16. 10., 10. 18., 4. 10., 16. 10.)
+        ));
+
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+        assert!(
+            matches!(errors[0], InvalidPolygon::InteriorNotSimplyConnected(_, _)),
+            "Expected InteriorNotSimplyConnected, got: {:?}",
+            errors[0],
+        );
+    }
+
+    /// Two holes forming a chain with vertex-on-edge touches to exterior.
+    ///
+    /// H0 touches exterior at (0,5), H1 touches exterior at (20,5),
+    /// both share (10,5). This creates a chain through the exterior with
+    /// distinct coordinates, disconnecting the interior.
+    #[test]
+    fn hole_chain_with_vertex_on_edge_touch() {
+        let polygon = wkt!(POLYGON(
+            (0. 0., 20. 0., 20. 15., 0. 15., 0. 0.),
+            (0. 5., 10. 5., 5. 10., 0. 5.),
+            (10. 5., 20. 5., 15. 10., 10. 5.)
+        ));
+
+        let errors = polygon.validation_errors();
+        assert_eq!(errors.len(), 1);
+        assert!(
+            matches!(errors[0], InvalidPolygon::InteriorNotSimplyConnected(_, _)),
+            "Expected InteriorNotSimplyConnected, got: {:?}",
+            errors[0],
+        );
+    }
+}
 /// Test cases ported from GDAL's geometry validity documentation.
 /// See: https://gdal.org/en/latest/user/geometry_validity.html
 ///
@@ -71,18 +287,20 @@ mod gdal_test_cases {
     // GDAL heading: "Polygon hole equal to shell"
     // GDAL error: "Self-intersection"
     // When the interior ring is identical to the exterior ring, GDAL calls this a
-    // self-intersection. Our code reports InteriorRingNotContainedInExteriorRing (the coincident
-    // ring is on the exterior boundary, not strictly inside it) followed by
-    // IntersectingRingsOnALine (the exterior ring boundary and interior ring share a 1D set).
+    // self-intersection. Our code reports IntersectingRingsOnALine (the exterior ring boundary and
+    // interior ring share a 1D set).
     #[test]
     fn polygon_hole_equal_to_shell() {
         let polygon = wkt!(POLYGON ((10. 90., 90. 90., 90. 10., 10. 10., 10. 90.), (10. 90., 90. 90., 90. 10., 10. 10., 10. 90.)));
         assert_eq!(
             polygon.validation_errors(),
-            vec![InvalidPolygon::IntersectingRingsOnALine(
-                RingRole::Exterior,
-                RingRole::Interior(0)
-            )]
+            vec![
+                InvalidPolygon::IntersectingRingsOnALine(RingRole::Exterior, RingRole::Interior(0)),
+                InvalidPolygon::InteriorNotSimplyConnected(
+                    RingRole::Exterior,
+                    RingRole::Interior(0)
+                )
+            ]
         );
     }
 
