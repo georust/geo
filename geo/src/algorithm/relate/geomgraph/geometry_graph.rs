@@ -206,6 +206,13 @@ where
         cw_left: CoordPos,
         cw_right: CoordPos,
     ) {
+        if linear_ring
+            .0
+            .iter()
+            .any(|c| !c.x.is_finite() || !c.y.is_finite())
+        {
+            return;
+        }
         debug_assert!(linear_ring.is_closed());
         if linear_ring.is_empty() {
             return;
@@ -264,6 +271,13 @@ where
         if line_string.is_empty() {
             return;
         }
+        if line_string
+            .0
+            .iter()
+            .any(|c| !c.x.is_finite() || !c.y.is_finite())
+        {
+            return;
+        }
 
         let mut coords: Vec<Coord<F>> = Vec::with_capacity(line_string.0.len());
         for coord in &line_string.0 {
@@ -292,6 +306,13 @@ where
     }
 
     fn add_line(&mut self, line: &Line<F>) {
+        if !line.start.x.is_finite()
+            || !line.start.y.is_finite()
+            || !line.end.x.is_finite()
+            || !line.end.y.is_finite()
+        {
+            return;
+        }
         self.insert_boundary_point(line.start);
         self.insert_boundary_point(line.end);
 
@@ -309,6 +330,9 @@ where
     /// Add a point computed externally.  The point is assumed to be a
     /// Point Geometry part, which has a location of INTERIOR.
     fn add_point(&mut self, point: &Point<F>) {
+        if !point.x().is_finite() || !point.y().is_finite() {
+            return;
+        }
         self.insert_point(self.arg_index, (*point).into(), CoordPos::Inside);
     }
 
@@ -428,5 +452,22 @@ where
         } else {
             self.insert_point(self.arg_index, coord, position)
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn line_graph_has_both_endpoints_as_boundary() {
+        let line = Line::new((2.0, 2.0), (4.0, 4.0));
+        let cow: GeometryCow<f64> = GeometryCow::Line(std::borrow::Cow::Borrowed(&line));
+        let graph = GeometryGraph::new(0, cow);
+
+        let boundary_coords: Vec<_> = graph.boundary_nodes().map(|n| *n.coordinate()).collect();
+
+        assert!(boundary_coords.contains(&line.start));
+        assert!(boundary_coords.contains(&line.end));
     }
 }
