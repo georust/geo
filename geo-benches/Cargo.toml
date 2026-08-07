@@ -107,6 +107,11 @@ path = "src/prepared_geometry.rs"
 harness = false
 
 [[bench]]
+name = "interval_tree_multipolygon"
+path = "src/interval_tree_multipolygon.rs"
+harness = false
+
+[[bench]]
 name = "rotate"
 path = "src/rotate.rs"
 harness = false
