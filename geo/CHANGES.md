@@ -33,6 +33,7 @@
 - BREAKING: Tightens the bound on `Contains<MultiPoint<T>> for MultiPoint<T>` from `T: CoordNum` to `T: GeoNum`
   - <https://github.com/georust/geo/pull/1555>
 - Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls.
+- Inline total_cmp for downstream users who don't use LTO
 
 ## 0.33.1 - 2026-4-20
 
