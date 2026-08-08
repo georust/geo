@@ -21,20 +21,24 @@ samply record ./target/profiling/profiling <scenario> --seconds 12
 A deferred second phase (valgrind/gungraun on Linux) can confirm these with
 deterministic instruction counts before and after any fix.
 
+Each candidate has a tracking card on the
+[geo performance project board](https://github.com/orgs/georust/projects/4);
+the candidate names below link to the corresponding card.
+
 ## Summary ranking
 
 | # | Candidate | Key evidence | Effort | Confidence |
 |---|-----------|--------------|--------|------------|
-| 1 | `hypot` in distance inner loops (Hausdorff, Fréchet, concave hull) | 86% / 83% / 13% of samples in libm `hypot` | S | High |
-| 2 | Relate/geomgraph allocation churn | 29% of relate samples in the allocator | M–L | High |
-| 3 | Constrained Delaunay interior filter | 53% of CDT time in per-triangle point-in-polygon | M | High |
-| 4 | Buffer superlinear scaling on MultiPolygon | 8.6 s and 810 MiB per buffer of a 27k-coord fixture | M (investigation) | Medium |
-| 5 | `SimplifyVwPreserve` R-tree drain churn | 42% in rstar `DrainIterator`, 11% allocator | M | High |
-| 6 | geo→i_overlay conversion overhead in boolean ops | 12–21% self time in geo's wrapper layer | S–M | High |
-| 7 | `coord_pos_relative_to_ring` as the universal point-in-polygon kernel | 99.7% of unindexed contains; hot in three other scenarios | M | Medium |
-| 8 | Concave hull inner loop (`line_segment_distance` + `intersects`) | 24% + 13% self time, plus `hypot` | S–M | High |
-| 9 | Sweep-line `line_intersection` kernel cost | 93% of sweep time in the intersection kernel | S–M | Medium |
-| 10 | Polygon–polygon Euclidean distance: sort dominates fast path | ~51% of samples in `ProjectedVertex` sorting | M | Low–Medium |
+| 1 | [`hypot` in distance inner loops (Hausdorff, Fréchet, concave hull)](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497533) | 86% / 83% / 13% of samples in libm `hypot` | S | High |
+| 2 | [Relate/geomgraph allocation churn](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497542) | 29% of relate samples in the allocator | M–L | High |
+| 3 | [Constrained Delaunay interior filter](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497549) | 53% of CDT time in per-triangle point-in-polygon | M | High |
+| 4 | [Buffer superlinear scaling on MultiPolygon](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497557) | 8.6 s and 810 MiB per buffer of a 27k-coord fixture | M (investigation) | Medium |
+| 5 | [`SimplifyVwPreserve` R-tree drain churn](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497563) | 42% in rstar `DrainIterator`, 11% allocator | M | High |
+| 6 | [geo→i_overlay conversion overhead in boolean ops](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497573) | 12–21% self time in geo's wrapper layer | S–M | High |
+| 7 | [`coord_pos_relative_to_ring` as the universal point-in-polygon kernel](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497587) | 99.7% of unindexed contains; hot in three other scenarios | M | Medium |
+| 8 | [Concave hull inner loop (`line_segment_distance` + `intersects`)](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497601) | 24% + 13% self time, plus `hypot` | S–M | High |
+| 9 | [Sweep-line `line_intersection` kernel cost](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497610) | 93% of sweep time in the intersection kernel | S–M | Medium |
+| 10 | [Polygon–polygon Euclidean distance: sort dominates fast path](https://github.com/orgs/georust/projects/4?pane=issue&itemId=225497616) | ~51% of samples in `ProjectedVertex` sorting | M | Low–Medium |
 
 ## Candidates
 
