@@ -1,11 +1,7 @@
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use geo::{
-    Area, BoundingRect, Centroid, ConvexHull, GeoFloat, GeoNum, LinesIter, MinimumRotatedRect,
-    Rotate,
-};
+use criterion::{BenchmarkId, Criterion, criterion_group, criterion_main};
+use geo::MinimumRotatedRect;
 
-use geo_types::{coord, CoordFloat, LineString, Polygon};
-use num_traits::Bounded;
+use geo_types::{Polygon, coord};
 
 pub fn regular_unit_polygon(num_vertices: usize) -> Polygon<f64> {
     let angle_inc = 2.0 * std::f64::consts::PI / num_vertices as f64;

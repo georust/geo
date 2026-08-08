@@ -9,6 +9,17 @@ members = [
   "jts-test-runner",
 ]
 
+# Release-optimised build with debug symbols, for use with sampling profilers
+# such as samply and Instruments: cargo build --profile profiling
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = false
+
+# Benchmarks also get symbols so bench binaries can be profiled directly
+[profile.bench]
+debug = true
+
 [patch.crates-io]
 
 # Ensure any transitive dependencies also use the local geo/geo-types
