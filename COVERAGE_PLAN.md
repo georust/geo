@@ -20,10 +20,14 @@ repair tool:
 
 ## Scope
 
-In scope: validate, union, find gaps, simplify. Out of scope for this effort:
-`CoverageCleaner` – it requires a snapping noder, a line dissolver, a
-polygonizer and RelateNG, none of which exist in geo; it is a separate, much
-larger project and is deferred.
+In scope: validate, union, find gaps, simplify. The union API is included, but
+in v1 it delegates to the existing `unary_union` rather than porting the JTS
+boundary-chain machinery – see the Union section for the rationale and the
+decision gate for a native implementation.
+
+Out of scope for this effort: `CoverageCleaner` – it requires a snapping noder,
+a line dissolver, a polygonizer and RelateNG, none of which exist in geo; it is
+a separate, much larger project and is deferred.
 
 ## Existing geo machinery to reuse
 
@@ -44,7 +48,7 @@ to geo equivalent:
 | `VertexSequencePackedRtree` (with `remove(index)`) | `rstar::RTree` mutated incrementally – the exact pattern already used by `visvalingam_preserve_indices` (`tree.remove` / `tree.insert` per accepted removal) |
 | `PriorityQueue<Corner>` | `BinaryHeap` with reversed `Ord` via `total_cmp`, stale-entry invalidation – same design as `simplify_vw.rs`'s `VScore` min-heap |
 | `MaximumInscribedCircle.isRadiusWithin` | Negative buffer: a hole is a gap iff `hole_polygon.buffer(-gap_width / 2)` is empty (erosion by r is empty iff no inscribed disc of radius r exists). `Buffer` already supports negative distances. Avoids implementing maximum inscribed circle |
-| `overlayng.CoverageUnion` (`BoundaryChainNoder` + `OverlayNG`) | New boundary-chain implementation (see below); `unary_union` as the correctness oracle in tests |
+| `overlayng.CoverageUnion` (`BoundaryChainNoder` + `OverlayNG`) | `unary_union` in v1; a native boundary-chain implementation is deferred behind a decision gate (see Union section) |
 | `CoordinateArrays.removeRepeatedPoints` etc. | `RemoveRepeatedPoints`, `LineString` utilities |
 | `HashMap` keyed on `Coordinate` / normalized `LineSegment` | Hash/BTree keys built on float bit patterns / `GeoNum::total_cmp`; precedent: the private `TotalOrdCoord` in `validation/polygon.rs` (promote a shared version into the coverage module or a crate-internal util) |
 | Union-find (gap/connectivity grouping, if needed) | Private `UnionFind` in `validation/polygon.rs` – promote to a crate-internal util if required |
@@ -59,8 +63,9 @@ Considered and rejected:
   patterns (min-heap of scored corners, incremental R-tree) rather than its code.
 - Reusing `stitch.rs` for union. Its kernel (odd-occurrence edge cancellation,
   ring chaining, containment-based nesting) is the right shape, but it is
-  deprecated, triangle-gated at the API, and O(n²) in three places. The union
-  implementation below uses the same ideas with hashing and an R-tree.
+  deprecated, triangle-gated at the API, and O(n²) in three places. Should the
+  deferred native union be built, it would use the same ideas with hashing and
+  an R-tree rather than this code.
 - Building on the `relate` `GeometryGraph`. It computes edge intersections but
   never materialises split edges and has no ring builder, so it provides
   nothing the coverage decomposition needs; coverage algorithms deliberately
@@ -95,9 +100,11 @@ pub fn validate_polygon<T: GeoFloat>(target: &Polygon<T>, adjacent: &[Polygon<T>
 
 // union.rs
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum CoverageUnionError {
     EmptyInput,
-    InvalidCoverage,   // boundary chains do not close into rings
+    // InvalidCoverage is added if/when the native boundary-chain
+    // implementation lands; non_exhaustive keeps that non-breaking.
 }
 pub fn union<T: GeoFloat>(coverage: &[Polygon<T>]) -> Result<MultiPolygon<T>, CoverageUnionError>;
 
@@ -147,30 +154,48 @@ Pure hashing – no spatial index needed:
 Exact float equality (bit-level, via `total_cmp`-keyed maps) is correct here by
 design: coverage semantics require exactly matching vertices on shared edges.
 
-### 2. Union: boundary-chain cancellation
+### 2. Union: delegate to `unary_union`; native implementation deferred
 
-JTS routes through OverlayNG with a custom `BoundaryChainNoder`; geo has no
-overlay graph, but for polygonal coverages the boundary chains are already a
-complete noded description of the result boundary, so we skip the overlay:
+`unary_union` already computes a correct union of a valid coverage, so v1's
+`coverage::union` is a thin wrapper: orient the inputs consistently (`Orient`,
+which `unary_union` requires), delegate, and return the result. No new
+algorithm code. The dedicated function still earns its keep as the documented
+coverage entry point, and its signature (`Result` with a `#[non_exhaustive]`
+error enum) is chosen so a native implementation can replace the internals
+without a breaking change.
 
-1. Toggle-insert every normalized segment into a hash set: present = remove,
-   absent = add. Surviving segments (odd occurrence count) are the coverage
-   boundary; shared interior edges cancel. O(n) with hashing.
-2. Mark surviving segments per source ring; extract maximal runs as chains.
-   Split chains at node points (chain endpoints plus interior vertices shared
-   by more than one chain) to handle self-touching topology (touching holes).
-3. Assemble rings by chaining endpoint-matched chains (hash map from start
-   coordinate to chains, walking with leftmost-turn selection at multi-way
-   nodes), then determine nesting: R-tree over rings, signed area/winding for
-   shell vs hole classification, `coord_pos_relative_to_ring` for parent
-   assignment. Parity of containment depth decides exterior vs interior –
-   the same scheme as `stitch.rs` but indexed instead of O(r²).
-4. Any failure to close a ring, or inconsistent nesting, returns
-   `CoverageUnionError::InvalidCoverage`. Note: this detects less than
-   OverlayNG's `TopologyException` (which JTS tests rely on); the docs will
-   state that `union` on an invalid coverage returns an error or garbage, and
-   that `validate` should be run first when input validity is unknown.
-   Tests compare output against `unary_union` as an oracle.
+Why JTS/GEOS have a dedicated implementation, and why we defer rather than
+reject it:
+
+- Vertex fidelity. `i_overlay`'s `FloatOverlay` converts float geometry to an
+  integer grid via `FloatPointAdapter` (scale derived from the data's bounding
+  box) and converts back on output, so output coordinates are quantised – not
+  guaranteed bit-identical to input. Coverage semantics are exact-equality
+  semantics, and the target use cases (surveying, cadastral, admin-boundary
+  dissolves) require the union boundary to be exactly the input linework. The
+  boundary-chain approach has this property by construction.
+- Performance. Boundary-chain cancellation computes no intersections at all;
+  overlay builds a full graph.
+
+Whether these justify a native implementation is an open call – the ring
+assembly and hole nesting it requires is the fiddly, bug-prone part, and it is
+needed only for union. The decision gate (see Implementation phases) is a
+concrete measurement of the quantisation effect on cadastral-scale fixtures:
+if `unary_union` moves vertices at magnitudes that matter for surveying data,
+the native implementation becomes necessary; if displacement is provably zero
+or negligible at realistic coordinate magnitudes, delegation stays.
+
+For reference, the deferred native design (all details surveyed and recorded
+here so no re-survey is needed): toggle-insert every normalized segment into a
+hash set so shared interior edges cancel (odd-occurrence survivors are the
+boundary); extract maximal per-ring chains, split at node points to handle
+touching holes; assemble rings by endpoint matching with leftmost-turn
+selection at multi-way nodes; nest via R-tree + winding/area +
+`coord_pos_relative_to_ring`, containment-depth parity deciding shell vs hole
+(the `stitch.rs` scheme, indexed instead of O(r²)). Unclosable chains or
+inconsistent nesting yield `CoverageUnionError::InvalidCoverage` – weaker
+error detection than OverlayNG's `TopologyException`, so docs would recommend
+validate-first.
 
 ### 3. Validator
 
@@ -229,8 +254,8 @@ Two layers, ported fresh (see rejection of `SimplifyVwPreserve` above):
 
 Each phase is a reviewable unit (jj commit series, stacked PRs if desired,
 using manual base-ref chaining per the stacked-prs setup for this repo).
-Phases 2–4 depend on 1 only where noted; validator (phase 4) is independent of
-2 and 3.
+Only the simplifier (phase 4) depends on the decomposition (phase 1); the
+validator and the union/gap-finder phases are mutually independent.
 
 1. Module skeleton and topology decomposition. `algorithm/coverage/mod.rs`
    with module-level prose docs (what a coverage is, references to the JTS
@@ -239,27 +264,36 @@ Phases 2–4 depend on 1 only where noted; validator (phase 4) is independent of
    (total-ordered coord key, canonical segment key). Tests: port
    `CoverageRingEdgesTest` verbatim (names preserved, `wkt!` fixtures,
    source noted).
-2. Union. Boundary-chain cancellation, chain extraction and noding at
-   touch points, ring assembly and nesting; `CoverageUnionError`. Tests:
-   port `CoverageUnionTest` (both the coverage-package and overlayng-level
-   suites), plus oracle comparisons against `unary_union` using
-   `relate(...).is_equal_topo()`.
-3. Gap finder. Thin layer over union + negative buffer. Tests: port
-   `CoverageGapFinderTest`.
-4. Validator. `CoverageRing` (internal), segment matching,
+2. Validator. `CoverageRing` (internal), segment matching,
    `InvalidSegmentDetector`, `PolygonNodeTopology::is_interior_segment`
    helper, interior-segment phase, invalid-line extraction; whole-coverage
    wrapper with R-tree neighbour query. Tests: port
    `CoveragePolygonValidatorTest` and `CoverageValidatorTest` (the richest
    suites; include the empty-polygon and duplicate-point edge cases).
-5. Simplifier. TPVW kernel with standalone tests ported from
+   Independent of phase 1's decomposition; can proceed in parallel.
+3. Union (delegating) and gap finder. `coverage::union` wrapping
+   `Orient` + `unary_union`; `find_gaps` over it with the negative-buffer
+   width test. Tests: port `CoverageUnionTest` and `CoverageGapFinderTest`;
+   geometry assertions via `relate(...).is_equal_topo()`, since exact vertex
+   equality with the JTS fixtures is not guaranteed under delegation
+   (the invalid-noding error cases from JTS do not apply and are skipped,
+   with a comment).
+4. Simplifier. TPVW kernel with standalone tests ported from
    `TPVWSimplifierTest`; then `CoverageSimplifyOptions` and the public
    functions; tests ported from `CoverageSimplifierTest` (noop, inner/outer,
    per-element tolerances, ring removal, smooth weight).
+5. Quantisation assessment – the union decision gate. Measure, on
+   representative cadastral-scale fixtures (realistic projected and
+   geographic coordinate magnitudes, including the geo-test-fixtures
+   datasets), the maximum vertex displacement between input boundary
+   linework and `unary_union` output, plus a bench of union cost. Outcome is
+   a written call: if displacement is zero/negligible for surveying-grade
+   data, delegation is kept and documented; otherwise the native
+   boundary-chain union (design recorded above) is scheduled as follow-up
+   work behind the unchanged public signature.
 6. Docs and integration. `lib.rs` doc listing (new `## Coverage` subsection
    under Algorithms), `CHANGES.md` entry, rustdoc examples for each public
-   function, benches in `geo-benches` (union vs `unary_union` is the headline
-   comparison).
+   function, benches in `geo-benches`.
 
 No changes to `jts-test-runner` are needed: the JTS coverage package has no
 XML tests – its suites are JUnit with inline WKT, which transliterate directly
@@ -272,10 +306,14 @@ into Rust unit tests.
   same) but must be prominent in the module docs, with `validate` as the
   advertised way to check inputs and a pointer to `unary_union` for
   non-coverage inputs.
-- Union error detection is weaker than JTS's (no OverlayNG consistency check).
-  Mitigated by documentation and the validate-first recommendation; if this
-  proves insufficient, an area-sum sanity check (result area vs sum of input
-  areas within a tolerance) is cheap to add.
+- Union vertex quantisation. The delegated union inherits `i_overlay`'s
+  integer-grid rounding, which is in tension with the exact-linework
+  expectation of surveying/cadastral users – the primary audience for a
+  coverage tool. Phase 5 measures this concretely; until that call is made,
+  the union docs must state that output vertices are not guaranteed identical
+  to input. If the native union is later built, its error detection will still
+  be weaker than JTS's OverlayNG consistency check; an area-sum sanity check
+  is a cheap supplement if needed.
 - `f32` support comes with `GeoFloat`; robust predicates already promote to
   `f64` internally. Test fixtures are `f64`; add a smoke test for `f32`.
 - Parallelism: `validate` is trivially parallel per element; a rayon path
