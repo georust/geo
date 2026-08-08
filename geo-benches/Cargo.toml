@@ -180,3 +180,8 @@ harness = false
 name = "validation"
 path = "src/validation.rs"
 harness = false
+
+[[bench]]
+name = "minimum_rotated_rect"
+path = "src/minimum_rotated_rect.rs"
+harness = false
