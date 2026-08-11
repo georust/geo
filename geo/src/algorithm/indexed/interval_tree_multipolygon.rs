@@ -63,15 +63,16 @@ struct YIntervalSegment<T: GeoNum> {
 /// rejection, and runs a robust winding-number test on the survivors. This avoids the linear scan
 /// over every segment that a naive ray cast would perform.
 ///
-/// Containment queries are exposed via the [`Contains`](crate::Contains) trait for both
-/// [`Coord`] and [`Point`](crate::Point), and follow the same semantics as
-/// `MultiPolygon::contains` (points strictly on the boundary are not contained).
+/// Queries are exposed via the [`Contains`](crate::Contains) and
+/// [`Intersects`](crate::Intersects) traits for both [`Coord`] and [`Point`](crate::Point), and
+/// follow the same semantics as their `MultiPolygon` counterparts: `contains` is true only for
+/// points strictly in the interior, whereas `intersects` is also true for points on the boundary.
 ///
 /// # Example
 ///
 /// ```
 /// use geo::indexed::IntervalTreeMultiPolygon;
-/// use geo::{Contains, MultiPolygon, Point, wkt};
+/// use geo::{Contains, Intersects, MultiPolygon, Point, wkt};
 ///
 /// // A square with a square hole.
 /// let mp: MultiPolygon = wkt!(
@@ -85,6 +86,11 @@ struct YIntervalSegment<T: GeoNum> {
 /// assert!(indexed.contains(&Point::new(0.5, 0.5))); // inside the shell
 /// assert!(!indexed.contains(&Point::new(2.0, 2.0))); // inside the hole
 /// assert!(!indexed.contains(&Point::new(5.0, 5.0))); // outside
+///
+/// // Unlike `contains`, `intersects` includes the boundary.
+/// assert!(indexed.intersects(&Point::new(0.0, 2.0))); // on the shell
+/// assert!(indexed.intersects(&Point::new(1.0, 2.0))); // on the hole's edge
+/// assert!(!indexed.contains(&Point::new(0.0, 2.0)));
 /// ```
 ///
 /// [interval tree]: https://en.wikipedia.org/wiki/Interval_tree
