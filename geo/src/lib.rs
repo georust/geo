@@ -410,6 +410,7 @@ macro_rules! impl_geo_num_for_float {
     ($t: ident) => {
         impl GeoNum for $t {
             type Ker = RobustKernel;
+            #[inline]
             fn total_cmp(&self, other: &Self) -> Ordering {
                 self.total_cmp(other)
             }
@@ -420,6 +421,7 @@ macro_rules! impl_geo_num_for_int {
     ($t: ident) => {
         impl GeoNum for $t {
             type Ker = SimpleKernel;
+            #[inline]
             fn total_cmp(&self, other: &Self) -> Ordering {
                 self.cmp(other)
             }
