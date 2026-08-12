@@ -1,5 +1,6 @@
 use super::{Intersects, has_disjoint_bboxes};
 use crate::coordinate_position::CoordPos;
+use crate::indexed::IntervalTreeMultiPolygon;
 use crate::{BoundingRect, CoordinatePosition, CoordsIter, LinesIter};
 use crate::{
     Coord, CoordNum, GeoNum, Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point,
@@ -32,6 +33,18 @@ where
 
 symmetric_intersects_impl!(Polygon<T>, Point<T>);
 symmetric_intersects_impl!(Polygon<T>, MultiPoint<T>);
+
+impl<T: GeoNum> Intersects<Coord<T>> for IntervalTreeMultiPolygon<T> {
+    fn intersects(&self, rhs: &Coord<T>) -> bool {
+        self.containment(*rhs) != CoordPos::Outside
+    }
+}
+
+impl<T: GeoNum> Intersects<Point<T>> for IntervalTreeMultiPolygon<T> {
+    fn intersects(&self, rhs: &Point<T>) -> bool {
+        self.containment(rhs.0) != CoordPos::Outside
+    }
+}
 
 impl<T> Intersects<Polygon<T>> for Polygon<T>
 where
@@ -111,5 +124,169 @@ mod tests {
         let a = Geometry::<f64>::from(polygon![]);
         let b = Geometry::from(polygon![]);
         assert!(!a.intersects(&b));
+    }
+
+    mod interval_tree_multipolygon {
+        use crate::indexed::IntervalTreeMultiPolygon;
+        use crate::*;
+
+        /// Assert that the indexed `Intersects`/`Contains` impls agree with the unindexed
+        /// `MultiPolygon` impls and with `Relate`, and that they match the expectation.
+        fn assert_agrees(mp: &MultiPolygon, coord: Coord, intersects: bool, contains: bool) {
+            let indexed = IntervalTreeMultiPolygon::new(mp);
+            let point = Point::from(coord);
+
+            assert_eq!(
+                indexed.intersects(&coord),
+                intersects,
+                "indexed.intersects(coord) at {coord:?}"
+            );
+            assert_eq!(
+                indexed.intersects(&point),
+                intersects,
+                "indexed.intersects(point) at {coord:?}"
+            );
+            assert_eq!(
+                indexed.contains(&coord),
+                contains,
+                "indexed.contains(coord) at {coord:?}"
+            );
+            assert_eq!(
+                indexed.contains(&point),
+                contains,
+                "indexed.contains(point) at {coord:?}"
+            );
+
+            // Sanity check against the unindexed implementations...
+            assert_eq!(
+                mp.intersects(&coord),
+                intersects,
+                "MultiPolygon::intersects at {coord:?}"
+            );
+            assert_eq!(
+                mp.contains(&coord),
+                contains,
+                "MultiPolygon::contains at {coord:?}"
+            );
+
+            // ...and against Relate, which is the reference implementation.
+            let im = mp.relate(&point);
+            assert_eq!(
+                im.is_intersects(),
+                intersects,
+                "Relate intersects {coord:?}"
+            );
+            assert_eq!(im.is_contains(), contains, "Relate contains {coord:?}");
+        }
+
+        #[test]
+        fn interior_point_both_intersects_and_contains() {
+            let mp = wkt!(MULTIPOLYGON(((0. 0.,4. 0.,4. 4.,0. 4.,0. 0.))));
+            assert_agrees(&mp, coord! { x: 2., y: 2. }, true, true);
+        }
+
+        #[test]
+        fn point_on_edge_intersects_but_is_not_contained() {
+            let mp = wkt!(MULTIPOLYGON(((0. 0.,4. 0.,4. 4.,0. 4.,0. 0.))));
+
+            // Midpoint of each of the four edges
+            assert_agrees(&mp, coord! { x: 2., y: 0. }, true, false);
+            assert_agrees(&mp, coord! { x: 4., y: 2. }, true, false);
+            assert_agrees(&mp, coord! { x: 2., y: 4. }, true, false);
+            assert_agrees(&mp, coord! { x: 0., y: 2. }, true, false);
+        }
+
+        #[test]
+        fn point_on_vertex_intersects_but_is_not_contained() {
+            let mp = wkt!(MULTIPOLYGON(((0. 0.,4. 0.,4. 4.,0. 4.,0. 0.))));
+
+            for vertex in [
+                coord! { x: 0., y: 0. },
+                coord! { x: 4., y: 0. },
+                coord! { x: 4., y: 4. },
+                coord! { x: 0., y: 4. },
+            ] {
+                assert_agrees(&mp, vertex, true, false);
+            }
+        }
+
+        #[test]
+        fn exterior_point_neither() {
+            let mp = wkt!(MULTIPOLYGON(((0. 0.,4. 0.,4. 4.,0. 4.,0. 0.))));
+
+            assert_agrees(&mp, coord! { x: 5., y: 2. }, false, false);
+            // Outside, but sharing a y-value with the shell — exercises the interval tree's
+            // x-based early rejection in both directions.
+            assert_agrees(&mp, coord! { x: -1., y: 2. }, false, false);
+            assert_agrees(&mp, coord! { x: 2., y: -1. }, false, false);
+        }
+
+        #[test]
+        fn hole_interior_is_outside_but_hole_boundary_intersects() {
+            // A 4x4 square with a 2x2 hole in the middle.
+            let mp = wkt!(MULTIPOLYGON(
+                ((0. 0.,4. 0.,4. 4.,0. 4.,0. 0.),(1. 1.,1. 3.,3. 3.,3. 1.,1. 1.))
+            ));
+
+            // Strictly inside the hole: not part of the polygon at all.
+            assert_agrees(&mp, coord! { x: 2., y: 2. }, false, false);
+
+            // On the hole's boundary: part of the polygon's boundary, so it intersects
+            // but is not contained.
+            assert_agrees(&mp, coord! { x: 1., y: 2. }, true, false);
+            assert_agrees(&mp, coord! { x: 2., y: 1. }, true, false);
+            assert_agrees(&mp, coord! { x: 1., y: 1. }, true, false);
+
+            // In the solid ring between shell and hole.
+            assert_agrees(&mp, coord! { x: 0.5, y: 2. }, true, true);
+        }
+
+        #[test]
+        fn multiple_polygons() {
+            let mp = wkt!(MULTIPOLYGON(
+                ((0. 0.,2. 0.,2. 2.,0. 2.,0. 0.)),
+                ((5. 0.,7. 0.,7. 2.,5. 2.,5. 0.))
+            ));
+
+            // Interior of each component
+            assert_agrees(&mp, coord! { x: 1., y: 1. }, true, true);
+            assert_agrees(&mp, coord! { x: 6., y: 1. }, true, true);
+
+            // Boundary of each component
+            assert_agrees(&mp, coord! { x: 2., y: 1. }, true, false);
+            assert_agrees(&mp, coord! { x: 5., y: 1. }, true, false);
+
+            // The gap between them
+            assert_agrees(&mp, coord! { x: 3.5, y: 1. }, false, false);
+        }
+
+        #[test]
+        fn agrees_with_relate_over_a_grid() {
+            // A concave "C" shape, so the sample grid hits interiors, boundaries,
+            // vertices, and the concave notch.
+            let mp = wkt!(MULTIPOLYGON(
+                ((0. 0.,3. 0.,3. 1.,1. 1.,1. 2.,3. 2.,3. 3.,0. 3.,0. 0.))
+            ));
+            let indexed = IntervalTreeMultiPolygon::new(&mp);
+
+            // Half-steps land on edges and vertices; quarter-steps land off them.
+            for i in -2..=14 {
+                for j in -2..=14 {
+                    let coord = coord! { x: f64::from(i) / 4., y: f64::from(j) / 4. };
+                    let im = mp.relate(&Point::from(coord));
+
+                    assert_eq!(
+                        indexed.intersects(&coord),
+                        im.is_intersects(),
+                        "intersects disagrees with Relate at {coord:?}"
+                    );
+                    assert_eq!(
+                        indexed.contains(&coord),
+                        im.is_contains(),
+                        "contains disagrees with Relate at {coord:?}"
+                    );
+                }
+            }
+        }
     }
 }

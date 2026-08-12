@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `Intersects<Coord>` and `Intersects<Point>` implementations for `IntervalTreeMultiPolygon`. Unlike the existing `Contains` impls, these return `true` for points on the polygon's boundary.
+
 - Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
 - BREAKING: adds the `InvalidPolygon::InteriorNotSimplyConnected` error variant.
   - <https://github.com/georust/geo/pull/1472>
