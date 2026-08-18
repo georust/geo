@@ -11,13 +11,11 @@
 //! GeometryCollections with union semantics, and allows named predicates to
 //! short-circuit as soon as their value is known.
 //!
-//! The module is crate-private while the port is in progress; see
-//! RELATENG_PLAN.md at the workspace root for the implementation plan and
-//! progress log. The boundary node rule is Mod-2 (the OGC SFS rule),
-//! matching the rest of the crate.
+//! The module is crate-private; the public entry points are the `Relate`
+//! trait and the predicate traits built on it. The boundary node rule is
+//! Mod-2 (the OGC SFS rule), matching the rest of the crate.
 
-// The module is consumed incrementally as the port proceeds; the allowance
-// is removed when the RelateNG driver lands.
+// Parts of the module are consumed only by later commits in the port.
 #![allow(dead_code)]
 
 pub(crate) mod adjacent_edge_locator;
@@ -40,3 +38,27 @@ pub(crate) mod topology_predicate;
 
 #[cfg(test)]
 mod tests;
+
+/// Implements a predicate trait for `$for` against each `$target` type by
+/// evaluating a RelateNG predicate, which short-circuits as soon as its
+/// value is known (unlike computing the full matrix).
+macro_rules! impl_predicate_from_relate {
+    ($trait:ident, $method:ident, $predicate:expr, $for:ty, [$($target:ty),*]) => {
+        $(
+            impl<T> $trait<$target> for $for
+            where
+                T: GeoFloat
+            {
+                fn $method(&self, target: &$target) -> bool {
+                    use $crate::algorithm::Relate;
+                    $crate::algorithm::relate::relateng::relate_ng::eval(
+                        &self.geometry_cow(),
+                        &target.geometry_cow(),
+                        &mut $predicate,
+                    )
+                }
+            }
+        )*
+    };
+}
+pub(crate) use impl_predicate_from_relate;
