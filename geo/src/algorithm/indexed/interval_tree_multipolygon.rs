@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, ops::ControlFlow};
 
-use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon};
+use geo_types::{Coord, Line, MultiPolygon, Polygon};
 use sif_itree::ITree;
 
 use crate::algorithm::kernels::Kernel;
@@ -100,29 +100,19 @@ pub struct IntervalTreeMultiPolygon<T: GeoNum> {
 
 impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
     pub fn new(mp: &MultiPolygon<T>) -> Self {
-        Self::from_rings(mp.0.iter().flat_map(polygon_rings))
+        Self::from_lines(mp.lines_iter())
     }
 
     /// Builds the index for a single [`Polygon`].
-    // Consumed by the RelateNG port (see RELATENG_PLAN.md); remove the allow
-    // when it lands.
-    #[allow(dead_code)]
     pub(crate) fn from_polygon(polygon: &Polygon<T>) -> Self {
-        Self::from_rings(polygon_rings(polygon))
+        Self::from_lines(polygon.lines_iter())
     }
 
-    /// Builds the index from an iterator of rings (exterior and interior line
-    /// segments are treated alike).
-    pub(crate) fn from_rings<'a>(rings: impl Iterator<Item = &'a LineString<T>>) -> Self
-    where
-        T: 'a,
-    {
-        let segments = rings
-            .flat_map(|ring| ring.lines_iter())
-            .map(Self::create_segment);
-
+    /// Builds the index from ring segments (exterior and interior segments
+    /// are treated alike).
+    fn from_lines(lines: impl Iterator<Item = Line<T>>) -> Self {
         Self {
-            y_interval_tree: ITree::new(segments),
+            y_interval_tree: ITree::new(lines.map(Self::create_segment)),
         }
     }
 
@@ -179,9 +169,6 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
     /// orientation, so invalid input (a hole wound the same way as its
     /// shell) still locates points in the hole as `Outside`. The two methods
     /// agree on all valid input. `OnBoundary` detection is exact.
-    // Consumed by the RelateNG port (see RELATENG_PLAN.md); remove the allow
-    // when it lands.
-    #[allow(dead_code)]
     pub(crate) fn containment_parity(&self, coord: Coord<T>) -> CoordPos {
         // Each ray crossing contributes +1 or -1 to the winding number, so
         // the parity of the winding sum equals the parity of the crossing
@@ -254,11 +241,6 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
             ControlFlow::Continue(()) => ControlFlow::Continue(winding_number),
         }
     }
-}
-
-/// Iterates the exterior ring and all interior rings of a polygon.
-fn polygon_rings<T: GeoNum>(polygon: &Polygon<T>) -> impl Iterator<Item = &LineString<T>> {
-    std::iter::once(polygon.exterior()).chain(polygon.interiors().iter())
 }
 
 #[cfg(test)]
