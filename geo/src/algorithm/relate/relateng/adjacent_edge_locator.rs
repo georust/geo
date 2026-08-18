@@ -12,11 +12,11 @@
 
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
-use crate::winding_order::Winding;
-use crate::{Coord, GeoFloat, Intersects, Line, LineString};
+use crate::{Coord, GeoFloat, Intersects, Line};
 
 use super::node_section::NodeSection;
 use super::node_sections::NodeSections;
+use super::relate_geometry::oriented_ring_coords;
 use super::relate_point_locator::Polygonal;
 use super::topology_predicate::InputIndex;
 
@@ -91,21 +91,6 @@ fn create_section<F: GeoFloat>(p: Coord<F>, prev: Coord<F>, next: Coord<F>) -> N
         p,
         Some(next),
     )
-}
-
-/// A copy of the ring's coordinates, oriented CW (for shells) or CCW (for
-/// holes). Port of `RelateGeometry.orient`.
-pub(crate) fn oriented_ring_coords<F: GeoFloat>(
-    ring: &LineString<F>,
-    require_cw: bool,
-) -> Vec<Coord<F>> {
-    let mut ring = ring.clone();
-    if require_cw {
-        ring.make_cw_winding();
-    } else {
-        ring.make_ccw_winding();
-    }
-    ring.0
 }
 
 #[cfg(test)]
