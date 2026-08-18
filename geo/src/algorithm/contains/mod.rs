@@ -110,6 +110,7 @@ mod test {
     use crate::Relate;
     use crate::indexed::IntervalTreeMultiPolygon;
     use crate::line_string;
+    use crate::wkt;
     use crate::{Coord, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle, coord};
 
     #[test]
@@ -1004,5 +1005,80 @@ mod test {
         let _ = multi_poly.contains(&multi_point);
         let _ = multi_poly.contains(&multi_ls);
         let _ = multi_poly.contains(&multi_poly);
+    }
+
+    // Point containment for collections uses the union semantics of the
+    // collection, as `relate` does: a point shared by two members can be
+    // interior to their union although it is on the boundary of each.
+    #[test]
+    fn multi_line_string_contains_shared_endpoint() {
+        let mls = wkt!(MULTILINESTRING((0. 0., 1. 0.), (1. 0., 2. 0.)));
+        let shared = Point::new(1., 0.);
+        let end = Point::new(2., 0.);
+        let interior = Point::new(0.5, 0.);
+        let off = Point::new(0.5, 1.);
+        assert!(mls.contains(&shared));
+        assert_eq!(mls.contains(&shared), mls.relate(&shared).is_contains());
+        assert!(!mls.contains(&end));
+        assert!(mls.contains(&interior));
+        assert!(!mls.contains(&off));
+        assert!(mls.contains(&shared.0));
+    }
+
+    // The Mod-2 rule counts line ends: three meeting at a point form a
+    // boundary point, and the two ends of a closed member do not.
+    #[test]
+    fn one_coordinate_line_member_contains_its_coordinate() {
+        let point = Point::new(1., 1.);
+
+        let line = wkt!(LINESTRING(1. 1.));
+        assert!(line.contains(&point));
+
+        let single = wkt!(MULTILINESTRING((1. 1.)));
+        assert!(single.contains(&point));
+        assert_eq!(single.contains(&point), single.relate(&point).is_contains());
+
+        let repeated = wkt!(MULTILINESTRING((1. 1.), (1. 1.)));
+        assert!(repeated.contains(&point));
+
+        let collection = wkt!(GEOMETRYCOLLECTION(LINESTRING(1. 1.)));
+        assert!(collection.contains(&point));
+        assert_eq!(
+            collection.contains(&point),
+            collection.relate(&point).is_contains()
+        );
+        assert!(!collection.contains(&Point::new(2., 2.)));
+    }
+
+    #[test]
+    fn multi_line_string_contains_counts_line_ends() {
+        let junction = wkt!(MULTILINESTRING((0. 0., 1. 0.), (1. 0., 2. 0.), (1. 0., 1. 1.)));
+        let shared = Point::new(1., 0.);
+        assert!(!junction.contains(&shared));
+        assert_eq!(
+            junction.contains(&shared),
+            junction.relate(&shared).is_contains()
+        );
+
+        let closed = wkt!(MULTILINESTRING((0. 0., 1. 0., 1. 1., 0. 0.)));
+        let start = Point::new(0., 0.);
+        assert!(closed.contains(&start));
+        assert_eq!(closed.contains(&start), closed.relate(&start).is_contains());
+
+        let empty = wkt!(MULTILINESTRING EMPTY);
+        assert!(!empty.contains(&start));
+    }
+
+    #[test]
+    fn geometry_collection_contains_shared_polygon_edge() {
+        let gc = wkt!(GEOMETRYCOLLECTION(
+            POLYGON((0. 0., 1. 0., 1. 1., 0. 1., 0. 0.)),
+            POLYGON((1. 0., 2. 0., 2. 1., 1. 1., 1. 0.))
+        ));
+        let shared = Point::new(1., 0.5);
+        let outer = Point::new(0., 0.5);
+        assert!(gc.contains(&shared));
+        assert_eq!(gc.contains(&shared), gc.relate(&shared).is_contains());
+        assert!(!gc.contains(&outer));
     }
 }

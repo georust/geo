@@ -1,11 +1,11 @@
 use super::Contains;
+use crate::GeoFloat;
 use crate::geometry::*;
 use crate::geometry_delegate_impl;
-use crate::{GeoFloat, GeoNum};
 
 impl<T> Contains<Coord<T>> for Geometry<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
 {
     fn contains(&self, coord: &Coord<T>) -> bool {
         self.contains(&Point::from(*coord))
@@ -14,7 +14,7 @@ where
 
 impl<T> Contains<Point<T>> for Geometry<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
 {
     geometry_delegate_impl! {
         fn contains(&self, point: &Point<T>) -> bool;
