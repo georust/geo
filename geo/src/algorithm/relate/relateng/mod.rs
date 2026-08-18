@@ -1,0 +1,23 @@
+//! Next-generation relate engine, a port of JTS's `operation.relateng`
+//! package (Martin Davis, JTS 1.20; ported from master at `ab57bff`).
+//!
+//! RelateNG evaluates DE-9IM topological predicates and intersection
+//! matrices without building a noded topology graph. It locates points and
+//! line ends on the opposing geometry, examines each intersection node from
+//! local segment-pair tests with robust orientation predicates, and never
+//! constructs intersection points into shared topology. This avoids the
+//! robustness failures of the graph-based engine when an intersection point
+//! is not exactly representable (see georust/geo issue #1585), supports
+//! GeometryCollections with union semantics, and allows named predicates to
+//! short-circuit as soon as their value is known.
+//!
+//! The module is crate-private; the public entry points are the `Relate`
+//! trait and the predicate traits built on it. The boundary node rule is
+//! Mod-2 (the OGC SFS rule), matching the rest of the crate.
+
+// Parts of the module are consumed only by later commits in the port.
+#![allow(dead_code)]
+
+pub(crate) mod im_predicate;
+pub(crate) mod relate_predicate;
+pub(crate) mod topology_predicate;
