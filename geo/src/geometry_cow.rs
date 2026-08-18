@@ -27,6 +27,29 @@ where
     Triangle(Cow<'a, Triangle<T>>),
 }
 
+impl<T: CoordNum> GeometryCow<'_, T> {
+    /// A borrowed view of this `GeometryCow`, without cloning owned
+    /// contents.
+    pub(crate) fn reborrow(&self) -> GeometryCow<'_, T> {
+        match self {
+            GeometryCow::Point(g) => GeometryCow::Point(Cow::Borrowed(g.as_ref())),
+            GeometryCow::Line(g) => GeometryCow::Line(Cow::Borrowed(g.as_ref())),
+            GeometryCow::LineString(g) => GeometryCow::LineString(Cow::Borrowed(g.as_ref())),
+            GeometryCow::Polygon(g) => GeometryCow::Polygon(Cow::Borrowed(g.as_ref())),
+            GeometryCow::MultiPoint(g) => GeometryCow::MultiPoint(Cow::Borrowed(g.as_ref())),
+            GeometryCow::MultiLineString(g) => {
+                GeometryCow::MultiLineString(Cow::Borrowed(g.as_ref()))
+            }
+            GeometryCow::MultiPolygon(g) => GeometryCow::MultiPolygon(Cow::Borrowed(g.as_ref())),
+            GeometryCow::GeometryCollection(g) => {
+                GeometryCow::GeometryCollection(Cow::Borrowed(g.as_ref()))
+            }
+            GeometryCow::Rect(g) => GeometryCow::Rect(Cow::Borrowed(g.as_ref())),
+            GeometryCow::Triangle(g) => GeometryCow::Triangle(Cow::Borrowed(g.as_ref())),
+        }
+    }
+}
+
 impl<'a, T: CoordNum> From<&'a Geometry<T>> for GeometryCow<'a, T> {
     fn from(geometry: &'a Geometry<T>) -> Self {
         match geometry {
