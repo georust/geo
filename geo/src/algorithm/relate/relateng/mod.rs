@@ -30,9 +30,13 @@ pub(crate) mod node_sections;
 pub(crate) mod polygon_node_converter;
 pub(crate) mod relate_edge;
 pub(crate) mod relate_geometry;
+pub(crate) mod relate_ng;
 pub(crate) mod relate_node;
 pub(crate) mod relate_point_locator;
 pub(crate) mod relate_predicate;
 pub(crate) mod relate_segment_string;
 pub(crate) mod topology_computer;
 pub(crate) mod topology_predicate;
+
+#[cfg(test)]
+mod tests;
