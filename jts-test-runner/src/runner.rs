@@ -1,5 +1,5 @@
 use geo::monotone_chain::MonotoneChainGeometry;
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashMap};
 use std::iter::once;
 
 use approx::relative_eq;
@@ -18,6 +18,7 @@ use geo::{ConvexHull, GeoNum};
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
 const MISC_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/misc");
+const ROBUST_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/robust");
 
 #[derive(Debug, Default, Clone)]
 pub struct TestRunner {
@@ -25,7 +26,7 @@ pub struct TestRunner {
     desc_filter: Option<String>,
     cases: Option<Vec<TestCase>>,
     unexpected_failures: Vec<TestFailure>,
-    expected_failures: Vec<TestId>,
+    expected_failures: Vec<ExpectedFailure>,
     unsupported: Vec<TestCase>,
     successes: Vec<TestCase>,
 }
@@ -34,6 +35,8 @@ pub struct TestRunner {
 pub struct TestId {
     file_name: String,
     case_idx: usize,
+    /// The number of earlier cases in the file that have the same description.
+    desc_index: usize,
     test_idx: usize,
 }
 
@@ -44,6 +47,45 @@ pub struct TestCase {
     operation: Operation,
 }
 
+/// A test that is known to fail.
+///
+/// The test is identified by its file, its case description and its position in the case, not by
+/// the position of the case in the file. Thus a case that JTS adds to a fixture file does not
+/// make an entry identify a different test.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ExpectedFailure {
+    file_name: &'static str,
+    /// The case description, with each sequence of whitespace replaced by one space.
+    case_desc: &'static str,
+    /// Selects among cases in the file that have the same description.
+    desc_index: usize,
+    test_idx: usize,
+}
+
+impl ExpectedFailure {
+    const fn new(file_name: &'static str, case_desc: &'static str, test_idx: usize) -> Self {
+        Self {
+            file_name,
+            case_desc,
+            desc_index: 0,
+            test_idx,
+        }
+    }
+
+    const fn desc_index(mut self, desc_index: usize) -> Self {
+        self.desc_index = desc_index;
+        self
+    }
+
+    pub(crate) fn matches(&self, test_case: &TestCase) -> bool {
+        let id = &test_case.test_id;
+        id.file_name == self.file_name
+            && test_case.description == self.case_desc
+            && id.desc_index == self.desc_index
+            && id.test_idx == self.test_idx
+    }
+}
+
 #[derive(Debug, Clone, thiserror::Error)]
 #[error("failed {:?}: \"{}\" with error: {}", .test_case.test_id, .test_case.description, .error_description)]
 pub struct TestFailure {
@@ -51,17 +93,96 @@ pub struct TestFailure {
     test_case: TestCase,
 }
 
+/// The description of five cases in each of `robust/TestRobustOverlayFloat.xml` and
+/// `robust/overlay/TestOverlay-misc-3.xml`.
+const OLD_ROBUSTNESS_FAILURE: &str = "AA - OLD robustness failure (works with snapping)";
+
 impl TestRunner {
     pub fn new() -> Self {
         Self {
             // Please document any expected failures as you add them.
             expected_failures: vec![
                 // Degenerate case we don't yet handle: buffering a collapsed (flat) polygon
-                TestId {
-                    file_name: "TestBuffer.xml".to_string(),
-                    case_idx: 6,
-                    test_idx: 1,
-                },
+                ExpectedFailure::new(
+                    "general/TestBuffer.xml",
+                    "Degenerate polygon - ring is flat. This case tests a fix made in ver 1.12",
+                    1,
+                ),
+                // GEOS ticket 841: the fixture expects `contains` = false
+                // because the DECIMAL point (0.95, 0.05) lies on the
+                // triangle's hypotenuse. After f64 parsing the point lies
+                // strictly inside (0.95_f64 rounds below 0.95), so exact
+                // arithmetic on the parsed doubles answers true. The
+                // fixture documents a limitation of float parsing, not of
+                // the relate engine.
+                ExpectedFailure::new(
+                    "robust/TestRobustRelateFloat.xml",
+                    "A/P - Point is on boundary of polygon. Orientation algorithms (including CGAlgorithmsDD) fail by incorrectly reporting the point to not be on the boundary. See https://trac.osgeo.org/geos/ticket/841",
+                    0,
+                ),
+                // "OLD robustness failure (works with snapping)" overlay
+                // cases: JTS passes these only via its snap-rounding
+                // fallback. i_overlay's integer-grid overlay produces the
+                // same slivers with quantised vertices (cases 0 and 1) or
+                // collapses a hairline sliver to empty (case 4). The same
+                // three cases appear in two fixture files.
+                ExpectedFailure::new(
+                    "robust/TestRobustOverlayFloat.xml",
+                    OLD_ROBUSTNESS_FAILURE,
+                    0,
+                ),
+                ExpectedFailure::new(
+                    "robust/TestRobustOverlayFloat.xml",
+                    OLD_ROBUSTNESS_FAILURE,
+                    0,
+                )
+                .desc_index(1),
+                ExpectedFailure::new(
+                    "robust/TestRobustOverlayFloat.xml",
+                    OLD_ROBUSTNESS_FAILURE,
+                    0,
+                )
+                .desc_index(4),
+                ExpectedFailure::new(
+                    "robust/overlay/TestOverlay-misc-3.xml",
+                    OLD_ROBUSTNESS_FAILURE,
+                    0,
+                ),
+                ExpectedFailure::new(
+                    "robust/overlay/TestOverlay-misc-3.xml",
+                    OLD_ROBUSTNESS_FAILURE,
+                    0,
+                )
+                .desc_index(1),
+                ExpectedFailure::new(
+                    "robust/overlay/TestOverlay-misc-3.xml",
+                    OLD_ROBUSTNESS_FAILURE,
+                    0,
+                )
+                .desc_index(4),
+                // The following files were previously skipped in their
+                // entirety, because a single unparseable case (e.g. POINT
+                // EMPTY) failed the whole-file deserialisation. Lenient
+                // per-case parsing now runs their remaining cases, which
+                // exposes these pre-existing gaps:
+                //
+                // geo has no LinearRing type: LINEARRING WKT parses as a
+                // LineString, and a self-intersecting LineString is valid,
+                // so the linear-ring bowtie cannot be reported invalid.
+                ExpectedFailure::new("general/TestValid.xml", "L - linear-ring bowtie", 0),
+                // i_overlay output differs from the JTS expectation in
+                // sliver-precision cases (near-degenerate geometry;
+                // vertices differ at the precision limit).
+                ExpectedFailure::new(
+                    "misc/TestOverlay.xml",
+                    "http://trac.osgeo.org/geos/ticket/275",
+                    0,
+                ),
+                ExpectedFailure::new(
+                    "robust/overlay/TestOverlay-pg-list.xml",
+                    "http://postgis.refractions.net/pipermail/postgis-users/2006-March/011316.html",
+                    0,
+                ),
             ],
             ..Self::default()
         }
@@ -72,7 +193,11 @@ impl TestRunner {
     }
 
     pub fn add_failure(&mut self, failure: TestFailure) {
-        if self.expected_failures.contains(&failure.test_case.test_id) {
+        if self
+            .expected_failures
+            .iter()
+            .any(|expected| expected.matches(&failure.test_case))
+        {
             return;
         }
         self.unexpected_failures.push(failure);
@@ -82,7 +207,7 @@ impl TestRunner {
         &self.unexpected_failures
     }
 
-    pub fn expected_failures(&self) -> &[TestId] {
+    pub fn expected_failures(&self) -> &[ExpectedFailure] {
         &self.expected_failures
     }
 
@@ -108,6 +233,7 @@ impl TestRunner {
         } else {
             self.parse_cases()?
         };
+        self.check_expected_failures(&cases)?;
 
         debug!("cases.len(): {}", cases.len());
 
@@ -632,6 +758,22 @@ impl TestRunner {
         Ok(())
     }
 
+    /// Returns an error if an expected failure identifies no test in a file that was parsed.
+    fn check_expected_failures(&self, cases: &[TestCase]) -> Result<()> {
+        if self.desc_filter.is_some() {
+            return Ok(());
+        }
+        for expected in &self.expected_failures {
+            let file_parsed = cases
+                .iter()
+                .any(|case| case.test_id.file_name == expected.file_name);
+            if file_parsed && !cases.iter().any(|case| expected.matches(case)) {
+                return Err(format!("expected failure identifies no test: {expected:?}").into());
+            }
+        }
+        Ok(())
+    }
+
     fn parse_cases(&self) -> Result<Vec<TestCase>> {
         let mut cases = vec![];
 
@@ -641,10 +783,18 @@ impl TestRunner {
             "**/*.xml".to_string()
         };
 
-        for entry in GENERAL_TEST_XML
-            .find(&filename_filter)?
-            .chain(VALIDATE_TEST_XML.find(&filename_filter)?)
-            .chain(MISC_TEST_XML.find(&filename_filter)?)
+        let corpora: [(&str, &Dir); 4] = [
+            ("general", &GENERAL_TEST_XML),
+            ("validate", &VALIDATE_TEST_XML),
+            ("misc", &MISC_TEST_XML),
+            ("robust", &ROBUST_TEST_XML),
+        ];
+        for (corpus, entry) in corpora
+            .iter()
+            .map(|(name, dir)| Ok((*name, dir.find(&filename_filter)?)))
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .flat_map(|(name, entries)| entries.map(move |e| (name, e)))
         {
             let file = match entry {
                 DirEntry::Dir(_) => {
@@ -667,7 +817,12 @@ impl TestRunner {
                 }
             };
 
+            let mut desc_counts: HashMap<String, usize> = HashMap::new();
             for (case_idx, mut case) in run.cases.into_iter().enumerate() {
+                let description = case.desc.split_whitespace().collect::<Vec<_>>().join(" ");
+                let desc_count = desc_counts.entry(description.clone()).or_default();
+                let desc_index = *desc_count;
+                *desc_count += 1;
                 if let Some(desc_filter) = &self.desc_filter {
                     if case.desc.as_str().contains(desc_filter) {
                         debug!("filter matched case: {}", case.desc);
@@ -680,18 +835,17 @@ impl TestRunner {
                 }
                 let tests = std::mem::take(&mut case.tests);
                 for (test_idx, test) in tests.into_iter().enumerate() {
-                    let description = case.desc.clone();
+                    let description = description.clone();
 
-                    let test_file_name = file
-                        .path()
-                        .file_name()
-                        .expect("file from include_dir unexpectedly missing name")
-                        .to_string_lossy()
-                        .to_string();
+                    // Qualify with the corpus directory: bare file
+                    // names are ambiguous (e.g. TestValid.xml exists in
+                    // both general/ and misc/).
+                    let test_file_name = format!("{}/{}", corpus, file.path().display());
 
                     let test_id = TestId {
                         file_name: test_file_name.clone(),
                         case_idx,
+                        desc_index,
                         test_idx,
                     };
                     match test.operation_input.into_operation(&case) {
@@ -718,8 +872,13 @@ impl TestRunner {
                             }
                         }
                         Err(e) => {
-                            debug!("skipping unsupported operation: {e}");
-                            continue;
+                            cases.push(TestCase {
+                                description,
+                                test_id,
+                                operation: Operation::Unsupported {
+                                    reason: e.to_string(),
+                                },
+                            });
                         }
                     }
                 }
