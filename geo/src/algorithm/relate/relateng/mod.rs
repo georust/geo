@@ -20,7 +20,9 @@
 // is removed when the RelateNG driver lands.
 #![allow(dead_code)]
 
+pub(crate) mod dimension_location;
 pub(crate) mod im_predicate;
+pub(crate) mod linear_boundary;
 pub(crate) mod node_section;
 pub(crate) mod node_sections;
 pub(crate) mod polygon_node_converter;
