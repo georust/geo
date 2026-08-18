@@ -21,18 +21,18 @@ use super::topology_predicate::{InputIndex, TopologyPredicate};
 
 const MSG_GEOMETRY_DIMENSION_UNEXPECTED: &str = "Unexpected combination of geometry dimensions";
 
-pub(crate) struct TopologyComputer<'r, 'a, F: GeoFloat> {
+pub(crate) struct TopologyComputer<'r, 'a, 'b, F: GeoFloat> {
     predicate: &'r mut dyn TopologyPredicate<F>,
     geom_a: &'r RelateGeometry<'a, F>,
-    geom_b: &'r RelateGeometry<'a, F>,
+    geom_b: &'r RelateGeometry<'b, F>,
     node_map: BTreeMap<NodeKey<F>, NodeSections<F>>,
 }
 
-impl<'r, 'a, F: GeoFloat> TopologyComputer<'r, 'a, F> {
+impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
     pub fn new(
         predicate: &'r mut dyn TopologyPredicate<F>,
         geom_a: &'r RelateGeometry<'a, F>,
-        geom_b: &'r RelateGeometry<'a, F>,
+        geom_b: &'r RelateGeometry<'b, F>,
     ) -> Self {
         let mut computer = Self {
             predicate,
@@ -96,7 +96,7 @@ impl<'r, 'a, F: GeoFloat> TopologyComputer<'r, 'a, F> {
                 );
             }
             Dimensions::OneDimensional => {
-                if self.geometry(geom_non_empty).has_boundary() {
+                if self.geometry_has_boundary(geom_non_empty) {
                     self.update_dim_for(
                         geom_non_empty,
                         CoordPos::OnBoundary,
@@ -129,16 +129,26 @@ impl<'r, 'a, F: GeoFloat> TopologyComputer<'r, 'a, F> {
         }
     }
 
-    fn geometry(&self, input: InputIndex) -> &RelateGeometry<'a, F> {
+    fn geometry_has_boundary(&self, input: InputIndex) -> bool {
         match input {
-            InputIndex::A => self.geom_a,
-            InputIndex::B => self.geom_b,
+            InputIndex::A => self.geom_a.has_boundary(),
+            InputIndex::B => self.geom_b.has_boundary(),
+        }
+    }
+
+    fn geometry_is_empty(&self, input: InputIndex) -> bool {
+        match input {
+            InputIndex::A => self.geom_a.is_empty(),
+            InputIndex::B => self.geom_b.is_empty(),
         }
     }
 
     /// The type-based dimension of an input.
     pub fn dimension(&self, input: InputIndex) -> Dimensions {
-        self.geometry(input).dimension()
+        match input {
+            InputIndex::A => self.geom_a.dimension(),
+            InputIndex::B => self.geom_b.dimension(),
+        }
     }
 
     /// Whether the input geometries require self-noding for correct
@@ -266,7 +276,7 @@ impl<'r, 'a, F: GeoFloat> TopologyComputer<'r, 'a, F> {
         sections.add_node_section(ns1);
     }
 
-    pub fn add_point_on_point_interior(&mut self, _pt: Coord<F>) {
+    pub fn add_point_on_point_interior(&mut self) {
         self.update_dim(
             CoordPos::Inside,
             CoordPos::Inside,
@@ -274,7 +284,7 @@ impl<'r, 'a, F: GeoFloat> TopologyComputer<'r, 'a, F> {
         );
     }
 
-    pub fn add_point_on_point_exterior(&mut self, source: InputIndex, _pt: Coord<F>) {
+    pub fn add_point_on_point_exterior(&mut self, source: InputIndex) {
         self.update_dim_for(
             source,
             CoordPos::Inside,
@@ -299,7 +309,7 @@ impl<'r, 'a, F: GeoFloat> TopologyComputer<'r, 'a, F> {
         );
 
         // An empty geometry has no points to infer entries from.
-        if self.geometry(source.other()).is_empty() {
+        if self.geometry_is_empty(source.other()) {
             return;
         }
 
@@ -352,7 +362,7 @@ impl<'r, 'a, F: GeoFloat> TopologyComputer<'r, 'a, F> {
         );
 
         // An empty geometry has no points to infer entries from.
-        if self.geometry(source.other()).is_empty() {
+        if self.geometry_is_empty(source.other()) {
             return;
         }
 
