@@ -86,9 +86,6 @@ pub(crate) fn compare_angle<T: GeoNum>(origin: Coord<T>, p: Coord<T>, q: Coord<T
 ///
 /// `a0`/`a1` are the segment endpoints adjacent to the node in one ring,
 /// `b0`/`b1` those in the other ring.
-// Consumed by the RelateNG port (see RELATENG_PLAN.md); remove the allow when
-// it lands.
-#[allow(dead_code)]
 pub(crate) fn is_crossing<T: GeoNum>(
     node_pt: Coord<T>,
     a0: Coord<T>,
@@ -120,8 +117,8 @@ pub(crate) fn is_crossing<T: GeoNum>(
 /// The ring interior is assumed to be on the right of the corner (a CW shell
 /// or a CCW hole). The test segment must not be collinear with the corner
 /// segments.
-// Consumed by the RelateNG port (see RELATENG_PLAN.md); remove the allow when
-// it lands.
+// Ported with the rest of JTS PolygonNodeTopology; not used by the crate at
+// present.
 #[allow(dead_code)]
 pub(crate) fn is_interior_segment<T: GeoNum>(
     node_pt: Coord<T>,
