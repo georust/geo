@@ -12,6 +12,8 @@
   - DEPRECATED: `Relate::geometry_graph` and the `geo::relate::GeometryGraph` re-export; the graph-based engine is no longer used by `relate` and will be removed in a future release.
 - `line_intersection::line_intersection` now computes intersection points with double-double extended-precision arithmetic, matching current JTS (`CGAlgorithmsDD.intersection`). Computed points can differ from previous releases by roughly one ULP; the new values match JTS exactly.
   - <https://github.com/locationtech/jts/pull/989>
+- `Contains<Point>` / `Contains<Coord>` for `GeometryCollection` and `MultiLineString` now use the union semantics of the collection, consistent with `relate` and JTS: a point on the shared boundary of two adjacent polygon elements, or an endpoint shared by two line elements, lies in the interior of their union and is contained. Previously the check was member-wise and reported such points as not contained.
+  - BREAKING: these impls (and the delegating impls on `Geometry`) now require `T: GeoFloat` instead of `T: GeoNum` (`CoordNum` for `MultiLineString`), because the evaluation goes through the relate engine. Point containment for integer coordinates remains available on the non-collection geometry types.
 - Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
 - BREAKING: adds the `InvalidPolygon::InteriorNotSimplyConnected` error variant.
   - <https://github.com/georust/geo/pull/1472>
