@@ -38,3 +38,27 @@ pub(crate) mod topology_predicate;
 
 #[cfg(test)]
 mod tests;
+
+/// Implements a predicate trait for `$for` against each `$target` type by
+/// evaluating a RelateNG predicate, which short-circuits as soon as its
+/// value is known (unlike computing the full matrix).
+macro_rules! impl_predicate_from_relate {
+    ($trait:ident, $method:ident, $predicate:expr, $for:ty, [$($target:ty),*]) => {
+        $(
+            impl<T> $trait<$target> for $for
+            where
+                T: GeoFloat
+            {
+                fn $method(&self, target: &$target) -> bool {
+                    use $crate::algorithm::Relate;
+                    $crate::algorithm::relate::relateng::relate_ng::eval(
+                        &self.geometry_cow(),
+                        &target.geometry_cow(),
+                        &mut $predicate,
+                    )
+                }
+            }
+        )*
+    };
+}
+pub(crate) use impl_predicate_from_relate;
