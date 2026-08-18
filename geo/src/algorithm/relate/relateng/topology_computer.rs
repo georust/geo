@@ -6,12 +6,12 @@
 
 use std::collections::BTreeMap;
 
+use crate::GeoFloat;
 use crate::algorithm::polygon_node_topology::is_crossing;
 use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
 use crate::relate::geomgraph::Direction;
 use crate::relate::geomgraph::node_map::NodeKey;
-use crate::{Coord, GeoFloat};
 
 use super::node_section::NodeSection;
 use super::node_sections::NodeSections;
@@ -298,7 +298,6 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
         source: InputIndex,
         loc_target: CoordPos,
         dim_target: Dimensions,
-        _pt: Coord<F>,
     ) {
         // Update the entry for the point interior.
         self.update_dim_for(
@@ -351,7 +350,6 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
         loc_line_end: CoordPos,
         loc_target: CoordPos,
         dim_target: Dimensions,
-        pt: Coord<F>,
     ) {
         // Record topology at the line end point.
         self.update_dim_for(
@@ -370,22 +368,16 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
         match dim_target {
             Dimensions::ZeroDimensional => {}
             Dimensions::OneDimensional => {
-                self.add_line_end_on_line(source, loc_line_end, loc_target, pt);
+                self.add_line_end_on_line(source, loc_target);
             }
             Dimensions::TwoDimensional => {
-                self.add_line_end_on_area(source, loc_line_end, loc_target, pt);
+                self.add_line_end_on_area(source, loc_target);
             }
             Dimensions::Empty => unreachable!("{}", MSG_GEOMETRY_DIMENSION_UNEXPECTED),
         }
     }
 
-    fn add_line_end_on_line(
-        &mut self,
-        source: InputIndex,
-        _loc_line_end: CoordPos,
-        loc_line: CoordPos,
-        _pt: Coord<F>,
-    ) {
+    fn add_line_end_on_line(&mut self, source: InputIndex, loc_line: CoordPos) {
         // When a line end is in the exterior of a line, some length of the
         // source line interior is also in the target line exterior. This
         // holds for zero-length lines as well.
@@ -399,13 +391,7 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
         }
     }
 
-    fn add_line_end_on_area(
-        &mut self,
-        source: InputIndex,
-        _loc_line_end: CoordPos,
-        loc_area: CoordPos,
-        _pt: Coord<F>,
-    ) {
+    fn add_line_end_on_area(&mut self, source: InputIndex, loc_area: CoordPos) {
         if loc_area != CoordPos::OnBoundary {
             // When a line end is in an area interior or exterior, some
             // length of the source line interior, and the exterior of the
@@ -441,7 +427,6 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
         loc_area: CoordPos,
         loc_target: CoordPos,
         dim_target: Dimensions,
-        pt: Coord<F>,
     ) {
         if loc_target == CoordPos::Outside {
             self.update_dim_for(
@@ -472,12 +457,12 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
             return;
         }
         match dim_target {
-            Dimensions::ZeroDimensional => self.add_area_vertex_on_point(source, loc_area, pt),
+            Dimensions::ZeroDimensional => self.add_area_vertex_on_point(source, loc_area),
             Dimensions::OneDimensional => {
-                self.add_area_vertex_on_line(source, loc_area, loc_target, pt)
+                self.add_area_vertex_on_line(source, loc_area, loc_target)
             }
             Dimensions::TwoDimensional => {
-                self.add_area_vertex_on_area(source, loc_area, loc_target, pt)
+                self.add_area_vertex_on_area(source, loc_area, loc_target)
             }
             Dimensions::Empty => unreachable!("{}", MSG_GEOMETRY_DIMENSION_UNEXPECTED),
         }
@@ -487,7 +472,7 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
     /// point. Because the largest-dimension intersecting target was
     /// determined, the point is not part of any other target element, so
     /// its neighbourhood is in the target exterior.
-    fn add_area_vertex_on_point(&mut self, source: InputIndex, loc_area: CoordPos, _pt: Coord<F>) {
+    fn add_area_vertex_on_point(&mut self, source: InputIndex, loc_area: CoordPos) {
         // The vertex location intersects the point.
         self.update_dim_for(
             source,
@@ -529,7 +514,6 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
         source: InputIndex,
         loc_area: CoordPos,
         loc_target: CoordPos,
-        _pt: Coord<F>,
     ) {
         self.update_dim_for(source, loc_area, loc_target, Dimensions::ZeroDimensional);
         if loc_area == CoordPos::Inside {
@@ -549,7 +533,6 @@ impl<'r, 'a, 'b, F: GeoFloat> TopologyComputer<'r, 'a, 'b, F> {
         source: InputIndex,
         loc_area: CoordPos,
         loc_target: CoordPos,
-        _pt: Coord<F>,
     ) {
         if loc_target == CoordPos::OnBoundary {
             if loc_area == CoordPos::OnBoundary {

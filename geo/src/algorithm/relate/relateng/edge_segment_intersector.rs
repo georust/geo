@@ -238,6 +238,7 @@ mod tests {
     // interior/interior intersection via node evaluation.
     use super::super::im_predicate::RelateMatrixPredicate;
     use super::super::relate_geometry::RelateGeometry;
+    use super::super::relate_point_locator::Mode;
     use super::super::topology_computer::TopologyComputer;
     use super::super::topology_predicate::InputIndex;
     use super::*;
@@ -252,8 +253,8 @@ mod tests {
         let b = wkt!(LINESTRING (0. 2., 2. 0.));
         let cow_a = GeometryCow::from(&a);
         let cow_b = GeometryCow::from(&b);
-        let geom_a = RelateGeometry::new(&cow_a);
-        let geom_b = RelateGeometry::new(&cow_b);
+        let geom_a = RelateGeometry::new(&cow_a, Mode::Simple);
+        let geom_b = RelateGeometry::new(&cow_b, Mode::Simple);
 
         let mut predicate = RelateMatrixPredicate::new();
         {
@@ -281,8 +282,8 @@ mod tests {
         let b = wkt!(LINESTRING (0. 2., 2. 0.));
         let cow_a = GeometryCow::from(&a);
         let cow_b = GeometryCow::from(&b);
-        let geom_a = RelateGeometry::new(&cow_a);
-        let geom_b = RelateGeometry::new(&cow_b);
+        let geom_a = RelateGeometry::new(&cow_a, Mode::Simple);
+        let geom_b = RelateGeometry::new(&cow_b, Mode::Simple);
 
         let mut predicate = RelateMatrixPredicate::new();
         {

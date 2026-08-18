@@ -25,6 +25,7 @@ use std::collections::BTreeSet;
 
 use crate::bounding_rect::BoundingRect;
 use crate::coordinate_position::{CoordPos, CoordinatePosition};
+use crate::dimensions::HasDimensions;
 use crate::geometry_cow::GeometryCow;
 use crate::indexed::IntervalTreeMultiPolygon;
 use crate::relate::geomgraph::node_map::NodeKey;
@@ -45,10 +46,10 @@ pub(crate) enum Polygonal<'a, F: GeoFloat> {
 }
 
 impl<'a, F: GeoFloat> Polygonal<'a, F> {
-    pub fn polygons(&self) -> Box<dyn Iterator<Item = &Polygon<F>> + '_> {
+    pub fn polygons(&self) -> &[Polygon<F>] {
         match self {
-            Polygonal::Polygon(p) => Box::new(std::iter::once(p.as_ref())),
-            Polygonal::MultiPolygon(mp) => Box::new(mp.0.iter()),
+            Polygonal::Polygon(p) => std::slice::from_ref(p.as_ref()),
+            Polygonal::MultiPolygon(mp) => &mp.0,
         }
     }
 
@@ -82,12 +83,19 @@ impl<'a, F: GeoFloat> Polygonal<'a, F> {
     }
 }
 
+/// A linear element of the input geometry, with its envelope cached for
+/// fast rejection. A Line input is promoted to a two-point LineString.
+pub(crate) struct LineElement<'a, F: GeoFloat> {
+    pub line: Cow<'a, LineString<F>>,
+    pub env: Option<Rect<F>>,
+}
+
 /// The elements of an input geometry, decomposed for point location:
 /// unique point coordinates, linear components, and polygonal components,
 /// in document order.
 pub(crate) struct GeometryElements<'a, F: GeoFloat> {
     points: BTreeSet<NodeKey<F>>,
-    lines: Vec<Cow<'a, LineString<F>>>,
+    lines: Vec<LineElement<'a, F>>,
     polygonals: Vec<Polygonal<'a, F>>,
     is_polygonal_input: bool,
 }
@@ -133,6 +141,9 @@ impl<'a, F: GeoFloat> GeometryElements<'a, F> {
         elements
     }
 
+    /// Collection members are walked over `Geometry` rather than a
+    /// borrowed `GeometryCow` view so that the element borrows keep the
+    /// input lifetime.
     fn extract_geometry(&mut self, geom: &'a Geometry<F>) {
         match geom {
             Geometry::Point(p) => self.add_point(p.0),
@@ -168,16 +179,22 @@ impl<'a, F: GeoFloat> GeometryElements<'a, F> {
         if line.0.is_empty() {
             return;
         }
-        self.lines.push(Cow::Borrowed(line));
+        self.lines.push(LineElement {
+            env: line.bounding_rect(),
+            line: Cow::Borrowed(line),
+        });
     }
 
     fn add_line_segment(&mut self, start: Coord<F>, end: Coord<F>) {
-        self.lines
-            .push(Cow::Owned(LineString::new(vec![start, end])));
+        let line = LineString::new(vec![start, end]);
+        self.lines.push(LineElement {
+            env: line.bounding_rect(),
+            line: Cow::Owned(line),
+        });
     }
 
     fn add_polygon(&mut self, polygon: &'a Polygon<F>) {
-        if polygon.exterior().0.is_empty() {
+        if polygon.is_empty() {
             return;
         }
         self.polygonals
@@ -190,7 +207,7 @@ impl<'a, F: GeoFloat> GeometryElements<'a, F> {
     }
 
     fn add_multi_polygon(&mut self, mp: &'a MultiPolygon<F>) {
-        if mp.0.iter().all(|p| p.exterior().0.is_empty()) {
+        if mp.is_empty() {
             return;
         }
         self.polygonals.push(Polygonal::MultiPolygon(mp));
@@ -211,81 +228,73 @@ impl<'a, F: GeoFloat> GeometryElements<'a, F> {
 /// order.
 pub(crate) type SharedAreaLocators<F> = OnceCell<Vec<OnceCell<IntervalTreeMultiPolygon<F>>>>;
 
-/// The per-element area locator cells: owned by this locator, or borrowed
-/// from prepared state that outlives it.
-enum AreaLocators<'a, F: GeoFloat> {
-    Own(Vec<OnceCell<IntervalTreeMultiPolygon<F>>>),
-    Shared(&'a [OnceCell<IntervalTreeMultiPolygon<F>>]),
+/// How an input geometry is evaluated.
+#[derive(Clone, Copy)]
+pub(crate) enum Mode<'a, F: GeoFloat> {
+    /// A single evaluation: point-in-area location scans the rings, and
+    /// the edge index is filtered to the opposing envelope.
+    Simple,
+    /// Repeated evaluations against the same geometry: point-in-area
+    /// location is indexed, with the per-element indexes stored in state
+    /// that outlives the evaluation.
+    Prepared(&'a SharedAreaLocators<F>),
 }
 
-impl<F: GeoFloat> AreaLocators<'_, F> {
-    fn cells(&self) -> &[OnceCell<IntervalTreeMultiPolygon<F>>] {
-        match self {
-            AreaLocators::Own(cells) => cells,
-            AreaLocators::Shared(cells) => cells,
-        }
+impl<F: GeoFloat> Mode<'_, F> {
+    pub fn is_prepared(self) -> bool {
+        matches!(self, Mode::Prepared(_))
     }
 }
 
-fn new_locator_cells<F: GeoFloat>(count: usize) -> Vec<OnceCell<IntervalTreeMultiPolygon<F>>> {
-    (0..count).map(|_| OnceCell::new()).collect()
-}
-
 pub(crate) struct RelatePointLocator<'a, F: GeoFloat> {
-    is_prepared: bool,
     is_empty: bool,
     elements: GeometryElements<'a, F>,
-    /// Cached envelope per line, for fast rejection.
-    line_envelopes: Vec<Option<Rect<F>>>,
     line_boundary: Option<LinearBoundary<F>>,
-    /// Prepared mode: lazily built index per polygonal element.
-    poly_locators: AreaLocators<'a, F>,
+    /// Prepared mode: the lazily built index per polygonal element.
+    poly_locators: Option<&'a [OnceCell<IntervalTreeMultiPolygon<F>>]>,
     adj_edge_locator: OnceCell<AdjacentEdgeLocator<F>>,
 }
 
 impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
-    pub fn new(geom: &'a GeometryCow<'a, F>) -> Self {
-        Self::new_with_prepared(geom, false)
-    }
-
-    pub fn new_with_prepared(geom: &'a GeometryCow<'a, F>, is_prepared: bool) -> Self {
-        Self::new_full(geom, is_prepared, None)
-    }
-
-    /// Full constructor. When `shared_locators` is given, the per-element
-    /// area indexes are stored in (and reused from) that cache, which must
-    /// belong to the same geometry.
-    pub fn new_full(
-        geom: &'a GeometryCow<'a, F>,
-        is_prepared: bool,
-        shared_locators: Option<&'a SharedAreaLocators<F>>,
-    ) -> Self {
+    /// In prepared mode the shared area locators must belong to the same
+    /// geometry.
+    pub fn new(geom: &'a GeometryCow<'a, F>, mode: Mode<'a, F>) -> Self {
         let elements = GeometryElements::extract(geom);
         let is_empty = elements.is_empty();
-        let line_envelopes = elements.lines.iter().map(|l| l.bounding_rect()).collect();
         let line_boundary = if elements.lines.is_empty() {
             None
         } else {
             Some(LinearBoundary::new(
-                elements.lines.iter().map(|l| l.as_ref()),
+                elements.lines.iter().map(|l| l.line.as_ref()),
             ))
         };
-        let n_polygonals = elements.polygonals.len();
-        let poly_locators = match shared_locators {
-            Some(shared) => {
-                AreaLocators::Shared(shared.get_or_init(|| new_locator_cells(n_polygonals)))
-            }
-            None => AreaLocators::Own(new_locator_cells(n_polygonals)),
+        let poly_locators = match mode {
+            Mode::Simple => None,
+            Mode::Prepared(shared) => Some(
+                shared
+                    .get_or_init(|| {
+                        (0..elements.polygonals.len())
+                            .map(|_| OnceCell::new())
+                            .collect()
+                    })
+                    .as_slice(),
+            ),
         };
         Self {
-            is_prepared,
             is_empty,
             elements,
-            line_envelopes,
             line_boundary,
             poly_locators,
             adj_edge_locator: OnceCell::new(),
         }
+    }
+
+    pub fn lines(&self) -> &[LineElement<'a, F>] {
+        &self.elements.lines
+    }
+
+    pub fn polygonals(&self) -> &[Polygonal<'a, F>] {
+        self.elements.polygonals()
     }
 
     /// Whether the linear components have any boundary points.
@@ -326,10 +335,6 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
     /// Locates a point which is known to be a node of the geometry (a
     /// vertex or on an edge). `parent_polygonal_id` identifies the
     /// polygonal element the point is a node of, if any.
-    pub fn locate_node(&self, p: Coord<F>, parent_polygonal_id: Option<usize>) -> CoordPos {
-        self.locate_node_with_dim(p, parent_polygonal_id).location()
-    }
-
     pub fn locate_node_with_dim(
         &self,
         p: Coord<F>,
@@ -411,10 +416,10 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
             return CoordPos::Inside;
         }
 
-        for (line, env) in self.elements.lines.iter().zip(&self.line_envelopes) {
+        for elem in &self.elements.lines {
             // Every line has to be checked, since any or all may contain
             // the point.
-            let loc = Self::locate_on_line(p, line, env);
+            let loc = Self::locate_on_line(p, &elem.line, &elem.env);
             if loc != CoordPos::Outside {
                 return loc;
             }
@@ -476,12 +481,11 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
             return CoordPos::OnBoundary;
         }
         let polygonal = &self.elements.polygonals[index];
-        if self.is_prepared {
-            self.poly_locators.cells()[index]
+        match self.poly_locators {
+            Some(cells) => cells[index]
                 .get_or_init(|| polygonal.build_index())
-                .containment_parity(p)
-        } else {
-            polygonal.coordinate_position(p)
+                .containment_parity(p),
+            None => polygonal.coordinate_position(p),
         }
     }
 }
@@ -514,11 +518,12 @@ mod tests {
         expected: DimensionLocation,
     ) {
         let cow = GeometryCow::from(gc);
-        let locator = RelatePointLocator::new(&cow);
+        let locator = RelatePointLocator::new(&cow, Mode::Simple);
         assert_eq!(locator.locate_with_dim(Coord { x, y }), expected);
         // Not in JTS: the prepared (indexed) mode must agree with the
         // simple mode.
-        let prepared = RelatePointLocator::new_with_prepared(&cow, true);
+        let shared = SharedAreaLocators::default();
+        let prepared = RelatePointLocator::new(&cow, Mode::Prepared(&shared));
         assert_eq!(prepared.locate_with_dim(Coord { x, y }), expected);
     }
 
@@ -529,14 +534,19 @@ mod tests {
         expected: DimensionLocation,
     ) {
         let cow = GeometryCow::from(gc);
-        let locator = RelatePointLocator::new(&cow);
+        let locator = RelatePointLocator::new(&cow, Mode::Simple);
         assert_eq!(locator.locate_line_end_with_dim(Coord { x, y }), expected);
     }
 
     fn check_node_location(gc: &GeometryCollection<f64>, x: f64, y: f64, expected: CoordPos) {
         let cow = GeometryCow::from(gc);
-        let locator = RelatePointLocator::new(&cow);
-        assert_eq!(locator.locate_node(Coord { x, y }, None), expected);
+        let locator = RelatePointLocator::new(&cow, Mode::Simple);
+        assert_eq!(
+            locator
+                .locate_node_with_dim(Coord { x, y }, None)
+                .location(),
+            expected
+        );
     }
 
     #[test]
