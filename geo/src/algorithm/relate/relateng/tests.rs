@@ -1378,3 +1378,34 @@ mod relate_ng_boundary_node_rule_test {
         check_relate(a, b, "FFFFFF1F2");
     }
 }
+
+// Not from JTS: pins the full matrices of envelope-disjoint pairs, which
+// are served by the envelope fast-rejection path in
+// `RelateGeometry::locate_with_dim`.
+mod envelope_disjoint_matrix {
+    use super::*;
+
+    #[test]
+    fn test_polygons_envelope_disjoint() {
+        let a = "POLYGON ((0 0, 4 0, 4 4, 0 4, 0 0))";
+        let b = "POLYGON ((10 10, 14 10, 14 14, 10 14, 10 10))";
+        check_relate(a, b, "FF2FF1212");
+        check_intersects_disjoint(a, b, false);
+    }
+
+    #[test]
+    fn test_lines_envelope_disjoint() {
+        let a = "LINESTRING (0 0, 4 4)";
+        let b = "LINESTRING (10 10, 14 14)";
+        check_relate(a, b, "FF1FF0102");
+        check_intersects_disjoint(a, b, false);
+    }
+
+    #[test]
+    fn test_polygon_line_envelope_disjoint() {
+        let a = "POLYGON ((0 0, 4 0, 4 4, 0 4, 0 0))";
+        let b = "LINESTRING (10 10, 14 14)";
+        check_relate(a, b, "FF2FF1102");
+        check_relate(b, a, "FF1FF0212");
+    }
+}

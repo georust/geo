@@ -167,10 +167,27 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     /// for nodes of a geometry inside an overlapping polygon of a
     /// GeometryCollection.
     pub fn is_node_in_area(&self, node_pt: Coord<F>, parent_polygonal_id: Option<usize>) -> bool {
-        let dim_loc = self
-            .locator()
-            .locate_node_with_dim(node_pt, parent_polygonal_id);
+        let dim_loc = self.locate_node_with_dim(node_pt, parent_polygonal_id);
         dim_loc == DimensionLocation::AreaInterior
+    }
+
+    /// Locates a node point, hoisting the locator's own O(1) fast paths so
+    /// the locator is not built when they decide the answer: an empty
+    /// geometry has only exterior, and a node of a purely polygonal
+    /// geometry is always on its boundary. The conditions mirror
+    /// `RelatePointLocator::locate_with_dim_impl` exactly.
+    fn locate_node_with_dim(
+        &self,
+        pt: Coord<F>,
+        parent_polygonal_id: Option<usize>,
+    ) -> DimensionLocation {
+        if self.is_geom_empty {
+            return DimensionLocation::Exterior;
+        }
+        if self.is_polygonal() {
+            return DimensionLocation::AreaBoundary;
+        }
+        self.locator().locate_node_with_dim(pt, parent_polygonal_id)
     }
 
     pub fn locate_line_end_with_dim(&self, p: Coord<F>) -> DimensionLocation {
@@ -188,11 +205,19 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     }
 
     pub fn locate_node(&self, pt: Coord<F>, parent_polygonal_id: Option<usize>) -> CoordPos {
-        self.locator().locate_node(pt, parent_polygonal_id)
+        self.locate_node_with_dim(pt, parent_polygonal_id)
+            .location()
     }
 
     pub fn locate_with_dim(&self, pt: Coord<F>) -> DimensionLocation {
-        self.locator().locate_with_dim(pt)
+        // Envelope fast rejection: a point outside the (cached) envelope is
+        // exterior without a locator walk. This restores the performance of
+        // full-matrix evaluation on envelope-disjoint inputs, where every
+        // point-phase locate lands here.
+        match self.env {
+            Some(env) if env.intersects(&pt) => self.locator().locate_with_dim(pt),
+            _ => DimensionLocation::Exterior,
+        }
     }
 
     /// Whether the geometry requires self-noding for correct evaluation of

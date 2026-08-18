@@ -140,12 +140,15 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
         b: &GeometryCow<'_, F>,
         predicate: &mut dyn TopologyPredicate<F>,
     ) -> bool {
+        // The B wrapper is built first so the envelope gate reuses its
+        // cached envelope instead of walking B's coordinates twice (JTS
+        // gets the gate's envelope for free from the Geometry cache).
+        let geom_b = RelateGeometry::new(b);
+
         // Fast envelope checks.
-        if !self.has_required_envelope_interaction(b, predicate) {
+        if !self.has_required_envelope_interaction(geom_b.envelope(), predicate) {
             return false;
         }
-
-        let geom_b = RelateGeometry::new(b);
 
         let dim_a = self.geom_a.dimension_real();
         let dim_b = geom_b.dimension_real();
@@ -191,10 +194,9 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
 
     fn has_required_envelope_interaction(
         &self,
-        b: &GeometryCow<'_, F>,
+        env_b: Option<Rect<F>>,
         predicate: &dyn TopologyPredicate<F>,
     ) -> bool {
-        let env_b = b.bounding_rect();
         let env_a = self.geom_a.envelope();
         let mut is_interacts = false;
         if predicate.requires_covers(InputIndex::A) {
