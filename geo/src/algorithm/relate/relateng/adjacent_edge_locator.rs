@@ -11,12 +11,12 @@
 //! edges).
 
 use crate::coordinate_position::CoordPos;
-use crate::dimensions::Dimensions;
-use crate::winding_order::Winding;
-use crate::{Coord, GeoFloat, Intersects, Line, LineString};
+use crate::dimensions::{Dimensions, HasDimensions};
+use crate::{Coord, GeoFloat, Intersects, Line};
 
 use super::node_section::NodeSection;
 use super::node_sections::NodeSections;
+use super::relate_geometry::oriented_ring_coords;
 use super::relate_point_locator::Polygonal;
 use super::topology_predicate::InputIndex;
 
@@ -30,7 +30,7 @@ impl<F: GeoFloat> AdjacentEdgeLocator<F> {
         let mut rings = Vec::new();
         for polygonal in polygonals {
             for polygon in polygonal.polygons() {
-                if polygon.exterior().0.is_empty() {
+                if polygon.is_empty() {
                     continue;
                 }
                 rings.push(oriented_ring_coords(polygon.exterior(), true));
@@ -91,21 +91,6 @@ fn create_section<F: GeoFloat>(p: Coord<F>, prev: Coord<F>, next: Coord<F>) -> N
         p,
         Some(next),
     )
-}
-
-/// A copy of the ring's coordinates, oriented CW (for shells) or CCW (for
-/// holes). Port of `RelateGeometry.orient`.
-pub(crate) fn oriented_ring_coords<F: GeoFloat>(
-    ring: &LineString<F>,
-    require_cw: bool,
-) -> Vec<Coord<F>> {
-    let mut ring = ring.clone();
-    if require_cw {
-        ring.make_cw_winding();
-    } else {
-        ring.make_ccw_winding();
-    }
-    ring.0
 }
 
 #[cfg(test)]
