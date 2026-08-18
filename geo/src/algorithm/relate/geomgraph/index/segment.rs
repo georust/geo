@@ -1,27 +1,30 @@
 use crate::Coord;
 use crate::GeoFloat;
 
+/// A line segment stored in an [`rstar::RTree`], carrying a caller-defined
+/// payload that identifies the segment within its source collection.
+///
+/// The default payload is the geomgraph convention: `(edge_idx, segment_idx)`
+/// into a graph's edge list.
 #[derive(Debug, Clone)]
-pub(crate) struct Segment<F: GeoFloat + rstar::RTreeNum> {
-    pub edge_idx: usize,
-    pub segment_idx: usize,
+pub(crate) struct Segment<F: GeoFloat + rstar::RTreeNum, P = (usize, usize)> {
+    pub payload: P,
     pub envelope: rstar::AABB<Coord<F>>,
 }
 
-impl<F> Segment<F>
+impl<F, P> Segment<F, P>
 where
     F: GeoFloat + rstar::RTreeNum,
 {
-    pub fn new(edge_idx: usize, segment_idx: usize, p1: Coord<F>, p2: Coord<F>) -> Self {
+    pub fn new(payload: P, p1: Coord<F>, p2: Coord<F>) -> Self {
         Self {
-            edge_idx,
-            segment_idx,
+            payload,
             envelope: rstar::AABB::from_corners(p1, p2),
         }
     }
 }
 
-impl<F> rstar::RTreeObject for Segment<F>
+impl<F, P> rstar::RTreeObject for Segment<F, P>
 where
     F: GeoFloat + rstar::RTreeNum,
 {
