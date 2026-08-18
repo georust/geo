@@ -78,6 +78,70 @@ pub(crate) fn compare_angle<T: GeoNum>(origin: Coord<T>, p: Coord<T>, q: Coord<T
     }
 }
 
+/// Checks if four segments at a node cross.
+///
+/// The segments lie in two different rings, or in different sections of one
+/// ring. The node is topologically valid if the rings do not cross. If any
+/// segments are collinear, the test returns `false`.
+///
+/// `a0`/`a1` are the segment endpoints adjacent to the node in one ring,
+/// `b0`/`b1` those in the other ring.
+pub(crate) fn is_crossing<T: GeoNum>(
+    node_pt: Coord<T>,
+    a0: Coord<T>,
+    a1: Coord<T>,
+    b0: Coord<T>,
+    b1: Coord<T>,
+) -> bool {
+    let (a_lo, a_hi) = if is_angle_greater(node_pt, a0, a1) {
+        (a1, a0)
+    } else {
+        (a0, a1)
+    };
+    // The edges cross if b0 and b1 lie on opposite sides of the sector
+    // between a_lo and a_hi. A collinear edge is reported as not crossing.
+    let comp_between_0 = compare_between(node_pt, b0, a_lo, a_hi);
+    if comp_between_0 == Ordering::Equal {
+        return false;
+    }
+    let comp_between_1 = compare_between(node_pt, b1, a_lo, a_hi);
+    if comp_between_1 == Ordering::Equal {
+        return false;
+    }
+    comp_between_0 != comp_between_1
+}
+
+/// Tests if the angle of vector `origin -> p` is greater than that of vector
+/// `origin -> q`.
+fn is_angle_greater<T: GeoNum>(origin: Coord<T>, p: Coord<T>, q: Coord<T>) -> bool {
+    compare_angle(origin, p, q) == Ordering::Greater
+}
+
+/// Compares whether an edge `p` is between (`Greater`), outside (`Less`), or
+/// collinear with (`Equal`) the edges `e0` and `e1`, where all edges
+/// originate at `origin`. The "inside" of `e0` and `e1` is the arc that does
+/// not include the positive X-axis at the origin.
+fn compare_between<T: GeoNum>(
+    origin: Coord<T>,
+    p: Coord<T>,
+    e0: Coord<T>,
+    e1: Coord<T>,
+) -> Ordering {
+    let comp_0 = compare_angle(origin, p, e0);
+    if comp_0 == Ordering::Equal {
+        return Ordering::Equal;
+    }
+    let comp_1 = compare_angle(origin, p, e1);
+    if comp_1 == Ordering::Equal {
+        return Ordering::Equal;
+    }
+    if comp_0 == Ordering::Greater && comp_1 == Ordering::Less {
+        Ordering::Greater
+    } else {
+        Ordering::Less
+    }
+}
+
 fn quadrant<T: GeoNum>(origin: Coord<T>, p: Coord<T>) -> Option<Quadrant> {
     let d = p - origin;
     Quadrant::new(d.x, d.y)
@@ -85,7 +149,64 @@ fn quadrant<T: GeoNum>(origin: Coord<T>, p: Coord<T>) -> Option<Quadrant> {
 
 #[cfg(test)]
 mod tests {
+    // Tests ported from JTS PolygonNodeTopologyTest.java (master, ab57bff).
+    // Fixtures are three-point linestrings; the middle point is the node.
     use super::*;
+    use crate::LineString;
+    use crate::wkt;
+
+    fn check_crossing(a: LineString, b: LineString, expected: bool) {
+        let (a, b) = (a.0, b.0);
+        assert_eq!(a[1], b[1], "fixture invariant: shared node");
+        assert_eq!(is_crossing(a[1], a[0], a[2], b[0], b[2]), expected);
+    }
+
+    // In JTS this test is named testNonCrossing, but its helper asserts that
+    // the segments DO cross; the name is corrected here.
+    #[test]
+    fn test_crossing() {
+        check_crossing(
+            wkt!(LINESTRING (500. 1000., 1000. 1000., 1000. 1500.)),
+            wkt!(LINESTRING (1000. 500., 1000. 1000., 500. 1500.)),
+            true,
+        );
+    }
+
+    #[test]
+    fn test_non_crossing_quadrant2() {
+        check_crossing(
+            wkt!(LINESTRING (500. 1000., 1000. 1000., 1000. 1500.)),
+            wkt!(LINESTRING (300. 1200., 1000. 1000., 500. 1500.)),
+            false,
+        );
+    }
+
+    #[test]
+    fn test_non_crossing_quadrant4() {
+        check_crossing(
+            wkt!(LINESTRING (500. 1000., 1000. 1000., 1000. 1500.)),
+            wkt!(LINESTRING (1000. 500., 1000. 1000., 1500. 1000.)),
+            false,
+        );
+    }
+
+    #[test]
+    fn test_non_crossing_collinear() {
+        check_crossing(
+            wkt!(LINESTRING (3. 1., 5. 5., 9. 9.)),
+            wkt!(LINESTRING (2. 1., 5. 5., 9. 9.)),
+            false,
+        );
+    }
+
+    #[test]
+    fn test_non_crossing_both_collinear() {
+        check_crossing(
+            wkt!(LINESTRING (3. 1., 5. 5., 9. 9.)),
+            wkt!(LINESTRING (3. 1., 5. 5., 9. 9.)),
+            false,
+        );
+    }
 
     // Not from JTS: pin the total order of compare_angle across quadrant
     // boundaries and within a quadrant.
