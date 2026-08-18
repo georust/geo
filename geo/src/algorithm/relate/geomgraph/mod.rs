@@ -14,8 +14,9 @@ pub(crate) use label::Label;
 pub(crate) use line_intersector::{LineIntersection, LineIntersector};
 pub(crate) use node::CoordNode;
 use planar_graph::PlanarGraph;
-pub(crate) use quadrant::Quadrant;
 pub(crate) use robust_line_intersector::RobustLineIntersector;
+
+pub(crate) use crate::algorithm::polygon_node_topology::Quadrant;
 use topology_position::TopologyPosition;
 
 pub use crate::coordinate_position::CoordPos;
@@ -32,7 +33,6 @@ mod label;
 mod node;
 pub(crate) mod node_map;
 mod planar_graph;
-mod quadrant;
 mod topology_position;
 
 pub(crate) mod intersection_matrix;
