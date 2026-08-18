@@ -21,12 +21,12 @@ use super::topology_computer::TopologyComputer;
 
 /// Tests segments of [`RelateSegmentString`]s and adds any intersections
 /// to the [`TopologyComputer`].
-pub(crate) struct EdgeSegmentIntersector<'c, 'r, 'a, F: GeoFloat> {
-    topo_computer: &'c mut TopologyComputer<'r, 'a, F>,
+pub(crate) struct EdgeSegmentIntersector<'c, 'r, 'a, 'b, F: GeoFloat> {
+    topo_computer: &'c mut TopologyComputer<'r, 'a, 'b, F>,
 }
 
-impl<'c, 'r, 'a, F: GeoFloat> EdgeSegmentIntersector<'c, 'r, 'a, F> {
-    pub fn new(topo_computer: &'c mut TopologyComputer<'r, 'a, F>) -> Self {
+impl<'c, 'r, 'a, 'b, F: GeoFloat> EdgeSegmentIntersector<'c, 'r, 'a, 'b, F> {
+    pub fn new(topo_computer: &'c mut TopologyComputer<'r, 'a, 'b, F>) -> Self {
         Self { topo_computer }
     }
 
@@ -154,7 +154,7 @@ impl<F: GeoFloat> MutualSegmentSetIntersector<F> {
     pub fn process(
         &self,
         query: &[RelateSegmentString<F>],
-        intersector: &mut EdgeSegmentIntersector<'_, '_, '_, F>,
+        intersector: &mut EdgeSegmentIntersector<'_, '_, '_, '_, F>,
     ) {
         for query_string in query {
             for query_seg in 0..query_string.size().saturating_sub(1) {
@@ -185,7 +185,7 @@ pub(crate) fn intersect_all<F: GeoFloat>(
     edges_a: &[RelateSegmentString<F>],
     edges_b: &[RelateSegmentString<F>],
     env: Option<&Rect<F>>,
-    intersector: &mut EdgeSegmentIntersector<'_, '_, '_, F>,
+    intersector: &mut EdgeSegmentIntersector<'_, '_, '_, '_, F>,
 ) {
     // Combined string indexing: A strings first, then B strings.
     let string = |index: usize| -> &RelateSegmentString<F> {
