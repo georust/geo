@@ -1,4 +1,4 @@
-/// Geometries that are backed by an [R*-tree](https://en.wikipedia.org/wiki/R*-tree) spatial index for faster bulk operations
+/// Geometries that cache spatial indexes for faster repeated topological comparisons
 pub mod prepared_geometry;
 pub use prepared_geometry::PreparedGeometry;
 
