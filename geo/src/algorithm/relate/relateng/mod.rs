@@ -22,6 +22,7 @@
 
 pub(crate) mod adjacent_edge_locator;
 pub(crate) mod dimension_location;
+pub(crate) mod edge_segment_intersector;
 pub(crate) mod im_predicate;
 pub(crate) mod linear_boundary;
 pub(crate) mod node_section;
