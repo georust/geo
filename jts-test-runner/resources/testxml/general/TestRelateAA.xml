@@ -1,5 +1,4 @@
 <run>
-  <precisionModel scale="1.0" offsetx="0.0" offsety="0.0"/>
 
 <case>
   <desc>AA disjoint</desc>
@@ -99,7 +98,7 @@
       (120 140, 260 140, 260 260, 120 260, 120 140))
   </b>
 <test>
-  <op name="relate" arg3="212101212" arg1="A" arg2="B">true</op>
+  <op name="relate" arg3="212101212" arg1="A" arg2="B"> true  </op>
 </test>
 <test>  <op name="intersects" arg1="A" arg2="B">   true   </op></test>
 <test>  <op name="contains" arg1="A" arg2="B">   false   </op></test>
@@ -230,6 +229,20 @@
 </test>
 <test>  <op name="intersects" arg1="A" arg2="B">   true   </op></test>
 <test>  <op name="contains" arg1="A" arg2="B">   false   </op></test>
+</case>
+
+<case>
+  <desc>A/mA A-shells overlapping B-shell at A-vertex</desc>
+  <a>
+    POLYGON ((100 60, 140 100, 100 140, 60 100, 100 60))
+  </a>
+  <b>
+    MULTIPOLYGON (((80 40, 120 40, 120 80, 80 80, 80 40)), ((120 80, 160 80, 160 120, 120 120, 120 80)), ((80 120, 120 120, 120 160, 80 160, 80 120)), ((40 80, 80 80, 80 120, 40 120, 40 80)))
+  </b>
+<test>
+  <op name="relate" arg3="21210F212" arg1="A" arg2="B">    true  </op>
+</test>
+<test>  <op name="intersects" arg1="A" arg2="B">   true   </op></test>
 </case>
 
 </run>
