@@ -127,6 +127,10 @@ where
     fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<'_, F> {
         self.geometry_graph.clone_for_arg_index(arg_index)
     }
+
+    fn geometry_cow(&self) -> GeometryCow<'_, F> {
+        self.geometry_graph.geometry().reborrow()
+    }
 }
 
 #[cfg(test)]

@@ -52,11 +52,24 @@ impl<'a, F: GeoFloat> Polygonal<'a, F> {
         }
     }
 
-    /// Simple-mode location: the unindexed mod-2 locator.
+    /// Simple-mode location, with JTS `SimplePointInAreaLocator` member
+    /// semantics: the first non-exterior member location wins. The
+    /// `CoordinatePosition` impl for `MultiPolygon` is deliberately not
+    /// used: it applies the mod-2 rule across member boundaries, so a
+    /// point where two members touch would be classified exterior instead
+    /// of on the boundary.
     fn coordinate_position(&self, coord: Coord<F>) -> CoordPos {
         match self {
             Polygonal::Polygon(p) => p.coordinate_position(&coord),
-            Polygonal::MultiPolygon(mp) => mp.coordinate_position(&coord),
+            Polygonal::MultiPolygon(mp) => {
+                for polygon in &mp.0 {
+                    let loc = polygon.coordinate_position(&coord);
+                    if loc != CoordPos::Outside {
+                        return loc;
+                    }
+                }
+                CoordPos::Outside
+            }
         }
     }
 
