@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, ops::ControlFlow};
 
-use geo_types::{Coord, Line, MultiPolygon};
+use geo_types::{Coord, Line, LineString, MultiPolygon, Polygon};
 use sif_itree::ITree;
 
 use crate::algorithm::kernels::Kernel;
@@ -100,18 +100,26 @@ pub struct IntervalTreeMultiPolygon<T: GeoNum> {
 
 impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
     pub fn new(mp: &MultiPolygon<T>) -> Self {
-        // Chain all exterior and interior line segments from all polygons
-        let segments =
-            mp.0.iter()
-                .flat_map(|polygon| {
-                    polygon.exterior().lines_iter().chain(
-                        polygon
-                            .interiors()
-                            .iter()
-                            .flat_map(|interior| interior.lines_iter()),
-                    )
-                })
-                .map(|line| Self::create_segment(line));
+        Self::from_rings(mp.0.iter().flat_map(polygon_rings))
+    }
+
+    /// Builds the index for a single [`Polygon`].
+    // Consumed by the RelateNG port (see RELATENG_PLAN.md); remove the allow
+    // when it lands.
+    #[allow(dead_code)]
+    pub(crate) fn from_polygon(polygon: &Polygon<T>) -> Self {
+        Self::from_rings(polygon_rings(polygon))
+    }
+
+    /// Builds the index from an iterator of rings (exterior and interior line
+    /// segments are treated alike).
+    pub(crate) fn from_rings<'a>(rings: impl Iterator<Item = &'a LineString<T>>) -> Self
+    where
+        T: 'a,
+    {
+        let segments = rings
+            .flat_map(|ring| ring.lines_iter())
+            .map(Self::create_segment);
 
         Self {
             y_interval_tree: ITree::new(segments),
@@ -146,7 +154,53 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
         )
     }
 
+    /// Locates a coordinate with nonzero-winding semantics.
+    ///
+    /// Shells and holes must be oppositely wound for a hole to read as
+    /// `Outside`; this matches the existing `Contains` behaviour built on
+    /// this method. `OnBoundary` detection is exact.
     pub(crate) fn containment(&self, coord: Coord<T>) -> CoordPos {
+        match self.winding_number(coord) {
+            ControlFlow::Break(pos) => pos,
+            ControlFlow::Continue(winding_number) => {
+                if winding_number != 0 {
+                    CoordPos::Inside
+                } else {
+                    CoordPos::Outside
+                }
+            }
+        }
+    }
+
+    /// Locates a coordinate with even-odd (parity) semantics, as JTS's
+    /// `RayCrossingCounter` does.
+    ///
+    /// Unlike [`Self::containment`], the result does not depend on ring
+    /// orientation, so invalid input (a hole wound the same way as its
+    /// shell) still locates points in the hole as `Outside`. The two methods
+    /// agree on all valid input. `OnBoundary` detection is exact.
+    // Consumed by the RelateNG port (see RELATENG_PLAN.md); remove the allow
+    // when it lands.
+    #[allow(dead_code)]
+    pub(crate) fn containment_parity(&self, coord: Coord<T>) -> CoordPos {
+        // Each ray crossing contributes +1 or -1 to the winding number, so
+        // the parity of the winding sum equals the parity of the crossing
+        // count.
+        match self.winding_number(coord) {
+            ControlFlow::Break(pos) => pos,
+            ControlFlow::Continue(winding_number) => {
+                if winding_number % 2 != 0 {
+                    CoordPos::Inside
+                } else {
+                    CoordPos::Outside
+                }
+            }
+        }
+    }
+
+    /// Shared traversal: breaks with `OnBoundary` when the coordinate lies
+    /// exactly on a segment, otherwise yields the winding number.
+    fn winding_number(&self, coord: Coord<T>) -> ControlFlow<CoordPos, i32> {
         // Use winding number algorithm with robust predicates
         // Based on coord_pos_relative_to_ring in coordinate_position.rs
         let mut winding_number = 0;
@@ -196,14 +250,98 @@ impl<T: GeoNum> IntervalTreeMultiPolygon<T> {
             });
 
         match result {
-            ControlFlow::Break(pos) => pos,
-            ControlFlow::Continue(()) => {
-                if winding_number != 0 {
-                    CoordPos::Inside
-                } else {
-                    CoordPos::Outside
-                }
+            ControlFlow::Break(pos) => ControlFlow::Break(pos),
+            ControlFlow::Continue(()) => ControlFlow::Continue(winding_number),
+        }
+    }
+}
+
+/// Iterates the exterior ring and all interior rings of a polygon.
+fn polygon_rings<T: GeoNum>(polygon: &Polygon<T>) -> impl Iterator<Item = &LineString<T>> {
+    std::iter::once(polygon.exterior()).chain(polygon.interiors().iter())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::coordinate_position::CoordinatePosition;
+    use crate::wkt;
+
+    // Probe coordinates for the 4x4 square with a 1..3 square hole used in
+    // the fixtures below.
+    fn probes() -> Vec<Coord<f64>> {
+        vec![
+            Coord { x: 0.5, y: 0.5 },  // between shell and hole
+            Coord { x: 2.0, y: 2.0 },  // inside the hole
+            Coord { x: 5.0, y: 5.0 },  // outside the shell
+            Coord { x: 0.0, y: 2.0 },  // on the shell boundary
+            Coord { x: 1.0, y: 2.0 },  // on the hole boundary
+            Coord { x: 0.0, y: 0.0 },  // on a shell vertex
+            Coord { x: 3.0, y: 3.0 },  // on a hole vertex
+            Coord { x: -1.0, y: 0.0 }, // outside, collinear with a shell edge
+        ]
+    }
+
+    #[test]
+    fn parity_matches_coordinate_position_on_valid_input() {
+        // Hole wound opposite to the shell (valid input, both conventions).
+        let ccw_shell_cw_hole = wkt!(MULTIPOLYGON(
+            ((0. 0., 4. 0., 4. 4., 0. 4., 0. 0.),
+             (1. 1., 1. 3., 3. 3., 3. 1., 1. 1.))
+        ));
+        let cw_shell_ccw_hole = wkt!(MULTIPOLYGON(
+            ((0. 0., 0. 4., 4. 4., 4. 0., 0. 0.),
+             (1. 1., 3. 1., 3. 3., 1. 3., 1. 1.))
+        ));
+        for mp in [ccw_shell_cw_hole, cw_shell_ccw_hole] {
+            let index = IntervalTreeMultiPolygon::new(&mp);
+            for coord in probes() {
+                let expected = mp.coordinate_position(&coord);
+                assert_eq!(index.containment_parity(coord), expected, "{coord:?}");
+                // The two accumulators agree on valid input.
+                assert_eq!(index.containment(coord), expected, "{coord:?}");
             }
+        }
+    }
+
+    #[test]
+    fn parity_is_orientation_independent_on_invalid_input() {
+        // The hole is wound the same way as the shell: invalid per OGC.
+        let same_wound = wkt!(MULTIPOLYGON(
+            ((0. 0., 4. 0., 4. 4., 0. 4., 0. 0.),
+             (1. 1., 3. 1., 3. 3., 1. 3., 1. 1.))
+        ));
+        let index = IntervalTreeMultiPolygon::new(&same_wound);
+        let in_hole = Coord { x: 2.0, y: 2.0 };
+
+        // Parity matches the unindexed locator: the hole is outside.
+        assert_eq!(index.containment_parity(in_hole), CoordPos::Outside);
+        assert_eq!(same_wound.coordinate_position(&in_hole), CoordPos::Outside);
+        // The nonzero-winding accumulator diverges here (winding number 2).
+        // This pins the existing `Contains` behaviour on invalid input; a
+        // change to this result must be deliberate.
+        assert_eq!(index.containment(in_hole), CoordPos::Inside);
+    }
+
+    #[test]
+    fn from_polygon_matches_multi_polygon_index() {
+        let polygon = wkt!(POLYGON(
+            (0. 0., 4. 0., 4. 4., 0. 4., 0. 0.),
+            (1. 1., 1. 3., 3. 3., 3. 1., 1. 1.)
+        ));
+        let from_polygon = IntervalTreeMultiPolygon::from_polygon(&polygon);
+        let from_multi = IntervalTreeMultiPolygon::new(&MultiPolygon::new(vec![polygon.clone()]));
+        for coord in probes() {
+            assert_eq!(
+                from_polygon.containment_parity(coord),
+                from_multi.containment_parity(coord),
+                "{coord:?}"
+            );
+            assert_eq!(
+                from_polygon.containment_parity(coord),
+                polygon.coordinate_position(&coord),
+                "{coord:?}"
+            );
         }
     }
 }
