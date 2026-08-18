@@ -73,6 +73,11 @@ impl<F: GeoFloat> LineIntersection<F> {
 /// assert_eq!(line_intersection(line_1, line_2), Some(expected));
 /// ```
 /// Strongly inspired by, and meant to produce the same results as, [JTS's RobustLineIntersector](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/algorithm/RobustLineIntersector.java#L26).
+///
+/// The intersection point of a proper intersection is computed with
+/// double-double extended-precision arithmetic, as JTS
+/// [`CGAlgorithmsDD.intersection`](https://github.com/locationtech/jts/blob/master/modules/core/src/main/java/org/locationtech/jts/algorithm/CGAlgorithmsDD.java)
+/// does, and matches the JTS result exactly.
 pub fn line_intersection<F>(p: Line<F>, q: Line<F>) -> Option<LineIntersection<F>>
 where
     F: GeoFloat,
@@ -230,61 +235,134 @@ fn nearest_endpoint<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Coord<F> {
     nearest_pt
 }
 
+/// Computes the intersection point using double-double extended-precision
+/// arithmetic, as JTS `CGAlgorithmsDD.intersection` does (JTS PR #989 made
+/// this the `RobustLineIntersector` computation; the older conditioned
+/// floating-point formula caused spatial predicate failures, for example
+/// producing points one ULP away from a shared endpoint).
 fn raw_line_intersection<F: GeoFloat>(p: Line<F>, q: Line<F>) -> Option<Coord<F>> {
-    let p_min_x = p.start.x.min(p.end.x);
-    let p_min_y = p.start.y.min(p.end.y);
-    let p_max_x = p.start.x.max(p.end.x);
-    let p_max_y = p.start.y.max(p.end.y);
+    use double_double::DD;
+    use num_traits::NumCast;
 
-    let q_min_x = q.start.x.min(q.end.x);
-    let q_min_y = q.start.y.min(q.end.y);
-    let q_max_x = q.start.x.max(q.end.x);
-    let q_max_y = q.start.y.max(q.end.y);
+    let f = |v: F| <f64 as NumCast>::from(v).unwrap();
+    let (p1x, p1y) = (f(p.start.x), f(p.start.y));
+    let (p2x, p2y) = (f(p.end.x), f(p.end.y));
+    let (q1x, q1y) = (f(q.start.x), f(q.start.y));
+    let (q2x, q2y) = (f(q.end.x), f(q.end.y));
 
-    let int_min_x = p_min_x.max(q_min_x);
-    let int_max_x = p_max_x.min(q_max_x);
-    let int_min_y = p_min_y.max(q_min_y);
-    let int_max_y = p_max_y.min(q_max_y);
+    let px = DD::new(p1y).sub(DD::new(p2y));
+    let py = DD::new(p2x).sub(DD::new(p1x));
+    let pw = DD::new(p1x)
+        .mul(DD::new(p2y))
+        .sub(DD::new(p2x).mul(DD::new(p1y)));
 
-    let two = F::one() + F::one();
-    let mid_x = (int_min_x + int_max_x) / two;
-    let mid_y = (int_min_y + int_max_y) / two;
+    let qx = DD::new(q1y).sub(DD::new(q2y));
+    let qy = DD::new(q2x).sub(DD::new(q1x));
+    let qw = DD::new(q1x)
+        .mul(DD::new(q2y))
+        .sub(DD::new(q2x).mul(DD::new(q1y)));
 
-    // condition ordinate values by subtracting midpoint
-    let p1x = p.start.x - mid_x;
-    let p1y = p.start.y - mid_y;
-    let p2x = p.end.x - mid_x;
-    let p2y = p.end.y - mid_y;
-    let q1x = q.start.x - mid_x;
-    let q1y = q.start.y - mid_y;
-    let q2x = q.end.x - mid_x;
-    let q2y = q.end.y - mid_y;
+    let x = py.mul(qw).sub(qy.mul(pw));
+    let y = qx.mul(pw).sub(px.mul(qw));
+    let w = px.mul(qy).sub(qx.mul(py));
 
-    // unrolled computation using homogeneous coordinates eqn
-    let px = p1y - p2y;
-    let py = p2x - p1x;
-    let pw = p1x * p2y - p2x * p1y;
-
-    let qx = q1y - q2y;
-    let qy = q2x - q1x;
-    let qw = q1x * q2y - q2x * q1y;
-
-    let xw = py * qw - qy * pw;
-    let yw = qx * pw - px * qw;
-    let w = px * qy - qx * py;
-
-    let x_int = xw / w;
-    let y_int = yw / w;
+    let x_int = x.div(w).value();
+    let y_int = y.div(w).value();
 
     // check for parallel lines
     if (x_int.is_nan() || x_int.is_infinite()) || (y_int.is_nan() || y_int.is_infinite()) {
         None
     } else {
-        // de-condition intersection point
         Some(coord! {
-            x: x_int + mid_x,
-            y: y_int + mid_y,
+            x: F::from(x_int).unwrap(),
+            y: F::from(y_int).unwrap(),
         })
+    }
+}
+
+/// Minimal double-double arithmetic: only the operations the intersection
+/// computation needs, ported from JTS `math.DD` (algorithms from the
+/// DoubleDouble library of M. Hida, S. Li and D. Bailey).
+mod double_double {
+    /// The value to split a double-precision value on during
+    /// multiplication: 2^27 + 1.
+    const SPLIT: f64 = 134217729.0;
+
+    #[derive(Clone, Copy, Debug)]
+    pub(super) struct DD {
+        hi: f64,
+        lo: f64,
+    }
+
+    impl DD {
+        pub fn new(x: f64) -> Self {
+            DD { hi: x, lo: 0.0 }
+        }
+
+        pub fn value(self) -> f64 {
+            self.hi + self.lo
+        }
+
+        pub fn sub(self, y: DD) -> DD {
+            let (hi, lo) = (self.hi, self.lo);
+            let (yhi, ylo) = (-y.hi, -y.lo);
+            let s_big = hi + yhi;
+            let t_big = lo + ylo;
+            let e = s_big - hi;
+            let f = t_big - lo;
+            let mut s = s_big - e;
+            let mut t = t_big - f;
+            s = (yhi - e) + (hi - s);
+            t = (ylo - f) + (lo - t);
+            let e = s + t_big;
+            let h_big = s_big + e;
+            let h = e + (s_big - h_big);
+            let e = t + h;
+
+            let zhi = h_big + e;
+            let zlo = e + (h_big - zhi);
+            DD { hi: zhi, lo: zlo }
+        }
+
+        pub fn mul(self, y: DD) -> DD {
+            let (hi, lo) = (self.hi, self.lo);
+            let (yhi, ylo) = (y.hi, y.lo);
+            let mut c_big = SPLIT * hi;
+            let mut hx = c_big - hi;
+            let mut c = SPLIT * yhi;
+            hx = c_big - hx;
+            let tx = hi - hx;
+            let mut hy = c - yhi;
+            c_big = hi * yhi;
+            hy = c - hy;
+            let ty = yhi - hy;
+            c = ((((hx * hy - c_big) + hx * ty) + tx * hy) + tx * ty) + (hi * ylo + lo * yhi);
+            let zhi = c_big + c;
+            hx = c_big - zhi;
+            let zlo = c + hx;
+            DD { hi: zhi, lo: zlo }
+        }
+
+        pub fn div(self, y: DD) -> DD {
+            let (hi, lo) = (self.hi, self.lo);
+            let c_big = hi / y.hi;
+            let mut c = SPLIT * c_big;
+            let mut hc = c - c_big;
+            let mut u = SPLIT * y.hi;
+            hc = c - hc;
+            let tc = c_big - hc;
+            let mut hy = u - y.hi;
+            let u_big = c_big * y.hi;
+            hy = u - hy;
+            let ty = y.hi - hy;
+            u = (((hc * hy - u_big) + hc * ty) + tc * hy) + tc * ty;
+            c = ((((hi - u_big) - u) + lo) - c_big * y.lo) / y.hi;
+            let u2 = c_big + c;
+
+            let zhi = u2;
+            let zlo = (c_big - u2) + c;
+            DD { hi: zhi, lo: zlo }
+        }
     }
 }
 
@@ -386,10 +464,12 @@ mod test {
             },
         );
         let actual = line_intersection(line_1, line_2);
+        // The expected value matches current JTS (DD intersection
+        // computation, JTS PR #989).
         let expected = LineIntersection::SinglePoint {
             intersection: coord! {
-                x: -215.22279674875,
-                y: -158.65425425385,
+                x: -215.22279674875003,
+                y: -158.65425425385004,
             },
             is_proper: true,
         };
@@ -560,10 +640,12 @@ mod test {
             },
         );
         let actual = line_intersection(line_1, line_2);
+        // The expected value matches current JTS (DD intersection
+        // computation, JTS PR #989).
         let expected = LineIntersection::SinglePoint {
             intersection: coord! {
-                x: 2087536.6062609926,
-                y: 1187900.560566967,
+                x: 2087600.4716727887,
+                y: 1187639.7426241424,
             },
             is_proper: true,
         };
@@ -596,9 +678,11 @@ mod test {
             },
         );
         let actual = line_intersection(line_1, line_2);
+        // The expected value matches current JTS (DD intersection
+        // computation, JTS PR #989).
         let expected = LineIntersection::SinglePoint {
             intersection: coord! {
-                x: 4348440.8493874,
+                x: 4348440.849387399,
                 y: 5552599.27202212,
             },
             is_proper: true,
