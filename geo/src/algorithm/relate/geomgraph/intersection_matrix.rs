@@ -236,7 +236,7 @@ pub struct InvalidInputError {
 }
 
 impl InvalidInputError {
-    fn new(message: String) -> Self {
+    pub(crate) fn new(message: String) -> Self {
         Self { message }
     }
 }
@@ -842,6 +842,7 @@ pub(crate) mod dimension_matcher {
     use super::InvalidInputError;
 
     /// A single letter from a DE-9IM matching specification like "1*T**FFF*"
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub(crate) enum DimensionMatcher {
         Anything,
         NonEmpty,
