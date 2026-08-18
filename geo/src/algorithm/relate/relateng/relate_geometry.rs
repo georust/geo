@@ -26,13 +26,15 @@ use crate::winding_order::Winding;
 use crate::{Coord, GeoFloat, Geometry, Intersects, LineString, MultiPolygon, Polygon, Rect};
 
 use super::dimension_location::DimensionLocation;
-use super::relate_point_locator::RelatePointLocator;
+use super::relate_point_locator::{RelatePointLocator, SharedAreaLocators};
 use super::relate_segment_string::RelateSegmentString;
 use super::topology_predicate::InputIndex;
 
 pub(crate) struct RelateGeometry<'a, F: GeoFloat> {
     geom: &'a GeometryCow<'a, F>,
     is_prepared: bool,
+    /// Prepared mode: per-element area locators shared across evaluations.
+    shared_area_locators: Option<&'a SharedAreaLocators<F>>,
     env: Option<Rect<F>>,
     geom_dim: Dimensions,
     has_points: bool,
@@ -46,10 +48,27 @@ pub(crate) struct RelateGeometry<'a, F: GeoFloat> {
 
 impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     pub fn new(geom: &'a GeometryCow<'a, F>) -> Self {
-        Self::new_with_prepared(geom, false)
+        Self::new_full(geom, false, None)
     }
 
     pub fn new_with_prepared(geom: &'a GeometryCow<'a, F>, is_prepared: bool) -> Self {
+        Self::new_full(geom, is_prepared, None)
+    }
+
+    /// A prepared instance whose area locators are stored in shared state
+    /// that outlives it, for reuse across evaluations.
+    pub fn new_prepared_shared(
+        geom: &'a GeometryCow<'a, F>,
+        shared_area_locators: &'a SharedAreaLocators<F>,
+    ) -> Self {
+        Self::new_full(geom, true, Some(shared_area_locators))
+    }
+
+    fn new_full(
+        geom: &'a GeometryCow<'a, F>,
+        is_prepared: bool,
+        shared_area_locators: Option<&'a SharedAreaLocators<F>>,
+    ) -> Self {
         let is_geom_empty = geom.is_empty();
         // The type-based dimension, which counts empty elements.
         let mut geom_dim = type_dimension_cow(geom);
@@ -69,6 +88,7 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
         Self {
             geom,
             is_prepared,
+            shared_area_locators,
             env: geom.bounding_rect(),
             geom_dim,
             has_points,
@@ -137,8 +157,9 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     }
 
     fn locator(&self) -> &RelatePointLocator<'a, F> {
-        self.locator
-            .get_or_init(|| RelatePointLocator::new_with_prepared(self.geom, self.is_prepared))
+        self.locator.get_or_init(|| {
+            RelatePointLocator::new_full(self.geom, self.is_prepared, self.shared_area_locators)
+        })
     }
 
     /// Whether a node point lies in the interior of the geometry's area,
@@ -231,13 +252,18 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     /// coordinate is included. Cached for reuse in prepared mode. Only
     /// used for geometries with real dimension 0.
     pub fn unique_points(&self) -> &BTreeSet<NodeKey<F>> {
-        self.unique_points.get_or_init(|| {
-            let mut set = BTreeSet::new();
-            collect_component_coords_cow(self.geom, &mut |c| {
-                set.insert(NodeKey(c));
-            });
-            set
-        })
+        self.unique_points
+            .get_or_init(|| self.compute_unique_points())
+    }
+
+    /// Computes the unique points without caching; prepared state caches
+    /// the result across evaluations.
+    pub fn compute_unique_points(&self) -> BTreeSet<NodeKey<F>> {
+        let mut set = BTreeSet::new();
+        collect_component_coords_cow(self.geom, &mut |c| {
+            set.insert(NodeKey(c));
+        });
+        set
     }
 
     /// The point-element coordinates that are not covered by a

@@ -205,6 +205,32 @@ impl<'a, F: GeoFloat> GeometryElements<'a, F> {
     }
 }
 
+/// A cache of the per-polygonal-element area indexes of a geometry, owned
+/// by prepared state and shared across evaluations. The outer cell is
+/// initialised on first use to one cell per polygonal element, in document
+/// order.
+pub(crate) type SharedAreaLocators<F> = OnceCell<Vec<OnceCell<IntervalTreeMultiPolygon<F>>>>;
+
+/// The per-element area locator cells: owned by this locator, or borrowed
+/// from prepared state that outlives it.
+enum AreaLocators<'a, F: GeoFloat> {
+    Own(Vec<OnceCell<IntervalTreeMultiPolygon<F>>>),
+    Shared(&'a [OnceCell<IntervalTreeMultiPolygon<F>>]),
+}
+
+impl<F: GeoFloat> AreaLocators<'_, F> {
+    fn cells(&self) -> &[OnceCell<IntervalTreeMultiPolygon<F>>] {
+        match self {
+            AreaLocators::Own(cells) => cells,
+            AreaLocators::Shared(cells) => cells,
+        }
+    }
+}
+
+fn new_locator_cells<F: GeoFloat>(count: usize) -> Vec<OnceCell<IntervalTreeMultiPolygon<F>>> {
+    (0..count).map(|_| OnceCell::new()).collect()
+}
+
 pub(crate) struct RelatePointLocator<'a, F: GeoFloat> {
     is_prepared: bool,
     is_empty: bool,
@@ -213,7 +239,7 @@ pub(crate) struct RelatePointLocator<'a, F: GeoFloat> {
     line_envelopes: Vec<Option<Rect<F>>>,
     line_boundary: Option<LinearBoundary<F>>,
     /// Prepared mode: lazily built index per polygonal element.
-    poly_locators: Vec<OnceCell<IntervalTreeMultiPolygon<F>>>,
+    poly_locators: AreaLocators<'a, F>,
     adj_edge_locator: OnceCell<AdjacentEdgeLocator<F>>,
 }
 
@@ -223,6 +249,17 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
     }
 
     pub fn new_with_prepared(geom: &'a GeometryCow<'a, F>, is_prepared: bool) -> Self {
+        Self::new_full(geom, is_prepared, None)
+    }
+
+    /// Full constructor. When `shared_locators` is given, the per-element
+    /// area indexes are stored in (and reused from) that cache, which must
+    /// belong to the same geometry.
+    pub fn new_full(
+        geom: &'a GeometryCow<'a, F>,
+        is_prepared: bool,
+        shared_locators: Option<&'a SharedAreaLocators<F>>,
+    ) -> Self {
         let elements = GeometryElements::extract(geom);
         let is_empty = elements.is_empty();
         let line_envelopes = elements.lines.iter().map(|l| l.bounding_rect()).collect();
@@ -233,11 +270,13 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
                 elements.lines.iter().map(|l| l.as_ref()),
             ))
         };
-        let poly_locators = elements
-            .polygonals
-            .iter()
-            .map(|_| OnceCell::new())
-            .collect();
+        let n_polygonals = elements.polygonals.len();
+        let poly_locators = match shared_locators {
+            Some(shared) => {
+                AreaLocators::Shared(shared.get_or_init(|| new_locator_cells(n_polygonals)))
+            }
+            None => AreaLocators::Own(new_locator_cells(n_polygonals)),
+        };
         Self {
             is_prepared,
             is_empty,
@@ -438,7 +477,7 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
         }
         let polygonal = &self.elements.polygonals[index];
         if self.is_prepared {
-            self.poly_locators[index]
+            self.poly_locators.cells()[index]
                 .get_or_init(|| polygonal.build_index())
                 .containment_parity(p)
         } else {

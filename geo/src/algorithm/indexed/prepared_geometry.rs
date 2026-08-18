@@ -1,5 +1,7 @@
 use crate::geometry::*;
+use crate::relate::IntersectionMatrix;
 use crate::relate::geomgraph::GeometryGraph;
+use crate::relate::relateng::relate_ng::{PreparedRelateState, RelateNG};
 use crate::{BoundingRect, GeometryCow, HasDimensions};
 use crate::{GeoFloat, Relate};
 
@@ -8,9 +10,12 @@ use std::fmt::{Debug, Formatter};
 use crate::dimensions::Dimensions;
 use rstar::RTreeNum;
 
-/// A `PreparedGeometry` is backed by an R*-tree spatial index and
-/// can be more efficient than a plain Geometry when performing
-/// multiple topological comparisons against the `PreparedGeometry`.
+/// A `PreparedGeometry` caches the spatial indexes that topological
+/// comparisons use: a segment [R-tree](https://en.wikipedia.org/wiki/R-tree),
+/// per-polygon point-in-area locators, and the set of unique points.
+/// The indexes are built on the first comparison that needs them and are
+/// reused by later comparisons, so a `PreparedGeometry` can be more
+/// efficient than a plain `Geometry` when it is compared many times.
 ///
 /// ```
 /// use geo::{Relate, PreparedGeometry, wkt};
@@ -26,7 +31,6 @@ use rstar::RTreeNum;
 /// assert!(prepared_polygon.relate(&contained_line).is_contains());
 ///
 /// ```
-#[derive(Clone)]
 pub struct PreparedGeometry<'a, G, F = f64>
 where
     G: Into<GeometryCow<'a, F>>,
@@ -35,6 +39,26 @@ where
     pub(crate) geometry: G,
     pub(crate) geometry_graph: GeometryGraph<'a, F>,
     pub(crate) bounding_rect: Option<Rect<F>>,
+    /// The RelateNG caches reused across `relate` calls: the segment
+    /// index, per-element area locators, and unique points.
+    relate_state: PreparedRelateState<F>,
+}
+
+impl<'a, G, F> Clone for PreparedGeometry<'a, G, F>
+where
+    G: Into<GeometryCow<'a, F>> + Clone,
+    F: GeoFloat + RTreeNum,
+{
+    fn clone(&self) -> Self {
+        // The relate caches are rebuildable; a clone starts with fresh
+        // (empty) ones.
+        Self {
+            geometry: self.geometry.clone(),
+            geometry_graph: self.geometry_graph.clone(),
+            bounding_rect: self.bounding_rect,
+            relate_state: PreparedRelateState::new(),
+        }
+    }
 }
 
 impl<'a, G, F> Debug for PreparedGeometry<'a, G, F>
@@ -71,6 +95,7 @@ where
         geometry,
         geometry_graph,
         bounding_rect,
+        relate_state: PreparedRelateState::new(),
     }
 }
 
@@ -131,6 +156,15 @@ where
     fn geometry_cow(&self) -> GeometryCow<'_, F> {
         self.geometry_graph.geometry().reborrow()
     }
+
+    /// Relates against the B geometry with the cached prepared state: the
+    /// A-side segment index, area locators and unique points are built
+    /// once and reused across calls.
+    fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix {
+        let cow = self.geometry_cow();
+        let engine = RelateNG::with_state(&cow, &self.relate_state);
+        engine.evaluate_matrix(&other.geometry_cow())
+    }
 }
 
 #[cfg(test)]
@@ -177,6 +211,33 @@ mod tests {
         let prepared_1 = PreparedGeometry::from(&p1);
         assert!(prepared_1.relate(&p2).is_contains());
         assert!(p2.relate(&prepared_1).is_within());
+    }
+
+    // Not in JTS: repeated relate calls reuse the cached prepared state
+    // (segment index, area locators, unique points) and must produce
+    // results identical to unprepared evaluation, in both argument
+    // positions and against multiple B geometries.
+    #[test]
+    fn repeated_relates_reuse_cached_state() {
+        let a = wkt!(POLYGON((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)));
+        let bs = [
+            wkt!(POLYGON((2.0 2.0, 4.0 2.0, 4.0 4.0, 2.0 4.0, 2.0 2.0))),
+            wkt!(POLYGON((8.0 8.0, 12.0 8.0, 12.0 12.0, 8.0 12.0, 8.0 8.0))),
+            wkt!(POLYGON((20.0 20.0, 22.0 20.0, 22.0 22.0, 20.0 22.0, 20.0 20.0))),
+        ];
+        let prepared = PreparedGeometry::from(&a);
+        for _pass in 0..2 {
+            for b in &bs {
+                assert_eq!(
+                    format!("{:?}", prepared.relate(b)),
+                    format!("{:?}", a.relate(b)),
+                );
+                assert_eq!(
+                    format!("{:?}", b.relate(&prepared)),
+                    format!("{:?}", b.relate(&a)),
+                );
+            }
+        }
     }
 
     #[test]
