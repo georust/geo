@@ -6,6 +6,12 @@
 
 - Add `Intersects<Coord>` and `Intersects<Point>` implementations for `IntervalTreeMultiPolygon`. Unlike the existing `Contains` impls, these return `true` for points on the polygon's boundary.
 
+- The `Relate` trait and the predicates derived from it (`Contains`, `Within`, `Covers`, `ContainsProperly` where they delegate to relate) are now evaluated by RelateNG, a port of the JTS next-generation relate engine (JTS 1.20 / GEOS 3.13, including post-release fixes). RelateNG evaluates the DE-9IM matrix from local robust segment tests without building a noded topology graph. This fixes a class of robustness failures where a constructed intersection point that is not exactly representable produced incorrect matrices, and adds full support for GeometryCollections (union semantics), which the previous engine rejected for overlapping polygons. Relate on interacting polygon pairs is substantially faster; named predicates short-circuit as soon as their value is known; `PreparedGeometry` caches the relate segment index and point locators across calls.
+  - <https://github.com/georust/geo/issues/1585>
+  - BREAKING: the `Relate` trait gains a required `geometry_cow` method (the trait is not practically implementable outside geo, since `GeometryGraph` has no public constructor).
+  - DEPRECATED: `Relate::geometry_graph` and the `geo::relate::GeometryGraph` re-export; the graph-based engine is no longer used by `relate` and will be removed in a future release.
+- `line_intersection::line_intersection` now computes intersection points with double-double extended-precision arithmetic, matching current JTS (`CGAlgorithmsDD.intersection`). Computed points can differ from previous releases by roughly one ULP; the new values match JTS exactly.
+  - <https://github.com/locationtech/jts/pull/989>
 - Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
 - BREAKING: adds the `InvalidPolygon::InteriorNotSimplyConnected` error variant.
   - <https://github.com/georust/geo/pull/1472>
