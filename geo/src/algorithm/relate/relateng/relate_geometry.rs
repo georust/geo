@@ -23,18 +23,18 @@ use crate::dimensions::{Dimensions, HasDimensions};
 use crate::geometry_cow::GeometryCow;
 use crate::relate::geomgraph::node_map::NodeKey;
 use crate::winding_order::Winding;
-use crate::{Coord, GeoFloat, Geometry, Intersects, LineString, MultiPolygon, Polygon, Rect};
+use crate::{Coord, GeoFloat, Intersects, LineString, MultiPolygon, Polygon, Rect};
 
 use super::dimension_location::DimensionLocation;
-use super::relate_point_locator::{RelatePointLocator, SharedAreaLocators};
+use super::relate_point_locator::{LineElement, Mode, Polygonal, RelatePointLocator};
 use super::relate_segment_string::RelateSegmentString;
 use super::topology_predicate::InputIndex;
 
-pub(crate) struct RelateGeometry<'a, F: GeoFloat> {
-    geom: &'a GeometryCow<'a, F>,
-    is_prepared: bool,
-    /// Prepared mode: per-element area locators shared across evaluations.
-    shared_area_locators: Option<&'a SharedAreaLocators<F>>,
+/// The metadata of a relate input that costs a walk of its coordinates:
+/// the envelope and the dimension analysis. A prepared geometry computes
+/// it once and reuses it across evaluations.
+#[derive(Clone, Copy)]
+pub(crate) struct GeometryMeta<F: GeoFloat> {
     env: Option<Rect<F>>,
     geom_dim: Dimensions,
     has_points: bool,
@@ -42,124 +42,131 @@ pub(crate) struct RelateGeometry<'a, F: GeoFloat> {
     has_areas: bool,
     is_line_zero_len: bool,
     is_geom_empty: bool,
+}
+
+impl<F: GeoFloat> GeometryMeta<F> {
+    pub fn of(geom: &GeometryCow<'_, F>) -> Self {
+        let is_geom_empty = geom.is_empty();
+        let mut analysis = DimensionAnalysis {
+            // The type-based dimension, which counts empty elements.
+            dim: type_dimension(geom),
+            has_points: false,
+            has_lines: false,
+            has_areas: false,
+        };
+        if !is_geom_empty {
+            analysis.analyze(geom);
+        }
+        let geom_dim = analysis.dim;
+        Self {
+            env: geom.bounding_rect(),
+            geom_dim,
+            has_points: analysis.has_points,
+            has_lines: analysis.has_lines,
+            has_areas: analysis.has_areas,
+            is_line_zero_len: geom_dim == Dimensions::OneDimensional && is_zero_length(geom),
+            is_geom_empty,
+        }
+    }
+
+    /// The geometry envelope; `None` for an empty geometry.
+    pub fn envelope(&self) -> Option<Rect<F>> {
+        self.env
+    }
+}
+
+pub(crate) struct RelateGeometry<'a, F: GeoFloat> {
+    geom: &'a GeometryCow<'a, F>,
+    mode: Mode<'a, F>,
+    meta: GeometryMeta<F>,
     unique_points: OnceCell<BTreeSet<NodeKey<F>>>,
     locator: OnceCell<RelatePointLocator<'a, F>>,
 }
 
 impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
-    pub fn new(geom: &'a GeometryCow<'a, F>) -> Self {
-        Self::new_full(geom, false, None)
+    pub fn new(geom: &'a GeometryCow<'a, F>, mode: Mode<'a, F>) -> Self {
+        Self::with_meta(geom, mode, GeometryMeta::of(geom))
     }
 
-    pub fn new_with_prepared(geom: &'a GeometryCow<'a, F>, is_prepared: bool) -> Self {
-        Self::new_full(geom, is_prepared, None)
-    }
-
-    /// A prepared instance whose area locators are stored in shared state
-    /// that outlives it, for reuse across evaluations.
-    pub fn new_prepared_shared(
+    /// An instance over metadata computed earlier for the same geometry.
+    pub fn with_meta(
         geom: &'a GeometryCow<'a, F>,
-        shared_area_locators: &'a SharedAreaLocators<F>,
+        mode: Mode<'a, F>,
+        meta: GeometryMeta<F>,
     ) -> Self {
-        Self::new_full(geom, true, Some(shared_area_locators))
-    }
-
-    fn new_full(
-        geom: &'a GeometryCow<'a, F>,
-        is_prepared: bool,
-        shared_area_locators: Option<&'a SharedAreaLocators<F>>,
-    ) -> Self {
-        let is_geom_empty = geom.is_empty();
-        // The type-based dimension, which counts empty elements.
-        let mut geom_dim = type_dimension_cow(geom);
-        let mut has_points = false;
-        let mut has_lines = false;
-        let mut has_areas = false;
-        if !is_geom_empty {
-            analyze_dimensions_cow(
-                geom,
-                &mut geom_dim,
-                &mut has_points,
-                &mut has_lines,
-                &mut has_areas,
-            );
-        }
-        let is_line_zero_len = geom_dim == Dimensions::OneDimensional && is_zero_length_cow(geom);
         Self {
             geom,
-            is_prepared,
-            shared_area_locators,
-            env: geom.bounding_rect(),
-            geom_dim,
-            has_points,
-            has_lines,
-            has_areas,
-            is_line_zero_len,
-            is_geom_empty,
+            mode,
+            meta,
             unique_points: OnceCell::new(),
             locator: OnceCell::new(),
         }
     }
 
-    pub fn geometry(&self) -> &'a GeometryCow<'a, F> {
-        self.geom
-    }
-
     pub fn is_prepared(&self) -> bool {
-        self.is_prepared
+        self.mode.is_prepared()
     }
 
     /// The geometry envelope; `None` for an empty geometry (the JTS null
     /// envelope).
     pub fn envelope(&self) -> Option<Rect<F>> {
-        self.env
+        self.meta.env
     }
 
     /// The type-based dimension of the geometry.
     pub fn dimension(&self) -> Dimensions {
-        self.geom_dim
+        self.meta.geom_dim
     }
 
     pub fn has_dimension(&self, dim: Dimensions) -> bool {
         match dim {
-            Dimensions::ZeroDimensional => self.has_points,
-            Dimensions::OneDimensional => self.has_lines,
-            Dimensions::TwoDimensional => self.has_areas,
+            Dimensions::ZeroDimensional => self.meta.has_points,
+            Dimensions::OneDimensional => self.meta.has_lines,
+            Dimensions::TwoDimensional => self.meta.has_areas,
             Dimensions::Empty => false,
         }
     }
 
     pub fn has_area_and_line(&self) -> bool {
-        self.has_areas && self.has_lines
+        self.meta.has_areas && self.meta.has_lines
     }
 
     /// The actual non-empty dimension of the geometry. Zero-length
     /// linestrings are treated as points; an empty geometry has dimension
     /// `Empty`.
     pub fn dimension_real(&self) -> Dimensions {
-        if self.is_geom_empty {
+        if self.meta.is_geom_empty {
             return Dimensions::Empty;
         }
-        if self.geom_dim == Dimensions::OneDimensional && self.is_line_zero_len {
+        if self.meta.geom_dim == Dimensions::OneDimensional && self.meta.is_line_zero_len {
             return Dimensions::ZeroDimensional;
         }
-        if self.has_areas {
+        if self.meta.has_areas {
             return Dimensions::TwoDimensional;
         }
-        if self.has_lines {
+        if self.meta.has_lines {
             return Dimensions::OneDimensional;
         }
         Dimensions::ZeroDimensional
     }
 
     pub fn has_edges(&self) -> bool {
-        self.has_lines || self.has_areas
+        self.meta.has_lines || self.meta.has_areas
     }
 
     fn locator(&self) -> &RelatePointLocator<'a, F> {
-        self.locator.get_or_init(|| {
-            RelatePointLocator::new_full(self.geom, self.is_prepared, self.shared_area_locators)
-        })
+        self.locator
+            .get_or_init(|| RelatePointLocator::new(self.geom, self.mode))
+    }
+
+    /// The non-empty linear elements, in document order.
+    pub fn lines(&self) -> &[LineElement<'a, F>] {
+        self.locator().lines()
+    }
+
+    /// The non-empty polygonal elements, in document order.
+    pub fn polygonals(&self) -> &[Polygonal<'a, F>] {
+        self.locator().polygonals()
     }
 
     /// Whether a node point lies in the interior of the geometry's area,
@@ -167,10 +174,27 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     /// for nodes of a geometry inside an overlapping polygon of a
     /// GeometryCollection.
     pub fn is_node_in_area(&self, node_pt: Coord<F>, parent_polygonal_id: Option<usize>) -> bool {
-        let dim_loc = self
-            .locator()
-            .locate_node_with_dim(node_pt, parent_polygonal_id);
+        let dim_loc = self.locate_node_with_dim(node_pt, parent_polygonal_id);
         dim_loc == DimensionLocation::AreaInterior
+    }
+
+    /// Locates a node point, hoisting the locator's own O(1) fast paths so
+    /// the locator is not built when they decide the answer: an empty
+    /// geometry has only exterior, and a node of a purely polygonal
+    /// geometry is always on its boundary. The conditions mirror
+    /// `RelatePointLocator::locate_with_dim_impl` exactly.
+    fn locate_node_with_dim(
+        &self,
+        pt: Coord<F>,
+        parent_polygonal_id: Option<usize>,
+    ) -> DimensionLocation {
+        if self.meta.is_geom_empty {
+            return DimensionLocation::Exterior;
+        }
+        if self.is_polygonal() {
+            return DimensionLocation::AreaBoundary;
+        }
+        self.locator().locate_node_with_dim(pt, parent_polygonal_id)
     }
 
     pub fn locate_line_end_with_dim(&self, p: Coord<F>) -> DimensionLocation {
@@ -188,11 +212,19 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     }
 
     pub fn locate_node(&self, pt: Coord<F>, parent_polygonal_id: Option<usize>) -> CoordPos {
-        self.locator().locate_node(pt, parent_polygonal_id)
+        self.locate_node_with_dim(pt, parent_polygonal_id)
+            .location()
     }
 
     pub fn locate_with_dim(&self, pt: Coord<F>) -> DimensionLocation {
-        self.locator().locate_with_dim(pt)
+        // Envelope fast rejection: a point outside the (cached) envelope is
+        // exterior without a locator walk. This restores the performance of
+        // full-matrix evaluation on envelope-disjoint inputs, where every
+        // point-phase locate lands here.
+        match self.meta.env {
+            Some(env) if env.intersects(&pt) => self.locator().locate_with_dim(pt),
+            _ => DimensionLocation::Exterior,
+        }
     }
 
     /// Whether the geometry requires self-noding for correct evaluation of
@@ -211,10 +243,10 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
             GeometryCow::GeometryCollection(gc) => {
                 // A collection with a single polygonal element does not
                 // need noding; neither does one with only points.
-                if self.has_areas && gc.0.len() == 1 {
+                if self.meta.has_areas && gc.0.len() == 1 {
                     return false;
                 }
-                self.has_areas || self.has_lines
+                self.meta.has_areas || self.meta.has_lines
             }
             // A single Line segment cannot self-cross, but is treated as a
             // LineString for consistency with JTS.
@@ -239,7 +271,7 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.is_geom_empty
+        self.meta.is_geom_empty
     }
 
     pub fn has_boundary(&self) -> bool {
@@ -260,7 +292,7 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     /// the result across evaluations.
     pub fn compute_unique_points(&self) -> BTreeSet<NodeKey<F>> {
         let mut set = BTreeSet::new();
-        collect_component_coords_cow(self.geom, &mut |c| {
+        collect_component_coords(self.geom, &mut |c| {
             set.insert(NodeKey(c));
         });
         set
@@ -270,7 +302,7 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
     /// higher-dimension element of the geometry.
     pub fn effective_points(&self) -> Vec<Coord<F>> {
         let mut pts = Vec::new();
-        collect_point_coords_cow(self.geom, &mut |c| pts.push(c));
+        collect_point_coords(self.geom, &mut |c| pts.push(c));
 
         if pts.is_empty() || self.dimension_real() <= Dimensions::ZeroDimensional {
             return pts;
@@ -299,7 +331,7 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
             polygonal_count: 0,
             seg_strings: Vec::new(),
         };
-        extractor.extract_cow(self.geom);
+        extractor.extract(self.geom);
         extractor.seg_strings
     }
 }
@@ -313,10 +345,14 @@ struct SegmentStringExtractor<'e, F: GeoFloat> {
 }
 
 impl<F: GeoFloat> SegmentStringExtractor<'_, F> {
-    fn extract_cow(&mut self, geom: &GeometryCow<'_, F>) {
+    fn extract(&mut self, geom: &GeometryCow<'_, F>) {
         match geom {
             GeometryCow::Point(_) | GeometryCow::MultiPoint(_) => {}
-            GeometryCow::Line(l) => self.extract_line_coords(vec![l.start, l.end]),
+            GeometryCow::Line(l) => {
+                if self.env_intersects(Some(l.bounding_rect())) {
+                    self.push_line(vec![l.start, l.end]);
+                }
+            }
             GeometryCow::LineString(ls) => self.extract_line(ls),
             GeometryCow::Polygon(p) => self.extract_polygon(p),
             GeometryCow::MultiLineString(mls) => {
@@ -329,45 +365,20 @@ impl<F: GeoFloat> SegmentStringExtractor<'_, F> {
             GeometryCow::Triangle(t) => self.extract_polygon(&t.to_polygon()),
             GeometryCow::GeometryCollection(gc) => {
                 for g in &gc.0 {
-                    self.extract_geometry(g);
-                }
-            }
-        }
-    }
-
-    fn extract_geometry(&mut self, geom: &Geometry<F>) {
-        match geom {
-            Geometry::Point(_) | Geometry::MultiPoint(_) => {}
-            Geometry::Line(l) => self.extract_line_coords(vec![l.start, l.end]),
-            Geometry::LineString(ls) => self.extract_line(ls),
-            Geometry::Polygon(p) => self.extract_polygon(p),
-            Geometry::MultiLineString(mls) => {
-                for ls in &mls.0 {
-                    self.extract_line(ls);
-                }
-            }
-            Geometry::MultiPolygon(mp) => self.extract_multi_polygon(mp),
-            Geometry::Rect(r) => self.extract_polygon(&r.to_polygon()),
-            Geometry::Triangle(t) => self.extract_polygon(&t.to_polygon()),
-            Geometry::GeometryCollection(gc) => {
-                for g in &gc.0 {
-                    self.extract_geometry(g);
+                    self.extract(&GeometryCow::from(g));
                 }
             }
         }
     }
 
     fn extract_line(&mut self, line: &LineString<F>) {
-        if line.0.is_empty() {
+        if line.0.is_empty() || !self.env_intersects(line.bounding_rect()) {
             return;
         }
-        self.extract_line_coords(line.0.clone());
+        self.push_line(line.0.clone());
     }
 
-    fn extract_line_coords(&mut self, coords: Vec<Coord<F>>) {
-        if !self.env_intersects_coords(&coords) {
-            return;
-        }
+    fn push_line(&mut self, coords: Vec<Coord<F>>) {
         self.element_id += 1;
         self.seg_strings.push(RelateSegmentString::create_line(
             coords,
@@ -378,7 +389,7 @@ impl<F: GeoFloat> SegmentStringExtractor<'_, F> {
 
     /// A polygon which is a direct element (its own polygonal element).
     fn extract_polygon(&mut self, polygon: &Polygon<F>) {
-        if polygon.exterior().0.is_empty() {
+        if polygon.is_empty() {
             return;
         }
         self.polygonal_count += 1;
@@ -389,13 +400,13 @@ impl<F: GeoFloat> SegmentStringExtractor<'_, F> {
     /// A MultiPolygon is one polygonal element; its member polygons share
     /// its id.
     fn extract_multi_polygon(&mut self, mp: &MultiPolygon<F>) {
-        if mp.0.iter().all(|p| p.exterior().0.is_empty()) {
+        if mp.is_empty() {
             return;
         }
         self.polygonal_count += 1;
         let polygonal_id = self.polygonal_count - 1;
         for polygon in &mp.0 {
-            if polygon.exterior().0.is_empty() {
+            if polygon.is_empty() {
                 continue;
             }
             self.extract_polygon_rings(polygon, polygonal_id);
@@ -403,7 +414,7 @@ impl<F: GeoFloat> SegmentStringExtractor<'_, F> {
     }
 
     fn extract_polygon_rings(&mut self, polygon: &Polygon<F>, polygonal_id: usize) {
-        if !self.env_intersects_coords(&polygon.exterior().0) {
+        if !self.env_intersects(polygon.exterior().bounding_rect()) {
             // The shell envelope contains the whole polygon.
             return;
         }
@@ -415,10 +426,7 @@ impl<F: GeoFloat> SegmentStringExtractor<'_, F> {
     }
 
     fn extract_ring(&mut self, ring: &LineString<F>, ring_id: i32, polygonal_id: usize) {
-        if ring.0.is_empty() {
-            return;
-        }
-        if !self.env_intersects_coords(&ring.0) {
+        if ring.0.is_empty() || !self.env_intersects(ring.bounding_rect()) {
             return;
         }
         // Orient the points if required: shells CW, holes CCW.
@@ -433,28 +441,16 @@ impl<F: GeoFloat> SegmentStringExtractor<'_, F> {
         ));
     }
 
-    fn env_intersects_coords(&self, coords: &[Coord<F>]) -> bool {
-        let Some(env) = self.env else {
-            return true;
-        };
-        let Some(coords_env) = coords_bounding_rect(coords) else {
-            return false;
-        };
-        env.intersects(&coords_env)
+    /// Whether an element with the given envelope passes the extraction
+    /// filter. Without a filter every element passes; with one, an empty
+    /// element (no envelope) is rejected.
+    fn env_intersects(&self, elem_env: Option<Rect<F>>) -> bool {
+        match (self.env, elem_env) {
+            (None, _) => true,
+            (Some(env), Some(elem_env)) => env.intersects(&elem_env),
+            (Some(_), None) => false,
+        }
     }
-}
-
-fn coords_bounding_rect<F: GeoFloat>(coords: &[Coord<F>]) -> Option<Rect<F>> {
-    let (first, rest) = coords.split_first()?;
-    let mut min = *first;
-    let mut max = *first;
-    for c in rest {
-        min.x = min.x.min(c.x);
-        min.y = min.y.min(c.y);
-        max.x = max.x.max(c.x);
-        max.y = max.y.max(c.y);
-    }
-    Some(Rect::new(min, max))
 }
 
 /// A copy of the ring's coordinates, oriented CW (for shells) or CCW (for
@@ -475,7 +471,7 @@ pub(crate) fn oriented_ring_coords<F: GeoFloat>(
 /// The type-based dimension of the geometry: empty geometries and empty
 /// collection members count with their type's dimension (JTS
 /// `Geometry.getDimension`).
-fn type_dimension_cow<F: GeoFloat>(geom: &GeometryCow<'_, F>) -> Dimensions {
+fn type_dimension<F: GeoFloat>(geom: &GeometryCow<'_, F>) -> Dimensions {
     match geom {
         GeometryCow::Point(_) | GeometryCow::MultiPoint(_) => Dimensions::ZeroDimensional,
         GeometryCow::Line(_) | GeometryCow::LineString(_) | GeometryCow::MultiLineString(_) => {
@@ -487,129 +483,72 @@ fn type_dimension_cow<F: GeoFloat>(geom: &GeometryCow<'_, F>) -> Dimensions {
         | GeometryCow::Triangle(_) => Dimensions::TwoDimensional,
         GeometryCow::GeometryCollection(gc) => {
             gc.0.iter()
-                .map(type_dimension_geom)
+                .map(|g| type_dimension(&GeometryCow::from(g)))
                 .max()
                 .unwrap_or(Dimensions::Empty)
         }
     }
 }
 
-fn type_dimension_geom<F: GeoFloat>(geom: &Geometry<F>) -> Dimensions {
-    match geom {
-        Geometry::Point(_) | Geometry::MultiPoint(_) => Dimensions::ZeroDimensional,
-        Geometry::Line(_) | Geometry::LineString(_) | Geometry::MultiLineString(_) => {
-            Dimensions::OneDimensional
-        }
-        Geometry::Polygon(_)
-        | Geometry::MultiPolygon(_)
-        | Geometry::Rect(_)
-        | Geometry::Triangle(_) => Dimensions::TwoDimensional,
-        Geometry::GeometryCollection(gc) => {
-            gc.0.iter()
-                .map(type_dimension_geom)
-                .max()
-                .unwrap_or(Dimensions::Empty)
-        }
-    }
+/// The dimension analysis of a geometry: the dimension raised to that of
+/// the highest non-empty element, and which dimensions have non-empty
+/// elements (JTS `RelateGeometry.analyzeDimensions`).
+struct DimensionAnalysis {
+    dim: Dimensions,
+    has_points: bool,
+    has_lines: bool,
+    has_areas: bool,
 }
 
-/// Computes the per-dimension presence flags over the non-empty elements,
-/// raising the dimension to at least the highest non-empty element's (JTS
-/// `RelateGeometry.analyzeDimensions`). For non-collection inputs the
-/// dimension is set outright, as in JTS.
-fn analyze_dimensions_cow<F: GeoFloat>(
-    geom: &GeometryCow<'_, F>,
-    geom_dim: &mut Dimensions,
-    has_points: &mut bool,
-    has_lines: &mut bool,
-    has_areas: &mut bool,
-) {
-    match geom {
-        GeometryCow::Point(_) | GeometryCow::MultiPoint(_) => {
-            *has_points = true;
-            *geom_dim = Dimensions::ZeroDimensional;
+impl DimensionAnalysis {
+    fn found(&mut self, dim: Dimensions) {
+        match dim {
+            Dimensions::ZeroDimensional => self.has_points = true,
+            Dimensions::OneDimensional => self.has_lines = true,
+            Dimensions::TwoDimensional => self.has_areas = true,
+            Dimensions::Empty => {}
         }
-        GeometryCow::Line(_) | GeometryCow::LineString(_) | GeometryCow::MultiLineString(_) => {
-            *has_lines = true;
-            *geom_dim = Dimensions::OneDimensional;
-        }
-        GeometryCow::Polygon(_)
-        | GeometryCow::MultiPolygon(_)
-        | GeometryCow::Rect(_)
-        | GeometryCow::Triangle(_) => {
-            *has_areas = true;
-            *geom_dim = Dimensions::TwoDimensional;
-        }
-        GeometryCow::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                analyze_dimensions_geom(g, geom_dim, has_points, has_lines, has_areas);
-            }
+        if self.dim < dim {
+            self.dim = dim;
         }
     }
-}
 
-fn analyze_dimensions_geom<F: GeoFloat>(
-    geom: &Geometry<F>,
-    geom_dim: &mut Dimensions,
-    has_points: &mut bool,
-    has_lines: &mut bool,
-    has_areas: &mut bool,
-) {
-    let raise = |geom_dim: &mut Dimensions, dim: Dimensions| {
-        if *geom_dim < dim {
-            *geom_dim = dim;
-        }
-    };
-    match geom {
-        Geometry::Point(_) => {
-            *has_points = true;
-            raise(geom_dim, Dimensions::ZeroDimensional);
-        }
-        Geometry::MultiPoint(mp) => {
-            if !mp.0.is_empty() {
-                *has_points = true;
-                raise(geom_dim, Dimensions::ZeroDimensional);
+    fn analyze<F: GeoFloat>(&mut self, geom: &GeometryCow<'_, F>) {
+        match geom {
+            GeometryCow::Point(_) => self.found(Dimensions::ZeroDimensional),
+            GeometryCow::MultiPoint(mp) => {
+                if !mp.0.is_empty() {
+                    self.found(Dimensions::ZeroDimensional);
+                }
             }
-        }
-        Geometry::Line(_) => {
-            *has_lines = true;
-            raise(geom_dim, Dimensions::OneDimensional);
-        }
-        Geometry::LineString(ls) => {
-            if !ls.0.is_empty() {
-                *has_lines = true;
-                raise(geom_dim, Dimensions::OneDimensional);
-            }
-        }
-        Geometry::MultiLineString(mls) => {
-            for ls in &mls.0 {
+            GeometryCow::Line(_) => self.found(Dimensions::OneDimensional),
+            GeometryCow::LineString(ls) => {
                 if !ls.0.is_empty() {
-                    *has_lines = true;
-                    raise(geom_dim, Dimensions::OneDimensional);
+                    self.found(Dimensions::OneDimensional);
                 }
             }
-        }
-        Geometry::Polygon(p) => {
-            if !p.exterior().0.is_empty() {
-                *has_areas = true;
-                raise(geom_dim, Dimensions::TwoDimensional);
-            }
-        }
-        Geometry::MultiPolygon(mp) => {
-            for p in &mp.0 {
-                if !p.exterior().0.is_empty() {
-                    *has_areas = true;
-                    raise(geom_dim, Dimensions::TwoDimensional);
+            GeometryCow::MultiLineString(mls) => {
+                if mls.0.iter().any(|ls| !ls.0.is_empty()) {
+                    self.found(Dimensions::OneDimensional);
                 }
             }
-        }
-        Geometry::Rect(_) | Geometry::Triangle(_) => {
-            *has_areas = true;
-            raise(geom_dim, Dimensions::TwoDimensional);
-        }
-        Geometry::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                analyze_dimensions_geom(g, geom_dim, has_points, has_lines, has_areas);
+            GeometryCow::Polygon(p) => {
+                if !p.is_empty() {
+                    self.found(Dimensions::TwoDimensional);
+                }
+            }
+            GeometryCow::MultiPolygon(mp) => {
+                if !mp.is_empty() {
+                    self.found(Dimensions::TwoDimensional);
+                }
+            }
+            GeometryCow::Rect(_) | GeometryCow::Triangle(_) => {
+                self.found(Dimensions::TwoDimensional)
+            }
+            GeometryCow::GeometryCollection(gc) => {
+                for g in &gc.0 {
+                    self.analyze(&GeometryCow::from(g));
+                }
             }
         }
     }
@@ -617,22 +556,14 @@ fn analyze_dimensions_geom<F: GeoFloat>(
 
 /// Tests if all linear elements are zero-length. For efficiency the test
 /// avoids computing actual length.
-fn is_zero_length_cow<F: GeoFloat>(geom: &GeometryCow<'_, F>) -> bool {
+fn is_zero_length<F: GeoFloat>(geom: &GeometryCow<'_, F>) -> bool {
     match geom {
         GeometryCow::Line(l) => l.start == l.end,
         GeometryCow::LineString(ls) => is_zero_length_line(ls),
         GeometryCow::MultiLineString(mls) => mls.0.iter().all(is_zero_length_line),
-        GeometryCow::GeometryCollection(gc) => gc.0.iter().all(is_zero_length_geom),
-        _ => true,
-    }
-}
-
-fn is_zero_length_geom<F: GeoFloat>(geom: &Geometry<F>) -> bool {
-    match geom {
-        Geometry::Line(l) => l.start == l.end,
-        Geometry::LineString(ls) => is_zero_length_line(ls),
-        Geometry::MultiLineString(mls) => mls.0.iter().all(is_zero_length_line),
-        Geometry::GeometryCollection(gc) => gc.0.iter().all(is_zero_length_geom),
+        GeometryCow::GeometryCollection(gc) => {
+            gc.0.iter().all(|g| is_zero_length(&GeometryCow::from(g)))
+        }
         _ => true,
     }
 }
@@ -650,10 +581,7 @@ fn is_zero_length_line<F: GeoFloat>(line: &LineString<F>) -> bool {
 /// point and line component of the geometry, in document order (the JTS
 /// `ComponentCoordinateExtracter` semantic). Polygonal components are not
 /// visited; the callers only use this for zero-dimensional geometries.
-fn collect_component_coords_cow<F: GeoFloat>(
-    geom: &GeometryCow<'_, F>,
-    f: &mut impl FnMut(Coord<F>),
-) {
+fn collect_component_coords<F: GeoFloat>(geom: &GeometryCow<'_, F>, f: &mut impl FnMut(Coord<F>)) {
     match geom {
         GeometryCow::Point(p) => f(p.0),
         GeometryCow::Line(l) => f(l.start),
@@ -676,37 +604,7 @@ fn collect_component_coords_cow<F: GeoFloat>(
         }
         GeometryCow::GeometryCollection(gc) => {
             for g in &gc.0 {
-                collect_component_coords_geom(g, f);
-            }
-        }
-        _ => {}
-    }
-}
-
-fn collect_component_coords_geom<F: GeoFloat>(geom: &Geometry<F>, f: &mut impl FnMut(Coord<F>)) {
-    match geom {
-        Geometry::Point(p) => f(p.0),
-        Geometry::Line(l) => f(l.start),
-        Geometry::LineString(ls) => {
-            if let Some(&c) = ls.0.first() {
-                f(c);
-            }
-        }
-        Geometry::MultiPoint(mp) => {
-            for p in &mp.0 {
-                f(p.0);
-            }
-        }
-        Geometry::MultiLineString(mls) => {
-            for ls in &mls.0 {
-                if let Some(&c) = ls.0.first() {
-                    f(c);
-                }
-            }
-        }
-        Geometry::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                collect_component_coords_geom(g, f);
+                collect_component_coords(&GeometryCow::from(g), f);
             }
         }
         _ => {}
@@ -715,7 +613,7 @@ fn collect_component_coords_geom<F: GeoFloat>(geom: &Geometry<F>, f: &mut impl F
 
 /// Applies `f` to the coordinate of every point element of the geometry,
 /// in document order.
-fn collect_point_coords_cow<F: GeoFloat>(geom: &GeometryCow<'_, F>, f: &mut impl FnMut(Coord<F>)) {
+fn collect_point_coords<F: GeoFloat>(geom: &GeometryCow<'_, F>, f: &mut impl FnMut(Coord<F>)) {
     match geom {
         GeometryCow::Point(p) => f(p.0),
         GeometryCow::MultiPoint(mp) => {
@@ -725,24 +623,7 @@ fn collect_point_coords_cow<F: GeoFloat>(geom: &GeometryCow<'_, F>, f: &mut impl
         }
         GeometryCow::GeometryCollection(gc) => {
             for g in &gc.0 {
-                collect_point_coords_geom(g, f);
-            }
-        }
-        _ => {}
-    }
-}
-
-fn collect_point_coords_geom<F: GeoFloat>(geom: &Geometry<F>, f: &mut impl FnMut(Coord<F>)) {
-    match geom {
-        Geometry::Point(p) => f(p.0),
-        Geometry::MultiPoint(mp) => {
-            for p in &mp.0 {
-                f(p.0);
-            }
-        }
-        Geometry::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                collect_point_coords_geom(g, f);
+                collect_point_coords(&GeometryCow::from(g), f);
             }
         }
         _ => {}
@@ -756,7 +637,7 @@ mod tests {
     use crate::wkt;
 
     fn relate_geom_dims(geom: &GeometryCow<'_, f64>) -> (Dimensions, Dimensions) {
-        let rgeom = RelateGeometry::new(geom);
+        let rgeom = RelateGeometry::new(geom, Mode::Simple);
         (rgeom.dimension(), rgeom.dimension_real())
     }
 
@@ -764,7 +645,7 @@ mod tests {
     fn test_unique_points() {
         let geom = wkt!(MULTIPOINT(0. 0., 5. 5., 5. 0., 0. 0.));
         let cow = GeometryCow::from(&geom);
-        let rgeom = RelateGeometry::new(&cow);
+        let rgeom = RelateGeometry::new(&cow, Mode::Simple);
         assert_eq!(rgeom.unique_points().len(), 3, "Unique pts size");
     }
 
@@ -772,7 +653,7 @@ mod tests {
     fn test_boundary() {
         let geom = wkt!(MULTILINESTRING ((0. 0., 9. 9.), (9. 9., 5. 1.)));
         let cow = GeometryCow::from(&geom);
-        let rgeom = RelateGeometry::new(&cow);
+        let rgeom = RelateGeometry::new(&cow, Mode::Simple);
         assert!(rgeom.has_boundary(), "hasBoundary");
     }
 
@@ -784,7 +665,7 @@ mod tests {
             POINT (6. 5.)
         ));
         let cow = GeometryCow::from(&geom);
-        let rgeom = RelateGeometry::new(&cow);
+        let rgeom = RelateGeometry::new(&cow, Mode::Simple);
         assert!(rgeom.has_dimension(Dimensions::ZeroDimensional), "dim 0");
         assert!(rgeom.has_dimension(Dimensions::OneDimensional), "dim 1");
         assert!(rgeom.has_dimension(Dimensions::TwoDimensional), "dim 2");
@@ -844,7 +725,7 @@ mod tests {
             POLYGON ((20. 20., 22. 20., 22. 22., 20. 22., 20. 20.))
         ));
         let cow = GeometryCow::from(&gc);
-        let rgeom = RelateGeometry::new(&cow);
+        let rgeom = RelateGeometry::new(&cow, Mode::Simple);
 
         // Filter to the last polygon only: its section id must still be 2.
         let env = Rect::new(Coord { x: 19., y: 19. }, Coord { x: 23., y: 23. });

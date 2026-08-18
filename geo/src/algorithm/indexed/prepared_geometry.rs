@@ -5,6 +5,7 @@ use crate::relate::relateng::relate_ng::{PreparedRelateState, RelateNG};
 use crate::{BoundingRect, GeometryCow, HasDimensions};
 use crate::{GeoFloat, Relate};
 
+use std::cell::OnceCell;
 use std::fmt::{Debug, Formatter};
 
 use crate::dimensions::Dimensions;
@@ -37,10 +38,13 @@ where
     F: GeoFloat + RTreeNum,
 {
     pub(crate) geometry: G,
-    pub(crate) geometry_graph: GeometryGraph<'a, F>,
-    pub(crate) bounding_rect: Option<Rect<F>>,
-    /// The RelateNG caches reused across `relate` calls: the segment
-    /// index, per-element area locators, and unique points.
+    geometry_cow: GeometryCow<'a, F>,
+    /// The legacy noded graph, built on the first call of the deprecated
+    /// `Relate::geometry_graph`.
+    geometry_graph: OnceCell<GeometryGraph<'a, F>>,
+    /// The RelateNG caches reused across `relate` calls: the geometry
+    /// metadata, segment index, per-element area locators, and unique
+    /// points.
     relate_state: PreparedRelateState<F>,
 }
 
@@ -50,13 +54,13 @@ where
     F: GeoFloat + RTreeNum,
 {
     fn clone(&self) -> Self {
-        // The relate caches are rebuildable; a clone starts with fresh
-        // (empty) ones.
+        // The caches are rebuildable; a clone starts with fresh (empty)
+        // ones.
         Self {
             geometry: self.geometry.clone(),
-            geometry_graph: self.geometry_graph.clone(),
-            bounding_rect: self.bounding_rect,
-            relate_state: PreparedRelateState::new(),
+            geometry_cow: self.geometry_cow.clone(),
+            geometry_graph: OnceCell::new(),
+            relate_state: PreparedRelateState::default(),
         }
     }
 }
@@ -89,13 +93,11 @@ where
     F: GeoFloat,
     T: Clone + Into<GeometryCow<'a, F>>,
 {
-    let geometry_graph = GeometryGraph::new(0, geometry.clone().into());
-    let bounding_rect = geometry_graph.geometry().bounding_rect();
     PreparedGeometry {
+        geometry_cow: geometry.clone().into(),
         geometry,
-        geometry_graph,
-        bounding_rect,
-        relate_state: PreparedRelateState::new(),
+        geometry_graph: OnceCell::new(),
+        relate_state: PreparedRelateState::default(),
     }
 }
 
@@ -120,7 +122,7 @@ where
     type Output = Option<Rect<F>>;
 
     fn bounding_rect(&self) -> Option<Rect<F>> {
-        self.bounding_rect
+        self.relate_state.meta(&self.geometry_cow).envelope()
     }
 }
 
@@ -130,15 +132,15 @@ where
     G: Into<GeometryCow<'a, F>>,
 {
     fn is_empty(&self) -> bool {
-        self.geometry_graph.geometry().is_empty()
+        self.geometry_cow.is_empty()
     }
 
     fn dimensions(&self) -> Dimensions {
-        self.geometry_graph.geometry().dimensions()
+        self.geometry_cow.dimensions()
     }
 
     fn boundary_dimensions(&self) -> Dimensions {
-        self.geometry_graph.geometry().boundary_dimensions()
+        self.geometry_cow.boundary_dimensions()
     }
 }
 
@@ -147,15 +149,17 @@ where
     F: GeoFloat,
     G: Into<GeometryCow<'a, F>>,
 {
-    /// Efficiently builds a [`GeometryGraph`] which can then be used for topological
-    /// computations.
+    /// Returns a copy of the cached [`GeometryGraph`], which is built on
+    /// the first call.
     #[allow(deprecated)]
     fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<'_, F> {
-        self.geometry_graph.clone_for_arg_index(arg_index)
+        self.geometry_graph
+            .get_or_init(|| GeometryGraph::new(0, self.geometry_cow.clone()))
+            .clone_for_arg_index(arg_index)
     }
 
     fn geometry_cow(&self) -> GeometryCow<'_, F> {
-        self.geometry_graph.geometry().reborrow()
+        self.geometry_cow.reborrow()
     }
 
     /// Relates against the B geometry with the cached prepared state: the
@@ -163,7 +167,7 @@ where
     /// once and reused across calls.
     fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix {
         let cow = self.geometry_cow();
-        let engine = RelateNG::with_state(&cow, &self.relate_state);
+        let engine = RelateNG::prepared(&cow, &self.relate_state);
         engine.evaluate_matrix(&other.geometry_cow())
     }
 }
@@ -229,14 +233,8 @@ mod tests {
         let prepared = PreparedGeometry::from(&a);
         for _pass in 0..2 {
             for b in &bs {
-                assert_eq!(
-                    format!("{:?}", prepared.relate(b)),
-                    format!("{:?}", a.relate(b)),
-                );
-                assert_eq!(
-                    format!("{:?}", b.relate(&prepared)),
-                    format!("{:?}", b.relate(&a)),
-                );
+                assert_eq!(prepared.relate(b), a.relate(b));
+                assert_eq!(b.relate(&prepared), b.relate(&a));
             }
         }
     }
