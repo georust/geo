@@ -51,30 +51,79 @@ pub(crate) fn eval<F: GeoFloat>(
     RelateNG::new(a).evaluate(b, predicate)
 }
 
+/// The A-side caches of a prepared relate evaluation. The state is fully
+/// owned (segment strings own their coordinates, the area indexes are
+/// owned), so it can live in a `PreparedGeometry` and be shared into
+/// per-call engines without borrowing the geometry.
+pub(crate) struct PreparedRelateState<F: GeoFloat> {
+    /// The A-side segment index, built over all A edges on first use.
+    edge_mutual_int: OnceCell<MutualSegmentSetIntersector<F>>,
+    /// The per-polygonal-element area locators of A.
+    area_locators: super::relate_point_locator::SharedAreaLocators<F>,
+    /// The unique points of A (for the P/P fast path).
+    unique_points:
+        OnceCell<std::collections::BTreeSet<crate::relate::geomgraph::node_map::NodeKey<F>>>,
+}
+
+impl<F: GeoFloat> PreparedRelateState<F> {
+    pub fn new() -> Self {
+        Self {
+            edge_mutual_int: OnceCell::new(),
+            area_locators: OnceCell::new(),
+            unique_points: OnceCell::new(),
+        }
+    }
+}
+
+/// The state used by an engine instance: owned for one-shot and
+/// self-contained prepared use, or borrowed from a `PreparedGeometry`.
+enum StateHolder<'a, F: GeoFloat> {
+    Owned(PreparedRelateState<F>),
+    Shared(&'a PreparedRelateState<F>),
+}
+
+impl<F: GeoFloat> StateHolder<'_, F> {
+    fn get(&self) -> &PreparedRelateState<F> {
+        match self {
+            StateHolder::Owned(state) => state,
+            StateHolder::Shared(state) => state,
+        }
+    }
+}
+
 pub(crate) struct RelateNG<'a, F: GeoFloat> {
     geom_a: RelateGeometry<'a, F>,
-    /// The cached A-side segment index. In prepared mode it is built over
-    /// all A edges and reused across evaluations; otherwise it is built
-    /// filtered to the first evaluation's envelope (a non-prepared
-    /// instance is single-use, as in JTS).
-    edge_mutual_int: OnceCell<MutualSegmentSetIntersector<F>>,
+    /// In prepared mode the A-side segment index is built over all A edges
+    /// and reused across evaluations; otherwise it is built filtered to
+    /// the first evaluation's envelope (a non-prepared instance is
+    /// single-use, as in JTS).
+    state: StateHolder<'a, F>,
 }
 
 impl<'a, F: GeoFloat> RelateNG<'a, F> {
     pub fn new(a: &'a GeometryCow<'a, F>) -> Self {
-        Self::new_with_prepared(a, false)
+        Self {
+            geom_a: RelateGeometry::new_with_prepared(a, false),
+            state: StateHolder::Owned(PreparedRelateState::new()),
+        }
     }
 
     /// Creates an instance with cached spatial indexes, for repeated
     /// evaluations against the same A geometry.
     pub fn prepare(a: &'a GeometryCow<'a, F>) -> Self {
-        Self::new_with_prepared(a, true)
+        Self {
+            geom_a: RelateGeometry::new_with_prepared(a, true),
+            state: StateHolder::Owned(PreparedRelateState::new()),
+        }
     }
 
-    fn new_with_prepared(a: &'a GeometryCow<'a, F>, is_prepared: bool) -> Self {
+    /// An engine over shared prepared state that outlives this instance
+    /// (the `PreparedGeometry` case): heavy indexes are stored in the
+    /// state and reused by every engine constructed over it.
+    pub fn with_state(a: &'a GeometryCow<'a, F>, state: &'a PreparedRelateState<F>) -> Self {
         Self {
-            geom_a: RelateGeometry::new_with_prepared(a, is_prepared),
-            edge_mutual_int: OnceCell::new(),
+            geom_a: RelateGeometry::new_prepared_shared(a, &state.area_locators),
+            state: StateHolder::Shared(state),
         }
     }
 
@@ -172,7 +221,13 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
         geom_b: &RelateGeometry<'_, F>,
         computer: &mut TopologyComputer<'_, '_, '_, F>,
     ) {
-        let pts_a = self.geom_a.unique_points();
+        // The A-side unique points live in the (possibly shared) state so
+        // prepared use computes them once.
+        let pts_a = self
+            .state
+            .get()
+            .unique_points
+            .get_or_init(|| self.geom_a.compute_unique_points());
         let pts_b = geom_b.unique_points();
 
         let mut num_b_in_a = 0;
@@ -217,7 +272,7 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
         } else {
             // In prepared mode the A edge index is reused across
             // evaluations.
-            let mutual = self.edge_mutual_int.get_or_init(|| {
+            let mutual = self.state.get().edge_mutual_int.get_or_init(|| {
                 let env_extract = if self.geom_a.is_prepared() {
                     None
                 } else {
