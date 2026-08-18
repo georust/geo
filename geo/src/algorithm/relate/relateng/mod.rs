@@ -21,5 +21,7 @@
 #![allow(dead_code)]
 
 pub(crate) mod im_predicate;
+pub(crate) mod node_section;
+pub(crate) mod polygon_node_converter;
 pub(crate) mod relate_predicate;
 pub(crate) mod topology_predicate;

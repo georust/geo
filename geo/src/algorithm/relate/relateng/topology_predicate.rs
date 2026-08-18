@@ -10,7 +10,9 @@ use crate::{Contains, GeoFloat, Intersects, Rect};
 /// Identifies one of the two input geometries of a relate operation.
 ///
 /// Replaces JTS's `RelateGeometry.GEOM_A`/`GEOM_B` boolean convention.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// The declaration order gives the "A sorts before B" ordering that
+/// node-section sorting relies on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum InputIndex {
     A,
     B,
