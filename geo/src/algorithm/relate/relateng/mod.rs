@@ -18,6 +18,7 @@
 // Parts of the module are consumed only by later commits in the port.
 #![allow(dead_code)]
 
+pub(crate) mod adjacent_edge_locator;
 pub(crate) mod dimension_location;
 pub(crate) mod im_predicate;
 pub(crate) mod linear_boundary;
@@ -26,5 +27,6 @@ pub(crate) mod node_sections;
 pub(crate) mod polygon_node_converter;
 pub(crate) mod relate_edge;
 pub(crate) mod relate_node;
+pub(crate) mod relate_point_locator;
 pub(crate) mod relate_predicate;
 pub(crate) mod topology_predicate;
