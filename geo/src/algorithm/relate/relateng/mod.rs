@@ -15,9 +15,6 @@
 //! trait and the predicate traits built on it. The boundary node rule is
 //! Mod-2 (the OGC SFS rule), matching the rest of the crate.
 
-// Parts of the module are consumed only by later commits in the port.
-#![allow(dead_code)]
-
 pub(crate) mod adjacent_edge_locator;
 pub(crate) mod dimension_location;
 pub(crate) mod edge_segment_intersector;
