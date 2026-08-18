@@ -149,6 +149,7 @@ where
 {
     /// Efficiently builds a [`GeometryGraph`] which can then be used for topological
     /// computations.
+    #[allow(deprecated)]
     fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<'_, F> {
         self.geometry_graph.clone_for_arg_index(arg_index)
     }
@@ -241,6 +242,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(deprecated)]
     fn swap_arg_index() {
         let poly = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
         let prepared_geom = PreparedGeometry::from(&poly);
