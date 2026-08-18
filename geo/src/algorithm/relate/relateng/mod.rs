@@ -33,4 +33,5 @@ pub(crate) mod relate_node;
 pub(crate) mod relate_point_locator;
 pub(crate) mod relate_predicate;
 pub(crate) mod relate_segment_string;
+pub(crate) mod topology_computer;
 pub(crate) mod topology_predicate;
