@@ -65,7 +65,18 @@ macro_rules! impl_contains_properly_from_relate {
             {
                 fn contains_properly(&self, target: &$target) -> bool {
                     use $crate::algorithm::Relate;
-                    self.relate(target).is_contains_properly()
+                    // Evaluate the pattern predicate directly: it
+                    // short-circuits as soon as the value is known, unlike
+                    // computing the full matrix.
+                    let mut predicate = $crate::algorithm::relate::relateng::relate_predicate::matches(
+                        $crate::algorithm::relate::relateng::relate_predicate::intersection_matrix_pattern::CONTAINS_PROPERLY,
+                    )
+                    .expect("valid pattern");
+                    $crate::algorithm::relate::relateng::relate_ng::eval(
+                        &self.geometry_cow(),
+                        &target.geometry_cow(),
+                        &mut predicate,
+                    )
                 }
             }
         )*

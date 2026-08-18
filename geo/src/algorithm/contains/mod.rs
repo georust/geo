@@ -70,7 +70,14 @@ macro_rules! impl_contains_from_relate {
             {
                 fn contains(&self, target: &$target) -> bool {
                     use $crate::algorithm::Relate;
-                    self.relate(target).is_contains()
+                    // Evaluate the named predicate directly: it
+                    // short-circuits as soon as the value is known, unlike
+                    // computing the full matrix.
+                    $crate::algorithm::relate::relateng::relate_ng::eval(
+                        &self.geometry_cow(),
+                        &target.geometry_cow(),
+                        &mut $crate::algorithm::relate::relateng::relate_predicate::contains(),
+                    )
                 }
             }
         )*

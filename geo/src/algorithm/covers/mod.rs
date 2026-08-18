@@ -64,7 +64,14 @@ macro_rules! impl_covers_from_relate {
             {
                 fn covers(&self, target: &$target) -> bool {
                     use $crate::algorithm::Relate;
-                    self.relate(target).is_covers()
+                    // Evaluate the named predicate directly: it
+                    // short-circuits as soon as the value is known, unlike
+                    // computing the full matrix.
+                    $crate::algorithm::relate::relateng::relate_ng::eval(
+                        &self.geometry_cow(),
+                        &target.geometry_cow(),
+                        &mut $crate::algorithm::relate::relateng::relate_predicate::covers(),
+                    )
                 }
             }
         )*

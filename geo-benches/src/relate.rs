@@ -1,5 +1,6 @@
 use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
-use geo::algorithm::{Relate, Rotate, Translate};
+use geo::PreparedGeometry;
+use geo::algorithm::{Contains, Relate, Rotate, Translate};
 use geo::geometry::{LineString, Polygon};
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -83,6 +84,25 @@ fn criterion_benchmark(c: &mut Criterion) {
 
         bencher.iter(|| {
             criterion::black_box(norway.relate(&translated_norway));
+        });
+    });
+
+    c.bench_function("prepared relate repeated", |bencher| {
+        let norway = Polygon::new(geo_test_fixtures::norway_main::<f64>(), vec![]);
+        let rotated_norway = norway.rotate_around_center(20.0);
+        let prepared = PreparedGeometry::from(&norway);
+
+        bencher.iter(|| {
+            criterion::black_box(prepared.relate(&rotated_norway));
+        });
+    });
+
+    c.bench_function("contains via short-circuit predicate", |bencher| {
+        let norway = Polygon::new(geo_test_fixtures::norway_main::<f64>(), vec![]);
+        let rotated_norway = norway.rotate_around_center(20.0);
+
+        bencher.iter(|| {
+            criterion::black_box(norway.contains(&rotated_norway));
         });
     });
 }
