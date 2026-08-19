@@ -37,6 +37,10 @@
   - <https://github.com/georust/geo/pull/1555>
 - Derive all error types via `thiserror` instead of hand-written `Display`/`Error` impls.
 - Inline total_cmp for downstream users who don't use LTO
+- Speed up multi-geometry `Euclidean` distance by pruning members whose bounding rectangle is already further away than the running minimum.
+  - <https://github.com/georust/geo/pull/1561>
+- Speed up `Euclidean.distance` between two `Rect`s with a closed form, instead of converting both to polygons.
+  - <https://github.com/georust/geo/pull/1561>
 
 ## 0.33.1 - 2026-4-20
 
