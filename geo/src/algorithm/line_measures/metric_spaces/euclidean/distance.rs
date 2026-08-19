@@ -322,15 +322,13 @@ impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
 // │ Implementations for Rect and Triangle  │
 // └────────────────────────────────────────┘
 
-/// Implements Euclidean distance for Triangles and Rects by converting them to polygons.
+/// Implements Euclidean distance from a Triangle or a Rect to another geometry type by
+/// converting the Triangle or Rect to a polygon.
+///
+/// The Triangle-to-Triangle and Rect-to-Rect implementations are written out below instead,
+/// because Rect-to-Rect has a closed form that does not need the polygon conversion.
 macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
   ($polygonlike:ty,  [$($geometry_b:ty),*]) => {
-      impl<F: GeoFloat> Distance<F, $polygonlike, $polygonlike> for Euclidean
-      {
-          fn distance(&self, origin: $polygonlike, destination: $polygonlike) -> F {
-              self.distance(&origin.to_polygon(), destination)
-          }
-      }
       $(
           impl<F: GeoFloat> Distance<F, $polygonlike, $geometry_b> for Euclidean
           {
@@ -341,6 +339,28 @@ macro_rules! impl_euclidean_distance_for_polygonlike_geometry {
           symmetric_distance_impl!(GeoFloat, $geometry_b, $polygonlike);
       )*
   };
+}
+
+impl<F: GeoFloat> Distance<F, &Triangle<F>, &Triangle<F>> for Euclidean {
+    fn distance(&self, origin: &Triangle<F>, destination: &Triangle<F>) -> F {
+        self.distance(&origin.to_polygon(), destination)
+    }
+}
+
+/// Closed-form distance between two axis-aligned rectangles.
+///
+/// The multi-geometry implementations use this as the lower bound for
+/// bounding-rectangle pruning, so it must stay cheap: it's on the hot path
+impl<F: GeoFloat> Distance<F, &Rect<F>, &Rect<F>> for Euclidean {
+    fn distance(&self, a: &Rect<F>, b: &Rect<F>) -> F {
+        let dx = (a.min().x - b.max().x)
+            .max(b.min().x - a.max().x)
+            .max(F::zero());
+        let dy = (a.min().y - b.max().y)
+            .max(b.min().y - a.max().y)
+            .max(F::zero());
+        dx.hypot(dy)
+    }
 }
 
 impl_euclidean_distance_for_polygonlike_geometry!(&Triangle<F>,  [&Point<F>, &Line<F>, &LineString<F>, &Polygon<F>, &Rect<F>]);
@@ -446,20 +466,6 @@ impl<F: GeoFloat> Distance<F, &Geometry<F>, &Geometry<F>> for Euclidean {
 // │ Implementations utilities │
 // └───────────────────────────┘
 
-/// Minimum distance between two axis-aligned rectangles
-///
-/// Returns zero if the rectangles overlap or touch
-#[inline]
-fn rect_rect_distance<F: GeoFloat>(a: Rect<F>, b: Rect<F>) -> F {
-    let dx = (a.min().x - b.max().x)
-        .max(b.min().x - a.max().x)
-        .max(F::zero());
-    let dy = (a.min().y - b.max().y)
-        .max(b.min().y - a.max().y)
-        .max(F::zero());
-    dx.hypot(dy)
-}
-
 /// Minimum distance from a collection of members to a target geometry, with
 /// bounding-rectangle pruning
 ///
@@ -488,7 +494,7 @@ fn bbox_pruned_min_distance<F: GeoFloat, M>(
     let mut candidates: Vec<(F, M)> = members
         .map(|member| {
             let lower_bound = member_rect(&member)
-                .map(|rect| rect_rect_distance(rect, target_rect))
+                .map(|rect| Euclidean.distance(&rect, &target_rect))
                 .unwrap_or_else(F::zero);
             (lower_bound, member)
         })
@@ -1690,5 +1696,70 @@ mod test {
 
         let test_gc = GeometryCollection(vec![Geometry::Rect(test_rect)]);
         assert_relative_eq!(Euclidean.distance(&test_gc, &gc), 60.959002616512684);
+    }
+
+    /// Exercises the closed-form `Distance<&Rect, &Rect>` implementation. Each expected value is
+    /// also the value the general polygon-to-polygon path produces, which the following test
+    /// checks over random input.
+    #[test]
+    fn distance_rect_rect_test() {
+        let a = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 10., y: 10. });
+
+        // Separated along x only: the gap is the x deficit
+        let right = Rect::new(coord! { x: 13., y: 2. }, coord! { x: 20., y: 8. });
+        assert_relative_eq!(Euclidean.distance(&a, &right), 3.);
+        assert_relative_eq!(Euclidean.distance(&right, &a), 3.);
+
+        // Separated along y only
+        let above = Rect::new(coord! { x: 2., y: 14. }, coord! { x: 8., y: 20. });
+        assert_relative_eq!(Euclidean.distance(&a, &above), 4.);
+
+        // Separated along both axes: the gap is the hypotenuse of the two deficits
+        let diagonal = Rect::new(coord! { x: 13., y: 14. }, coord! { x: 20., y: 20. });
+        assert_relative_eq!(Euclidean.distance(&a, &diagonal), 5.);
+
+        // Touching, overlapping, nested and identical rectangles are all zero
+        let touching = Rect::new(coord! { x: 10., y: 2. }, coord! { x: 20., y: 8. });
+        assert_relative_eq!(Euclidean.distance(&a, &touching), 0.);
+
+        let corner_touching = Rect::new(coord! { x: 10., y: 10. }, coord! { x: 20., y: 20. });
+        assert_relative_eq!(Euclidean.distance(&a, &corner_touching), 0.);
+
+        let overlapping = Rect::new(coord! { x: 5., y: 5. }, coord! { x: 15., y: 15. });
+        assert_relative_eq!(Euclidean.distance(&a, &overlapping), 0.);
+
+        let nested = Rect::new(coord! { x: 2., y: 2. }, coord! { x: 4., y: 4. });
+        assert_relative_eq!(Euclidean.distance(&a, &nested), 0.);
+        assert_relative_eq!(Euclidean.distance(&nested, &a), 0.);
+
+        assert_relative_eq!(Euclidean.distance(&a, &a), 0.);
+
+        // A degenerate rectangle is a point
+        let degenerate = Rect::new(coord! { x: 14., y: 5. }, coord! { x: 14., y: 5. });
+        assert_relative_eq!(Euclidean.distance(&a, &degenerate), 4.);
+    }
+
+    /// The closed-form Rect-to-Rect distance must agree with the general polygon-to-polygon path
+    /// that the other Rect implementations use.
+    #[test]
+    fn distance_rect_rect_agrees_with_polygon_path() {
+        // A small deterministic LCG keeps the input reproducible without a dependency
+        let mut state: u64 = 0x2545_F491_4F6C_DD1D;
+        let mut next = || {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            ((state >> 11) as f64 / (1u64 << 53) as f64) * 200. - 100.
+        };
+        for _ in 0..2_000 {
+            let (x1, x2, y1, y2) = (next(), next(), next(), next());
+            let (x3, x4, y3, y4) = (next(), next(), next(), next());
+            let a = Rect::new((x1.min(x2), y1.min(y2)), (x1.max(x2), y1.max(y2)));
+            let b = Rect::new((x3.min(x4), y3.min(y4)), (x3.max(x4), y3.max(y4)));
+
+            let closed_form: f64 = Euclidean.distance(&a, &b);
+            let via_polygons: f64 = Euclidean.distance(&a.to_polygon(), &b.to_polygon());
+            assert_relative_eq!(closed_form, via_polygons, epsilon = 1e-9);
+        }
     }
 }
