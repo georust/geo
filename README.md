@@ -2,6 +2,7 @@
 
 [![geo on Crates.io](https://img.shields.io/crates/v/geo.svg?color=brightgreen)](https://crates.io/crates/geo)
 [![Coverage Status](https://img.shields.io/coverallsCoverage/github/georust/geo.svg)](https://coveralls.io/github/georust/geo?branch=trying)
+[![inspect.software](https://raw.githubusercontent.com/inspect-software/badges/main/v1/g/georust/geo.svg)](https://inspect.software/software/georust/geo)
 [![Documentation](https://img.shields.io/docsrs/geo/latest.svg)](https://docs.rs/geo)
 [![Discord](https://img.shields.io/discord/598002550221963289)](https://discord.gg/Fp2aape)
 
