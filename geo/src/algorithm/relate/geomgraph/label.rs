@@ -23,7 +23,7 @@ impl fmt::Debug for Label {
         write!(
             f,
             "Label {{ A: {:?}, B: {:?} }}",
-            &self.geometry_topologies[0], &self.geometry_topologies[1]
+            self.geometry_topologies[0], self.geometry_topologies[1]
         )
     }
 }
