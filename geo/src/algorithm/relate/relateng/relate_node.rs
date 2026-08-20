@@ -53,13 +53,17 @@ impl<F: GeoFloat> RelateNode<F> {
                 // Assumes node edges have CW orientation (the JTS norm):
                 // the entering edge has the interior on its left, the
                 // exiting edge on its right.
-                let index0 = self.add_area_edge(ns.input(), ns.vertex(0), IS_REVERSE);
-                let index1 = self.add_area_edge(ns.input(), ns.vertex(1), IS_FORWARD);
+                let e0 = self.add_area_edge(ns.input(), ns.vertex(0), IS_REVERSE);
+                let e1 = self.add_area_edge(ns.input(), ns.vertex(1), IS_FORWARD);
 
                 // A well-formed area section has both edges; a degenerate
                 // one (zero-length or absent edge) contributes nothing to
-                // update.
-                if let (Some(index0), Some(index1)) = (index0, index1) {
+                // update. The indices are looked up only after both
+                // insertions: the second insertion can shift the first
+                // edge's position (JTS uses object identity here).
+                if e0.is_some() && e1.is_some() {
+                    let index0 = self.find_edge_index(ns.vertex(0).expect("edge was added"));
+                    let index1 = self.find_edge_index(ns.vertex(1).expect("edge was added"));
                     self.update_edges_in_area(ns.input(), index0, index1);
                     self.update_if_area_prev(ns.input(), index0);
                     self.update_if_area_next(ns.input(), index1);
@@ -91,6 +95,15 @@ impl<F: GeoFloat> RelateNode<F> {
         if self.edges[index_next].is_interior(input, Direction::Right) {
             self.edges[index].set_area_interior(input);
         }
+    }
+
+    /// The index of the edge with the given direction point. The edge list
+    /// holds at most one edge per direction angle, so the lookup is exact.
+    fn find_edge_index(&self, dir_pt: Coord<F>) -> usize {
+        self.edges
+            .iter()
+            .position(|e| e.compare_to_edge(dir_pt) == Ordering::Equal)
+            .expect("edge with this direction was added")
     }
 
     fn add_line_edge(&mut self, input: InputIndex, dir_pt: Option<Coord<F>>) -> Option<usize> {
