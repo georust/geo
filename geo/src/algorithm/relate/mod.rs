@@ -1,6 +1,5 @@
 pub(crate) use edge_end_builder::EdgeEndBuilder;
 pub use geomgraph::intersection_matrix::IntersectionMatrix;
-use relate_operation::RelateOperation;
 
 use crate::geometry::*;
 #[deprecated(
@@ -8,11 +7,20 @@ use crate::geometry::*;
     note = "PreparedGeometry has moved to geo::indexed::PreparedGeometry"
 )]
 pub use crate::indexed::PreparedGeometry;
+#[deprecated(
+    since = "0.34.0",
+    note = "part of the legacy graph-based relate engine, superseded by RelateNG; will be removed in a future release"
+)]
 pub use crate::relate::geomgraph::GeometryGraph;
 use crate::{BoundingRect, GeoFloat, GeometryCow, HasDimensions};
 
+// The legacy graph-based engine is kept in-tree (still reachable through
+// `Relate::geometry_graph` and `PreparedGeometry`) until a future breaking
+// release removes it; `relate` itself now evaluates through `relateng`.
+#[allow(dead_code)]
 mod edge_end_builder;
 pub(crate) mod geomgraph;
+#[allow(dead_code, deprecated)]
 mod relate_operation;
 pub(crate) mod relateng;
 
@@ -62,17 +70,28 @@ pub(crate) mod relateng;
 pub trait Relate<F: GeoFloat>: BoundingRect<F> + HasDimensions {
     /// Returns a noded topology graph for the geometry.
     ///
+    /// Used by the legacy graph-based relate engine; `relate` itself no
+    /// longer calls this.
+    ///
     /// # Params
     ///
     /// `idx`: 0 or 1, designating A or B (respectively) in the role this geometry plays
     ///        in the relation. e.g. in `a.relate(b)`
+    #[deprecated(
+        since = "0.34.0",
+        note = "part of the legacy graph-based relate engine, superseded by RelateNG; will be removed in a future release"
+    )]
+    #[allow(deprecated)]
     fn geometry_graph(&self, idx: usize) -> GeometryGraph<'_, F>;
+
+    /// Returns a borrowed view of the geometry for relate evaluation.
+    fn geometry_cow(&self) -> GeometryCow<'_, F>;
 
     fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix
     where
         Self: Sized,
     {
-        RelateOperation::new(self, other).compute_intersection_matrix()
+        relateng::relate_ng::relate(&self.geometry_cow(), &other.geometry_cow())
     }
 }
 
@@ -80,8 +99,13 @@ macro_rules! relate_impl {
     ($($t:ty ,)*) => {
         $(
             impl<F: GeoFloat> Relate<F> for $t {
+                #[allow(deprecated)]
                 fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<'_, F> {
                     $crate::relate::GeometryGraph::new(arg_index, GeometryCow::from(self))
+                }
+
+                fn geometry_cow(&self) -> GeometryCow<'_, F> {
+                    GeometryCow::from(self)
                 }
             }
             impl<F: GeoFloat> From<$t> for PreparedGeometry<'static, $t, F> {

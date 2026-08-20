@@ -1,19 +1,30 @@
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
+use crate::GeoFloat;
 use crate::geometry::*;
-use crate::{GeoFloat, GeoNum};
+use crate::geometry_cow::GeometryCow;
 
 impl<T> Contains<Coord<T>> for GeometryCollection<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
 {
+    /// Point containment uses the union semantics of the collection, as
+    /// `relate` does: a point on the shared boundary of two adjacent
+    /// polygon elements lies in the interior of their union and is
+    /// contained. A member-wise check cannot express this, so the
+    /// evaluation goes through the relate engine.
     fn contains(&self, coord: &Coord<T>) -> bool {
-        self.iter().any(|geometry| geometry.contains(coord))
+        let point = Point::from(*coord);
+        crate::algorithm::relate::relateng::relate_ng::eval(
+            &GeometryCow::from(self),
+            &GeometryCow::from(&point),
+            &mut crate::algorithm::relate::relateng::relate_predicate::contains(),
+        )
     }
 }
 
 impl<T> Contains<Point<T>> for GeometryCollection<T>
 where
-    T: GeoNum,
+    T: GeoFloat,
 {
     fn contains(&self, point: &Point<T>) -> bool {
         self.contains(&point.0)

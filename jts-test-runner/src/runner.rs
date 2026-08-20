@@ -18,6 +18,7 @@ use geo::{ConvexHull, GeoNum};
 const GENERAL_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/general");
 const VALIDATE_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/validate");
 const MISC_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/misc");
+const ROBUST_TEST_XML: Dir = include_dir!("$CARGO_MANIFEST_DIR/resources/testxml/robust");
 
 #[derive(Debug, Default, Clone)]
 pub struct TestRunner {
@@ -58,9 +59,91 @@ impl TestRunner {
             expected_failures: vec![
                 // Degenerate case we don't yet handle: buffering a collapsed (flat) polygon
                 TestId {
-                    file_name: "TestBuffer.xml".to_string(),
+                    file_name: "general/TestBuffer.xml".to_string(),
                     case_idx: 6,
                     test_idx: 1,
+                },
+                // GEOS ticket 841: the fixture expects `contains` = false
+                // because the DECIMAL point (0.95, 0.05) lies on the
+                // triangle's hypotenuse. After f64 parsing the point lies
+                // strictly inside (0.95_f64 rounds below 0.95), so exact
+                // arithmetic on the parsed doubles answers true. The
+                // fixture documents a limitation of float parsing, not of
+                // the relate engine.
+                TestId {
+                    file_name: "robust/TestRobustRelateFloat.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
+                },
+                // "OLD robustness failure (works with snapping)" overlay
+                // cases: JTS passes these only via its snap-rounding
+                // fallback. i_overlay's integer-grid overlay produces the
+                // same slivers with quantised vertices (cases 0 and 1) or
+                // collapses a hairline sliver to empty (case 4). The same
+                // three cases appear in two fixture files.
+                TestId {
+                    file_name: "robust/TestRobustOverlayFloat.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "robust/TestRobustOverlayFloat.xml".to_string(),
+                    case_idx: 1,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "robust/TestRobustOverlayFloat.xml".to_string(),
+                    case_idx: 4,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "robust/overlay/TestOverlay-misc-3.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "robust/overlay/TestOverlay-misc-3.xml".to_string(),
+                    case_idx: 1,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "robust/overlay/TestOverlay-misc-3.xml".to_string(),
+                    case_idx: 4,
+                    test_idx: 0,
+                },
+                // The following files were previously skipped in their
+                // entirety, because a single unparseable case (e.g. POINT
+                // EMPTY) failed the whole-file deserialisation. Lenient
+                // per-case parsing now runs their remaining cases, which
+                // exposes these pre-existing gaps:
+                //
+                // geo has no LinearRing type: LINEARRING WKT parses as a
+                // LineString, and a self-intersecting LineString is valid,
+                // so the linear-ring bowtie cannot be reported invalid.
+                TestId {
+                    file_name: "general/TestValid.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
+                },
+                // geo's polygon validation does not flag a collapsed
+                // (zero-area, collinear) ring as invalid.
+                TestId {
+                    file_name: "general/TestValid.xml".to_string(),
+                    case_idx: 17,
+                    test_idx: 0,
+                },
+                // i_overlay output differs from the JTS expectation in
+                // sliver-precision cases (near-degenerate geometry;
+                // vertices differ at the precision limit).
+                TestId {
+                    file_name: "misc/TestOverlay.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "robust/overlay/TestOverlay-pg-list.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
                 },
             ],
             ..Self::default()
@@ -641,10 +724,18 @@ impl TestRunner {
             "**/*.xml".to_string()
         };
 
-        for entry in GENERAL_TEST_XML
-            .find(&filename_filter)?
-            .chain(VALIDATE_TEST_XML.find(&filename_filter)?)
-            .chain(MISC_TEST_XML.find(&filename_filter)?)
+        let corpora: [(&str, &Dir); 4] = [
+            ("general", &GENERAL_TEST_XML),
+            ("validate", &VALIDATE_TEST_XML),
+            ("misc", &MISC_TEST_XML),
+            ("robust", &ROBUST_TEST_XML),
+        ];
+        for (corpus, entry) in corpora
+            .iter()
+            .map(|(name, dir)| Ok((*name, dir.find(&filename_filter)?)))
+            .collect::<Result<Vec<_>>>()?
+            .into_iter()
+            .flat_map(|(name, entries)| entries.map(move |e| (name, e)))
         {
             let file = match entry {
                 DirEntry::Dir(_) => {
@@ -682,12 +773,10 @@ impl TestRunner {
                 for (test_idx, test) in tests.into_iter().enumerate() {
                     let description = case.desc.clone();
 
-                    let test_file_name = file
-                        .path()
-                        .file_name()
-                        .expect("file from include_dir unexpectedly missing name")
-                        .to_string_lossy()
-                        .to_string();
+                    // Qualify with the corpus directory: bare file
+                    // names are ambiguous (e.g. TestValid.xml exists in
+                    // both general/ and misc/).
+                    let test_file_name = format!("{}/{}", corpus, file.path().display());
 
                     let test_id = TestId {
                         file_name: test_file_name.clone(),
