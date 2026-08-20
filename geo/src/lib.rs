@@ -392,7 +392,7 @@ impl<T> GeoFloat for T where
 }
 
 /// A trait for methods which work for both integers **and** floating point
-pub trait GeoNum: CoordNum {
+pub trait GeoNum: CoordNum + Send + Sync {
     type Ker: Kernel<Self>;
 
     /// Return the ordering between self and other.
@@ -483,6 +483,23 @@ mod tests {
         assert_eq!(GeoNum::total_cmp(&3i32, &2i32), Ordering::Greater);
         assert_eq!(GeoNum::total_cmp(&2i32, &2i32), Ordering::Equal);
         assert_eq!(GeoNum::total_cmp(&1i32, &2i32), Ordering::Less);
+    }
+
+    #[test]
+    fn geo_num_is_send_sync() {
+        // Code that is generic over `T: GeoNum` can rely on `Send + Sync`
+        // without extra bounds. This does not compile if the supertrait
+        // bound is removed.
+        fn assert_send_sync<T: Send + Sync>() {}
+        fn assert_geo_num_send_sync<T: GeoNum>() {
+            assert_send_sync::<T>();
+        }
+        assert_geo_num_send_sync::<f32>();
+        assert_geo_num_send_sync::<f64>();
+        assert_geo_num_send_sync::<i16>();
+        assert_geo_num_send_sync::<i32>();
+        assert_geo_num_send_sync::<i64>();
+        assert_geo_num_send_sync::<i128>();
     }
 
     #[test]
