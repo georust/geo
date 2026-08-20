@@ -225,12 +225,15 @@ impl<'a, F: GeoFloat> RelateGeometry<'a, F> {
         self.locator().has_boundary()
     }
 
-    /// The distinct coordinates of the geometry's point elements. Cached
-    /// for reuse in prepared mode. Only meaningful for puntal geometries.
+    /// The distinct representative coordinates of the geometry's point and
+    /// line components (JTS `ComponentCoordinateExtracter`: one coordinate
+    /// per component). Zero-length lines are effectively points, so their
+    /// coordinate is included. Cached for reuse in prepared mode. Only
+    /// used for geometries with real dimension 0.
     pub fn unique_points(&self) -> &BTreeSet<NodeKey<F>> {
         self.unique_points.get_or_init(|| {
             let mut set = BTreeSet::new();
-            collect_point_coords_cow(self.geom, &mut |c| {
+            collect_component_coords_cow(self.geom, &mut |c| {
                 set.insert(NodeKey(c));
             });
             set
@@ -615,6 +618,73 @@ fn is_zero_length_line<F: GeoFloat>(line: &LineString<F>) -> bool {
         return line.0.iter().all(|&p| p == p0);
     }
     true
+}
+
+/// Applies `f` to one representative coordinate (the first) of every
+/// point and line component of the geometry, in document order (the JTS
+/// `ComponentCoordinateExtracter` semantic). Polygonal components are not
+/// visited; the callers only use this for zero-dimensional geometries.
+fn collect_component_coords_cow<F: GeoFloat>(
+    geom: &GeometryCow<'_, F>,
+    f: &mut impl FnMut(Coord<F>),
+) {
+    match geom {
+        GeometryCow::Point(p) => f(p.0),
+        GeometryCow::Line(l) => f(l.start),
+        GeometryCow::LineString(ls) => {
+            if let Some(&c) = ls.0.first() {
+                f(c);
+            }
+        }
+        GeometryCow::MultiPoint(mp) => {
+            for p in &mp.0 {
+                f(p.0);
+            }
+        }
+        GeometryCow::MultiLineString(mls) => {
+            for ls in &mls.0 {
+                if let Some(&c) = ls.0.first() {
+                    f(c);
+                }
+            }
+        }
+        GeometryCow::GeometryCollection(gc) => {
+            for g in &gc.0 {
+                collect_component_coords_geom(g, f);
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_component_coords_geom<F: GeoFloat>(geom: &Geometry<F>, f: &mut impl FnMut(Coord<F>)) {
+    match geom {
+        Geometry::Point(p) => f(p.0),
+        Geometry::Line(l) => f(l.start),
+        Geometry::LineString(ls) => {
+            if let Some(&c) = ls.0.first() {
+                f(c);
+            }
+        }
+        Geometry::MultiPoint(mp) => {
+            for p in &mp.0 {
+                f(p.0);
+            }
+        }
+        Geometry::MultiLineString(mls) => {
+            for ls in &mls.0 {
+                if let Some(&c) = ls.0.first() {
+                    f(c);
+                }
+            }
+        }
+        Geometry::GeometryCollection(gc) => {
+            for g in &gc.0 {
+                collect_component_coords_geom(g, f);
+            }
+        }
+        _ => {}
+    }
 }
 
 /// Applies `f` to the coordinate of every point element of the geometry,
