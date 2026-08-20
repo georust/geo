@@ -670,13 +670,13 @@ impl TestRunner {
             for (case_idx, mut case) in run.cases.into_iter().enumerate() {
                 if let Some(desc_filter) = &self.desc_filter {
                     if case.desc.as_str().contains(desc_filter) {
-                        debug!("filter matched case: {}", &case.desc);
+                        debug!("filter matched case: {}", case.desc);
                     } else {
-                        debug!("filter skipped case: {}", &case.desc);
+                        debug!("filter skipped case: {}", case.desc);
                         continue;
                     }
                 } else {
-                    debug!("parsing case {}:", &case.desc);
+                    debug!("parsing case {}:", case.desc);
                 }
                 let tests = std::mem::take(&mut case.tests);
                 for (test_idx, test) in tests.into_iter().enumerate() {

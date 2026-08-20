@@ -133,7 +133,7 @@ where
 
         debug!(
             "before update_intersection_matrix: {:?}",
-            &intersection_matrix
+            intersection_matrix
         );
         Self::update_intersection_matrix(
             &isolated_edge_labels,
