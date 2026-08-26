@@ -11,11 +11,12 @@ use std::fmt::{Debug, Formatter};
 use crate::dimensions::Dimensions;
 use rstar::RTreeNum;
 
-/// A `PreparedGeometry` caches the spatial indexes that topological
-/// comparisons use: a segment [R-tree](https://en.wikipedia.org/wiki/R-tree),
-/// per-polygon point-in-area locators, and the set of unique points.
-/// The indexes are built on the first comparison that needs them and are
-/// reused by later comparisons, so a `PreparedGeometry` can be more
+/// A `PreparedGeometry` caches the spatial indexes and derived state that
+/// topological comparisons use: a segment
+/// [R-tree](https://en.wikipedia.org/wiki/R-tree), per-polygon
+/// point-in-area locators, per-line envelopes and boundary points, and the
+/// set of unique points. They are built on the first comparison that needs
+/// them and are reused by later comparisons, so a `PreparedGeometry` can be more
 /// efficient than a plain `Geometry` when it is compared many times.
 ///
 /// ```
@@ -43,8 +44,7 @@ where
     /// `Relate::geometry_graph`.
     geometry_graph: OnceCell<GeometryGraph<'a, F>>,
     /// The RelateNG caches reused across `relate` calls: the geometry
-    /// metadata, segment index, per-element area locators, and unique
-    /// points.
+    /// metadata, segment index, point-locator state, and unique points.
     relate_state: PreparedRelateState<F>,
 }
 
