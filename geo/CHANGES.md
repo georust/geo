@@ -10,6 +10,7 @@
   - <https://github.com/georust/geo/issues/1585>
   - BREAKING: the `Relate` trait gains a required `geometry_cow` method (the trait is not practically implementable outside geo, since `GeometryGraph` has no public constructor).
   - DEPRECATED: `Relate::geometry_graph` and the `geo::relate::GeometryGraph` re-export; the graph-based engine is no longer used by `relate` and will be removed in a future release.
+  - `PreparedGeometry` also reuses the per-line envelopes, linear boundary points and adjacent-edge locator of linear and mixed geometries, so a repeated `relate` against a prepared linear geometry costs a walk of its elements rather than of its coordinates.
 - `line_intersection::line_intersection` now computes intersection points with double-double extended-precision arithmetic, matching current JTS (`CGAlgorithmsDD.intersection`). Computed points can differ from previous releases by roughly one ULP; the new values match JTS exactly.
   - <https://github.com/locationtech/jts/pull/989>
 - `Contains<Point>` / `Contains<Coord>` for `GeometryCollection` and `MultiLineString` now use the union semantics of the collection, consistent with `relate` and JTS: a point on the shared boundary of two adjacent polygon elements, or an endpoint shared by two line elements, lies in the interior of their union and is contained. Previously the check was member-wise and reported such points as not contained.

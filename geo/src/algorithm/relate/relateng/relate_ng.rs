@@ -28,7 +28,7 @@ use super::edge_segment_intersector::{
 };
 use super::im_predicate::RelateMatrixPredicate;
 use super::relate_geometry::{GeometryMeta, RelateGeometry};
-use super::relate_point_locator::{Mode, Polygonal};
+use super::relate_point_locator::{Mode, Polygonal, PreparedLocatorCache};
 use super::topology_computer::TopologyComputer;
 use super::topology_predicate::{
     InputIndex, TopologyPredicate, envelope_covers, envelopes_intersect,
@@ -61,8 +61,8 @@ pub(crate) fn eval<F: GeoFloat>(
 pub(crate) struct PreparedRelateState<F: GeoFloat> {
     /// The A-side segment index, built over all A edges on first use.
     edge_mutual_int: OnceCell<MutualSegmentSetIntersector<F>>,
-    /// The per-polygonal-element area locators of A.
-    area_locators: super::relate_point_locator::SharedAreaLocators<F>,
+    /// The point-locator state of A that costs a coordinate walk.
+    locator_cache: PreparedLocatorCache<F>,
     /// The unique points of A (for the P/P fast path).
     unique_points:
         OnceCell<std::collections::BTreeSet<crate::relate::geomgraph::node_map::NodeKey<F>>>,
@@ -74,7 +74,7 @@ impl<F: GeoFloat> Default for PreparedRelateState<F> {
     fn default() -> Self {
         Self {
             edge_mutual_int: OnceCell::new(),
-            area_locators: OnceCell::new(),
+            locator_cache: PreparedLocatorCache::default(),
             unique_points: OnceCell::new(),
             meta: OnceCell::new(),
         }
@@ -113,7 +113,7 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
         Self {
             geom_a: RelateGeometry::with_meta(
                 a,
-                Mode::Prepared(&state.area_locators),
+                Mode::Prepared(&state.locator_cache),
                 *state.meta(a),
             ),
             state,

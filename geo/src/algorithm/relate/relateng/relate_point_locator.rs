@@ -175,21 +175,22 @@ impl<'a, F: GeoFloat> GeometryElements<'a, F> {
         self.points.insert(NodeKey(p));
     }
 
+    // Envelopes are filled in by the locator, which may take them from
+    // the prepared cache instead of walking the coordinates.
     fn add_line(&mut self, line: &'a LineString<F>) {
         if line.0.is_empty() {
             return;
         }
         self.lines.push(LineElement {
-            env: line.bounding_rect(),
             line: Cow::Borrowed(line),
+            env: None,
         });
     }
 
     fn add_line_segment(&mut self, start: Coord<F>, end: Coord<F>) {
-        let line = LineString::new(vec![start, end]);
         self.lines.push(LineElement {
-            env: line.bounding_rect(),
-            line: Cow::Owned(line),
+            line: Cow::Owned(LineString::new(vec![start, end])),
+            env: None,
         });
     }
 
@@ -222,11 +223,36 @@ impl<'a, F: GeoFloat> GeometryElements<'a, F> {
     }
 }
 
-/// A cache of the per-polygonal-element area indexes of a geometry, owned
-/// by prepared state and shared across evaluations. The outer cell is
-/// initialised on first use to one cell per polygonal element, in document
-/// order.
-pub(crate) type SharedAreaLocators<F> = OnceCell<Vec<OnceCell<IntervalTreeMultiPolygon<F>>>>;
+/// The parts of a point locator that cost a walk of the geometry's
+/// coordinates, owned by prepared state and reused by every locator
+/// constructed over the same geometry. Each part is built on first use.
+/// Per-element entries are in document order, so they line up with the
+/// elements a locator extracts from the same geometry.
+///
+/// The locator itself borrows the geometry and so cannot be stored next
+/// to it in a prepared geometry; with this cache a per-evaluation locator
+/// costs a walk of the elements rather than of the coordinates.
+pub(crate) struct PreparedLocatorCache<F: GeoFloat> {
+    /// The envelope of each linear element.
+    line_envelopes: OnceCell<Vec<Option<Rect<F>>>>,
+    /// The boundary points of the linear elements; `None` when there are
+    /// no linear elements.
+    line_boundary: OnceCell<Option<LinearBoundary<F>>>,
+    /// One area index cell per polygonal element.
+    area_locators: OnceCell<Vec<OnceCell<IntervalTreeMultiPolygon<F>>>>,
+    adj_edge_locator: OnceCell<AdjacentEdgeLocator<F>>,
+}
+
+impl<F: GeoFloat> Default for PreparedLocatorCache<F> {
+    fn default() -> Self {
+        Self {
+            line_envelopes: OnceCell::new(),
+            line_boundary: OnceCell::new(),
+            area_locators: OnceCell::new(),
+            adj_edge_locator: OnceCell::new(),
+        }
+    }
+}
 
 /// How an input geometry is evaluated.
 #[derive(Clone, Copy)]
@@ -235,9 +261,9 @@ pub(crate) enum Mode<'a, F: GeoFloat> {
     /// the edge index is filtered to the opposing envelope.
     Simple,
     /// Repeated evaluations against the same geometry: point-in-area
-    /// location is indexed, with the per-element indexes stored in state
-    /// that outlives the evaluation.
-    Prepared(&'a SharedAreaLocators<F>),
+    /// location is indexed, and the locator state that costs a coordinate
+    /// walk is taken from a cache that outlives the evaluation.
+    Prepared(&'a PreparedLocatorCache<F>),
 }
 
 impl<F: GeoFloat> Mode<'_, F> {
@@ -249,43 +275,56 @@ impl<F: GeoFloat> Mode<'_, F> {
 pub(crate) struct RelatePointLocator<'a, F: GeoFloat> {
     is_empty: bool,
     elements: GeometryElements<'a, F>,
-    line_boundary: Option<LinearBoundary<F>>,
+    /// Owned in simple mode, borrowed from the cache in prepared mode.
+    line_boundary: Cow<'a, Option<LinearBoundary<F>>>,
     /// Prepared mode: the lazily built index per polygonal element.
     poly_locators: Option<&'a [OnceCell<IntervalTreeMultiPolygon<F>>]>,
-    adj_edge_locator: OnceCell<AdjacentEdgeLocator<F>>,
+    /// Prepared mode: the cached adjacent-edge locator cell.
+    shared_adj_edge_locator: Option<&'a OnceCell<AdjacentEdgeLocator<F>>>,
+    /// Simple mode: the adjacent-edge locator cell.
+    own_adj_edge_locator: OnceCell<AdjacentEdgeLocator<F>>,
 }
 
 impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
-    /// In prepared mode the shared area locators must belong to the same
-    /// geometry.
+    /// In prepared mode the cache must belong to the same geometry.
     pub fn new(geom: &'a GeometryCow<'a, F>, mode: Mode<'a, F>) -> Self {
-        let elements = GeometryElements::extract(geom);
+        let mut elements = GeometryElements::extract(geom);
         let is_empty = elements.is_empty();
-        let line_boundary = if elements.lines.is_empty() {
-            None
-        } else {
-            Some(LinearBoundary::new(
-                elements.lines.iter().map(|l| l.line.as_ref()),
-            ))
-        };
-        let poly_locators = match mode {
-            Mode::Simple => None,
-            Mode::Prepared(shared) => Some(
-                shared
-                    .get_or_init(|| {
-                        (0..elements.polygonals.len())
-                            .map(|_| OnceCell::new())
-                            .collect()
-                    })
-                    .as_slice(),
-            ),
+        let lines = &mut elements.lines;
+        let (line_boundary, poly_locators, shared_adj_edge_locator) = match mode {
+            Mode::Simple => {
+                for elem in lines.iter_mut() {
+                    elem.env = elem.line.bounding_rect();
+                }
+                (Cow::Owned(line_boundary(lines)), None, None)
+            }
+            Mode::Prepared(cache) => {
+                let envs = cache
+                    .line_envelopes
+                    .get_or_init(|| lines.iter().map(|l| l.line.bounding_rect()).collect());
+                for (elem, env) in lines.iter_mut().zip(envs) {
+                    elem.env = *env;
+                }
+                let boundary = cache.line_boundary.get_or_init(|| line_boundary(lines));
+                let cells = cache.area_locators.get_or_init(|| {
+                    (0..elements.polygonals.len())
+                        .map(|_| OnceCell::new())
+                        .collect()
+                });
+                (
+                    Cow::Borrowed(boundary),
+                    Some(cells.as_slice()),
+                    Some(&cache.adj_edge_locator),
+                )
+            }
         };
         Self {
             is_empty,
             elements,
             line_boundary,
             poly_locators,
-            adj_edge_locator: OnceCell::new(),
+            shared_adj_edge_locator,
+            own_adj_edge_locator: OnceCell::new(),
         }
     }
 
@@ -297,11 +336,13 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
         self.elements.polygonals()
     }
 
+    fn line_boundary(&self) -> Option<&LinearBoundary<F>> {
+        Option::as_ref(&self.line_boundary)
+    }
+
     /// Whether the linear components have any boundary points.
     pub fn has_boundary(&self) -> bool {
-        self.line_boundary
-            .as_ref()
-            .is_some_and(|lb| lb.has_boundary())
+        self.line_boundary().is_some_and(|lb| lb.has_boundary())
     }
 
     pub fn locate(&self, p: Coord<F>) -> CoordPos {
@@ -321,10 +362,7 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
             }
         }
         // Not in an area, so return the line end location.
-        let is_boundary = self
-            .line_boundary
-            .as_ref()
-            .is_some_and(|lb| lb.is_boundary(p));
+        let is_boundary = self.line_boundary().is_some_and(|lb| lb.is_boundary(p));
         if is_boundary {
             DimensionLocation::LineBoundary
         } else {
@@ -404,11 +442,7 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
     }
 
     fn locate_on_lines(&self, p: Coord<F>, is_node: bool) -> CoordPos {
-        if self
-            .line_boundary
-            .as_ref()
-            .is_some_and(|lb| lb.is_boundary(p))
-        {
+        if self.line_boundary().is_some_and(|lb| lb.is_boundary(p)) {
             return CoordPos::OnBoundary;
         }
         // A node must be on a line, in the interior.
@@ -462,7 +496,8 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
             // The point lies on more than one polygon boundary: determine
             // the effective location from the adjacent edges.
             let adj_locator = self
-                .adj_edge_locator
+                .shared_adj_edge_locator
+                .unwrap_or(&self.own_adj_edge_locator)
                 .get_or_init(|| AdjacentEdgeLocator::new(&self.elements.polygonals));
             adj_locator.locate(p)
         } else {
@@ -487,6 +522,15 @@ impl<'a, F: GeoFloat> RelatePointLocator<'a, F> {
                 .containment_parity(p),
             None => polygonal.coordinate_position(p),
         }
+    }
+}
+
+/// The boundary of the linear elements; `None` when there are none.
+fn line_boundary<F: GeoFloat>(lines: &[LineElement<'_, F>]) -> Option<LinearBoundary<F>> {
+    if lines.is_empty() {
+        None
+    } else {
+        Some(LinearBoundary::new(lines.iter().map(|l| l.line.as_ref())))
     }
 }
 
@@ -521,10 +565,13 @@ mod tests {
         let locator = RelatePointLocator::new(&cow, Mode::Simple);
         assert_eq!(locator.locate_with_dim(Coord { x, y }), expected);
         // Not in JTS: the prepared (indexed) mode must agree with the
-        // simple mode.
-        let shared = SharedAreaLocators::default();
-        let prepared = RelatePointLocator::new(&cow, Mode::Prepared(&shared));
+        // simple mode, both when the cache is empty and when a second
+        // locator reuses the cache filled by the first.
+        let cache = PreparedLocatorCache::default();
+        let prepared = RelatePointLocator::new(&cow, Mode::Prepared(&cache));
         assert_eq!(prepared.locate_with_dim(Coord { x, y }), expected);
+        let reused = RelatePointLocator::new(&cow, Mode::Prepared(&cache));
+        assert_eq!(reused.locate_with_dim(Coord { x, y }), expected);
     }
 
     fn check_line_end_dim_location(
