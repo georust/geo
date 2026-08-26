@@ -7,6 +7,11 @@ use crate::geometry_cow::GeometryCow::Point;
 use crate::relate::geomgraph::intersection_matrix::dimension_matcher::DimensionMatcher;
 use std::str::FromStr;
 
+/// The row and column order of the matrix, which is also the order of the
+/// entries in a DE-9IM specification string.
+pub(crate) const LOCATION_ORDER: [CoordPos; 3] =
+    [CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside];
+
 /// Output from [`Relate::relate`](trait.Relate.html) which models a *Dimensionally Extended Nine-Intersection Model (DE-9IM)* matrix.
 ///
 /// Represented as 3x3 matrices, they express the topological relationships between the Interior, Boundary, and Exterior of two geometries.
@@ -375,8 +380,8 @@ impl IntersectionMatrix {
         }
 
         let mut chars = dimensions.chars();
-        for a in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
-            for b in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
+        for a in &LOCATION_ORDER {
+            for b in &LOCATION_ORDER {
                 match chars.next().expect("already validated length is 9") {
                     '0' => self.0[*a][*b] = self.0[*a][*b].max(Dimensions::ZeroDimensional),
                     '1' => self.0[*a][*b] = self.0[*a][*b].max(Dimensions::OneDimensional),
@@ -805,8 +810,8 @@ impl IntersectionMatrix {
         }
 
         let mut chars = spec.chars();
-        for a in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
-            for b in &[CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
+        for a in &LOCATION_ORDER {
+            for b in &LOCATION_ORDER {
                 let dim_spec = dimension_matcher::DimensionMatcher::try_from(
                     chars.next().expect("already validated length is 9"),
                 )?;
