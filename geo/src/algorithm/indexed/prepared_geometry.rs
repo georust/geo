@@ -2,8 +2,10 @@ use crate::geometry::*;
 use crate::relate::IntersectionMatrix;
 use crate::relate::geomgraph::GeometryGraph;
 use crate::relate::relateng::relate_ng::{PreparedRelateState, RelateNG};
+use crate::relate::relateng::relate_predicate;
+use crate::relate::relateng::topology_predicate::TopologyPredicate;
 use crate::{BoundingRect, GeometryCow, HasDimensions};
-use crate::{GeoFloat, Relate};
+use crate::{Contains, ContainsProperly, Covers, GeoFloat, Intersects, Relate};
 
 use std::cell::OnceCell;
 use std::fmt::{Debug, Formatter};
@@ -19,8 +21,14 @@ use rstar::RTreeNum;
 /// them and are reused by later comparisons, so a `PreparedGeometry` can be more
 /// efficient than a plain `Geometry` when it is compared many times.
 ///
+/// The predicate traits [`Intersects`], [`Contains`], [`Covers`] and
+/// [`ContainsProperly`] are implemented against any geometry that
+/// implements [`Relate`]. They use the cached state and stop as soon as
+/// the result is known, so they are cheaper than computing the full
+/// matrix with [`Relate::relate`] and testing it.
+///
 /// ```
-/// use geo::{Relate, PreparedGeometry, wkt};
+/// use geo::{Contains, Intersects, Relate, PreparedGeometry, wkt};
 ///
 /// let polygon = wkt! { POLYGON((2.0 2.0,2.0 6.0,4.0 6.0)) };
 /// let touching_line = wkt! { LINESTRING(0.0 0.0,2.0 2.0) };
@@ -29,8 +37,8 @@ use rstar::RTreeNum;
 ///
 /// let prepared_polygon = PreparedGeometry::from(polygon);
 /// assert!(prepared_polygon.relate(&touching_line).is_touches());
-/// assert!(prepared_polygon.relate(&intersecting_line).is_intersects());
-/// assert!(prepared_polygon.relate(&contained_line).is_contains());
+/// assert!(prepared_polygon.intersects(&intersecting_line));
+/// assert!(prepared_polygon.contains(&contained_line));
 ///
 /// ```
 pub struct PreparedGeometry<'a, G, F = f64>
@@ -163,14 +171,54 @@ where
     }
 
     /// Relates against the B geometry with the cached prepared state: the
-    /// A-side segment index, area locators and unique points are built
-    /// once and reused across calls.
+    /// A-side segment index, point-locator state and unique points are
+    /// built once and reused across calls.
     fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix {
         let cow = self.geometry_cow();
         let engine = RelateNG::prepared(&cow, &self.relate_state);
         engine.evaluate_matrix(&other.geometry_cow())
     }
 }
+
+impl<'a, G, F> PreparedGeometry<'a, G, F>
+where
+    F: GeoFloat,
+    G: Into<GeometryCow<'a, F>>,
+{
+    /// Evaluates a topological predicate against the B geometry with the
+    /// cached prepared state, stopping as soon as the value is known.
+    fn evaluate(&self, other: &impl Relate<F>, predicate: &mut dyn TopologyPredicate<F>) -> bool {
+        let cow = self.geometry_cow();
+        let engine = RelateNG::prepared(&cow, &self.relate_state);
+        engine.evaluate(&other.geometry_cow(), predicate)
+    }
+}
+
+/// Implements a predicate trait for `PreparedGeometry` against any
+/// `Relate` geometry, evaluated with the cached prepared state.
+macro_rules! impl_prepared_predicate {
+    ($trait:ident, $method:ident, $predicate:expr) => {
+        impl<'a, G, F, R> $trait<R> for PreparedGeometry<'a, G, F>
+        where
+            F: GeoFloat,
+            G: Into<GeometryCow<'a, F>>,
+            R: Relate<F>,
+        {
+            fn $method(&self, rhs: &R) -> bool {
+                self.evaluate(rhs, &mut $predicate)
+            }
+        }
+    };
+}
+
+impl_prepared_predicate!(Intersects, intersects, relate_predicate::intersects());
+impl_prepared_predicate!(Contains, contains, relate_predicate::contains());
+impl_prepared_predicate!(Covers, covers, relate_predicate::covers());
+impl_prepared_predicate!(
+    ContainsProperly,
+    contains_properly,
+    relate_predicate::contains_properly()
+);
 
 #[cfg(test)]
 mod tests {
@@ -306,5 +354,87 @@ mod tests {
 
         let im = prepared_poly.relate(&prepared_multi_point);
         assert!(im.matches("0F2FF1FF2").unwrap(), "got {im:?}");
+    }
+
+    // Not in JTS: the predicate traits on a prepared geometry must agree
+    // with the full matrix and with the unprepared predicates, for every
+    // argument type, and across repeated calls that reuse the cache.
+    #[test]
+    fn predicates_agree_with_relate_and_unprepared() {
+        use crate::relate::relateng::relate_predicate::intersection_matrix_pattern::CONTAINS_PROPERLY;
+        use crate::{Contains, ContainsProperly, Covers, Intersects};
+
+        let a_geoms: Vec<Geometry> = vec![
+            wkt!(POLYGON((0. 0., 10. 0., 10. 10., 0. 10., 0. 0.), (4. 4., 6. 4., 6. 6., 4. 6., 4. 4.))).into(),
+            wkt!(MULTILINESTRING((0. 0., 10. 0.), (10. 0., 10. 10.), (2. 2., 8. 8.))).into(),
+            Geometry::GeometryCollection(wkt!(GEOMETRYCOLLECTION(
+                POLYGON((0. 0., 5. 0., 5. 5., 0. 5., 0. 0.)),
+                POLYGON((5. 0., 10. 0., 10. 5., 5. 5., 5. 0.)),
+                LINESTRING(0. 8., 10. 8.),
+                POINT(1. 9.)
+            ))),
+            wkt!(MULTIPOINT(1. 1., 5. 5., 9. 9.)).into(),
+        ];
+        let b_geoms: Vec<Geometry> = vec![
+            wkt!(POINT(5. 5.)).into(),
+            wkt!(POINT(1. 9.)).into(),
+            wkt!(POINT(20. 20.)).into(),
+            wkt!(LINESTRING(1. 1., 3. 1.)).into(),
+            wkt!(LINESTRING(5. 0., 5. 5.)).into(),
+            wkt!(LINESTRING(0. 8., 10. 8.)).into(),
+            wkt!(LINESTRING(-1. -1., 11. 11.)).into(),
+            wkt!(POLYGON((1. 1., 3. 1., 3. 3., 1. 3., 1. 1.))).into(),
+            wkt!(POLYGON((4.5 4.5, 5.5 4.5, 5.5 5.5, 4.5 5.5, 4.5 4.5))).into(),
+            wkt!(POLYGON((0. 0., 10. 0., 10. 10., 0. 10., 0. 0.))).into(),
+            wkt!(MULTIPOINT(1. 1., 5. 5.)).into(),
+            wkt!(MULTIPOINT(1. 1., 20. 20.)).into(),
+            Geometry::GeometryCollection(
+                wkt!(GEOMETRYCOLLECTION(POINT(2. 2.), LINESTRING(2. 2., 3. 3.))),
+            ),
+            Geometry::GeometryCollection(wkt!(GEOMETRYCOLLECTION EMPTY)),
+        ];
+        for a in &a_geoms {
+            let prepared = PreparedGeometry::from(a);
+            for _pass in 0..2 {
+                for b in &b_geoms {
+                    let im = a.relate(b);
+                    let ctx = format!("A = {a:?}, B = {b:?}");
+                    assert_eq!(
+                        prepared.intersects(b),
+                        im.is_intersects(),
+                        "intersects: {ctx}"
+                    );
+                    assert_eq!(prepared.contains(b), im.is_contains(), "contains: {ctx}");
+                    assert_eq!(prepared.covers(b), im.is_covers(), "covers: {ctx}");
+                    assert_eq!(
+                        prepared.contains_properly(b),
+                        im.matches(CONTAINS_PROPERLY).unwrap(),
+                        "contains_properly: {ctx}"
+                    );
+                    assert_eq!(
+                        prepared.intersects(b),
+                        a.intersects(b),
+                        "intersects vs unprepared: {ctx}"
+                    );
+                    assert_eq!(
+                        prepared.contains(b),
+                        a.contains(b),
+                        "contains vs unprepared: {ctx}"
+                    );
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn predicates_accept_prepared_arguments() {
+        let a = wkt!(POLYGON((0. 0., 10. 0., 10. 10., 0. 10., 0. 0.)));
+        let b = wkt!(POLYGON((2. 2., 4. 2., 4. 4., 2. 4., 2. 2.)));
+        let prepared_a = PreparedGeometry::from(&a);
+        let prepared_b = PreparedGeometry::from(&b);
+        assert!(prepared_a.contains(&prepared_b));
+        assert!(prepared_a.contains_properly(&prepared_b));
+        assert!(prepared_b.intersects(&prepared_a));
+        assert!(!prepared_b.covers(&prepared_a));
     }
 }
