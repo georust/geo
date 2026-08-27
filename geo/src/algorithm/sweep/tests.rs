@@ -165,6 +165,27 @@ fn sweep_line_interval_ordering_holds_for_signed_zero() {
     }
 }
 
+/// A segment whose maximum `x` is `-0.0` must still be swept against a segment
+/// starting at `+0.0`: the two coordinates denote the same position.
+///
+/// See <https://github.com/georust/geo/issues/1578>.
+#[test]
+fn sweep_spans_signed_zero_boundary() {
+    // The first segment is deleted at `-0.0`, the second inserted at `+0.0`.
+    let segments = vec![
+        Line::from([(-1.0, 0.0), (-0.0, 0.0)]),
+        Line::from([(0.0, 0.0), (1.0, 0.0)]),
+    ];
+    verify_intersections(&segments);
+
+    // Same shape, but the shared endpoint is a genuine crossing rather than a touch.
+    let segments = vec![
+        Line::from([(-1.0, -1.0), (-0.0, 1.0)]),
+        Line::from([(0.0, -1.0), (1.0, 1.0)]),
+    ];
+    verify_intersections(&segments);
+}
+
 #[test]
 fn test_iterator_behavior() {
     let input = vec![

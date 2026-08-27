@@ -929,4 +929,38 @@ mod test {
         );
         let _ = poly.interior_point();
     }
+
+    #[test]
+    fn polygon_with_negative_zero_coordinate_does_not_panic() {
+        // Regression for https://github.com/georust/geo/issues/1578: an edge whose
+        // maximum `x` is `-0.0` tripped the sweep line's `intervals_overlap` assertion,
+        // even though `-0.0` and `+0.0` are the same position.
+        let poly = Polygon::new(
+            LineString::from(vec![
+                (-5.0, 0.0),
+                (-0.0, 5.0),
+                (0.0, 10.0),
+                (5.0, 0.0),
+                (-5.0, 0.0),
+            ]),
+            vec![],
+        );
+
+        let interior_point = poly.interior_point().unwrap();
+        assert!(poly.contains(&interior_point));
+
+        // Replacing `-0.0` with `+0.0` describes the very same polygon, so it must
+        // produce the very same interior point.
+        let positive_zero = Polygon::new(
+            LineString::from(vec![
+                (-5.0, 0.0),
+                (0.0, 5.0),
+                (0.0, 10.0),
+                (5.0, 0.0),
+                (-5.0, 0.0),
+            ]),
+            vec![],
+        );
+        assert_eq!(interior_point, positive_zero.interior_point().unwrap());
+    }
 }
