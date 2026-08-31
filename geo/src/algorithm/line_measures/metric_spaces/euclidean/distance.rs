@@ -612,9 +612,19 @@ struct ProjectedVertex<F: GeoFloat> {
 /// - Any closer pair must have perpendicular separation `< d_min`
 /// - Therefore their intercept difference must be `< d_min * sqrt(1 + slope²)`
 ///
-/// If two `PQ` pair vertices have intercept difference `> max_projection_delta`, they CANNOT be closer
-/// than `d_min` regardless of where they lie along their respective parallel lines. This is
-/// conservative but guarantees we never skip a potentially optimal pair.
+/// If two `PQ` pair vertices have intercept difference `> max_projection_delta`, the two vertices
+/// CANNOT be closer than `d_min` regardless of where they lie along their respective parallel lines.
+///
+/// ## Why the Pruning is One-Sided
+///
+/// Pairs are scored on the segments *adjacent to* the two vertices, so the vertex bound
+/// transfers only in the iteration direction: for the realising edge pair, the
+/// higher-intercept left endpoint `u` and lower-intercept right endpoint `w` satisfy
+/// `intercept(w) - intercept(u) <= d * scale`, so `(u, w)` survives the forward breaks and
+/// evaluates the realising edges. The reverse difference is bounded only after adding the
+/// two edges' own intercept spans – an edge can run a long way back along the projection
+/// axis from the vertex that indexes it – so the prefix skip widens its threshold by
+/// `span_allowance`, the sum of each geometry's largest edge span.
 ///
 /// # Performance
 ///
@@ -655,11 +665,14 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
     let q_closed = q_coords.first() == q_coords.last();
 
     // Step 1: Project all vertices into 1D space
-    // This gives us intercepts + index of original vertex
-    let mut projected_vertices_p =
+    // This gives us intercepts + index of original vertex, plus each geometry's largest
+    // edge intercept span; their sum widens the prefix skip (see "Why the Pruning is
+    // One-Sided")
+    let (mut projected_vertices_p, p_edge_span) =
         calculate_vertex_intercepts(p_coords, slope, use_x_projection, p_closed);
-    let mut projected_vertices_q =
+    let (mut projected_vertices_q, q_edge_span) =
         calculate_vertex_intercepts(q_coords, slope, use_x_projection, q_closed);
+    let span_allowance = p_edge_span + q_edge_span;
 
     // Step 2: Sort vertices by intercepts for spatial locality
     projected_vertices_p.sort_unstable_by(|a, b| a.intercept.total_cmp(&b.intercept));
@@ -753,15 +766,13 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
             break;
         }
 
-        // The distance bound is symmetric in the intercept difference, so right
-        // vertices whose intercepts lie *below* vertex1's by more than the threshold
-        // cannot yield a closer pair either. When the two projections overlap, that
-        // prefix can be long: locate its end by binary search instead of evaluating
-        // full segment distances for it. The cheap first-element check skips the
-        // search in the common non-overlapping case
-        let start = if vertex1.intercept - right_intercepts[0].intercept > max_projection_delta {
-            right_intercepts
-                .partition_point(|v| vertex1.intercept - v.intercept > max_projection_delta)
+        // Right vertices projecting *below* vertex1 can also be skipped, but only at a
+        // threshold widened by `span_allowance` (see "Why the Pruning is One-Sided").
+        // Binary search for the end of the skippable prefix; the cheap first-element
+        // check avoids it in the common non-overlapping case
+        let prefix_threshold = max_projection_delta + span_allowance;
+        let start = if vertex1.intercept - right_intercepts[0].intercept > prefix_threshold {
+            right_intercepts.partition_point(|v| vertex1.intercept - v.intercept > prefix_threshold)
         } else {
             0
         };
@@ -800,6 +811,9 @@ fn separable_geometry_distance_fast<F: GeoFloat>(
 /// `y` axis would work, but one is chosen to avoid division by zero errors / small values causing fp
 /// issues.
 ///
+/// Also returns the largest absolute intercept difference across any edge, measured
+/// while the vertices are still in original order (the caller sorts them afterwards).
+///
 /// # Notes
 /// This function excludes the duplicate closing vertex in polygon rings to avoid
 /// redundant calculations, as the first and last vertices are identical in closed polygons.
@@ -808,7 +822,7 @@ fn calculate_vertex_intercepts<F: GeoFloat>(
     perpendicular_slope: F,
     use_x_intercept: bool,
     is_closed: bool,
-) -> Vec<ProjectedVertex<F>> {
+) -> (Vec<ProjectedVertex<F>>, F) {
     // If this is a closed ring (polygon exterior/interior), skip the duplicate closing vertex.
     // For open LineStrings, we must include the last vertex; otherwise the fast path can miss
     // the true nearest neighbour.
@@ -818,7 +832,7 @@ fn calculate_vertex_intercepts<F: GeoFloat>(
     } else {
         coords
     };
-    coords
+    let projected: Vec<ProjectedVertex<F>> = coords
         .iter()
         .enumerate()
         .map(|(idx, &coord)| {
@@ -839,7 +853,25 @@ fn calculate_vertex_intercepts<F: GeoFloat>(
                 vertex_idx: idx,
             }
         })
-        .collect()
+        .collect();
+    let max_edge_span = max_edge_projection_span(&projected, is_closed);
+    (projected, max_edge_span)
+}
+
+/// The largest absolute intercept difference across any edge of a projected geometry
+///
+/// `projected` must be in original vertex order. The duplicate closing vertex of a closed
+/// ring has been dropped, so the ring's final edge is added back here.
+fn max_edge_projection_span<F: GeoFloat>(projected: &[ProjectedVertex<F>], is_closed: bool) -> F {
+    let consecutive = projected
+        .windows(2)
+        .map(|pair| (pair[1].intercept - pair[0].intercept).abs())
+        .fold(F::zero(), |acc, span| acc.max(span));
+
+    match projected {
+        [first, .., last] if is_closed => consecutive.max((last.intercept - first.intercept).abs()),
+        _ => consecutive,
+    }
 }
 
 /// Calculates the minimum Euclidean distance between segments adjacent to two vertices
@@ -1608,6 +1640,22 @@ mod test {
         assert_eq!(Euclidean.distance(&p1, &p4), 50.0f64);
         assert_eq!(Euclidean.distance(&p2, &p3), 50.0f64);
     }
+
+    #[test]
+    fn fast_path_prefix_prune_regression() {
+        // The prefix skip used to discard right-hand vertices projecting below the
+        // current left-hand vertex at the unwidened threshold, which is unsound: see
+        // "Why the Pruning is One-Sided" on `separable_geometry_distance_fast`. The two
+        // vertical edges here overlap in y and lie one unit apart, but all four of their
+        // endpoint pairs project further apart than the threshold, so the unfixed skip
+        // missed them and returned 1.1767... instead of 1.
+        let p = wkt! { LINESTRING(0.0 0.0, 0.0 4.0, -1.0 -1.0) };
+        let q = wkt! { LINESTRING(1.0 3.0, 1.0 -3.0) };
+
+        assert_relative_eq!(Euclidean.distance(&p, &q), 1.0);
+        assert_relative_eq!(Euclidean.distance(&q, &p), 1.0);
+    }
+
     #[test]
     fn all_types_geometry_collection_test() {
         let p = Point::new(0.0, 0.0);
