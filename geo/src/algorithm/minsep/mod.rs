@@ -35,6 +35,8 @@ use crate::{
     },
 };
 
+mod linsep;
+
 /// Compute the separation σ(P, Q) between the boundaries of two simple polygons.
 ///
 /// Returns zero if the boundaries intersect.
@@ -358,7 +360,7 @@ fn remove_redundant_segments<T: GeoFloat>(segments: Vec<Line<T>>) -> Vec<Line<T>
 struct Subproblem<T: GeoFloat> {
     p_chain: LineString<T>,
     q_chain: LineString<T>,
-    _separator: Line<T>,
+    separator: Line<T>,
 }
 
 /// Placeholder: every subproblem receives the full exterior rings instead of
@@ -373,15 +375,24 @@ fn construct_subproblems<T: GeoFloat>(
         .map(|separator| Subproblem {
             p_chain: p.exterior().clone(),
             q_chain: q.exterior().clone(),
-            _separator: *separator,
+            separator: *separator,
         })
         .collect()
 }
 
-/// Placeholder: brute-force minimum distance between the chains. The full
-/// version is the LinSep solver (Section 4 of the paper).
+/// Solve one subproblem with the LinSep solver when its chains really are
+/// separated by the subproblem's separator. The placeholder decomposition
+/// does not yet produce genuinely separated subchains, so the brute-force
+/// fallback usually applies.
 fn solve_linearly_separable_subproblem<T: GeoFloat>(subproblem: &Subproblem<T>) -> T {
-    Euclidean.distance(&subproblem.p_chain, &subproblem.q_chain)
+    match linsep::SeparatedChains::new(
+        &subproblem.p_chain,
+        &subproblem.q_chain,
+        subproblem.separator,
+    ) {
+        Some(chains) => chains.separation(),
+        None => linsep::separation_brute_force(&subproblem.p_chain, &subproblem.q_chain),
+    }
 }
 
 #[cfg(test)]
