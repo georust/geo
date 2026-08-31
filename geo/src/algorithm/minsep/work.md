@@ -40,15 +40,22 @@ isolation against the oracle, and defines what a subproblem must look like.
 
 1. ~~Housekeeping: boundary-separation semantics, generic `T: GeoFloat`,
    honest placeholder comments, `total_cmp`, wkt! fixtures.~~ Done.
-2. `linsep.rs` scaffold: `SeparatedChains` (two chains + separating line,
-   validated with orient2d; vertices may lie on the line), brute-force
-   solver, property-test harness vs an independent segment-pair loop.
-3. Pruning, Step 1 of LinSep-CVV: remove vertices not perpendicularly
-   visible from l. Property: surviving candidates still contain a pair
-   realising cvv. Start O(n²) (test each perpendicular segment against all
-   chain edges via `line_intersection`); optimise later.
-4. Visible wedges via successive convex hulls on the pruned (monotone)
-   chain; eliminate α < 90° vertices (Lemma 3).
+2. ~~`linsep.rs` scaffold: `SeparatedChains` (validated with orient2d;
+   vertices may lie on the line), brute-force solver, property-test
+   harness.~~ Done. The harness immediately caught a real bug in geo's
+   LineString-LineString fast path (see "Found bug" below).
+3. ~~Pruning, Step 1 of LinSep-CVV: perpendicular visibility.~~ Done,
+   O(n²) for now.
+4. ~~Visible wedges and α ≥ 90° elimination (Lemma 3).~~ Done, O(n²)
+   tangent scan per vertex for now (the successive-hull O(n) version
+   comes with the perf pass). Hard-won lessons, enforced by hegel:
+   - visibility must block only on PROPER intersections (the paper's
+     §4.3 relaxed definition); collinear overlap does not hide;
+   - exclude edges incident to a sight-segment endpoint exactly — they
+     cannot properly cross it, and the robust intersector's endpoint
+     snapping otherwise produces false positives at ~1e-17 scales;
+   - measure wedge heights relative to the apex, never against the
+     separator start (absolute heights absorb small coordinates).
 5. Feasible regions R() (u⁺/u⁻ points) and candidate search. Correctness
    first: direct min over candidate pairs. Then the totally monotone matrix
    row-minima search (SMAWK / Atallah–Kosaraju) as a perf pass. Note: the
@@ -70,6 +77,19 @@ isolation against the oracle, and defines what a subproblem must look like.
    `Option<T>` or a result carrying the realising pair, per geo
    conventions on degenerate inputs), document the σ vs `Distance`
    distinction, no third-party types in the public API.
+
+## Found bug: geo fast-path overestimate (2026-08-31)
+
+The linsep property harness found that `Euclidean.distance` for
+LineString pairs can overestimate: the prefix binary search added to
+`separable_geometry_distance_fast` in PR #1560 prunes vertex pairs by a
+bound that is sound for vertex-vertex distances but not for the
+adjacent-segment distances the search evaluates. Counterexample:
+`LINESTRING(0 0,0 4,-1 -1)` vs `LINESTRING(1 3,1 -3)` returns ~1.1767
+instead of 1.0. Fixed on the branch `fix-separable-fast-path-prefix-prune`
+(two commits: failing regression tests, then a fix widening the prefix
+threshold by each geometry's maximum projected edge span; costs 3.6% on
+the #1560 benchmark against 97% for removing the skip). The fix was merged on 2026-09-01
 
 ## Preconditions and open questions
 
