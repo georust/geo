@@ -1,8 +1,11 @@
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::algorithm::kernels::Kernel;
+use crate::algorithm::relate::relateng::relate_point_locator::{Mode, RelatePointLocator};
+use crate::coordinate_position::CoordPos;
 use crate::dimensions::Dimensions;
 use crate::geometry::*;
-use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions, Intersects, Orientation};
+use crate::geometry_cow::GeometryCow;
+use crate::{GeoFloat, GeoNum, HasDimensions, Intersects, Orientation};
 
 // ┌────────────────────────────────┐
 // │ Implementations for LineString │
@@ -152,21 +155,25 @@ impl_contains_geometry_for!(MultiLineString<T>);
 
 impl<T> Contains<Coord<T>> for MultiLineString<T>
 where
-    T: CoordNum,
-    LineString<T>: Contains<Coord<T>>,
+    T: GeoFloat,
 {
+    /// Point containment uses the union semantics of the collection, as
+    /// `relate` does (the Mod-2 boundary rule): an endpoint shared by two
+    /// members lies in the interior of their union and is contained. A
+    /// member-wise check cannot express this.
     fn contains(&self, coord: &Coord<T>) -> bool {
-        self.iter().any(|ls| ls.contains(coord))
+        // A point is contained exactly when it lies in the interior.
+        RelatePointLocator::new(&GeometryCow::from(self), Mode::Simple).locate(*coord)
+            == CoordPos::Inside
     }
 }
 
 impl<T> Contains<Point<T>> for MultiLineString<T>
 where
-    T: CoordNum,
-    LineString<T>: Contains<Point<T>>,
+    T: GeoFloat,
 {
     fn contains(&self, rhs: &Point<T>) -> bool {
-        self.iter().any(|ls| ls.contains(rhs))
+        self.contains(&rhs.0)
     }
 }
 

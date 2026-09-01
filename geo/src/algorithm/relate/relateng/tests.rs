@@ -14,7 +14,7 @@ use crate::geometry_cow::GeometryCow;
 use crate::relate::IntersectionMatrix;
 
 use super::im_predicate::RelateMatrixPredicate;
-use super::relate_ng::{self, RelateNG};
+use super::relate_ng::{self, PreparedRelateState, RelateNG};
 use super::relate_predicate as pred;
 use super::relate_predicate::intersection_matrix_pattern;
 use super::topology_predicate::TopologyPredicate;
@@ -98,7 +98,8 @@ fn check_prepared(wkta: &str, wktb: &str) {
     let b = read(wktb);
     let ca = GeometryCow::from(&a);
     let cb = GeometryCow::from(&b);
-    let prep_a = RelateNG::prepare(&ca);
+    let state = PreparedRelateState::default();
+    let prep_a = RelateNG::prepared(&ca, &state);
 
     macro_rules! check {
         ($factory:expr, $name:literal) => {
@@ -138,7 +139,8 @@ fn check_prepared_matches(wkta: &str, wktb: &str, pattern: &str) {
     let b = read(wktb);
     let ca = GeometryCow::from(&a);
     let cb = GeometryCow::from(&b);
-    let prep_a = RelateNG::prepare(&ca);
+    let state = PreparedRelateState::default();
+    let prep_a = RelateNG::prepared(&ca, &state);
 
     let mut p1 = pred::matches(pattern).expect("valid pattern");
     let mut p2 = pred::matches(pattern).expect("valid pattern");
@@ -1364,5 +1366,36 @@ mod relate_ng_boundary_node_rule_test {
         let a = "POLYGON EMPTY";
         let b = "MULTILINESTRING ((0 0, 0 1), (0 1, 1 1, 1 0, 0 0))";
         check_relate(a, b, "FFFFFF1F2");
+    }
+}
+
+// Not from JTS: pins the full matrices of envelope-disjoint pairs, which
+// are served by the envelope fast-rejection path in
+// `RelateGeometry::locate_with_dim`.
+mod envelope_disjoint_matrix {
+    use super::*;
+
+    #[test]
+    fn test_polygons_envelope_disjoint() {
+        let a = "POLYGON ((0 0, 4 0, 4 4, 0 4, 0 0))";
+        let b = "POLYGON ((10 10, 14 10, 14 14, 10 14, 10 10))";
+        check_relate(a, b, "FF2FF1212");
+        check_intersects_disjoint(a, b, false);
+    }
+
+    #[test]
+    fn test_lines_envelope_disjoint() {
+        let a = "LINESTRING (0 0, 4 4)";
+        let b = "LINESTRING (10 10, 14 14)";
+        check_relate(a, b, "FF1FF0102");
+        check_intersects_disjoint(a, b, false);
+    }
+
+    #[test]
+    fn test_polygon_line_envelope_disjoint() {
+        let a = "POLYGON ((0 0, 4 0, 4 4, 0 4, 0 0))";
+        let b = "LINESTRING (10 10, 14 14)";
+        check_relate(a, b, "FF2FF1102");
+        check_relate(b, a, "FF1FF0212");
     }
 }

@@ -63,17 +63,13 @@ mod triangle;
 
 macro_rules! impl_contains_from_relate {
     ($for:ty,  [$($target:ty),*]) => {
-        $(
-            impl<T> Contains<$target> for $for
-            where
-                T: GeoFloat
-            {
-                fn contains(&self, target: &$target) -> bool {
-                    use $crate::algorithm::Relate;
-                    self.relate(target).is_contains()
-                }
-            }
-        )*
+        $crate::algorithm::relate::relateng::impl_predicate_from_relate!(
+            Contains,
+            contains,
+            $crate::algorithm::relate::relateng::relate_predicate::contains(),
+            $for,
+            [$($target),*]
+        );
     };
 }
 pub(crate) use impl_contains_from_relate;
@@ -114,6 +110,7 @@ mod test {
     use crate::Relate;
     use crate::indexed::IntervalTreeMultiPolygon;
     use crate::line_string;
+    use crate::wkt;
     use crate::{Coord, Line, LineString, MultiPolygon, Point, Polygon, Rect, Triangle, coord};
 
     #[test]
@@ -1008,5 +1005,36 @@ mod test {
         let _ = multi_poly.contains(&multi_point);
         let _ = multi_poly.contains(&multi_ls);
         let _ = multi_poly.contains(&multi_poly);
+    }
+
+    // Point containment for collections uses the union semantics of the
+    // collection, as `relate` does: a point shared by two members can be
+    // interior to their union although it is on the boundary of each.
+    #[test]
+    fn multi_line_string_contains_shared_endpoint() {
+        let mls = wkt!(MULTILINESTRING((0. 0., 1. 0.), (1. 0., 2. 0.)));
+        let shared = Point::new(1., 0.);
+        let end = Point::new(2., 0.);
+        let interior = Point::new(0.5, 0.);
+        let off = Point::new(0.5, 1.);
+        assert!(mls.contains(&shared));
+        assert_eq!(mls.contains(&shared), mls.relate(&shared).is_contains());
+        assert!(!mls.contains(&end));
+        assert!(mls.contains(&interior));
+        assert!(!mls.contains(&off));
+        assert!(mls.contains(&shared.0));
+    }
+
+    #[test]
+    fn geometry_collection_contains_shared_polygon_edge() {
+        let gc = wkt!(GEOMETRYCOLLECTION(
+            POLYGON((0. 0., 1. 0., 1. 1., 0. 1., 0. 0.)),
+            POLYGON((1. 0., 2. 0., 2. 1., 1. 1., 1. 0.))
+        ));
+        let shared = Point::new(1., 0.5);
+        let outer = Point::new(0., 0.5);
+        assert!(gc.contains(&shared));
+        assert_eq!(gc.contains(&shared), gc.relate(&shared).is_contains());
+        assert!(!gc.contains(&outer));
     }
 }

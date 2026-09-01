@@ -1,16 +1,22 @@
 use crate::geometry::*;
+use crate::relate::IntersectionMatrix;
 use crate::relate::geomgraph::GeometryGraph;
+use crate::relate::relateng::relate_ng::{PreparedRelateState, RelateNG};
 use crate::{BoundingRect, GeometryCow, HasDimensions};
 use crate::{GeoFloat, Relate};
 
+use std::cell::OnceCell;
 use std::fmt::{Debug, Formatter};
 
 use crate::dimensions::Dimensions;
 use rstar::RTreeNum;
 
-/// A `PreparedGeometry` is backed by an R*-tree spatial index and
-/// can be more efficient than a plain Geometry when performing
-/// multiple topological comparisons against the `PreparedGeometry`.
+/// A `PreparedGeometry` caches the spatial indexes that topological
+/// comparisons use: a segment [R-tree](https://en.wikipedia.org/wiki/R-tree),
+/// per-polygon point-in-area locators, and the set of unique points.
+/// The indexes are built on the first comparison that needs them and are
+/// reused by later comparisons, so a `PreparedGeometry` can be more
+/// efficient than a plain `Geometry` when it is compared many times.
 ///
 /// ```
 /// use geo::{Relate, PreparedGeometry, wkt};
@@ -26,15 +32,37 @@ use rstar::RTreeNum;
 /// assert!(prepared_polygon.relate(&contained_line).is_contains());
 ///
 /// ```
-#[derive(Clone)]
 pub struct PreparedGeometry<'a, G, F = f64>
 where
     G: Into<GeometryCow<'a, F>>,
     F: GeoFloat + RTreeNum,
 {
     pub(crate) geometry: G,
-    pub(crate) geometry_graph: GeometryGraph<'a, F>,
-    pub(crate) bounding_rect: Option<Rect<F>>,
+    geometry_cow: GeometryCow<'a, F>,
+    /// The legacy noded graph, built on the first call of the deprecated
+    /// `Relate::geometry_graph`.
+    geometry_graph: OnceCell<GeometryGraph<'a, F>>,
+    /// The RelateNG caches reused across `relate` calls: the geometry
+    /// metadata, segment index, per-element area locators, and unique
+    /// points.
+    relate_state: PreparedRelateState<F>,
+}
+
+impl<'a, G, F> Clone for PreparedGeometry<'a, G, F>
+where
+    G: Into<GeometryCow<'a, F>> + Clone,
+    F: GeoFloat + RTreeNum,
+{
+    fn clone(&self) -> Self {
+        // The caches are rebuildable; a clone starts with fresh (empty)
+        // ones.
+        Self {
+            geometry: self.geometry.clone(),
+            geometry_cow: self.geometry_cow.clone(),
+            geometry_graph: OnceCell::new(),
+            relate_state: PreparedRelateState::default(),
+        }
+    }
 }
 
 impl<'a, G, F> Debug for PreparedGeometry<'a, G, F>
@@ -65,12 +93,11 @@ where
     F: GeoFloat,
     T: Clone + Into<GeometryCow<'a, F>>,
 {
-    let geometry_graph = GeometryGraph::new(0, geometry.clone().into());
-    let bounding_rect = geometry_graph.geometry().bounding_rect();
     PreparedGeometry {
+        geometry_cow: geometry.clone().into(),
         geometry,
-        geometry_graph,
-        bounding_rect,
+        geometry_graph: OnceCell::new(),
+        relate_state: PreparedRelateState::default(),
     }
 }
 
@@ -95,7 +122,7 @@ where
     type Output = Option<Rect<F>>;
 
     fn bounding_rect(&self) -> Option<Rect<F>> {
-        self.bounding_rect
+        self.relate_state.meta(&self.geometry_cow).envelope()
     }
 }
 
@@ -105,15 +132,15 @@ where
     G: Into<GeometryCow<'a, F>>,
 {
     fn is_empty(&self) -> bool {
-        self.geometry_graph.geometry().is_empty()
+        self.geometry_cow.is_empty()
     }
 
     fn dimensions(&self) -> Dimensions {
-        self.geometry_graph.geometry().dimensions()
+        self.geometry_cow.dimensions()
     }
 
     fn boundary_dimensions(&self) -> Dimensions {
-        self.geometry_graph.geometry().boundary_dimensions()
+        self.geometry_cow.boundary_dimensions()
     }
 }
 
@@ -122,10 +149,26 @@ where
     F: GeoFloat,
     G: Into<GeometryCow<'a, F>>,
 {
-    /// Efficiently builds a [`GeometryGraph`] which can then be used for topological
-    /// computations.
+    /// Returns a copy of the cached [`GeometryGraph`], which is built on
+    /// the first call.
+    #[allow(deprecated)]
     fn geometry_graph(&self, arg_index: usize) -> GeometryGraph<'_, F> {
-        self.geometry_graph.clone_for_arg_index(arg_index)
+        self.geometry_graph
+            .get_or_init(|| GeometryGraph::new(0, self.geometry_cow.clone()))
+            .clone_for_arg_index(arg_index)
+    }
+
+    fn geometry_cow(&self) -> GeometryCow<'_, F> {
+        self.geometry_cow.reborrow()
+    }
+
+    /// Relates against the B geometry with the cached prepared state: the
+    /// A-side segment index, area locators and unique points are built
+    /// once and reused across calls.
+    fn relate(&self, other: &impl Relate<F>) -> IntersectionMatrix {
+        let cow = self.geometry_cow();
+        let engine = RelateNG::prepared(&cow, &self.relate_state);
+        engine.evaluate_matrix(&other.geometry_cow())
     }
 }
 
@@ -175,7 +218,29 @@ mod tests {
         assert!(p2.relate(&prepared_1).is_within());
     }
 
+    // Not in JTS: repeated relate calls reuse the cached prepared state
+    // (segment index, area locators, unique points) and must produce
+    // results identical to unprepared evaluation, in both argument
+    // positions and against multiple B geometries.
     #[test]
+    fn repeated_relates_reuse_cached_state() {
+        let a = wkt!(POLYGON((0.0 0.0, 10.0 0.0, 10.0 10.0, 0.0 10.0, 0.0 0.0)));
+        let bs = [
+            wkt!(POLYGON((2.0 2.0, 4.0 2.0, 4.0 4.0, 2.0 4.0, 2.0 2.0))),
+            wkt!(POLYGON((8.0 8.0, 12.0 8.0, 12.0 12.0, 8.0 12.0, 8.0 8.0))),
+            wkt!(POLYGON((20.0 20.0, 22.0 20.0, 22.0 22.0, 20.0 22.0, 20.0 20.0))),
+        ];
+        let prepared = PreparedGeometry::from(&a);
+        for _pass in 0..2 {
+            for b in &bs {
+                assert_eq!(prepared.relate(b), a.relate(b));
+                assert_eq!(b.relate(&prepared), b.relate(&a));
+            }
+        }
+    }
+
+    #[test]
+    #[allow(deprecated)]
     fn swap_arg_index() {
         let poly = polygon![(x: 0.0, y: 0.0), (x: 2.0, y: 0.0), (x: 1.0, y: 1.0)];
         let prepared_geom = PreparedGeometry::from(&poly);
