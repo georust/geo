@@ -35,8 +35,14 @@ use geo_types::Coord;
 use crate::{
     GeoFloat, GeoNum, Kernel, Line, LineString, Orientation, Point, Polygon,
     algorithm::{
-        closest_point::ClosestPoint, contains::Contains, convex_hull::ConvexHull,
-        intersects::Intersects, relate::Relate, winding_order::Winding,
+        closest_point::ClosestPoint,
+        contains::Contains,
+        convex_hull::ConvexHull,
+        intersects::Intersects,
+        line_intersection::line_intersection,
+        line_measures::{Distance, Euclidean},
+        relate::Relate,
+        winding_order::Winding,
     },
 };
 
@@ -60,11 +66,22 @@ pub fn compute_polygon_separation<T: GeoFloat>(p: &Polygon<T>, q: &Polygon<T>) -
         // recognise; correct, but without the linear-time decomposition.
         return linsep::separation_brute_force(p.exterior(), q.exterior());
     };
-    let polygon_r = construct_polygon_r(&case, p, q);
-
-    // Phase 3: Find shortest path (simplified for skeleton)
-    let (start, end) = get_path_endpoints(&case);
-    let shortest_path = shortest_path_in_polygon(&polygon_r, start, end);
+    // Phases 2b and 3: construct R and find the shortest path through it
+    let (polygon_r, shortest_path) = match &case {
+        SeparationCase::NonContaining {
+            bridge_pq,
+            bridge_qp,
+        } => {
+            let (r, start, end) = construct_polygon_r_noncontaining(bridge_pq, bridge_qp, p, q);
+            let path = shortest_path_in_ring(r.exterior(), start, end);
+            (r, path)
+        }
+        SeparationCase::Containing { visible_segment } => {
+            // Placeholder path until the containing case is implemented.
+            let r = construct_containing_polygon_r_simplified(visible_segment);
+            (r, vec![visible_segment.start, visible_segment.end])
+        }
+    };
 
     // Phase 4: Construct separators
     let extended_segments = extend_segments_to_boundary(&shortest_path, &polygon_r);
@@ -254,24 +271,6 @@ fn find_closest_visible_point<T: GeoFloat>(point: &Point<T>, polygon: &Polygon<T
     }
 }
 
-/// Construction of the polygon R that lies between P and Q (DECOMPOSE
-/// Step 1(a)). The containing arm is still a placeholder.
-fn construct_polygon_r<T: GeoFloat>(
-    case: &SeparationCase<T>,
-    p: &Polygon<T>,
-    q: &Polygon<T>,
-) -> Polygon<T> {
-    match case {
-        SeparationCase::NonContaining {
-            bridge_pq,
-            bridge_qp,
-        } => construct_polygon_r_noncontaining(bridge_pq, bridge_qp, p, q),
-        SeparationCase::Containing {
-            visible_segment, ..
-        } => construct_containing_polygon_r_simplified(visible_segment),
-    }
-}
-
 /// The simple polygon R between P and Q in the non-containing case,
 /// wound counterclockwise: the p→q bridge, then Q's facing portion Q′
 /// (Q's ring walked clockwise between its two contacts, so Q's interior
@@ -288,12 +287,16 @@ fn construct_polygon_r<T: GeoFloat>(
 /// the path step must route around the polygon rather than return the
 /// empty path. Only one side can pinch: were both contacts single
 /// vertices, CH(P ∪ Q) would degenerate to a segment.
+/// Returns R together with the ring indices of the two shortest-path
+/// endpoints (the paper's p_b and p_t, the P contacts of the bridges).
+/// Indices, not coordinates: in a pinched R the endpoints are the two
+/// instances of the pinch vertex, which share a coordinate.
 fn construct_polygon_r_noncontaining<T: GeoFloat>(
     bridge_pq: &Line<T>,
     bridge_qp: &Line<T>,
     p: &Polygon<T>,
     q: &Polygon<T>,
-) -> Polygon<T> {
+) -> (Polygon<T>, usize, usize) {
     let mut p_ring = p.exterior().clone();
     let mut q_ring = q.exterior().clone();
     p_ring.make_ccw_winding();
@@ -301,8 +304,10 @@ fn construct_polygon_r_noncontaining<T: GeoFloat>(
 
     let mut coords = vec![bridge_pq.start];
     coords.extend(ring_arc_cw(&q_ring, bridge_pq.end, bridge_qp.start));
+    // The first coordinate of the P arc is bridge_qp's P contact.
+    let end_index = coords.len();
     coords.extend(ring_arc_cw(&p_ring, bridge_qp.end, bridge_pq.start));
-    Polygon::new(LineString::from(coords), vec![])
+    (Polygon::new(LineString::from(coords), vec![]), 0, end_index)
 }
 
 /// The ring walked clockwise (interior kept on the right) from `from` to
@@ -367,37 +372,143 @@ fn construct_containing_polygon_r_simplified<T: GeoFloat>(segment: &Line<T>) -> 
     Polygon::new(LineString::from(coords), vec![])
 }
 
-/// The endpoints of the shortest path through R (DECOMPOSE Step 1(b)):
-/// the two P contacts of the bridges in the non-containing case (the
-/// paper's p_b and p_t), the two instances of the cut vertex in the
-/// containing case.
-fn get_path_endpoints<T: GeoFloat>(case: &SeparationCase<T>) -> (Point<T>, Point<T>) {
-    match case {
-        SeparationCase::NonContaining {
-            bridge_pq,
-            bridge_qp,
-        } => (bridge_pq.start.into(), bridge_qp.end.into()),
-        SeparationCase::Containing {
-            visible_segment, ..
-        } => (visible_segment.start.into(), visible_segment.end.into()),
+/// The Euclidean shortest path (geodesic) between two ring vertices of
+/// the closed, possibly pinched, ring of R (DECOMPOSE Step 1(b)),
+/// returned as the sequence of ring vertices it turns at, endpoints
+/// included.
+///
+/// Correctness-first construction, O(|R|³) overall: the geodesic in a
+/// simple polygon turns only at ring vertices, so it is a shortest route
+/// in the visibility graph over the ring vertices, found here with a
+/// scan-based Dijkstra. The linear-time replacement (triangulate,
+/// walk the dual tree, funnel algorithm) comes with the performance
+/// pass.
+///
+/// Endpoints are ring indices, not coordinates: in a pinched R the same
+/// coordinate appears twice and the path between the two instances must
+/// wrap around the pinched-in polygon.
+fn shortest_path_in_ring<T: GeoFloat>(
+    ring: &LineString<T>,
+    start: usize,
+    end: usize,
+) -> Vec<Coord<T>> {
+    let coords = &ring.0;
+    let m = coords.len() - 1;
+    if start == end || m < 2 {
+        return vec![coords[start]];
     }
+
+    let mut dist = vec![T::infinity(); m];
+    let mut prev = vec![usize::MAX; m];
+    let mut done = vec![false; m];
+    dist[start] = T::zero();
+    while let Some(u) = (0..m)
+        .filter(|&v| !done[v] && dist[v].is_finite())
+        .min_by(|&a, &b| {
+            dist[a]
+                .partial_cmp(&dist[b])
+                .unwrap_or(std::cmp::Ordering::Equal)
+        })
+    {
+        if u == end {
+            break;
+        }
+        done[u] = true;
+        for v in 0..m {
+            if !done[v] && ring_vertices_visible(ring, u, v) {
+                let step = Euclidean.distance(&Point::from(coords[u]), &Point::from(coords[v]));
+                let next = dist[u] + step;
+                if next < dist[v] {
+                    dist[v] = next;
+                    prev[v] = u;
+                }
+            }
+        }
+    }
+
+    let mut path = vec![coords[end]];
+    let mut v = end;
+    while v != start {
+        v = prev[v];
+        if v == usize::MAX {
+            // Unreachable: the ring edges alone connect every vertex.
+            return vec![coords[start], coords[end]];
+        }
+        path.push(coords[v]);
+    }
+    path.reverse();
+    path
 }
 
-/// Placeholder: the direct segment stands in for the shortest path within R.
-/// The full version triangulates R (earcut), walks the triangulation dual
-/// (a tree for a hole-free simple polygon), and applies the funnel algorithm.
-fn shortest_path_in_polygon<T: GeoFloat>(
-    _polygon: &Polygon<T>,
-    start: Point<T>,
-    end: Point<T>,
-) -> Vec<Point<T>> {
-    vec![start, end]
+/// Whether ring vertices `i` and `j` see each other within the ring: the
+/// open segment between them stays inside. Consecutive ring vertices are
+/// always visible. A segment that touches ANY non-incident edge —
+/// properly, at a grazed vertex, or along a collinear overlap — is
+/// rejected; this loses no geodesic, because a grazing shot decomposes
+/// into visible sub-segments through the grazed ring vertices, with the
+/// same total length. A touch-free segment is either entirely inside or
+/// entirely outside the ring; its midpoint decides which.
+///
+/// Incidence is by index, not coordinate: in a pinched ring the two
+/// instances of the pinch coordinate are distinct vertices, so a shot
+/// through the pinch touches the other instance's edges and is
+/// rejected, and the pinch instances never see each other directly —
+/// paths are forced around the pinched-in polygon.
+fn ring_vertices_visible<T: GeoFloat>(ring: &LineString<T>, i: usize, j: usize) -> bool {
+    let coords = &ring.0;
+    let m = coords.len() - 1;
+    if (i + 1) % m == j || (j + 1) % m == i {
+        return true;
+    }
+    if coords[i] == coords[j] {
+        // The two instances of a pinch vertex.
+        return false;
+    }
+    let seg = Line::new(coords[i], coords[j]);
+    let clear = (0..m).all(|e| {
+        let e_next = (e + 1) % m;
+        e == i
+            || e == j
+            || e_next == i
+            || e_next == j
+            || line_intersection(Line::new(coords[e], coords[e_next]), seg).is_none()
+    });
+    if !clear {
+        return false;
+    }
+    let two = T::one() + T::one();
+    let mid = Coord {
+        x: (coords[i].x + coords[j].x) / two,
+        y: (coords[i].y + coords[j].y) / two,
+    };
+    coord_inside_ring(ring, mid)
+}
+
+/// Even-odd point-in-ring test by horizontal ray casting. Works on
+/// weakly simple (pinched) rings; points exactly on the boundary are
+/// classified arbitrarily, which visibility testing tolerates because
+/// boundary-touching segments are rejected before the midpoint test.
+fn coord_inside_ring<T: GeoFloat>(ring: &LineString<T>, c: Coord<T>) -> bool {
+    let coords = &ring.0;
+    let m = coords.len() - 1;
+    let mut inside = false;
+    for e in 0..m {
+        let a = coords[e];
+        let b = coords[(e + 1) % m];
+        if (a.y > c.y) != (b.y > c.y) {
+            let x = a.x + (c.y - a.y) / (b.y - a.y) * (b.x - a.x);
+            if c.x < x {
+                inside = !inside;
+            }
+        }
+    }
+    inside
 }
 
 /// Placeholder: performs no extension. Step 1(c) of DECOMPOSE extends each
 /// path segment to the boundary of R by ray shooting.
 fn extend_segments_to_boundary<T: GeoFloat>(
-    path: &[Point<T>],
+    path: &[Coord<T>],
     _polygon: &Polygon<T>,
 ) -> Vec<Line<T>> {
     path.windows(2)
@@ -566,7 +677,7 @@ mod tests {
         let q = wkt! { POLYGON((2. 0.,3. 0.,3. 1.,2. 1.,2. 0.)) };
         let (_, _, ch_union) = compute_hulls(&p, &q);
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
-        let r = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
         let expected = wkt! { POLYGON((1. 0.,2. 0.,2. 1.,1. 1.,1. 0.)) };
         assert!(r.relate(&expected).is_equal_topo());
     }
@@ -583,7 +694,7 @@ mod tests {
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
         assert_eq!(bridge_pq, Line::new((0.0, 0.0), (2.0, 0.0)));
         assert_eq!(bridge_qp, Line::new((2.0, 1.0), (0.0, 1.0)));
-        let r = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
         let expected = wkt! { POLYGON((0. 0.,2. 0.,2. 1.,0. 1.,1. 0.5,0. 0.)) };
         assert!(r.relate(&expected).is_equal_topo());
     }
@@ -605,8 +716,113 @@ mod tests {
         assert_eq!(bridge_pq, Line::new(a2, b3));
         assert_eq!(bridge_qp, Line::new(b1, a2));
 
-        let r = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
         assert_eq!(r.exterior().0, vec![a2, b3, b2, b1, a2, a1, a3, a2]);
+    }
+
+    #[test]
+    fn shortest_path_direct_in_convex_channel() {
+        let p = wkt! { POLYGON((0. 0.,1. 0.,1. 1.,0. 1.,0. 0.)) };
+        let q = wkt! { POLYGON((2. 0.,3. 0.,3. 1.,2. 1.,2. 0.)) };
+        let (_, _, ch_union) = compute_hulls(&p, &q);
+        let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
+        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let path = shortest_path_in_ring(r.exterior(), start, end);
+        assert_eq!(
+            path,
+            vec![Coord { x: 1.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 }]
+        );
+    }
+
+    #[test]
+    fn shortest_path_bends_around_spike() {
+        // P carries a spike whose apex (1.8, 1) pokes into the channel:
+        // the straight route from (1, 0) to (1, 2) is blocked (it grazes
+        // the spike's base vertices and runs through P's interior), so
+        // the geodesic bends around the apex.
+        let p = wkt! { POLYGON((0. 0.,1. 0.,1. 0.4,1.8 1.,1. 1.6,1. 2.,0. 2.,0. 0.)) };
+        let q = wkt! { POLYGON((2. 0.,3. 0.,3. 2.,2. 2.,2. 0.)) };
+        let (_, _, ch_union) = compute_hulls(&p, &q);
+        let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
+        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let path = shortest_path_in_ring(r.exterior(), start, end);
+        assert_eq!(
+            path,
+            vec![
+                Coord { x: 1.0, y: 0.0 },
+                Coord { x: 1.8, y: 1.0 },
+                Coord { x: 1.0, y: 2.0 },
+            ]
+        );
+    }
+
+    #[test]
+    fn shortest_path_wraps_pinched_polygon() {
+        // Same configuration as polygon_r_wraps_single_contact_polygon:
+        // both path endpoints are the two instances of the pinch vertex,
+        // and the geodesic must wrap around the pinched-in triangle p —
+        // for a convex p, hugging its boundary exactly.
+        let p = wkt! { POLYGON((0.5000000000000002 0.8660254037844387,0.49999999999999956 -0.8660254037844384,1.125 -0.00000000000000003061616997868383,0.5000000000000002 0.8660254037844387)) };
+        let q = wkt! { POLYGON((0.5000000000000002 1.8660254037844388,0.7499999999999998 0.5669872981077808,2.0 0.9999999999999998,0.5000000000000002 1.8660254037844388)) };
+        let (a1, a2, a3) = (p.exterior().0[0], p.exterior().0[1], p.exterior().0[2]);
+        let (_, _, ch_union) = compute_hulls(&p, &q);
+        let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
+        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        assert_eq!(r.exterior().0[start], r.exterior().0[end]);
+        let path = shortest_path_in_ring(r.exterior(), start, end);
+        assert_eq!(path, vec![a2, a3, a1, a2]);
+    }
+
+    #[hegel::test]
+    fn shortest_path_stays_inside_r_and_beats_boundary_walks(tc: hegel::TestCase) {
+        let p = draw_star(&tc);
+        let q = draw_star(&tc);
+        let (bridge_pq, bridge_qp) = assume_noncontaining_bridges(&tc, &p, &q);
+        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let ring = r.exterior();
+        let path = shortest_path_in_ring(ring, start, end);
+
+        assert_eq!(path.first(), Some(&ring.0[start]));
+        assert_eq!(path.last(), Some(&ring.0[end]));
+
+        // No path segment may properly cross the ring.
+        for w in path.windows(2) {
+            let seg = Line::new(w[0], w[1]);
+            for edge in ring.lines() {
+                assert!(!line_intersection(edge, seg).is_some_and(|i| i.is_proper()));
+            }
+        }
+
+        // Optimality upper bound: the geodesic is no longer than either
+        // walk along the ring between the endpoints.
+        let length = |coords: &[Coord<f64>]| {
+            coords
+                .windows(2)
+                .map(|w| Euclidean.distance(&Point::from(w[0]), &Point::from(w[1])))
+                .fold(0.0, |acc, d| acc + d)
+        };
+        let m = ring.0.len() - 1;
+        let mut forward = vec![];
+        let mut i = start;
+        loop {
+            forward.push(ring.0[i]);
+            if i == end {
+                break;
+            }
+            i = (i + 1) % m;
+        }
+        let mut backward = vec![];
+        let mut i = start;
+        loop {
+            backward.push(ring.0[i]);
+            if i == end {
+                break;
+            }
+            i = if i == 0 { m - 1 } else { i - 1 };
+        }
+        let path_len = length(&path);
+        let bound = length(&forward).min(length(&backward));
+        assert!(path_len <= bound * (1.0 + 1e-12));
     }
 
     #[hegel::test]
@@ -643,7 +859,7 @@ mod tests {
         let p = draw_star(&tc);
         let q = draw_star(&tc);
         let (bridge_pq, bridge_qp) = assume_noncontaining_bridges(&tc, &p, &q);
-        let r = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
         // A pinched R (single-vertex hull contact on one side) is weakly
         // simple: it fails OGC validity by construction and `relate` is
         // not defined for it, so restrict this property to unpinched
