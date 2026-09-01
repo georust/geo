@@ -79,6 +79,7 @@ isolation against the oracle, and defines what a subproblem must look like.
    missed. The cvv property is therefore a bracket
    (σ ≤ cvv ≤ closest-visible-pair), not equality; the full σ equality
    test lands with CVE in step 6.
+
 6. ~~LinSep-CVE (vertex–edge case, Algorithm 4) and the separation()
    switch to min(cvv, cve(P,Q), cve(Q,P)).~~ Done 2026-09-01. Same
    deferral pattern as step 5: the direct cve search runs candidate
@@ -101,6 +102,7 @@ isolation against the oracle, and defines what a subproblem must look like.
    primitive limits" below): no `intersects` short-circuit, and
    endpoint-pair distances taken alongside the four point-segment
    distances.
+
 7. Return to DECOMPOSE with correct components:
    - common supporting lines from the CH(P)/CH(Q) merge;
    - facing portions via orient2d;
