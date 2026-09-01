@@ -79,9 +79,28 @@ isolation against the oracle, and defines what a subproblem must look like.
    missed. The cvv property is therefore a bracket
    (σ ≤ cvv ≤ closest-visible-pair), not equality; the full σ equality
    test lands with CVE in step 6.
-6. LinSep-CVE (vertex–edge case, Algorithm 4): edge partitioning so h()/l()
-   are constant per sub-segment, via successive convex hulls (Fig. 8;
-   sequential O(n) per §4.3). σ_subproblem = min(cvv, cve(P,Q), cve(Q,P)).
+6. ~~LinSep-CVE (vertex–edge case, Algorithm 4) and the separation()
+   switch to min(cvv, cve(P,Q), cve(Q,P)).~~ Done 2026-09-01. Same
+   deferral pattern as step 5: the direct cve search runs candidate
+   vertices against every opposite edge, restricted to pairs whose
+   nearest edge point lies in the vertex's wedge (Lemma 6 gives
+   q_{p,e} ∈ R(p) ⊂ W(p) for the realising pair); the edge partitioning
+   via successive convex hulls (Fig. 8; sequential O(n) per §4.3), the
+   edge wedges W(e′) with the C_e circle elimination, and the R()
+   regions all only structure the candidate matrix, so they move to the
+   perf pass. cve distances use the same Point–Line primitive as the
+   oracle so realising values agree bit-for-bit.
+   - The σ property (solver vs segment-pair oracle, 500k cases) is
+   equality within a scale-aware tolerance, not exact: pruning decides
+   with exact predicates while distances round, so at knife-edge inputs
+   solver and oracle can land a few ulps apart, on either side of the
+   true σ (see the test comment for two shrunk examples). Tolerance:
+   relative 8ε, absolute floor 32ε × max coordinate magnitude — never a
+   fixed constant, so tiny-coordinate regressions stay visible.
+   - Oracle hardening forced by the harness (see "Robust-kernel and
+   primitive limits" below): no `intersects` short-circuit, and
+   endpoint-pair distances taken alongside the four point-segment
+   distances.
 7. Return to DECOMPOSE with correct components:
    - common supporting lines from the CH(P)/CH(Q) merge;
    - facing portions via orient2d;
@@ -95,6 +114,25 @@ isolation against the oracle, and defines what a subproblem must look like.
    `Option<T>` or a result carrying the realising pair, per geo
    conventions on degenerate inputs), document the σ vs `Distance`
    distinction, no third-party types in the public API.
+
+## Robust-kernel and primitive limits (found 2026-09-01)
+
+Two float-limit behaviours in geo's primitives, both found by the σ
+property harness while testing the LinSep solver. Neither is a bug to
+fix upstream so much as a documented limit; the linsep test oracle works
+around both (see `separation_brute_force`):
+
+1. `RobustKernel::orient2d` loses exactness when an orientation product
+   underflows (magnitude below ~1e-323): disjoint segments can be
+   misclassified as collinear, after which `Intersects<Line> for Line`
+   degenerates to a bounding-rect check and reports a false
+   intersection, so `Euclidean.distance` returns a false zero.
+   Counterexample: `LINESTRING(0 0, 0 1.3e-113)` vs
+   `LINESTRING(0 1, 9.5e-212 0)` — true distance 9.5e-212.
+2. `line_segment_distance` divides by the segment's squared length,
+   which underflows to zero for segments shorter than ~1e-162; the
+   result is NaN, which `Float::min` folds silently away (an all-NaN
+   reduction leaves the initial infinity).
 
 ## Found bug: geo fast-path overestimate (2026-08-31)
 
