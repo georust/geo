@@ -28,6 +28,12 @@ path = "fuzz_targets/simplify.rs"
 test = false
 doc = false
 
+[[bin]]
+name = "separable_distance"
+path = "fuzz_targets/separable_distance.rs"
+test = false
+doc = false
+
 [patch.crates-io]
 geo = { path = ".." }
 geo-types = { path = "../../geo-types" }
