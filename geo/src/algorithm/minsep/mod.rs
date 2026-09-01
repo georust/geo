@@ -35,8 +35,6 @@ use geo_types::Coord;
 use crate::{
     GeoFloat, GeoNum, Kernel, Line, LineString, Orientation, Point, Polygon,
     algorithm::{
-        closest_point::ClosestPoint,
-        contains::Contains,
         convex_hull::ConvexHull,
         intersects::Intersects,
         line_intersection::line_intersection,
@@ -66,35 +64,40 @@ pub fn compute_polygon_separation<T: GeoFloat>(p: &Polygon<T>, q: &Polygon<T>) -
         // recognise; correct, but without the linear-time decomposition.
         return linsep::separation_brute_force(p.exterior(), q.exterior());
     };
-    // Phases 2b and 3: construct R and find the shortest path through it
-    let (polygon_r, shortest_path) = match &case {
+    match &case {
         SeparationCase::NonContaining {
             bridge_pq,
             bridge_qp,
         } => {
-            let (r, start, end) = construct_polygon_r_noncontaining(bridge_pq, bridge_qp, p, q);
-            let path = shortest_path_in_ring(r.exterior(), start, end);
-            (r, path)
+            // Phases 2b-6: R and its facing arcs, the shortest path,
+            // the separator sequence S(P, Q), and one linearly
+            // separable subproblem per separator.
+            let channel = construct_polygon_r_noncontaining(bridge_pq, bridge_qp, p, q);
+            let ring = channel.r.exterior();
+            let path = shortest_path_in_ring(ring, channel.path_start, channel.path_end);
+            let extended = extend_segments_to_boundary(&path, ring);
+            let separators = remove_redundant_segments(&extended);
+            let subproblems = construct_subproblems(&separators, &path, &channel);
+            let sigma = subproblems
+                .iter()
+                .map(solve_linearly_separable_subproblem)
+                .fold(T::infinity(), T::min);
+            if sigma.is_finite() {
+                sigma
+            } else {
+                // A degenerate decomposition (no separators, or every
+                // subproblem empty) must not report infinity.
+                linsep::separation_brute_force(p.exterior(), q.exterior())
+            }
         }
-        SeparationCase::Containing { visible_segment } => {
-            // Placeholder path until the containing case is implemented.
-            let r = construct_containing_polygon_r_simplified(visible_segment);
-            (r, vec![visible_segment.start, visible_segment.end])
+        SeparationCase::Containing => {
+            // Placeholder until the containing case (annulus R with the
+            // doubled cut vertex) is implemented: the segment-pair
+            // brute force is correct for any disjoint boundaries,
+            // nested ones included.
+            linsep::separation_brute_force(p.exterior(), q.exterior())
         }
-    };
-
-    // Phase 4: Construct separators
-    let extended_segments = extend_segments_to_boundary(&shortest_path, polygon_r.exterior());
-    let separators = remove_redundant_segments(extended_segments);
-
-    // Phase 5: Solve subproblems
-    let subproblems = construct_subproblems(&separators, p, q);
-
-    // Phase 6: Return minimum
-    subproblems
-        .iter()
-        .map(solve_linearly_separable_subproblem)
-        .fold(T::infinity(), T::min)
+    }
 }
 
 /// Test whether the boundaries of two polygons intersect.
@@ -137,9 +140,7 @@ enum SeparationCase<T: GeoFloat> {
         bridge_pq: Line<T>,
         bridge_qp: Line<T>,
     },
-    Containing {
-        visible_segment: Line<T>,
-    },
+    Containing,
 }
 
 /// Classify the relationship between polygons. `None` when the
@@ -152,9 +153,7 @@ fn classify_case<T: GeoFloat>(
     q: &Polygon<T>,
 ) -> Option<SeparationCase<T>> {
     if polygons_equal(ch_union, ch_p) || polygons_equal(ch_union, ch_q) {
-        Some(SeparationCase::Containing {
-            visible_segment: find_visible_segment(p, q),
-        })
+        Some(SeparationCase::Containing)
     } else {
         let (bridge_pq, bridge_qp) = common_supporting_segments(ch_union, p, q)?;
         Some(SeparationCase::NonContaining {
@@ -240,37 +239,6 @@ fn contact_extremes<T: GeoFloat>(
     Line::new(start_contact, end_contact)
 }
 
-/// Placeholder for the visible segment between a polygon and one it contains.
-/// The paper constructs this from the highest vertex p of the inner polygon
-/// and the closest edge of the outer polygon cut by the horizontal line
-/// through p; this version uses the closest boundary point without a
-/// visibility test.
-fn find_visible_segment<T: GeoFloat>(p: &Polygon<T>, q: &Polygon<T>) -> Line<T> {
-    let (inner_polygon, outer_polygon) = if q.contains(p) { (p, q) } else { (q, p) };
-
-    let highest_point = inner_polygon
-        .exterior()
-        .coords()
-        .max_by(|a, b| a.y.total_cmp(&b.y))
-        .unwrap();
-    let highest_point = Point::from(*highest_point);
-
-    let visible_point = find_closest_visible_point(&highest_point, outer_polygon);
-
-    Line::new(highest_point, visible_point)
-}
-
-fn find_closest_visible_point<T: GeoFloat>(point: &Point<T>, polygon: &Polygon<T>) -> Point<T> {
-    match polygon.closest_point(point) {
-        crate::Closest::Intersection(point) => point,
-        crate::Closest::SinglePoint(point) => point,
-        crate::Closest::Indeterminate => {
-            // Fallback: return first vertex
-            Point::from(*polygon.exterior().coords().next().unwrap())
-        }
-    }
-}
-
 /// The simple polygon R between P and Q in the non-containing case,
 /// wound counterclockwise: the p→q bridge, then Q's facing portion Q′
 /// (Q's ring walked clockwise between its two contacts, so Q's interior
@@ -296,18 +264,50 @@ fn construct_polygon_r_noncontaining<T: GeoFloat>(
     bridge_qp: &Line<T>,
     p: &Polygon<T>,
     q: &Polygon<T>,
-) -> (Polygon<T>, usize, usize) {
+) -> Channel<T> {
     let mut p_ring = p.exterior().clone();
     let mut q_ring = q.exterior().clone();
     p_ring.make_ccw_winding();
     q_ring.make_ccw_winding();
 
+    let arc_q = ring_arc_cw(&q_ring, bridge_pq.end, bridge_qp.start);
+    // Built descending (p_t down to p_b); stored ascending like arc_q.
+    let mut arc_p = ring_arc_cw(&p_ring, bridge_qp.end, bridge_pq.start);
+
     let mut coords = vec![bridge_pq.start];
-    coords.extend(ring_arc_cw(&q_ring, bridge_pq.end, bridge_qp.start));
+    coords.extend(arc_q.iter().copied());
     // The first coordinate of the P arc is bridge_qp's P contact.
-    let end_index = coords.len();
-    coords.extend(ring_arc_cw(&p_ring, bridge_qp.end, bridge_pq.start));
-    (Polygon::new(LineString::from(coords), vec![]), 0, end_index)
+    let path_end = coords.len();
+    coords.extend(arc_p.iter().copied());
+
+    arc_p.reverse();
+    Channel {
+        r: Polygon::new(LineString::from(coords), vec![]),
+        arc_p,
+        arc_q,
+        p_ring,
+        q_ring,
+        bridge_pq: *bridge_pq,
+        bridge_qp: *bridge_qp,
+        path_start: 0,
+        path_end,
+    }
+}
+
+/// The channel between P and Q in the non-containing case: the polygon R
+/// with its structural pieces. The facing arcs are stored ascending,
+/// from the bottom bridge contact (`bridge_pq`) to the top
+/// (`bridge_qp`); `arc_p` runs p_b to p_t, `arc_q` runs q_b to q_t.
+struct Channel<T: GeoFloat> {
+    r: Polygon<T>,
+    arc_p: Vec<Coord<T>>,
+    arc_q: Vec<Coord<T>>,
+    p_ring: LineString<T>,
+    q_ring: LineString<T>,
+    bridge_pq: Line<T>,
+    bridge_qp: Line<T>,
+    path_start: usize,
+    path_end: usize,
 }
 
 /// The ring walked clockwise (interior kept on the right) from `from` to
@@ -340,38 +340,22 @@ fn ring_arc_cw<T: GeoFloat>(
     arc
 }
 
-/// Placeholder: a rectangle around the visible segment stands in for the
-/// region between the inner and outer polygon.
-fn construct_containing_polygon_r_simplified<T: GeoFloat>(segment: &Line<T>) -> Polygon<T> {
-    let dx = T::one();
-    let dy = T::one();
-
-    let coords = vec![
-        Coord {
-            x: segment.start.x - dx,
-            y: segment.start.y - dy,
-        },
-        Coord {
-            x: segment.end.x + dx,
-            y: segment.start.y - dy,
-        },
-        Coord {
-            x: segment.end.x + dx,
-            y: segment.end.y + dy,
-        },
-        Coord {
-            x: segment.start.x - dx,
-            y: segment.end.y + dy,
-        },
-        Coord {
-            x: segment.start.x - dx,
-            y: segment.start.y - dy,
-        },
-    ];
-
-    Polygon::new(LineString::from(coords), vec![])
-}
-
+/// The simple polygon R between P and Q in the non-containing case,
+/// wound counterclockwise: the p→q bridge, then Q's facing portion Q′
+/// (Q's ring walked clockwise between its two contacts, so Q's interior
+/// lies outside R), then the q→p bridge, then P's facing portion P′
+/// back to the start. The bridge directions come from the
+/// counterclockwise walk of CH(P ∪ Q), which is what makes the clockwise
+/// polygon walks pick the facing arcs rather than the outer ones.
+///
+/// When a polygon touches the union hull at a single vertex (its two
+/// bridge contacts coincide), its facing arc is its full ring and R is
+/// pinched at that vertex: a weakly simple ring in which the vertex
+/// appears twice, analogous to the containing case's doubled cut vertex.
+/// The two instances also coincide with both shortest-path endpoints, so
+/// the path step must route around the polygon rather than return the
+/// empty path. Only one side can pinch: were both contacts single
+/// vertices, CH(P ∪ Q) would degenerate to a segment.
 /// The Euclidean shortest path (geodesic) between two ring vertices of
 /// the closed, possibly pinched, ring of R (DECOMPOSE Step 1(b)),
 /// returned as the sequence of ring vertices it turns at, endpoints
@@ -391,11 +375,11 @@ fn shortest_path_in_ring<T: GeoFloat>(
     ring: &LineString<T>,
     start: usize,
     end: usize,
-) -> Vec<Coord<T>> {
+) -> Vec<usize> {
     let coords = &ring.0;
     let m = coords.len() - 1;
     if start == end || m < 2 {
-        return vec![coords[start]];
+        return vec![start];
     }
 
     let mut dist = vec![T::infinity(); m];
@@ -426,15 +410,15 @@ fn shortest_path_in_ring<T: GeoFloat>(
         }
     }
 
-    let mut path = vec![coords[end]];
+    let mut path = vec![end];
     let mut v = end;
     while v != start {
         v = prev[v];
         if v == usize::MAX {
             // Unreachable: the ring edges alone connect every vertex.
-            return vec![coords[start], coords[end]];
+            return vec![start, end];
         }
-        path.push(coords[v]);
+        path.push(v);
     }
     path.reverse();
     path
@@ -517,34 +501,70 @@ fn coord_inside_ring<T: GeoFloat>(ring: &LineString<T>, c: Coord<T>) -> bool {
 /// side of the path's beginning, which Step 2 uses as the paper's b_i/t_i
 /// vertical orientation (b_i nearest l_{i-1}, t_i nearest l_{i+1}).
 fn extend_segments_to_boundary<T: GeoFloat>(
-    path: &[Coord<T>],
+    path: &[usize],
     ring: &LineString<T>,
-) -> Vec<Line<T>> {
+) -> Vec<ExtendedSegment<T>> {
     path.windows(2)
-        .map(|window| {
-            let (a, b) = (window[0], window[1]);
-            let backward = extend_ray(ring, b, a - b).unwrap_or(a);
-            let forward = extend_ray(ring, a, b - a).unwrap_or(b);
-            Line::new(backward, forward)
+        .enumerate()
+        .map(|(window, w)| {
+            let (a, b) = (ring.0[w[0]], ring.0[w[1]]);
+            let backward = extend_ray(ring, b, a - b, w[0]);
+            let forward = extend_ray(ring, a, b - a, w[1]);
+            ExtendedSegment {
+                line: Line::new(
+                    backward.map_or(a, |(c, _)| c),
+                    forward.map_or(b, |(c, _)| c),
+                ),
+                window,
+                back_edge: backward.map(|(_, e)| e),
+                fwd_edge: forward.map(|(_, e)| e),
+            }
         })
         .collect()
 }
 
-/// The first boundary hit of the ray `origin + t * dir` with t > 1,
-/// provided the span from `origin + dir` to the hit runs through R's
-/// interior; `None` when the ray leaves R immediately (a convex corner)
-/// or hits nothing beyond the segment end.
+/// One extended geodesic segment with the provenance the subproblem
+/// construction needs: the path window it extends and, per direction,
+/// the ring edge the extension hit (`None` when that endpoint is the
+/// path vertex itself). Provenance is exact where the coordinates are
+/// not: extension endpoints are computed hits that sit on their edge
+/// only within rounding.
+#[derive(Clone, Copy, Debug)]
+struct ExtendedSegment<T: GeoFloat> {
+    line: Line<T>,
+    window: usize,
+    back_edge: Option<usize>,
+    fwd_edge: Option<usize>,
+}
+
+/// The first boundary hit of the ray `origin + t * dir` with t > 1 and
+/// the ring edge it lies on, provided the span from `origin + dir` to
+/// the hit runs through R's interior; `None` when the ray leaves R
+/// immediately (a convex corner) or hits nothing beyond the segment
+/// end.
+///
+/// `through` is the ring index of the vertex the ray passes at t = 1;
+/// its incident edges are excluded from the scan. They end at that
+/// vertex, so they can never be the true first hit beyond it, but
+/// rounding can report one at t just above 1 — and such a spurious hit,
+/// being minimal, masks the real extension through a reflex vertex,
+/// leaving a gap in the separator sequence that nearby pairs slip
+/// through (found by the σ property harness).
 fn extend_ray<T: GeoFloat>(
     ring: &LineString<T>,
     origin: Coord<T>,
     dir: Coord<T>,
-) -> Option<Coord<T>> {
+    through: usize,
+) -> Option<(Coord<T>, usize)> {
     let coords = &ring.0;
     let m = coords.len() - 1;
     let cross = |a: Coord<T>, b: Coord<T>| a.x * b.y - a.y * b.x;
 
-    let mut best: Option<T> = None;
+    let mut best: Option<(T, usize)> = None;
     for e in 0..m {
+        if e == through || (e + 1) % m == through {
+            continue;
+        }
         let (ea, eb) = (coords[e], coords[(e + 1) % m]);
         let edge_delta = eb - ea;
         let denom = cross(dir, edge_delta);
@@ -553,11 +573,11 @@ fn extend_ray<T: GeoFloat>(
         }
         let t = cross(ea - origin, edge_delta) / denom;
         let s = cross(ea - origin, dir) / denom;
-        if t > T::one() && s >= T::zero() && s <= T::one() && best.is_none_or(|bt| t < bt) {
-            best = Some(t);
+        if t > T::one() && s >= T::zero() && s <= T::one() && best.is_none_or(|(bt, _)| t < bt) {
+            best = Some((t, e));
         }
     }
-    let t = best?;
+    let (t, edge) = best?;
     let hit = origin + dir * t;
     let two = T::one() + T::one();
     let segment_end = origin + dir;
@@ -565,7 +585,7 @@ fn extend_ray<T: GeoFloat>(
         x: (segment_end.x + hit.x) / two,
         y: (segment_end.y + hit.y) / two,
     };
-    coord_inside_ring(ring, mid).then_some(hit)
+    coord_inside_ring(ring, mid).then_some((hit, edge))
 }
 
 /// Remove redundant segments from the extended shortest path (DECOMPOSE
@@ -576,17 +596,19 @@ fn extend_ray<T: GeoFloat>(
 /// exact arithmetic they always intersect, but the computed extension
 /// endpoints round, and two near-collinear extensions can end up
 /// disjoint by an ulp.
-fn remove_redundant_segments<T: GeoFloat>(segments: Vec<Line<T>>) -> Vec<Line<T>> {
+fn remove_redundant_segments<T: GeoFloat>(
+    segments: &[ExtendedSegment<T>],
+) -> Vec<ExtendedSegment<T>> {
     let Some(&first) = segments.first() else {
-        return segments;
+        return Vec::new();
     };
     let mut kept = vec![first];
     let mut current = 0;
     while current + 1 < segments.len() {
-        let last = *kept.last().expect("kept starts non-empty");
+        let last = kept.last().expect("kept starts non-empty").line;
         let next = (current + 1..segments.len())
             .rev()
-            .find(|&j| segments[j].intersects(&last))
+            .find(|&j| segments[j].line.intersects(&last))
             .unwrap_or(current + 1);
         kept.push(segments[next]);
         current = next;
@@ -601,36 +623,336 @@ struct Subproblem<T: GeoFloat> {
     separator: Line<T>,
 }
 
-/// Placeholder: every subproblem receives the full exterior rings instead of
-/// the subchains bounded by consecutive separators (Step 2 of DECOMPOSE).
+/// A located cut: its lexicographic position along a facing arc and its
+/// coordinate.
+type ArcCut<T> = Option<((usize, T), Coord<T>)>;
+
+/// Which piece of R's boundary a separator endpoint lies on.
+#[derive(PartialEq, Clone, Copy)]
+enum RSide {
+    P,
+    Q,
+    Bridge,
+}
+
+/// DECOMPOSE Step 2: one linearly separable subproblem per separator.
+///
+/// Every separator is a chord of R, so its intersections with each
+/// polygon lie on that polygon's facing arc; each subchain is the slice
+/// of the facing arc between two cut positions. The paper phrases the
+/// slice as a fixed-direction scan of the whole polygon, which is the
+/// same thing when consecutive cuts ascend, but a later separator can
+/// cut a polygon BELOW an earlier one (the extension of a geodesic
+/// segment can land anywhere on the opposite wall), and the facing-arc
+/// slice between positions is what covers Lemma 1's pair assignment in
+/// both situations.
+///
+/// The end cut keeps the paper's rule only where its shielding argument
+/// is airtight: separator i's subchain of X ends at i's own cut when
+/// the separator's top endpoint t_i lies on X (the separator terminates
+/// into that wall and seals it) or i is the last index. The paper's
+/// "otherwise" branch ends at separator i+1's cut instead; that
+/// truncation is unsound when an extension lands on a bridge — the
+/// separator then misses one polygon entirely, its invariant "each l_i
+/// intersects both P and Q" fails, and a neighbour cut can exclude the
+/// realising vertex (found by the σ property harness on two triangles
+/// with a diagonal channel axis). This implementation widens the
+/// otherwise-branch to the arc's top sentinel: always enlarging, which
+/// cannot undercut σ and only widens the covered pair set.
+///
+/// Separator orientation is path order (start nearest the path's
+/// beginning), not the paper's "endpoint closest to l_{i-1}": the two
+/// disagree when a backward extension overshoots, and path order is
+/// what makes the last separator's cut land at the arc top, as the
+/// paper's sentinel definitions assume.
 fn construct_subproblems<T: GeoFloat>(
-    separators: &[Line<T>],
-    p: &Polygon<T>,
-    q: &Polygon<T>,
+    separators: &[ExtendedSegment<T>],
+    path: &[usize],
+    channel: &Channel<T>,
 ) -> Vec<Subproblem<T>> {
-    separators
+    let m = separators.len();
+    let ring = &channel.r.exterior().0;
+
+    // A pinched channel is topologically the containing case: the path
+    // wraps around the pinched-in polygon and the separator sequence is
+    // cyclic (the paper switches to modulo-m arithmetic), so the linear
+    // bottom-to-top subchain rules below do not apply — in particular
+    // the last separator's cut does not seal the arc top, which wraps
+    // back to the bottom bridge. Until the containing-case machinery
+    // lands, use full-ring subchains: always a sound superset, at the
+    // cost of the subchain brute force when validation fails.
+    let pinched = channel.bridge_pq.start == channel.bridge_qp.end
+        || channel.bridge_pq.end == channel.bridge_qp.start;
+    if pinched {
+        return separators
+            .iter()
+            .map(|s| Subproblem {
+                p_chain: channel.p_ring.clone(),
+                q_chain: channel.q_ring.clone(),
+                separator: s.line,
+            })
+            .collect();
+    }
+
+    // Exact side classification from the ring layout: edge 0 is the
+    // bottom bridge, edges 1..path_end-1 are the Q facing arc, edge
+    // path_end-1 is the top bridge, and edges from path_end on are the
+    // P facing arc; a bare ring vertex belongs to P at 0 and beyond
+    // path_end (the bridge contacts are arc endpoints of P and Q
+    // respectively), to Q in between.
+    let side_of_edge = |e: usize| -> RSide {
+        if e == 0 || e + 1 == channel.path_end {
+            RSide::Bridge
+        } else if e < channel.path_end {
+            RSide::Q
+        } else {
+            RSide::P
+        }
+    };
+    let side_of_vertex = |v: usize| -> RSide {
+        if v == 0 || v >= channel.path_end {
+            RSide::P
+        } else {
+            RSide::Q
+        }
+    };
+    let bottoms: Vec<RSide> = separators
         .iter()
-        .map(|separator| Subproblem {
-            p_chain: p.exterior().clone(),
-            q_chain: q.exterior().clone(),
-            separator: *separator,
+        .map(|s| {
+            s.back_edge
+                .map(side_of_edge)
+                .unwrap_or_else(|| side_of_vertex(path[s.window]))
+        })
+        .collect();
+    let tops: Vec<RSide> = separators
+        .iter()
+        .map(|s| {
+            s.fwd_edge
+                .map(side_of_edge)
+                .unwrap_or_else(|| side_of_vertex(path[s.window + 1]))
+        })
+        .collect();
+
+    // Cut candidates beyond the exact segment intersections: a
+    // separator's endpoints were computed as hits ON the ring, and it
+    // passes through its window's two path vertices — but only in exact
+    // arithmetic, so the robust segment-segment test can miss these
+    // touches by an ulp (found by the σ property harness: a missed
+    // endpoint cut made the resolution fall through to a much lower
+    // neighbouring cut and truncate the realising pair away). These
+    // coordinates are known exactly, so they join the candidate set
+    // directly, filtered by which side of R they lie on.
+    // Cut candidates beyond the exact segment intersections, assigned
+    // by exact provenance (found necessary twice by the σ property
+    // harness: computed extension endpoints miss the exact intersection
+    // test by an ulp, and a distance-based side heuristic once assigned
+    // a mid-bridge endpoint to an arc, inserting a fake off-boundary
+    // vertex into a subchain — an underestimate, the one failure class
+    // the design must exclude). A separator endpoint joins an arc's
+    // candidates when its hit edge lies on that arc; a path vertex when
+    // its ring index does. A path vertex that doubles as a bridge
+    // contact belongs to BOTH arcs' endpoints, so vertex classification
+    // maps the contacts to their arcs, never to the bridge.
+    let cuts = |arc: &[Coord<T>], own_side: RSide| -> Vec<ArcCut<T>> {
+        separators
+            .iter()
+            .map(|s| {
+                let mut extras: Vec<Coord<T>> = Vec::new();
+                if s.back_edge.map(side_of_edge) == Some(own_side) {
+                    extras.push(s.line.start);
+                }
+                if s.fwd_edge.map(side_of_edge) == Some(own_side) {
+                    extras.push(s.line.end);
+                }
+                for &v in &[path[s.window], path[s.window + 1]] {
+                    let vertex_side = side_of_vertex(v);
+                    // Bridge contacts sit on both arcs.
+                    let on_arc = vertex_side == own_side
+                        || v == 0
+                        || v == 1
+                        || v + 1 == channel.path_end
+                        || v == channel.path_end;
+                    if on_arc && arc.contains(&ring[v]) {
+                        extras.push(ring[v]);
+                    }
+                }
+                highest_intersection(&s.line, arc, &extras).map(|c| (arc_position(arc, c), c))
+            })
+            .collect()
+    };
+    let p_cuts = cuts(&channel.arc_p, RSide::P);
+    let q_cuts = cuts(&channel.arc_q, RSide::Q);
+
+    let subchain = |arc: &[Coord<T>],
+                    arc_cuts: &[ArcCut<T>],
+                    full_ring: &LineString<T>,
+                    own_side: RSide,
+                    i: usize|
+     -> LineString<T> {
+        let sentinel_start = ((0, T::zero()), arc[0]);
+        let sentinel_end = ((arc.len().saturating_sub(2), T::one()), arc[arc.len() - 1]);
+        // A cut truncates a subchain only where the shielding is
+        // airtight: the end stops at separator i's own cut exactly when
+        // the separator's top endpoint lands on this polygon (it
+        // terminates into that wall and seals it above the cut); the
+        // start begins at separator i-1's cut exactly when i-1's bottom
+        // endpoint lands on this polygon. In every other situation the
+        // sentinel (the whole facing arc on that side) is the sound
+        // choice: a separator anchored elsewhere — on the other
+        // polygon, a bridge, or (its last incarnation) on this side's
+        // own arc while merely grazing the other's vertex mid-flight —
+        // shields nothing here. The paper's "i = m-1 ends at its own
+        // cut" shortcut is unsound in that grazing configuration and is
+        // deliberately not implemented (found by the σ property
+        // harness). When the endpoint condition holds, the cut provably
+        // exists: the endpoint itself is one of its candidates.
+        let start = if i > 0 && bottoms[i - 1] == own_side {
+            arc_cuts[i - 1].unwrap_or(sentinel_start)
+        } else {
+            sentinel_start
+        };
+        let end = if tops[i] == own_side {
+            arc_cuts[i].unwrap_or(sentinel_end)
+        } else {
+            sentinel_end
+        };
+        // Wrap detection: the paper's subchain is a fixed-direction scan
+        // of the WHOLE ring, which can wrap around the polygon's back
+        // when a later separator cuts below an earlier one. An arc slice
+        // cannot represent a wrap; the signal is one of the paper's
+        // immediate anchor cuts (i-1 or i) falling outside the computed
+        // slice. The full ring is the always-sound superset there.
+        let (lo, hi) = if pos_le(start.0, end.0) {
+            (start.0, end.0)
+        } else {
+            (end.0, start.0)
+        };
+        let wraps = [i.checked_sub(1), Some(i)]
+            .into_iter()
+            .flatten()
+            .filter_map(|j| arc_cuts[j])
+            .any(|(pos, _)| !pos_le(lo, pos) || !pos_le(pos, hi));
+        if wraps {
+            return full_ring.clone();
+        }
+        arc_slice(arc, start, end)
+    };
+
+    (0..m)
+        .map(|i| Subproblem {
+            p_chain: subchain(&channel.arc_p, &p_cuts, &channel.p_ring, RSide::P, i),
+            q_chain: subchain(&channel.arc_q, &q_cuts, &channel.q_ring, RSide::Q, i),
+            separator: separators[i].line,
         })
         .collect()
 }
 
-/// Solve one subproblem with the LinSep solver when its chains really are
-/// separated by the subproblem's separator. The placeholder decomposition
-/// does not yet produce genuinely separated subchains, so the brute-force
-/// fallback usually applies.
-fn solve_linearly_separable_subproblem<T: GeoFloat>(subproblem: &Subproblem<T>) -> T {
-    match linsep::SeparatedChains::new(
-        &subproblem.p_chain,
-        &subproblem.q_chain,
-        subproblem.separator,
-    ) {
-        Some(chains) => chains.separation(),
-        None => linsep::separation_brute_force(&subproblem.p_chain, &subproblem.q_chain),
+/// Lexicographic order on arc positions.
+fn pos_le<T: GeoFloat>(a: (usize, T), b: (usize, T)) -> bool {
+    a.0 < b.0 || (a.0 == b.0 && a.1 <= b.1)
+}
+
+/// The intersection point of `separator` with the open polyline that is
+/// furthest along the separator's own orientation (the paper's p_i+ and
+/// q_i+, with b_i at `separator.start`). A collinear overlap contributes
+/// both overlap endpoints. `None` when they do not touch.
+fn highest_intersection<T: GeoFloat>(
+    separator: &Line<T>,
+    arc: &[Coord<T>],
+    extras: &[Coord<T>],
+) -> Option<Coord<T>> {
+    use crate::algorithm::line_intersection::LineIntersection;
+    let d = separator.delta();
+    let mut best: Option<(T, Coord<T>)> = None;
+    let mut consider = |c: Coord<T>| {
+        let h = (c.x - separator.start.x) * d.x + (c.y - separator.start.y) * d.y;
+        if best.is_none_or(|(bh, _)| h > bh) {
+            best = Some((h, c));
+        }
+    };
+    for &c in extras {
+        consider(c);
     }
+    for w in arc.windows(2) {
+        match line_intersection(*separator, Line::new(w[0], w[1])) {
+            Some(LineIntersection::SinglePoint { intersection, .. }) => consider(intersection),
+            Some(LineIntersection::Collinear { intersection }) => {
+                consider(intersection.start);
+                consider(intersection.end);
+            }
+            None => {}
+        }
+    }
+    best.map(|(_, c)| c)
+}
+
+/// The position of the point of `arc` nearest to `c`: segment index and
+/// clamped parameter within that segment, ordered lexicographically
+/// along the arc. Cut coordinates are computed intersections, so they
+/// sit on their segment only within rounding; nearest-segment location
+/// absorbs that.
+fn arc_position<T: GeoFloat>(arc: &[Coord<T>], c: Coord<T>) -> (usize, T) {
+    let mut best = (0, T::zero());
+    let mut best_d = T::infinity();
+    for (e, w) in arc.windows(2).enumerate() {
+        let d = w[1] - w[0];
+        let len2 = d.x * d.x + d.y * d.y;
+        let t = if len2 == T::zero() {
+            T::zero()
+        } else {
+            (((c.x - w[0].x) * d.x + (c.y - w[0].y) * d.y) / len2)
+                .max(T::zero())
+                .min(T::one())
+        };
+        let proj = Coord {
+            x: w[0].x + d.x * t,
+            y: w[0].y + d.y * t,
+        };
+        let dist = Euclidean.distance(&Point::from(c), &Point::from(proj));
+        if dist < best_d {
+            best_d = dist;
+            best = (e, t);
+        }
+    }
+    best
+}
+
+/// The sub-polyline of `arc` between two located cuts, endpoints
+/// included, running from the earlier position to the later one (the
+/// orientation of a subchain does not matter to the subproblem solver).
+fn arc_slice<T: GeoFloat>(
+    arc: &[Coord<T>],
+    a: ((usize, T), Coord<T>),
+    b: ((usize, T), Coord<T>),
+) -> LineString<T> {
+    let (first, second) = if pos_le(a.0, b.0) { (a, b) } else { (b, a) };
+    let ((e1, _), c1) = first;
+    let ((e2, _), c2) = second;
+
+    let mut coords = vec![c1];
+    coords.extend_from_slice(&arc[(e1 + 1)..=e2]);
+    coords.push(c2);
+    coords.dedup();
+    LineString::from(coords)
+}
+
+/// Solve one subproblem with the LinSep solver, trying the separator in
+/// both orientations (the extended segments carry the path's direction,
+/// not sidedness). When neither validates — a knife-edge cut can land a
+/// hair beyond its separator's line — fall back to the brute force on
+/// the SUBCHAINS: it cannot undercut σ (all values are boundary-point
+/// distances) and preserves the subproblem's assigned pair coverage.
+fn solve_linearly_separable_subproblem<T: GeoFloat>(subproblem: &Subproblem<T>) -> T {
+    let separator = subproblem.separator;
+    let reversed = Line::new(separator.end, separator.start);
+    for candidate in [separator, reversed] {
+        if let Some(chains) =
+            linsep::SeparatedChains::new(&subproblem.p_chain, &subproblem.q_chain, candidate)
+        {
+            return chains.separation();
+        }
+    }
+    linsep::separation_brute_force(&subproblem.p_chain, &subproblem.q_chain)
 }
 
 #[cfg(test)]
@@ -744,7 +1066,7 @@ mod tests {
         let q = wkt! { POLYGON((2. 0.,3. 0.,3. 1.,2. 1.,2. 0.)) };
         let (_, _, ch_union) = compute_hulls(&p, &q);
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
-        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let r = &construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q).r;
         let expected = wkt! { POLYGON((1. 0.,2. 0.,2. 1.,1. 1.,1. 0.)) };
         assert!(r.relate(&expected).is_equal_topo());
     }
@@ -761,7 +1083,7 @@ mod tests {
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
         assert_eq!(bridge_pq, Line::new((0.0, 0.0), (2.0, 0.0)));
         assert_eq!(bridge_qp, Line::new((2.0, 1.0), (0.0, 1.0)));
-        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let r = &construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q).r;
         let expected = wkt! { POLYGON((0. 0.,2. 0.,2. 1.,0. 1.,1. 0.5,0. 0.)) };
         assert!(r.relate(&expected).is_equal_topo());
     }
@@ -783,7 +1105,7 @@ mod tests {
         assert_eq!(bridge_pq, Line::new(a2, b3));
         assert_eq!(bridge_qp, Line::new(b1, a2));
 
-        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let r = &construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q).r;
         assert_eq!(r.exterior().0, vec![a2, b3, b2, b1, a2, a1, a3, a2]);
     }
 
@@ -793,8 +1115,12 @@ mod tests {
         let q = wkt! { POLYGON((2. 0.,3. 0.,3. 1.,2. 1.,2. 0.)) };
         let (_, _, ch_union) = compute_hulls(&p, &q);
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
-        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
-        let path = shortest_path_in_ring(r.exterior(), start, end);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, start, end) = (&channel.r, channel.path_start, channel.path_end);
+        let path: Vec<Coord<f64>> = shortest_path_in_ring(r.exterior(), start, end)
+            .into_iter()
+            .map(|i| r.exterior().0[i])
+            .collect();
         assert_eq!(
             path,
             vec![Coord { x: 1.0, y: 0.0 }, Coord { x: 1.0, y: 1.0 }]
@@ -811,8 +1137,12 @@ mod tests {
         let q = wkt! { POLYGON((2. 0.,3. 0.,3. 2.,2. 2.,2. 0.)) };
         let (_, _, ch_union) = compute_hulls(&p, &q);
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
-        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
-        let path = shortest_path_in_ring(r.exterior(), start, end);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, start, end) = (&channel.r, channel.path_start, channel.path_end);
+        let path: Vec<Coord<f64>> = shortest_path_in_ring(r.exterior(), start, end)
+            .into_iter()
+            .map(|i| r.exterior().0[i])
+            .collect();
         assert_eq!(
             path,
             vec![
@@ -834,9 +1164,13 @@ mod tests {
         let (a1, a2, a3) = (p.exterior().0[0], p.exterior().0[1], p.exterior().0[2]);
         let (_, _, ch_union) = compute_hulls(&p, &q);
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
-        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, start, end) = (&channel.r, channel.path_start, channel.path_end);
         assert_eq!(r.exterior().0[start], r.exterior().0[end]);
-        let path = shortest_path_in_ring(r.exterior(), start, end);
+        let path: Vec<Coord<f64>> = shortest_path_in_ring(r.exterior(), start, end)
+            .into_iter()
+            .map(|i| r.exterior().0[i])
+            .collect();
         assert_eq!(path, vec![a2, a3, a1, a2]);
     }
 
@@ -845,9 +1179,11 @@ mod tests {
         let p = draw_star(&tc);
         let q = draw_star(&tc);
         let (bridge_pq, bridge_qp) = assume_noncontaining_bridges(&tc, &p, &q);
-        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, start, end) = (&channel.r, channel.path_start, channel.path_end);
         let ring = r.exterior();
-        let path = shortest_path_in_ring(ring, start, end);
+        let path_idx = shortest_path_in_ring(ring, start, end);
+        let path: Vec<Coord<f64>> = path_idx.iter().map(|&i| ring.0[i]).collect();
 
         assert_eq!(path.first(), Some(&ring.0[start]));
         assert_eq!(path.last(), Some(&ring.0[end]));
@@ -900,12 +1236,15 @@ mod tests {
         let q = wkt! { POLYGON((2. 0.,3. 0.,3. 1.,2. 1.,2. 0.)) };
         let (_, _, ch_union) = compute_hulls(&p, &q);
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
-        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, start, end) = (&channel.r, channel.path_start, channel.path_end);
         let path = shortest_path_in_ring(r.exterior(), start, end);
         let extended = extend_segments_to_boundary(&path, r.exterior());
-        assert_eq!(extended, vec![Line::new((1.0, 0.0), (1.0, 1.0))]);
-        let separators = remove_redundant_segments(extended);
-        assert_eq!(separators, vec![Line::new((1.0, 0.0), (1.0, 1.0))]);
+        assert_eq!(extended.len(), 1);
+        assert_eq!(extended[0].line, Line::new((1.0, 0.0), (1.0, 1.0)));
+        let separators = remove_redundant_segments(&extended);
+        assert_eq!(separators.len(), 1);
+        assert_eq!(separators[0].line, Line::new((1.0, 0.0), (1.0, 1.0)));
     }
 
     #[test]
@@ -918,17 +1257,19 @@ mod tests {
         let q = wkt! { POLYGON((2. 0.,3. 0.,3. 2.,2. 2.,2. 0.)) };
         let (_, _, ch_union) = compute_hulls(&p, &q);
         let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
-        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, start, end) = (&channel.r, channel.path_start, channel.path_end);
         let path = shortest_path_in_ring(r.exterior(), start, end);
         let extended = extend_segments_to_boundary(&path, r.exterior());
+        let lines: Vec<Line<f64>> = extended.iter().map(|s| s.line).collect();
         assert_eq!(
-            extended,
+            lines,
             vec![
                 Line::new((1.0, 0.0), (2.0, 1.25)),
                 Line::new((2.0, 0.75), (1.0, 2.0)),
             ]
         );
-        let separators = remove_redundant_segments(extended);
+        let separators = remove_redundant_segments(&extended);
         assert_eq!(separators.len(), 2);
     }
 
@@ -937,19 +1278,21 @@ mod tests {
         let p = draw_star(&tc);
         let q = draw_star(&tc);
         let (bridge_pq, bridge_qp) = assume_noncontaining_bridges(&tc, &p, &q);
-        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let (r, start, end) = (&channel.r, channel.path_start, channel.path_end);
         let ring = r.exterior();
         let path = shortest_path_in_ring(ring, start, end);
         let extended = extend_segments_to_boundary(&path, ring);
-        let separators = remove_redundant_segments(extended.clone());
+        let separators = remove_redundant_segments(&extended);
 
-        for (segment, w) in extended.iter().zip(path.windows(2)) {
+        for (seg, w) in extended.iter().zip(path.windows(2)) {
+            let segment = seg.line;
             // Extension contains the original segment, in orientation.
             let along = |c: Coord<f64>| {
                 (c.x - segment.start.x) * (segment.end.x - segment.start.x)
                     + (c.y - segment.start.y) * (segment.end.y - segment.start.y)
             };
-            assert!(along(w[0]) <= along(w[1]));
+            assert!(along(ring.0[w[0]]) <= along(ring.0[w[1]]));
             // Endpoints lie on R's boundary. The hit point inherits the
             // ray-edge intersection's conditioning (near-parallel hits
             // amplify rounding), so this is a smoke bound: a genuinely
@@ -965,7 +1308,7 @@ mod tests {
         // exact arithmetic, but the computed extension endpoints round,
         // so near-collinear neighbours may only touch within an ulp.
         for pair in separators.windows(2) {
-            let gap = Euclidean.distance(&pair[0], &pair[1]);
+            let gap = Euclidean.distance(&pair[0].line, &pair[1].line);
             assert!(
                 gap <= 16.0 * f64::EPSILON * 16.0,
                 "kept separators disconnected by {gap:e}"
@@ -1007,7 +1350,7 @@ mod tests {
         let p = draw_star(&tc);
         let q = draw_star(&tc);
         let (bridge_pq, bridge_qp) = assume_noncontaining_bridges(&tc, &p, &q);
-        let (r, _, _) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let r = &construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q).r;
         // A pinched R (single-vertex hull contact on one side) is weakly
         // simple: it fails OGC validity by construction and `relate` is
         // not defined for it, so restrict this property to unpinched
