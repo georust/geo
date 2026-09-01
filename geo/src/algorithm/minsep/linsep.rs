@@ -14,8 +14,11 @@
 //!
 //! σ(P, Q) = min(cvv(P, Q), cve(P, Q), cve(Q, P)).
 //!
-//! Status: `separation` currently delegates to the O(|P| · |Q|) brute force;
-//! the steps above land incrementally, each property-tested against it.
+//! Status: `separation` computes min(cvv, cve, cve) over the pruned
+//! candidates with direct quadratic searches, property-tested for equality
+//! against the segment-pair brute force. The totally monotone matrix
+//! machinery (feasible regions, edge partitioning, row minima) lands with
+//! the performance pass.
 
 use crate::algorithm::line_intersection::line_intersection;
 use crate::algorithm::line_measures::{Distance, Euclidean};
@@ -64,84 +67,69 @@ impl<'a, T: GeoFloat> SeparatedChains<'a, T> {
             .then_some(Self { p, q, separator })
     }
 
-    /// The separation σ(P, Q) between the two chains.
+    /// The separation σ(P, Q) between the two chains:
+    /// min(cvv, cve(P, Q), cve(Q, P)). The minimum distance between two
+    /// disjoint chains is realised by a vertex pair or by a vertex and an
+    /// edge, so the three searches together cover it; every value any
+    /// search admits is a distance between boundary points, so none can
+    /// undercut σ.
     pub(super) fn separation(&self) -> T {
-        // Delegates to the brute force until the LinSep solver replaces it.
-        separation_brute_force(self.p, self.q)
-    }
-
-    /// The closest visible vertex distance cvv(P, Q): the minimum distance
-    /// over mutually visible vertex pairs, one vertex from each chain.
-    /// Infinite when no pair qualifies.
-    ///
-    /// When chain geometry lies on the separator line, the search can
-    /// admit a vertex pair whose sight segment is properly blocked by an
-    /// edge that runs through the apex's perpendicular foot (relaxed
-    /// visibility keeps such an apex, and the blocking edge spans the
-    /// wedge without putting a vertex inside it). The result is then
-    /// smaller than the closest visible vertex distance but never smaller
-    /// than σ(P, Q) — every admitted pair is a distance between boundary
-    /// vertices — so σ = min(cvv, cve, cve) is unaffected.
-    ///
-    /// Direct O(k_p · k_q) search over the pruned candidate vertices,
-    /// restricted to pairs that lie in each other's visible wedges. This
-    /// suffices for correctness: the paper's Lemma 4 places the realising
-    /// pair inside both feasible regions R(), and R(x) is contained in
-    /// W(x); conversely a candidate pair in each other's wedges is visible,
-    /// because a chain edge that crossed the sight segment would either put
-    /// a chain vertex inside a wedge interior (excluded by the tangent
-    /// construction) or span a whole wedge and thereby block the
-    /// perpendicular sight line of its apex (excluded by Lemma 2 pruning).
-    /// The u+/u- points that shrink W() to R() only give the candidate
-    /// matrix its totally monotone structure; they land with the matrix
-    /// row-minima search in the performance pass.
-    ///
-    /// Wedges here are computed against the full chain, not just the
-    /// candidate vertices: the visibility argument above needs W() to be
-    /// vertex-free with respect to every chain vertex.
-    #[allow(dead_code)] // wired into separation() once CVE lands (work.md step 6)
-    pub(super) fn cvv(&self) -> T {
-        let sep = self.separator;
         // The wedge construction expects its chain on the left of the
         // directed separator; q lies on the right, so reverse it for q.
-        let sep_rev = Line::new(sep.end, sep.start);
-        let cand_p = candidates(self.p, &sep);
-        let cand_q = candidates(self.q, &sep_rev);
-        let wedges_p: Vec<VisibleWedge<T>> = cand_p
-            .iter()
-            .map(|&i| visible_wedge(&self.p.0, i, &sep))
-            .collect();
-        let wedges_q: Vec<VisibleWedge<T>> = cand_q
-            .iter()
-            .map(|&j| visible_wedge(&self.q.0, j, &sep_rev))
-            .collect();
+        let sep_rev = Line::new(self.separator.end, self.separator.start);
+        let p = prune(self.p, &self.separator);
+        let q = prune(self.q, &sep_rev);
+        cvv_between(&p, &q)
+            .min(cve_between(&p, self.q))
+            .min(cve_between(&q, self.p))
+    }
 
-        let mut min = T::infinity();
-        for (wp, &i) in wedges_p.iter().zip(&cand_p) {
-            for (wq, &j) in wedges_q.iter().zip(&cand_q) {
-                let a = self.p.0[i];
-                let b = self.q.0[j];
-                if wp.contains_direction(b - a) && wq.contains_direction(a - b) {
+    /// Test-facing wrapper for the CVV component alone.
+    #[cfg(test)]
+    pub(super) fn cvv(&self) -> T {
+        let sep_rev = Line::new(self.separator.end, self.separator.start);
+        cvv_between(&prune(self.p, &self.separator), &prune(self.q, &sep_rev))
+    }
+}
+
+/// O(|P| · |Q|) reference: minimum distance over all boundary segment
+/// pairs, each computed as the minimum of the four point-segment
+/// distances. This is the test oracle for the solver and the benchmark
+/// baseline. Valid for chains separated by a line; chains that properly
+/// cross are out of scope (their interior intersections are not seen).
+///
+/// Three deliberate departures from the Line-Line `Euclidean.distance`,
+/// all found by the σ property harness:
+/// - no shared code with the optimised LineString paths: PR #1560 showed
+///   an optimised path can be wrong;
+/// - no `intersects` short-circuit: the robust kernel's exactness breaks
+///   when an orientation product underflows (magnitude below roughly
+///   1e-323), which can misclassify disjoint segments as collinear and
+///   touching. For chains separated by a line, segment interiors from
+///   opposite chains cannot properly cross, so the point-segment
+///   decomposition is exact without the predicate;
+/// - the endpoint-pair distances are taken as well: the point-segment
+///   primitive divides by the segment's squared length, which underflows
+///   to zero for segments shorter than roughly 1e-162 and yields NaN,
+///   which `min` then ignores. The endpoint distances are NaN-free and
+///   bound the segment distance to within the (tiny) segment length.
+pub(super) fn separation_brute_force<T: GeoFloat>(p: &LineString<T>, q: &LineString<T>) -> T {
+    let mut min = T::infinity();
+    for lp in p.lines() {
+        for lq in q.lines() {
+            min = min
+                .min(Euclidean.distance(&Point::from(lp.start), &lq))
+                .min(Euclidean.distance(&Point::from(lp.end), &lq))
+                .min(Euclidean.distance(&Point::from(lq.start), &lp))
+                .min(Euclidean.distance(&Point::from(lq.end), &lp));
+            for a in [lp.start, lp.end] {
+                for b in [lq.start, lq.end] {
                     min = min.min(Euclidean.distance(&Point::from(a), &Point::from(b)));
                 }
             }
         }
-        min
     }
-}
-
-/// O(|P| · |Q|) reference: minimum distance over all boundary segment pairs.
-/// This is the test oracle for the solver and the benchmark baseline.
-///
-/// The fold over segment pairs is deliberate: the LineString-LineString
-/// `Euclidean.distance` takes a project-and-prune fast path that, as of
-/// PR #1560, can return an overestimate (fix on the branch
-/// `fix-separable-fast-path-prefix-prune`). An oracle must not share code
-/// with an optimised path.
-pub(super) fn separation_brute_force<T: GeoFloat>(p: &LineString<T>, q: &LineString<T>) -> T {
-    p.lines()
-        .flat_map(|lp| q.lines().map(move |lq| Euclidean.distance(&lp, &lq)))
-        .fold(T::infinity(), T::min)
+    min
 }
 
 /// The foot of the perpendicular from `v` to the infinite line through
@@ -315,6 +303,109 @@ pub(super) fn candidates<T: GeoFloat>(chain: &LineString<T>, separator: &Line<T>
         .filter(|&(k, _)| visible_wedge(&coords, k, separator).alpha_at_least_90())
         .map(|(_, &i)| i)
         .collect()
+}
+
+/// A chain with its pruned candidate vertices and their visible wedges,
+/// ready for the CVV and CVE searches. The wedges are computed against the
+/// full chain, not just the candidates: the visibility arguments behind
+/// both searches need W() to be vertex-free with respect to every chain
+/// vertex. `separator` must have the chain on its left.
+pub(super) struct PrunedChain<'a, T: GeoFloat> {
+    chain: &'a LineString<T>,
+    cand: Vec<usize>,
+    wedges: Vec<VisibleWedge<T>>,
+}
+
+pub(super) fn prune<'a, T: GeoFloat>(
+    chain: &'a LineString<T>,
+    separator: &Line<T>,
+) -> PrunedChain<'a, T> {
+    let cand = candidates(chain, separator);
+    let wedges = cand
+        .iter()
+        .map(|&i| visible_wedge(&chain.0, i, separator))
+        .collect();
+    PrunedChain {
+        chain,
+        cand,
+        wedges,
+    }
+}
+
+/// The closest visible vertex component cvv(P, Q): the minimum distance
+/// over mutually visible vertex pairs, one vertex from each chain.
+/// Infinite when no pair qualifies.
+///
+/// Direct O(k_p · k_q) search over the pruned candidate vertices,
+/// restricted to pairs that lie in each other's visible wedges. This
+/// suffices for correctness: the paper's Lemma 4 places the realising
+/// pair inside both feasible regions R(), and R(x) is contained in
+/// W(x); conversely a candidate pair in each other's wedges is visible,
+/// because a chain edge that crossed the sight segment would either put
+/// a chain vertex inside a wedge interior (excluded by the tangent
+/// construction) or span a whole wedge and thereby block the
+/// perpendicular sight line of its apex (excluded by Lemma 2 pruning).
+/// The u+/u- points that shrink W() to R() only give the candidate
+/// matrix its totally monotone structure; they land with the matrix
+/// row-minima search in the performance pass.
+///
+/// When chain geometry lies on the separator line, the search can admit
+/// a vertex pair whose sight segment is properly blocked by an edge that
+/// runs through the apex's perpendicular foot (relaxed visibility keeps
+/// such an apex, and the blocking edge spans the wedge without putting a
+/// vertex inside it). The result is then smaller than the closest
+/// visible vertex distance but never smaller than σ(P, Q) — every
+/// admitted pair is a distance between boundary vertices — so
+/// σ = min(cvv, cve, cve) is unaffected.
+pub(super) fn cvv_between<T: GeoFloat>(p: &PrunedChain<'_, T>, q: &PrunedChain<'_, T>) -> T {
+    let mut min = T::infinity();
+    for (wp, &i) in p.wedges.iter().zip(&p.cand) {
+        for (wq, &j) in q.wedges.iter().zip(&q.cand) {
+            let a = p.chain.0[i];
+            let b = q.chain.0[j];
+            if wp.contains_direction(b - a) && wq.contains_direction(a - b) {
+                min = min.min(Euclidean.distance(&Point::from(a), &Point::from(b)));
+            }
+        }
+    }
+    min
+}
+
+/// The point of `edge` nearest to `v`.
+fn nearest_point_on_edge<T: GeoFloat>(edge: &Line<T>, v: Coord<T>) -> Coord<T> {
+    let d = edge.delta();
+    let len2 = dot(d, d);
+    if len2 == T::zero() {
+        return edge.start;
+    }
+    let t = (dot(v - edge.start, d) / len2).max(T::zero()).min(T::one());
+    edge.start + d * t
+}
+
+/// The closest vertex-edge component cve: the minimum distance between the
+/// pruned candidate vertices of `verts` and the edges of `edges`, the
+/// opposite chain. Infinite when no pair qualifies.
+///
+/// Direct search over candidate vertices against every opposite edge,
+/// restricted to pairs whose nearest edge point lies in the vertex's
+/// visible wedge: the paper's Lemma 6 places the realising pair's nearest
+/// point q_{p,e} inside R(p), which is contained in W(p). The edge-side
+/// wedges W(e') and the edge partitioning of Algorithm 4 Step 2(b) only
+/// structure the candidate matrix; like R(), they move to the performance
+/// pass. Admitted pairs need not be visible, but every admitted value is a
+/// distance between boundary points, so the search never undercuts σ.
+pub(super) fn cve_between<T: GeoFloat>(verts: &PrunedChain<'_, T>, edges: &LineString<T>) -> T {
+    let mut min = T::infinity();
+    for (w, &i) in verts.wedges.iter().zip(&verts.cand) {
+        let v = verts.chain.0[i];
+        for edge in edges.lines() {
+            let nearest = nearest_point_on_edge(&edge, v);
+            if w.contains_direction(nearest - v) {
+                min = min.min(Euclidean.distance(&Point::from(v), &edge));
+            }
+        }
+    }
+    min
 }
 
 #[cfg(test)]
@@ -552,6 +643,29 @@ mod tests {
     }
 
     #[test]
+    fn separation_finds_vertex_to_edge_interior_minimum() {
+        // The closest approach is from p's vertex (-1, 0) perpendicular to
+        // the interior of q's only edge, at (1, 0): the vertex-edge case,
+        // beating the closest vertex pair at sqrt 5.
+        let p = wkt! { LINESTRING(-1. 0.,-1. 2.) };
+        let q = wkt! { LINESTRING(1. 3.,1. -3.) };
+        let chains = SeparatedChains::new(&p, &q, vertical_separator()).unwrap();
+        assert_relative_eq!(chains.separation(), 2.0);
+    }
+
+    #[test]
+    fn separation_is_zero_for_vertex_on_opposite_edge() {
+        // p's vertex (0, 2) lies on q's edge from (0, -2) to (0, 5): the
+        // boundaries touch on the separator line, so sigma is zero. Same
+        // fixture as cvv_admits_pair_blocked_through_perpendicular_foot,
+        // where cvv alone reports 2; the vertex-edge search recovers 0.
+        let p = wkt! { LINESTRING(0. 2.,-1. 0.) };
+        let q = wkt! { LINESTRING(1. 0.,0. -2.,0. 5.) };
+        let chains = SeparatedChains::new(&p, &q, vertical_separator()).unwrap();
+        assert_relative_eq!(chains.separation(), 0.0);
+    }
+
+    #[test]
     fn cvv_finds_closest_vertex_pair() {
         let p = wkt! { LINESTRING(-1. 0.,-1. 2.) };
         let q = wkt! { LINESTRING(1. 1.,3. 1.) };
@@ -615,14 +729,31 @@ mod tests {
         let chains = SeparatedChains::new(&p, &q, vertical_separator())
             .expect("chains are separated by construction");
 
-        let expected = p
-            .lines()
-            .flat_map(|lp| q.lines().map(move |lq| Euclidean.distance(&lp, &lq)))
-            .fold(f64::INFINITY, f64::min);
+        let expected = separation_brute_force(&p, &q);
+        let sep = chains.separation();
 
-        assert_eq!(
-            chains.separation().total_cmp(&expected),
-            std::cmp::Ordering::Equal
+        // Solver and oracle each sit within a few rounding errors of the
+        // true separation, but not necessarily on the same side of it:
+        // pruning decides with exact predicates while distances round at
+        // the scale of the coordinates that produce them. Two shrunk
+        // examples of the knife edges this tolerance absorbs: a vertex
+        // pruned by Lemma 2 because an edge recrosses within an ulp of
+        // it, leaving the solver an ulp above the oracle; and a segment
+        // spanning [-131072, 1.46e-11] whose projection parameter for a
+        // touching vertex rounds to exactly 1, turning a true zero into
+        // an endpoint distance of 1.46e-11 for solver and oracle both.
+        // The tolerance is therefore relative, with an absolute floor of
+        // a few ulps of the largest coordinate magnitude, never a fixed
+        // constant.
+        let scale = p
+            .coords()
+            .chain(q.coords())
+            .fold(0.0_f64, |m, c| m.max(c.x.abs()).max(c.y.abs()));
+        assert_relative_eq!(
+            sep,
+            expected,
+            max_relative = 8.0 * f64::EPSILON,
+            epsilon = 32.0 * f64::EPSILON * scale
         );
     }
 }
