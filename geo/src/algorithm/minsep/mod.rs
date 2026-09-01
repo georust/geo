@@ -400,6 +400,70 @@ mod tests {
     use super::*;
     use crate::wkt;
     use approx::assert_relative_eq;
+    use hegel::generators;
+
+    /// A star-shaped polygon around (cx, cy): vertices at strictly
+    /// increasing angles (gaps bounded below before normalisation, so no
+    /// two vertices are radially aligned) with radii in
+    /// [r_max / 10, r_max]. Star-shapedness guarantees a simple ring.
+    #[hegel::composite]
+    fn star_polygon(tc: &hegel::TestCase, cx: f64, cy: f64, r_max: f64) -> Polygon<f64> {
+        let n = tc.draw(generators::integers::<usize>().min_value(3).max_value(12));
+        let gaps: Vec<f64> = (0..n)
+            .map(|_| tc.draw(generators::floats::<f64>().min_value(0.1).max_value(1.0)))
+            .collect();
+        let total: f64 = gaps.iter().sum();
+        let mut angle = 0.0;
+        let coords: Vec<Coord<f64>> = gaps
+            .iter()
+            .map(|g| {
+                angle += g / total * std::f64::consts::TAU;
+                let r = tc.draw(
+                    generators::floats::<f64>()
+                        .min_value(0.1 * r_max)
+                        .max_value(r_max),
+                );
+                Coord {
+                    x: cx + r * angle.cos(),
+                    y: cy + r * angle.sin(),
+                }
+            })
+            .collect();
+        Polygon::new(LineString::from(coords), vec![])
+    }
+
+    /// A star polygon with centre in [-8, 8]² and maximum radius in
+    /// [0.2, 4]: pairs cover the separated, nearby, and nested
+    /// configurations.
+    fn draw_star(tc: &hegel::TestCase) -> Polygon<f64> {
+        let cx = tc.draw(generators::floats::<f64>().min_value(-8.0).max_value(8.0));
+        let cy = tc.draw(generators::floats::<f64>().min_value(-8.0).max_value(8.0));
+        let r_max = tc.draw(generators::floats::<f64>().min_value(0.2).max_value(4.0));
+        tc.draw(star_polygon(cx, cy, r_max))
+    }
+
+    /// The headline DECOMPOSE property: for polygons with disjoint
+    /// boundaries, the pipeline agrees with the segment-pair oracle. The
+    /// tolerance is the scale-aware contract established for the LinSep
+    /// solver (see `separation_matches_segment_pair_minimum` in
+    /// linsep.rs); coordinates here are bounded by centre plus radius,
+    /// so the scale is a constant.
+    #[hegel::test]
+    fn separation_matches_oracle_for_disjoint_boundaries(tc: hegel::TestCase) {
+        let p = draw_star(&tc);
+        let q = draw_star(&tc);
+        tc.assume(!p.exterior().intersects(q.exterior()));
+
+        let sigma = compute_polygon_separation(&p, &q);
+        let oracle = linsep::separation_brute_force(p.exterior(), q.exterior());
+
+        assert_relative_eq!(
+            sigma,
+            oracle,
+            max_relative = 8.0 * f64::EPSILON,
+            epsilon = 32.0 * f64::EPSILON * 16.0
+        );
+    }
 
     #[test]
     fn separated_squares() {
