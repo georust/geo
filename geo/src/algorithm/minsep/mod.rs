@@ -84,7 +84,7 @@ pub fn compute_polygon_separation<T: GeoFloat>(p: &Polygon<T>, q: &Polygon<T>) -
     };
 
     // Phase 4: Construct separators
-    let extended_segments = extend_segments_to_boundary(&shortest_path, &polygon_r);
+    let extended_segments = extend_segments_to_boundary(&shortest_path, polygon_r.exterior());
     let separators = remove_redundant_segments(extended_segments);
 
     // Phase 5: Solve subproblems
@@ -505,26 +505,93 @@ fn coord_inside_ring<T: GeoFloat>(ring: &LineString<T>, c: Coord<T>) -> bool {
     inside
 }
 
-/// Placeholder: performs no extension. Step 1(c) of DECOMPOSE extends each
-/// path segment to the boundary of R by ray shooting.
+/// Extend each geodesic segment along its own line to the boundary of R,
+/// in both directions (DECOMPOSE Step 1(c)), by linear scan over the ring
+/// edges. A path vertex is extended only when the ray beyond it continues
+/// through R's interior (the vertex is reflex with respect to the ray):
+/// between the vertex and the first ray hit the line crosses no boundary,
+/// so the midpoint of that span decides inside or outside, as in the
+/// visibility test. Beyond a convex corner there is no extension.
+///
+/// The extended segments keep the path's orientation: `start` lies on the
+/// side of the path's beginning, which Step 2 uses as the paper's b_i/t_i
+/// vertical orientation (b_i nearest l_{i-1}, t_i nearest l_{i+1}).
 fn extend_segments_to_boundary<T: GeoFloat>(
     path: &[Coord<T>],
-    _polygon: &Polygon<T>,
+    ring: &LineString<T>,
 ) -> Vec<Line<T>> {
     path.windows(2)
-        .map(|window| Line::new(window[0], window[1]))
+        .map(|window| {
+            let (a, b) = (window[0], window[1]);
+            let backward = extend_ray(ring, b, a - b).unwrap_or(a);
+            let forward = extend_ray(ring, a, b - a).unwrap_or(b);
+            Line::new(backward, forward)
+        })
         .collect()
 }
 
-/// Placeholder. Step 1(d) of DECOMPOSE keeps l_0 and then greedily keeps the
-/// maximal-indexed segment that intersects the previously kept one; this
-/// version keeps only the first and last segments.
-fn remove_redundant_segments<T: GeoFloat>(segments: Vec<Line<T>>) -> Vec<Line<T>> {
-    if segments.len() <= 2 {
-        segments
-    } else {
-        vec![segments[0], segments[segments.len() - 1]]
+/// The first boundary hit of the ray `origin + t * dir` with t > 1,
+/// provided the span from `origin + dir` to the hit runs through R's
+/// interior; `None` when the ray leaves R immediately (a convex corner)
+/// or hits nothing beyond the segment end.
+fn extend_ray<T: GeoFloat>(
+    ring: &LineString<T>,
+    origin: Coord<T>,
+    dir: Coord<T>,
+) -> Option<Coord<T>> {
+    let coords = &ring.0;
+    let m = coords.len() - 1;
+    let cross = |a: Coord<T>, b: Coord<T>| a.x * b.y - a.y * b.x;
+
+    let mut best: Option<T> = None;
+    for e in 0..m {
+        let (ea, eb) = (coords[e], coords[(e + 1) % m]);
+        let edge_delta = eb - ea;
+        let denom = cross(dir, edge_delta);
+        if denom == T::zero() {
+            continue;
+        }
+        let t = cross(ea - origin, edge_delta) / denom;
+        let s = cross(ea - origin, dir) / denom;
+        if t > T::one() && s >= T::zero() && s <= T::one() && best.is_none_or(|bt| t < bt) {
+            best = Some(t);
+        }
     }
+    let t = best?;
+    let hit = origin + dir * t;
+    let two = T::one() + T::one();
+    let segment_end = origin + dir;
+    let mid = Coord {
+        x: (segment_end.x + hit.x) / two,
+        y: (segment_end.y + hit.y) / two,
+    };
+    coord_inside_ring(ring, mid).then_some(hit)
+}
+
+/// Remove redundant segments from the extended shortest path (DECOMPOSE
+/// Step 1(d)): keep l_0, then repeatedly keep the maximal-indexed segment
+/// that intersects the previously kept one. Progress is guaranteed by
+/// falling back to the next segment: consecutive extended segments
+/// contain the original path segments, which share a path vertex — in
+/// exact arithmetic they always intersect, but the computed extension
+/// endpoints round, and two near-collinear extensions can end up
+/// disjoint by an ulp.
+fn remove_redundant_segments<T: GeoFloat>(segments: Vec<Line<T>>) -> Vec<Line<T>> {
+    let Some(&first) = segments.first() else {
+        return segments;
+    };
+    let mut kept = vec![first];
+    let mut current = 0;
+    while current + 1 < segments.len() {
+        let last = *kept.last().expect("kept starts non-empty");
+        let next = (current + 1..segments.len())
+            .rev()
+            .find(|&j| segments[j].intersects(&last))
+            .unwrap_or(current + 1);
+        kept.push(segments[next]);
+        current = next;
+    }
+    kept
 }
 
 #[derive(Debug, Clone)]
@@ -823,6 +890,87 @@ mod tests {
         let path_len = length(&path);
         let bound = length(&forward).min(length(&backward));
         assert!(path_len <= bound * (1.0 + 1e-12));
+    }
+
+    #[test]
+    fn extension_stops_at_convex_corners() {
+        // The single path segment runs along R's left edge between two
+        // convex corners of R: no extension in either direction.
+        let p = wkt! { POLYGON((0. 0.,1. 0.,1. 1.,0. 1.,0. 0.)) };
+        let q = wkt! { POLYGON((2. 0.,3. 0.,3. 1.,2. 1.,2. 0.)) };
+        let (_, _, ch_union) = compute_hulls(&p, &q);
+        let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
+        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let path = shortest_path_in_ring(r.exterior(), start, end);
+        let extended = extend_segments_to_boundary(&path, r.exterior());
+        assert_eq!(extended, vec![Line::new((1.0, 0.0), (1.0, 1.0))]);
+        let separators = remove_redundant_segments(extended);
+        assert_eq!(separators, vec![Line::new((1.0, 0.0), (1.0, 1.0))]);
+    }
+
+    #[test]
+    fn extension_continues_through_reflex_apex() {
+        // The geodesic bends at the spike apex (1.8, 1), which is reflex
+        // in R: each segment extends through it to Q's facing edge at
+        // x = 2, and the two extended separators cross, so both survive
+        // redundancy removal.
+        let p = wkt! { POLYGON((0. 0.,1. 0.,1. 0.4,1.8 1.,1. 1.6,1. 2.,0. 2.,0. 0.)) };
+        let q = wkt! { POLYGON((2. 0.,3. 0.,3. 2.,2. 2.,2. 0.)) };
+        let (_, _, ch_union) = compute_hulls(&p, &q);
+        let (bridge_pq, bridge_qp) = common_supporting_segments(&ch_union, &p, &q).unwrap();
+        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let path = shortest_path_in_ring(r.exterior(), start, end);
+        let extended = extend_segments_to_boundary(&path, r.exterior());
+        assert_eq!(
+            extended,
+            vec![
+                Line::new((1.0, 0.0), (2.0, 1.25)),
+                Line::new((2.0, 0.75), (1.0, 2.0)),
+            ]
+        );
+        let separators = remove_redundant_segments(extended);
+        assert_eq!(separators.len(), 2);
+    }
+
+    #[hegel::test]
+    fn extended_separators_are_chords_of_r(tc: hegel::TestCase) {
+        let p = draw_star(&tc);
+        let q = draw_star(&tc);
+        let (bridge_pq, bridge_qp) = assume_noncontaining_bridges(&tc, &p, &q);
+        let (r, start, end) = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        let ring = r.exterior();
+        let path = shortest_path_in_ring(ring, start, end);
+        let extended = extend_segments_to_boundary(&path, ring);
+        let separators = remove_redundant_segments(extended.clone());
+
+        for (segment, w) in extended.iter().zip(path.windows(2)) {
+            // Extension contains the original segment, in orientation.
+            let along = |c: Coord<f64>| {
+                (c.x - segment.start.x) * (segment.end.x - segment.start.x)
+                    + (c.y - segment.start.y) * (segment.end.y - segment.start.y)
+            };
+            assert!(along(w[0]) <= along(w[1]));
+            // Endpoints lie on R's boundary. The hit point inherits the
+            // ray-edge intersection's conditioning (near-parallel hits
+            // amplify rounding), so this is a smoke bound: a genuinely
+            // wrong hit is off by a feature-sized amount, not 1e-9.
+            for endpoint in [segment.start, segment.end] {
+                let d = Euclidean.distance(&Point::from(endpoint), ring);
+                assert!(d <= 1e-10 * 16.0, "endpoint off-ring by {d:e}");
+            }
+        }
+
+        // The kept separators form an intersecting chain — up to
+        // rounding: consecutive extended segments share a path vertex in
+        // exact arithmetic, but the computed extension endpoints round,
+        // so near-collinear neighbours may only touch within an ulp.
+        for pair in separators.windows(2) {
+            let gap = Euclidean.distance(&pair[0], &pair[1]);
+            assert!(
+                gap <= 16.0 * f64::EPSILON * 16.0,
+                "kept separators disconnected by {gap:e}"
+            );
+        }
     }
 
     #[hegel::test]
