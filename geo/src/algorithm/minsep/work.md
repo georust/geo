@@ -104,14 +104,40 @@ isolation against the oracle, and defines what a subproblem must look like.
    distances.
 
 7. Return to DECOMPOSE with correct components:
-   - common supporting lines from the CH(P)/CH(Q) merge;
-   - facing portions via orient2d;
-   - polygon R construction with proper winding (`Winding` trait);
-   - shortest path (earcut + funnel);
+   - ~~polygon-level σ property (star-polygon generator, hegel) as the
+     standing regression guard; passes trivially while the pipeline ends
+     in the brute-force fallback, and keeps DECOMPOSE honest as each
+     placeholder is replaced.~~ Done 2026-09-01. Generator lesson: a
+     star polygon is simple only while every angular gap is < 180°;
+     draw gaps from [0.6, 1.0] before normalising (a dominant gap made
+     the chord leave its wedge and produced self-intersecting "stars",
+     found when an R-property failure shrank to one).
+   - ~~common supporting segments~~ Done 2026-09-01. No tangent
+     computation needed: they are the mixed edges of CH(P ∪ Q) (one
+     endpoint from each polygon; membership by coordinate equality,
+     sound because disjoint boundaries share no coords), with contacts
+     shrunk along the line to the extreme on-line vertices of each
+     polygon (hull construction elides collinear vertices, so the mixed
+     edge can overshoot the tangency).
+   - ~~facing portions + polygon R (non-containing)~~ Done 2026-09-01.
+     R (CCW) = p→q bridge + Q's ring walked CW between its contacts +
+     q→p bridge + P's ring walked CW back; the bridge directions from
+     the CCW hull walk are what make the CW polygon walks select the
+     facing arcs. Single-vertex hull contact ⇒ that polygon's facing
+     arc is its FULL ring and R is pinched (weakly simple, vertex
+     appears twice) — the analogue of the containing case's doubled cut
+     vertex; the shortest path must then route around the pinched-in
+     polygon (both path endpoints are the pinch vertex). Only one side
+     can pinch (both ⇒ hull degenerates to a segment).
+   - shortest path (earcut + funnel); must handle the pinched-R case
+     (path between the two instances of the pinch vertex);
    - segment extension by ray shooting (linear scan is fine sequentially);
    - redundant-segment removal: keep l_0, then greedily keep the
      maximal-indexed segment intersecting the previously kept one;
-   - subchain extraction per Step 2 (p⁺/q⁺ intersection points).
+   - subchain extraction per Step 2 (p⁺/q⁺ intersection points), then
+     remove the brute-force fallback in
+     solve_linearly_separable_subproblem (it currently masks
+     decomposition bugs: invalid subproblems silently brute-force).
 8. API shaping for the PR: decide trait name and signature (likely
    `Option<T>` or a result carrying the realising pair, per geo
    conventions on degenerate inputs), document the σ vs `Distance`

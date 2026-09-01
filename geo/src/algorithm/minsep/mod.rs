@@ -22,7 +22,12 @@
 //!
 //! Both inputs must be simple polygons without interior rings.
 //!
-//! Status: work in progress. The decomposition phases below are placeholders.
+//! Status: work in progress. The linearly separable subproblem solver
+//! (`linsep`) is complete; of DECOMPOSE, case classification, the common
+//! supporting segments, and the polygon R construction for the
+//! non-containing case are real, while the shortest path, segment
+//! extension, redundancy removal, subproblem extraction, and the
+//! containing case remain placeholders backed by a brute-force fallback.
 //! See `work.md` for the implementation plan.
 
 use geo_types::Coord;
