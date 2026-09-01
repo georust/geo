@@ -22,13 +22,14 @@
 //!
 //! Both inputs must be simple polygons without interior rings.
 //!
-//! Status: work in progress. The linearly separable subproblem solver
-//! (`linsep`) is complete; of DECOMPOSE, case classification, the common
-//! supporting segments, and the polygon R construction for the
-//! non-containing case are real, while the shortest path, segment
-//! extension, redundancy removal, subproblem extraction, and the
-//! containing case remain placeholders backed by a brute-force fallback.
-//! See `work.md` for the implementation plan.
+//! Status: the linearly separable subproblem solver (`linsep`) and the
+//! full non-containing DECOMPOSE pipeline (classification, supporting
+//! segments, polygon R, geodesic, separator extension, redundancy
+//! removal, subproblem construction) are implemented and property-tested
+//! against the segment-pair oracle. The containing case and pinched
+//! channels fall back to correct brute force pending the annulus
+//! machinery; the performance pass (linear-time structures throughout)
+//! comes after. See `work.md` for the plan.
 
 use geo_types::Coord;
 

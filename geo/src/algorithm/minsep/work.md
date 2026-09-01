@@ -129,15 +129,49 @@ isolation against the oracle, and defines what a subproblem must look like.
      vertex; the shortest path must then route around the pinched-in
      polygon (both path endpoints are the pinch vertex). Only one side
      can pinch (both ⇒ hull degenerates to a segment).
-   - shortest path (earcut + funnel); must handle the pinched-R case
-     (path between the two instances of the pinch vertex);
-   - segment extension by ray shooting (linear scan is fine sequentially);
-   - redundant-segment removal: keep l_0, then greedily keep the
-     maximal-indexed segment intersecting the previously kept one;
-   - subchain extraction per Step 2 (p⁺/q⁺ intersection points), then
-     remove the brute-force fallback in
-     solve_linearly_separable_subproblem (it currently masks
-     decomposition bugs: invalid subproblems silently brute-force).
+   - ~~shortest path~~ Done 2026-09-01, correctness-first: visibility
+     graph over R's ring vertices + scan Dijkstra, O(|R|³); endpoints
+     and visibility are INDEX-based so pinched rings route around the
+     pinched-in polygon (the two pinch instances never see each other).
+     Earcut + funnel replaces it in the perf pass.
+   - ~~segment extension + redundant-segment removal~~ Done 2026-09-01.
+     Extension = linear ray scan per direction with the midpoint-decides
+     rule at path vertices (no extension past convex corners), EXCLUDING
+     the through-vertex's incident edges from the scan (a rounded t just
+     above 1 on an incident edge otherwise masks the true hit through a
+     reflex vertex, leaving a coverage gap — σ harness find). Extensions
+     carry exact provenance (path window + hit edge index).
+   - ~~subproblem construction (Step 2)~~ Done 2026-09-01, the hardest
+     part; the σ property harness found six distinct coverage bugs
+     before it held at 300k cases. Deviations from the paper, each
+     forced by a shrunk counterexample:
+     - separator b/t orientation is PATH order, not "endpoint closest
+       to l_{i−1}" (they disagree when a backward extension overshoots);
+     - cut candidates include the separator endpoints and its window's
+       path vertices by exact provenance (rounding makes the exact
+       segment intersection miss touching hits; a distance-based side
+       heuristic once inserted a mid-bridge point into a subchain — the
+       only underestimate ever seen, since chains must contain only
+       boundary points);
+     - a cut truncates ONLY when the corresponding separator endpoint
+       lands on that polygon (top endpoint for the end cut, previous
+       separator's bottom endpoint for the start cut); the paper's
+       "otherwise → neighbour cut" and "i = m−1 → own cut" branches are
+       both unsound (bridge landings break the l_i-intersects-both
+       invariant; the last separator can be anchored on one polygon at
+       both ends and merely graze the other), and widen to the facing
+       arc sentinel instead;
+     - subchains are facing-arc slices, EXCEPT when a paper anchor cut
+       falls outside the slice (the fixed-direction ring scan would
+       wrap the polygon's back) — then the full ring, always a sound
+       superset;
+     - pinched channels take full-ring subchains for every separator
+       (topologically the containing case: cyclic separator sequence).
+     The subchain brute-force fallback (when a separator fails
+     SeparatedChains validation in both orientations) is retained by
+     design: over-large subchains cannot undercut σ, and the σ property
+     guards completeness. Aggregate subchain size is not yet O(n); the
+     perf pass revisits with the paper's exact machinery.
 8. API shaping for the PR: decide trait name and signature (likely
    `Option<T>` or a result carrying the realising pair, per geo
    conventions on degenerate inputs), document the σ vs `Distance`
