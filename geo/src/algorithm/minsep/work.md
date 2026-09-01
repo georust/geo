@@ -56,11 +56,29 @@ isolation against the oracle, and defines what a subproblem must look like.
      snapping otherwise produces false positives at ~1e-17 scales;
    - measure wedge heights relative to the apex, never against the
      separator start (absolute heights absorb small coordinates).
-5. Feasible regions R() (u⁺/u⁻ points) and candidate search. Correctness
-   first: direct min over candidate pairs. Then the totally monotone matrix
-   row-minima search (SMAWK / Atallah–Kosaraju) as a perf pass. Note: the
-   `smawk` crate exists and is maintained; decide dep-vs-vendor with
-   maintainers (~100 lines to vendor).
+5. ~~Candidate search (CVV): direct min over candidate pairs.~~ Done via
+   mutual visible-wedge membership, without the feasible regions R():
+   reading the paper closely, the u⁺/u⁻ points exist only to give the
+   candidate matrix M its totally monotone structure — for correctness,
+   mutual W() membership suffices (Lemma 4 puts the realising pair in both
+   R() ⊂ W(); conversely a mutually-wedge-contained candidate pair is
+   visible, since a crossing edge would either put a vertex inside a wedge
+   or span one and block its apex's perpendicular sight). R()/u⁺/u⁻
+   therefore move to the perf pass, alongside the totally monotone matrix
+   row-minima search (SMAWK / Atallah–Kosaraju). Note: the `smawk` crate
+   exists and is maintained; decide dep-vs-vendor with maintainers (~100
+   lines to vendor).
+   - Wedges for membership are computed against the full chain (the
+   visibility argument needs W() vertex-free w.r.t. every chain vertex),
+   while α-elimination keeps its candidate-based wedges.
+   - Caveat found by hegel: with chain geometry ON the separator line, a
+   properly-blocked pair can be admitted (blocking edge through the
+   apex's perpendicular foot — an endpoint contact under relaxed
+   visibility). Sound for σ: admitted pairs are vertex-vertex distances,
+   so cvv never undercuts σ, and the visible realising pair is never
+   missed. The cvv property is therefore a bracket
+   (σ ≤ cvv ≤ closest-visible-pair), not equality; the full σ equality
+   test lands with CVE in step 6.
 6. LinSep-CVE (vertex–edge case, Algorithm 4): edge partitioning so h()/l()
    are constant per sub-segment, via successive convex hulls (Fig. 8;
    sequential O(n) per §4.3). σ_subproblem = min(cvv, cve(P,Q), cve(Q,P)).
@@ -90,6 +108,18 @@ instead of 1.0. Fixed on the branch `fix-separable-fast-path-prefix-prune`
 (two commits: failing regression tests, then a fix widening the prefix
 threshold by each geometry's maximum projected edge span; costs 3.6% on
 the #1560 benchmark against 97% for removing the skip). The fix was merged on 2026-09-01
+
+## Expected performance vs existing paths (noted 2026-09-01)
+
+- vs the #1560 fast path (bbox-separated inputs): both near-linear in
+  practice; the fast path is two O(n log n) sorts plus a heuristic prune
+  with O(n·m) worst case. Amato is worst-case Θ(n) (modulo earcut in
+  DECOMPOSE). Expect a constant-to-log-factor win at scale, decisive only
+  on inputs where prefix pruning degrades.
+- vs the overlapping-bbox fallback (R-tree nearest neighbour,
+  O((n+m) log n) plus tree-build): the clearer win.
+- Nested/overlapping polygons: `Distance` returns 0 there; σ is new
+  capability, not a faster path. Whether 0 is the expected distance (what do JTS, GEOS, PostGIS return) is an open question, however
 
 ## Preconditions and open questions
 
