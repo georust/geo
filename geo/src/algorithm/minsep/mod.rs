@@ -311,6 +311,16 @@ struct Channel<T: GeoFloat> {
     path_end: usize,
 }
 
+impl<T: GeoFloat> Channel<T> {
+    /// The ascending facing arc of P or Q. A bridge is not an arc.
+    fn arc(&self, side: RSide) -> &[Coord<T>] {
+        match side {
+            RSide::P => &self.arc_p,
+            _ => &self.arc_q,
+        }
+    }
+}
+
 /// The ring walked clockwise (interior kept on the right) from `from` to
 /// `to`, both of which must be vertices of the closed counterclockwise
 /// ring. Inclusive of both endpoints. When `from == to` the walk covers
@@ -636,43 +646,38 @@ enum RSide {
     Bridge,
 }
 
-/// DECOMPOSE Step 2: one linearly separable subproblem per separator.
+/// DECOMPOSE Step 2: one subproblem per separator.
 ///
 /// Every separator is a chord of R, so its intersections with each
 /// polygon lie on that polygon's facing arc; each subchain is the slice
-/// of the facing arc between two cut positions. The paper phrases the
-/// slice as a fixed-direction scan of the whole polygon, which is the
-/// same thing when consecutive cuts ascend, but a later separator can
-/// cut a polygon BELOW an earlier one (the extension of a geodesic
-/// segment can land anywhere on the opposite wall), and the facing-arc
-/// slice between positions is what covers Lemma 1's pair assignment in
-/// both situations.
+/// of the facing arc between two cut positions. The rules are those of
+/// the amended construction in paper_corrections.typ (§4), whose
+/// Appendix A proves that they cover every visible pair: the subchain
+/// of X for separator i ends at i's own cut exactly when the top
+/// endpoint t_i lands on X, and begins at separator i−1's cut exactly
+/// when the bottom endpoint b_{i−1} lands on X; otherwise it runs to
+/// the end of the facing arc. The paper's "otherwise" branch (end at
+/// separator i+1's cut) and its "i = m−1" shortcut both need property
+/// (v) of the 1992 report, which extensions of a one-path geodesic do
+/// not have (report §3.1, §3.3).
 ///
-/// The end cut keeps the paper's rule only where its shielding argument
-/// is airtight: separator i's subchain of X ends at i's own cut when
-/// the separator's top endpoint t_i lies on X (the separator terminates
-/// into that wall and seals it) or i is the last index. The paper's
-/// "otherwise" branch ends at separator i+1's cut instead; that
-/// truncation is unsound when an extension lands on a bridge — the
-/// separator then misses one polygon entirely, its invariant "each l_i
-/// intersects both P and Q" fails, and a neighbour cut can exclude the
-/// realising vertex (found by the σ property harness on two triangles
-/// with a diagonal channel axis). This implementation widens the
-/// otherwise-branch to the arc's top sentinel: always enlarging, which
-/// cannot undercut σ and only widens the covered pair set.
+/// The construction is combinatorial. Landing sides come from the hit
+/// edge recorded by the extension. A cut is never searched for: the
+/// points of l_i on either arc are its endpoints and its path vertices
+/// (Lemma A2), ordered along l_i as b_i, lower vertex, upper vertex,
+/// t_i, so the highest of them on an arc is the first of t_i, upper
+/// vertex, lower vertex, b_i that lies on that arc (Lemma A6), and its
+/// arc position follows from the same ring indices.
 ///
 /// Separator orientation is path order (start nearest the path's
 /// beginning), not the paper's "endpoint closest to l_{i-1}": the two
-/// disagree when a backward extension overshoots, and path order is
-/// what makes the last separator's cut land at the arc top, as the
-/// paper's sentinel definitions assume.
+/// disagree when a backward extension overshoots (report §3.2).
 fn construct_subproblems<T: GeoFloat>(
     separators: &[ExtendedSegment<T>],
     path: &[usize],
     channel: &Channel<T>,
 ) -> Vec<Subproblem<T>> {
     let m = separators.len();
-    let ring = &channel.r.exterior().0;
 
     // A pinched channel is topologically the containing case: the path
     // wraps around the pinched-in polygon and the separator sequence is
@@ -734,115 +739,91 @@ fn construct_subproblems<T: GeoFloat>(
         })
         .collect();
 
-    // Cut candidates beyond the exact segment intersections: a
-    // separator's endpoints were computed as hits ON the ring, and it
-    // passes through its window's two path vertices — but only in exact
-    // arithmetic, so the robust segment-segment test can miss these
-    // touches by an ulp (found by the σ property harness: a missed
-    // endpoint cut made the resolution fall through to a much lower
-    // neighbouring cut and truncate the realising pair away). These
-    // coordinates are known exactly, so they join the candidate set
-    // directly, filtered by which side of R they lie on.
-    // Cut candidates beyond the exact segment intersections, assigned
-    // by exact provenance (found necessary twice by the σ property
-    // harness: computed extension endpoints miss the exact intersection
-    // test by an ulp, and a distance-based side heuristic once assigned
-    // a mid-bridge endpoint to an arc, inserting a fake off-boundary
-    // vertex into a subchain — an underestimate, the one failure class
-    // the design must exclude). A separator endpoint joins an arc's
-    // candidates when its hit edge lies on that arc; a path vertex when
-    // its ring index does. A path vertex that doubles as a bridge
-    // contact belongs to BOTH arcs' endpoints, so vertex classification
-    // maps the contacts to their arcs, never to the bridge.
-    let cuts = |arc: &[Coord<T>], own_side: RSide| -> Vec<ArcCut<T>> {
-        separators
-            .iter()
-            .map(|s| {
-                let mut extras: Vec<Coord<T>> = Vec::new();
-                if s.back_edge.map(side_of_edge) == Some(own_side) {
-                    extras.push(s.line.start);
-                }
-                if s.fwd_edge.map(side_of_edge) == Some(own_side) {
-                    extras.push(s.line.end);
-                }
-                for &v in &[path[s.window], path[s.window + 1]] {
-                    let vertex_side = side_of_vertex(v);
-                    // Bridge contacts sit on both arcs.
-                    let on_arc = vertex_side == own_side
-                        || v == 0
-                        || v == 1
-                        || v + 1 == channel.path_end
-                        || v == channel.path_end;
-                    if on_arc && arc.contains(&ring[v]) {
-                        extras.push(ring[v]);
-                    }
-                }
-                highest_intersection(&s.line, arc, &extras).map(|c| (arc_position(arc, c), c))
-            })
-            .collect()
-    };
-    let p_cuts = cuts(&channel.arc_p, RSide::P);
-    let q_cuts = cuts(&channel.arc_q, RSide::Q);
+    let path_end = channel.path_end;
 
-    let subchain = |arc: &[Coord<T>],
-                    arc_cuts: &[ArcCut<T>],
-                    full_ring: &LineString<T>,
-                    own_side: RSide,
-                    i: usize|
-     -> LineString<T> {
-        let sentinel_start = ((0, T::zero()), arc[0]);
-        let sentinel_end = ((arc.len().saturating_sub(2), T::one()), arc[arc.len() - 1]);
-        // A cut truncates a subchain only where the shielding is
-        // airtight: the end stops at separator i's own cut exactly when
-        // the separator's top endpoint lands on this polygon (it
-        // terminates into that wall and seals it above the cut); the
-        // start begins at separator i-1's cut exactly when i-1's bottom
-        // endpoint lands on this polygon. In every other situation the
-        // sentinel (the whole facing arc on that side) is the sound
-        // choice: a separator anchored elsewhere — on the other
-        // polygon, a bridge, or (its last incarnation) on this side's
-        // own arc while merely grazing the other's vertex mid-flight —
-        // shields nothing here. The paper's "i = m-1 ends at its own
-        // cut" shortcut is unsound in that grazing configuration and is
-        // deliberately not implemented (found by the σ property
-        // harness). When the endpoint condition holds, the cut provably
-        // exists: the endpoint itself is one of its candidates.
-        let start = if i > 0 && bottoms[i - 1] == own_side {
-            arc_cuts[i - 1].unwrap_or(sentinel_start)
+    // Index on the ascending facing arc of `side` of the ring vertex
+    // `v`, which must lie on that arc. Q's arc is stored in ring order;
+    // P's arc is stored ascending while the ring walks it descending.
+    let arc_index = |v: usize, side: RSide| -> usize {
+        match side {
+            RSide::P if v == 0 => 0,
+            RSide::P => channel.arc_p.len() - 1 - (v - path_end),
+            _ => v - 1,
+        }
+    };
+    let at_vertex = |arc: &[Coord<T>], j: usize| -> ((usize, T), Coord<T>) {
+        if j + 1 == arc.len() {
+            ((j - 1, T::one()), arc[j])
+        } else {
+            ((j, T::zero()), arc[j])
+        }
+    };
+    // Position on the ascending arc of `side` of the landing point `c`
+    // on ring edge `e`. The coordinate is a computed hit that sits on
+    // its edge only within rounding; the parameter is its projection.
+    let on_edge = |e: usize, c: Coord<T>, side: RSide| -> ((usize, T), Coord<T>) {
+        let arc = channel.arc(side);
+        let seg = match side {
+            RSide::P => arc.len() - 2 - (e - path_end),
+            _ => e - 1,
+        };
+        let (a, b) = (arc[seg], arc[seg + 1]);
+        let d = b - a;
+        let len2 = d.x * d.x + d.y * d.y;
+        let t = if len2 == T::zero() {
+            T::zero()
+        } else {
+            (((c.x - a.x) * d.x + (c.y - a.y) * d.y) / len2)
+                .max(T::zero())
+                .min(T::one())
+        };
+        ((seg, t), c)
+    };
+
+    // The highest point of l_i on the facing arc of `side`, when l_i
+    // meets that arc at all.
+    let cut = |i: usize, side: RSide| -> ArcCut<T> {
+        let s = &separators[i];
+        if let Some(e) = s.fwd_edge
+            && side_of_edge(e) == side
+        {
+            return Some(on_edge(e, s.line.end, side));
+        }
+        for v in [path[s.window + 1], path[s.window]] {
+            if side_of_vertex(v) == side {
+                return Some(at_vertex(channel.arc(side), arc_index(v, side)));
+            }
+        }
+        match s.back_edge {
+            Some(e) if side_of_edge(e) == side => Some(on_edge(e, s.line.start, side)),
+            _ => None,
+        }
+    };
+
+    // When a truncation applies, the landing endpoint itself is a cut
+    // candidate, so the cut exists; the sentinel fallback is the sound
+    // default and is not reached.
+    let subchain = |side: RSide, i: usize| -> LineString<T> {
+        let arc = channel.arc(side);
+        let sentinel_start = at_vertex(arc, 0);
+        let sentinel_end = at_vertex(arc, arc.len() - 1);
+        let start = if i > 0 && bottoms[i - 1] == side {
+            cut(i - 1, side).unwrap_or(sentinel_start)
         } else {
             sentinel_start
         };
-        let end = if tops[i] == own_side {
-            arc_cuts[i].unwrap_or(sentinel_end)
+        let end = if tops[i] == side {
+            cut(i, side).unwrap_or(sentinel_end)
         } else {
             sentinel_end
         };
-        // Wrap detection: the paper's subchain is a fixed-direction scan
-        // of the WHOLE ring, which can wrap around the polygon's back
-        // when a later separator cuts below an earlier one. An arc slice
-        // cannot represent a wrap; the signal is one of the paper's
-        // immediate anchor cuts (i-1 or i) falling outside the computed
-        // slice. The full ring is the always-sound superset there.
-        let (lo, hi) = if pos_le(start.0, end.0) {
-            (start.0, end.0)
-        } else {
-            (end.0, start.0)
-        };
-        let wraps = [i.checked_sub(1), Some(i)]
-            .into_iter()
-            .flatten()
-            .filter_map(|j| arc_cuts[j])
-            .any(|(pos, _)| !pos_le(lo, pos) || !pos_le(pos, hi));
-        if wraps {
-            return full_ring.clone();
-        }
         arc_slice(arc, start, end)
     };
 
     (0..m)
         .map(|i| Subproblem {
-            p_chain: subchain(&channel.arc_p, &p_cuts, &channel.p_ring, RSide::P, i),
-            q_chain: subchain(&channel.arc_q, &q_cuts, &channel.q_ring, RSide::Q, i),
+            p_chain: subchain(RSide::P, i),
+            q_chain: subchain(RSide::Q, i),
             separator: separators[i].line,
         })
         .collect()
@@ -851,71 +832,6 @@ fn construct_subproblems<T: GeoFloat>(
 /// Lexicographic order on arc positions.
 fn pos_le<T: GeoFloat>(a: (usize, T), b: (usize, T)) -> bool {
     a.0 < b.0 || (a.0 == b.0 && a.1 <= b.1)
-}
-
-/// The intersection point of `separator` with the open polyline that is
-/// furthest along the separator's own orientation (the paper's p_i+ and
-/// q_i+, with b_i at `separator.start`). A collinear overlap contributes
-/// both overlap endpoints. `None` when they do not touch.
-fn highest_intersection<T: GeoFloat>(
-    separator: &Line<T>,
-    arc: &[Coord<T>],
-    extras: &[Coord<T>],
-) -> Option<Coord<T>> {
-    use crate::algorithm::line_intersection::LineIntersection;
-    let d = separator.delta();
-    let mut best: Option<(T, Coord<T>)> = None;
-    let mut consider = |c: Coord<T>| {
-        let h = (c.x - separator.start.x) * d.x + (c.y - separator.start.y) * d.y;
-        if best.is_none_or(|(bh, _)| h > bh) {
-            best = Some((h, c));
-        }
-    };
-    for &c in extras {
-        consider(c);
-    }
-    for w in arc.windows(2) {
-        match line_intersection(*separator, Line::new(w[0], w[1])) {
-            Some(LineIntersection::SinglePoint { intersection, .. }) => consider(intersection),
-            Some(LineIntersection::Collinear { intersection }) => {
-                consider(intersection.start);
-                consider(intersection.end);
-            }
-            None => {}
-        }
-    }
-    best.map(|(_, c)| c)
-}
-
-/// The position of the point of `arc` nearest to `c`: segment index and
-/// clamped parameter within that segment, ordered lexicographically
-/// along the arc. Cut coordinates are computed intersections, so they
-/// sit on their segment only within rounding; nearest-segment location
-/// absorbs that.
-fn arc_position<T: GeoFloat>(arc: &[Coord<T>], c: Coord<T>) -> (usize, T) {
-    let mut best = (0, T::zero());
-    let mut best_d = T::infinity();
-    for (e, w) in arc.windows(2).enumerate() {
-        let d = w[1] - w[0];
-        let len2 = d.x * d.x + d.y * d.y;
-        let t = if len2 == T::zero() {
-            T::zero()
-        } else {
-            (((c.x - w[0].x) * d.x + (c.y - w[0].y) * d.y) / len2)
-                .max(T::zero())
-                .min(T::one())
-        };
-        let proj = Coord {
-            x: w[0].x + d.x * t,
-            y: w[0].y + d.y * t,
-        };
-        let dist = Euclidean.distance(&Point::from(c), &Point::from(proj));
-        if dist < best_d {
-            best_d = dist;
-            best = (e, t);
-        }
-    }
-    best
 }
 
 /// The sub-polyline of `arc` between two located cuts, endpoints
@@ -1375,6 +1291,71 @@ mod tests {
         }
     }
 
+    /// σ-property counterexamples, one per DECOMPOSE defect: the shrunk
+    /// originals, then the simplified integer-coordinate forms shown in
+    /// paper_corrections.typ (bookmark: minsep-paper-corrections), each
+    /// verified to fail with its repair reverted. Float-level defects
+    /// are covered in work.md.
+    #[test]
+    fn decompose_regressions_match_oracle() {
+        let pairs = [
+            (
+                wkt! { POLYGON((0. 2.,0. -2.,2. 0.,0. 2.)) },
+                wkt! { POLYGON((-6. -2.,-6. -6.,-2. -5.,-6. -2.)) },
+            ),
+            (
+                wkt! { POLYGON((2. -4.,-1. 3.,7. 12.,-4. 8.,-4. -4.,2. -4.)) },
+                wkt! { POLYGON((12. 4.,6. 8.,4. 4.,8. 0.,12. 4.)) },
+            ),
+            (
+                wkt! { POLYGON((0. 0.,-1. -2.,2. -1.,0. 0.)) },
+                wkt! { POLYGON((-8. -4.,-8. -8.,4. -6.,-8. -4.)) },
+            ),
+            (
+                wkt! { POLYGON((3. 2.,0. -4.,4. 2.,3. 2.)) },
+                wkt! { POLYGON((0. 8.,2. 3.,8. 4.,0. 8.)) },
+            ),
+            (
+                wkt! { POLYGON((-0.49999999999999983 0.8660254037844387,-0.5000000000000004 -0.8660254037844384,1.0 -0.00000000000000024492935982947064,-0.49999999999999983 0.8660254037844387)) },
+                wkt! { POLYGON((-3.5 -1.1339745962155612,-3.5000000000000004 -2.8660254037844384,-2.0 -2.0000000000000004,-3.5 -1.1339745962155612)) },
+            ),
+            (
+                wkt! { POLYGON((-0.142314838273285 -5.010178558119067,-0.6548607339452852 -6.755749574354258,1.0 -6.0,-0.142314838273285 -5.010178558119067)) },
+                wkt! { POLYGON((-1.4999999999999998 -7.133974596215562,-1.5000000000000004 -8.866025403784437,2.0 -8.0,-1.4999999999999998 -7.133974596215562)) },
+            ),
+            (
+                wkt! { POLYGON((0.7500000000000001 -6.56698729810778,0.49999999999999956 -7.866025403784438,2.0 -7.0,0.7500000000000001 -6.56698729810778)) },
+                wkt! { POLYGON((-1.9999999999999998 -5.0,-3.0 -8.0,-2.0 -9.0,0.5 -8.0,-1.9999999999999998 -5.0)) },
+            ),
+            (
+                wkt! { POLYGON((2.344483459537843 0.36239639361456,1.9493508311612873 0.9987165071710528,1.6206209386536046 0.32568624136111113,1.5025653383040525 -0.05058416099371602,1.3878940174523373 -0.7907757369376986,2.1514277775045767 -0.9884683243281114,2.6889669190756864 -0.72479278722912,3.0 -0.00000000000000024492935982947064,2.344483459537843 0.36239639361456)) },
+                wkt! { POLYGON((7.445738355776538 4.895163291355062,6.397365363620744 4.79801722728024,4.051080700948295 3.4487514465502898,7.092268359463302 3.0042658237049653,8.0 3.9999999999999996,7.445738355776538 4.895163291355062)) },
+            ),
+            (
+                wkt! { POLYGON((1.75 -2.566987298107781,1.7499999999999998 -3.433012701892219,3.0 -3.0000000000000004,1.75 -2.566987298107781)) },
+                wkt! { POLYGON((-0.49999999999999983 0.8660254037844387,-0.5000000000000004 -0.8660254037844384,1.0 -0.00000000000000024492935982947064,-0.49999999999999983 0.8660254037844387)) },
+            ),
+            (
+                wkt! { POLYGON((-0.05967548431193898 3.498217830221508,-0.49972049878061514 2.516715953411433,0.039404700122676696 1.0005176661233244,2.0 2.4999999999999996,-0.05967548431193898 3.498217830221508)) },
+                wkt! { POLYGON((0.766044443118978 0.6427876096865393,0.17364817766693041 0.984807753012208,-0.24999999999999992 0.43301270189221935,-0.9396926207859083 0.3420201433256689,-0.9396926207859084 -0.34202014332566866,-0.5000000000000004 -0.8660254037844384,0.17364817766692997 -0.9848077530122081,0.7660444431189778 -0.6427876096865396,1.0 -0.00000000000000024492935982947064,0.766044443118978 0.6427876096865393)) },
+            ),
+            (
+                wkt! { POLYGON((0.43301270189221935 0.24999999999999997,1.5000000000000004 2.598076211353316,0.00000000000000006123233995736766 1.0,-0.49999999999999983 0.8660254037844387,-0.8660254037844385 0.5000000000000003,-1.0 0.000000000000000566553889764798,-0.866025403784439 -0.4999999999999994,-0.5000000000000004 -0.8660254037844384,-0.00000000000000018369701987210297 -1.0,0.5000000000000001 -0.8660254037844386,0.8660254037844388 -0.49999999999999967,1.0 0.0000000000000006432490598706546,0.43301270189221935 0.24999999999999997)) },
+                wkt! { POLYGON((2.7071067811865475 1.7071067811865475,2.0 2.0,1.2928932188134525 1.7071067811865475,1.0 1.0000000000000002,1.2928932188134523 0.29289321881345254,1.9999999999999998 0.0,2.7071067811865475 0.2928932188134523,3.0 0.9999999999999998,2.7071067811865475 1.7071067811865475)) },
+            ),
+        ];
+        for (p, q) in &pairs {
+            let sigma = compute_polygon_separation(p, q);
+            let oracle = linsep::separation_brute_force(p.exterior(), q.exterior());
+            assert_relative_eq!(
+                sigma,
+                oracle,
+                max_relative = 8.0 * f64::EPSILON,
+                epsilon = 32.0 * f64::EPSILON * 16.0
+            );
+        }
+    }
+
     #[test]
     fn separated_squares() {
         let p = wkt! { POLYGON((0. 0.,1. 0.,1. 1.,0. 1.,0. 0.)) };
@@ -1405,5 +1386,74 @@ mod tests {
         let separation: f64 = compute_polygon_separation(&p, &q);
         assert!(separation > 0.0);
         assert!(separation.is_finite());
+    }
+
+    /// The pair of boundary points realising σ, by brute force over the
+    /// segment pairs.
+    fn closest_boundary_pair(p: &LineString<f64>, q: &LineString<f64>) -> (Coord<f64>, Coord<f64>) {
+        use crate::Closest;
+        use crate::algorithm::closest_point::ClosestPoint;
+        let mut best = (f64::INFINITY, Coord::zero(), Coord::zero());
+        let mut consider = |a: Coord<f64>, b: Coord<f64>| {
+            let d = Euclidean.distance(&Point::from(a), &Point::from(b));
+            if d < best.0 {
+                best = (d, a, b);
+            }
+        };
+        let foot = |l: &Line<f64>, c: Coord<f64>| match l.closest_point(&Point::from(c)) {
+            Closest::SinglePoint(pt) | Closest::Intersection(pt) => pt.0,
+            Closest::Indeterminate => l.start,
+        };
+        for lp in p.lines() {
+            for lq in q.lines() {
+                for a in [lp.start, lp.end] {
+                    consider(a, foot(&lq, a));
+                }
+                for b in [lq.start, lq.end] {
+                    consider(foot(&lp, b), b);
+                }
+            }
+        }
+        (best.1, best.2)
+    }
+
+    /// Theorem A of paper_corrections.typ: with i* the least separator
+    /// the realising sight meets, the pair lies in subproblem i* or,
+    /// when the sight touches l_{i*} only at a path vertex, in i*+1.
+    /// Sharper than the σ property, which another subproblem can
+    /// satisfy by chance. Computed extension endpoints round, so
+    /// touching and membership are tested with a tolerance.
+    #[hegel::test]
+    fn realising_pair_lies_in_its_separators_subproblem(tc: hegel::TestCase) {
+        let p = draw_star(&tc);
+        let q = draw_star(&tc);
+        let (bridge_pq, bridge_qp) = assume_noncontaining_bridges(&tc, &p, &q);
+        let channel = construct_polygon_r_noncontaining(&bridge_pq, &bridge_qp, &p, &q);
+        tc.assume(
+            channel.bridge_pq.start != channel.bridge_qp.end
+                && channel.bridge_pq.end != channel.bridge_qp.start,
+        );
+        let ring = channel.r.exterior();
+        let path = shortest_path_in_ring(ring, channel.path_start, channel.path_end);
+        let extended = extend_segments_to_boundary(&path, ring);
+        let separators = remove_redundant_segments(&extended);
+        let subproblems = construct_subproblems(&separators, &path, &channel);
+
+        let (rp, rq) = closest_boundary_pair(p.exterior(), q.exterior());
+        let sight = Line::new(rp, rq);
+        let tol = 1e-9;
+        let i_star = separators
+            .iter()
+            .position(|s| Euclidean.distance(&s.line, &sight) <= tol)
+            .expect("every sight meets a separator");
+        let covers = |sp: &Subproblem<f64>| {
+            Euclidean.distance(&Point::from(rp), &sp.p_chain) <= tol
+                && Euclidean.distance(&Point::from(rq), &sp.q_chain) <= tol
+        };
+        assert!(
+            covers(&subproblems[i_star]) || subproblems.get(i_star + 1).is_some_and(covers),
+            "realising pair not in subproblem {i_star} or {}",
+            i_star + 1
+        );
     }
 }
