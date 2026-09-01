@@ -19,8 +19,16 @@
 
 use crate::algorithm::line_intersection::line_intersection;
 use crate::algorithm::line_measures::{Distance, Euclidean};
-use crate::{GeoFloat, GeoNum, Kernel, Line, LineString, Orientation};
+use crate::{GeoFloat, GeoNum, Kernel, Line, LineString, Orientation, Point};
 use geo_types::Coord;
+
+fn cross<T: GeoFloat>(a: Coord<T>, b: Coord<T>) -> T {
+    a.x * b.y - a.y * b.x
+}
+
+fn dot<T: GeoFloat>(a: Coord<T>, b: Coord<T>) -> T {
+    a.x * b.x + a.y * b.y
+}
 
 /// Two polygonal chains separated by a line.
 ///
@@ -30,8 +38,6 @@ use geo_types::Coord;
 pub(super) struct SeparatedChains<'a, T: GeoFloat> {
     p: &'a LineString<T>,
     q: &'a LineString<T>,
-    // Read once pruning lands (work.md step 3).
-    #[allow(dead_code)]
     separator: Line<T>,
 }
 
@@ -62,6 +68,65 @@ impl<'a, T: GeoFloat> SeparatedChains<'a, T> {
     pub(super) fn separation(&self) -> T {
         // Delegates to the brute force until the LinSep solver replaces it.
         separation_brute_force(self.p, self.q)
+    }
+
+    /// The closest visible vertex distance cvv(P, Q): the minimum distance
+    /// over mutually visible vertex pairs, one vertex from each chain.
+    /// Infinite when no pair qualifies.
+    ///
+    /// When chain geometry lies on the separator line, the search can
+    /// admit a vertex pair whose sight segment is properly blocked by an
+    /// edge that runs through the apex's perpendicular foot (relaxed
+    /// visibility keeps such an apex, and the blocking edge spans the
+    /// wedge without putting a vertex inside it). The result is then
+    /// smaller than the closest visible vertex distance but never smaller
+    /// than σ(P, Q) — every admitted pair is a distance between boundary
+    /// vertices — so σ = min(cvv, cve, cve) is unaffected.
+    ///
+    /// Direct O(k_p · k_q) search over the pruned candidate vertices,
+    /// restricted to pairs that lie in each other's visible wedges. This
+    /// suffices for correctness: the paper's Lemma 4 places the realising
+    /// pair inside both feasible regions R(), and R(x) is contained in
+    /// W(x); conversely a candidate pair in each other's wedges is visible,
+    /// because a chain edge that crossed the sight segment would either put
+    /// a chain vertex inside a wedge interior (excluded by the tangent
+    /// construction) or span a whole wedge and thereby block the
+    /// perpendicular sight line of its apex (excluded by Lemma 2 pruning).
+    /// The u+/u- points that shrink W() to R() only give the candidate
+    /// matrix its totally monotone structure; they land with the matrix
+    /// row-minima search in the performance pass.
+    ///
+    /// Wedges here are computed against the full chain, not just the
+    /// candidate vertices: the visibility argument above needs W() to be
+    /// vertex-free with respect to every chain vertex.
+    #[allow(dead_code)] // wired into separation() once CVE lands (work.md step 6)
+    pub(super) fn cvv(&self) -> T {
+        let sep = self.separator;
+        // The wedge construction expects its chain on the left of the
+        // directed separator; q lies on the right, so reverse it for q.
+        let sep_rev = Line::new(sep.end, sep.start);
+        let cand_p = candidates(self.p, &sep);
+        let cand_q = candidates(self.q, &sep_rev);
+        let wedges_p: Vec<VisibleWedge<T>> = cand_p
+            .iter()
+            .map(|&i| visible_wedge(&self.p.0, i, &sep))
+            .collect();
+        let wedges_q: Vec<VisibleWedge<T>> = cand_q
+            .iter()
+            .map(|&j| visible_wedge(&self.q.0, j, &sep_rev))
+            .collect();
+
+        let mut min = T::infinity();
+        for (wp, &i) in wedges_p.iter().zip(&cand_p) {
+            for (wq, &j) in wedges_q.iter().zip(&cand_q) {
+                let a = self.p.0[i];
+                let b = self.q.0[j];
+                if wp.contains_direction(b - a) && wq.contains_direction(a - b) {
+                    min = min.min(Euclidean.distance(&Point::from(a), &Point::from(b)));
+                }
+            }
+        }
+        min
     }
 }
 
@@ -118,34 +183,47 @@ impl<T: GeoFloat> VisibleWedge<T> {
     /// lower to the upper boundary through the toward-separator direction,
     /// capped at 180 degrees; it falls below 90 exactly when the two
     /// boundary directions span less than a quarter turn.
-    #[allow(dead_code)] // called by the solver steps as they land (work.md steps 4-6)
     pub(super) fn alpha_at_least_90(&self) -> bool {
         if self.degenerate {
             return false;
         }
-        let cross = self.lower.x * self.upper.y - self.lower.y * self.upper.x;
-        let dot = self.lower.x * self.upper.x + self.lower.y * self.upper.y;
-        !(cross >= T::zero() && dot > T::zero())
+        let c = cross(self.lower, self.upper);
+        let d = dot(self.lower, self.upper);
+        !(c >= T::zero() && d > T::zero())
+    }
+
+    /// Whether `dir` lies in the closed wedge, swept counterclockwise from
+    /// the lower to the upper boundary. A degenerate wedge contains
+    /// nothing; the zero direction lies in every non-degenerate wedge.
+    pub(super) fn contains_direction(&self, dir: Coord<T>) -> bool {
+        if self.degenerate {
+            return false;
+        }
+        let cl = cross(self.lower, dir);
+        let cu = cross(dir, self.upper);
+        if cross(self.lower, self.upper) < T::zero() {
+            // Reflex wedge (over 180 degrees): the complement is the convex
+            // cone swept counterclockwise from upper to lower.
+            cl >= T::zero() || cu >= T::zero()
+        } else {
+            cl >= T::zero() && cu >= T::zero()
+        }
     }
 }
 
-/// Compute the visible wedge of `candidates[idx]` against the other
-/// candidate vertices. O(n) per vertex; the paper's successive convex
-/// hulls achieve O(n) for a whole monotone chain.
-#[allow(dead_code)] // called by the solver steps as they land (work.md steps 4-6)
+/// Compute the visible wedge of `vertices[idx]` against the other vertices
+/// of the slice. O(n) per vertex; the paper's successive convex hulls
+/// achieve O(n) for a whole monotone chain.
 pub(super) fn visible_wedge<T: GeoFloat>(
-    candidates: &[Coord<T>],
+    vertices: &[Coord<T>],
     idx: usize,
     separator: &Line<T>,
 ) -> VisibleWedge<T> {
-    let apex = candidates[idx];
+    let apex = vertices[idx];
     let d = separator.delta();
     // Right normal of the separator direction: points from the chain's
     // side toward the line.
     let toward = Coord { x: d.y, y: -d.x };
-
-    let cross = |a: Coord<T>, b: Coord<T>| a.x * b.y - a.y * b.x;
-    let dot = |a: Coord<T>, b: Coord<T>| a.x * b.x + a.y * b.y;
 
     // Upper tangent: the direction with the smallest counterclockwise
     // angle from `toward` among vertices above the apex. Lower tangent:
@@ -154,7 +232,7 @@ pub(super) fn visible_wedge<T: GeoFloat>(
     let mut lower: Option<Coord<T>> = None;
     let mut degenerate = false;
 
-    for (j, &c) in candidates.iter().enumerate() {
+    for (j, &c) in vertices.iter().enumerate() {
         if j == idx || c == apex {
             continue;
         }
@@ -201,7 +279,6 @@ pub(super) fn visible_wedge<T: GeoFloat>(
 /// O(n²): each sight segment is tested against every chain edge. The paper
 /// achieves this step in O(n) with a linear scan; optimise once the solver
 /// is complete.
-#[allow(dead_code)] // called by the solver steps as they land (work.md steps 4-6)
 pub(super) fn perpendicularly_visible<T: GeoFloat>(
     chain: &LineString<T>,
     separator: &Line<T>,
@@ -223,6 +300,20 @@ pub(super) fn perpendicularly_visible<T: GeoFloat>(
                 .filter(|edge| edge.start != v && edge.end != v)
                 .all(|edge| !line_intersection(edge, sight).is_some_and(|i| i.is_proper()))
         })
+        .collect()
+}
+
+/// Candidate vertex indices of `chain` after both pruning steps:
+/// perpendicular visibility (Lemma 2), then the alpha >= 90 degrees
+/// elimination (Lemma 3) computed over the survivors. `separator` must have
+/// the chain on its left.
+pub(super) fn candidates<T: GeoFloat>(chain: &LineString<T>, separator: &Line<T>) -> Vec<usize> {
+    let vis = perpendicularly_visible(chain, separator);
+    let coords: Vec<Coord<T>> = vis.iter().map(|&i| chain.0[i]).collect();
+    vis.iter()
+        .enumerate()
+        .filter(|&(k, _)| visible_wedge(&coords, k, separator).alpha_at_least_90())
+        .map(|(_, &i)| i)
         .collect()
 }
 
@@ -359,30 +450,17 @@ mod tests {
         assert_eq!(visible_idx, vec![0, 1]);
     }
 
-    /// Candidate indices of `chain` after both pruning steps: perpendicular
-    /// visibility, then the alpha >= 90 degrees elimination computed over
-    /// the survivors. `separator` must have the chain on its left.
-    fn pruned_candidates(chain: &LineString<f64>, separator: &Line<f64>) -> Vec<usize> {
-        let vis = perpendicularly_visible(chain, separator);
-        let coords: Vec<Coord<f64>> = vis.iter().map(|&i| chain.0[i]).collect();
-        vis.iter()
-            .enumerate()
-            .filter(|&(k, _)| visible_wedge(&coords, k, separator).alpha_at_least_90())
-            .map(|(_, &i)| i)
-            .collect()
-    }
-
     #[test]
     fn alpha_elimination_removes_deep_pocket_vertex() {
         // The middle vertex sits at the bottom of a deep pocket: its wedge
         // is bounded by the rays to its neighbours, spanning well under 90
         // degrees, so Lemma 3 eliminates it.
         let p = wkt! { LINESTRING(-0.1 0.,-2. 1.,-0.1 2.) };
-        assert_eq!(pruned_candidates(&p, &vertical_separator()), vec![0, 2]);
+        assert_eq!(candidates(&p, &vertical_separator()), vec![0, 2]);
 
         // A shallow pocket spans more than 90 degrees and survives.
         let p = wkt! { LINESTRING(-0.1 0.,-1. 1.,-0.1 2.) };
-        assert_eq!(pruned_candidates(&p, &vertical_separator()), vec![0, 1, 2]);
+        assert_eq!(candidates(&p, &vertical_separator()), vec![0, 1, 2]);
     }
 
     #[test]
@@ -390,7 +468,7 @@ mod tests {
         // A vertex protruding toward the separator sees it broadly: the
         // wedge is reflex and is treated as 180 degrees.
         let p = wkt! { LINESTRING(-1. 0.,-0.1 1.,-1. 2.) };
-        assert_eq!(pruned_candidates(&p, &vertical_separator()), vec![0, 1, 2]);
+        assert_eq!(candidates(&p, &vertical_separator()), vec![0, 1, 2]);
     }
 
     #[hegel::test]
@@ -403,8 +481,8 @@ mod tests {
 
         let all_p: Vec<usize> = (0..p.0.len()).collect();
         let all_q: Vec<usize> = (0..q.0.len()).collect();
-        let cand_p = pruned_candidates(&p, &sep);
-        let cand_q = pruned_candidates(&q, &sep_reversed);
+        let cand_p = candidates(&p, &sep);
+        let cand_q = candidates(&q, &sep_reversed);
 
         let full = brute_cvv(&p, &all_p, &q, &all_q);
         let pruned = brute_cvv(&p, &cand_p, &q, &cand_q);
@@ -427,6 +505,107 @@ mod tests {
         let pruned = brute_cvv(&p, &vis_p, &q, &vis_q);
 
         assert_eq!(full.total_cmp(&pruned), std::cmp::Ordering::Equal);
+    }
+
+    #[test]
+    fn wedge_containment_convex_reflex_and_default() {
+        // Convex quarter-turn wedge from (1, -1) to (1, 1).
+        let convex = VisibleWedge {
+            upper: Coord { x: 1.0, y: 1.0 },
+            lower: Coord { x: 1.0, y: -1.0 },
+            degenerate: false,
+        };
+        assert!(convex.contains_direction(Coord { x: 1.0, y: 0.0 }));
+        assert!(convex.contains_direction(Coord { x: 1.0, y: 1.0 }));
+        assert!(!convex.contains_direction(Coord { x: 0.0, y: 1.0 }));
+        assert!(!convex.contains_direction(Coord { x: -1.0, y: 0.0 }));
+
+        // Reflex wedge sweeping 270 degrees counterclockwise from
+        // (-1, -1) through +x to (-1, 1): everything except directions
+        // strictly inside the back-facing quarter turn is contained.
+        let reflex = VisibleWedge {
+            upper: Coord { x: -1.0, y: 1.0 },
+            lower: Coord { x: -1.0, y: -1.0 },
+            degenerate: false,
+        };
+        assert!(reflex.contains_direction(Coord { x: 1.0, y: 0.0 }));
+        assert!(reflex.contains_direction(Coord { x: 0.0, y: 1.0 }));
+        assert!(reflex.contains_direction(Coord { x: 0.0, y: -1.0 }));
+        assert!(!reflex.contains_direction(Coord { x: -1.0, y: 0.0 }));
+
+        // Default half-plane wedge for a vertical separator with the chain
+        // on the left: toward is +x.
+        let half = VisibleWedge {
+            upper: Coord { x: 0.0, y: 1.0 },
+            lower: Coord { x: 0.0, y: -1.0 },
+            degenerate: false,
+        };
+        assert!(half.contains_direction(Coord { x: 1.0, y: 5.0 }));
+        assert!(half.contains_direction(Coord { x: 0.0, y: 1.0 }));
+        assert!(!half.contains_direction(Coord { x: -1.0, y: 0.0 }));
+
+        let degenerate = VisibleWedge {
+            degenerate: true,
+            ..half
+        };
+        assert!(!degenerate.contains_direction(Coord { x: 1.0, y: 0.0 }));
+    }
+
+    #[test]
+    fn cvv_finds_closest_vertex_pair() {
+        let p = wkt! { LINESTRING(-1. 0.,-1. 2.) };
+        let q = wkt! { LINESTRING(1. 1.,3. 1.) };
+        let chains = SeparatedChains::new(&p, &q, vertical_separator()).unwrap();
+        assert_relative_eq!(chains.cvv(), 5.0_f64.sqrt());
+    }
+
+    #[test]
+    fn cvv_excludes_hidden_vertex() {
+        // The pocket vertex (-3, 0) is the closest vertex of p to q's
+        // vertex (1, 0), but p's first edge hides it; the closest VISIBLE
+        // vertex pair is realised at a front vertex.
+        let p = wkt! { LINESTRING(-1. 5.,-1. -5.,-3. 0.) };
+        let q = wkt! { LINESTRING(1. 0.,3. 0.) };
+        let chains = SeparatedChains::new(&p, &q, vertical_separator()).unwrap();
+        assert_relative_eq!(chains.cvv(), 29.0_f64.sqrt());
+    }
+
+    #[test]
+    fn cvv_admits_pair_blocked_through_perpendicular_foot() {
+        // Found by the property harness. q's last edge runs along the
+        // separator: it properly blocks the vertex pair (-1, 0)-(1, 0)
+        // but crosses the apex's perpendicular sight only at its foot, so
+        // relaxed pruning keeps the apex and the pair is admitted (2.0,
+        // below the closest visible pair at sqrt 5). This is sound for
+        // separation: p's vertex (0, 2) lies on that edge, so the true
+        // sigma is 0 and the vertex-edge case recovers it.
+        let p = wkt! { LINESTRING(0. 2.,-1. 0.) };
+        let q = wkt! { LINESTRING(1. 0.,0. -2.,0. 5.) };
+        let chains = SeparatedChains::new(&p, &q, vertical_separator()).unwrap();
+        assert_relative_eq!(chains.cvv(), 2.0);
+        assert_relative_eq!(separation_brute_force(&p, &q), 0.0);
+    }
+
+    /// cvv() must never miss the closest visible vertex pair (upper
+    /// bound), and every pair it admits is a distance between boundary
+    /// vertices, so it can never undercut the separation (lower bound).
+    /// Equality with the closest visible pair is deliberately not
+    /// asserted: see `cvv_admits_pair_blocked_through_perpendicular_foot`.
+    #[hegel::test]
+    fn cvv_brackets_between_separation_and_closest_visible_pair(tc: hegel::TestCase) {
+        let p = tc.draw(side_chain(-1e6, 0.0));
+        let q = tc.draw(side_chain(0.0, 1e6));
+        let chains = SeparatedChains::new(&p, &q, vertical_separator())
+            .expect("chains are separated by construction");
+
+        let all_p: Vec<usize> = (0..p.0.len()).collect();
+        let all_q: Vec<usize> = (0..q.0.len()).collect();
+        let visible_min = brute_cvv(&p, &all_p, &q, &all_q);
+        let sigma = separation_brute_force(&p, &q);
+
+        let cvv = chains.cvv();
+        assert_ne!(cvv.total_cmp(&visible_min), std::cmp::Ordering::Greater);
+        assert_ne!(cvv.total_cmp(&sigma), std::cmp::Ordering::Less);
     }
 
     #[hegel::test]
