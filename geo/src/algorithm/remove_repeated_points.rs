@@ -472,3 +472,74 @@ mod test {
         assert_eq!(gc, expected);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::RemoveRepeatedPoints;
+    use crate::utils::pbt_gens::{coords, geometries, line_strings};
+    use crate::{Geometry, MultiPoint, Point};
+    use hegel::generators;
+
+    // "Create a new geometry with (consecutive) repeated points removed" versus
+    // "Remove (consecutive) repeated points inplace" — the same operation by
+    // two routes.
+    #[hegel::test]
+    fn the_in_place_form_matches_the_by_value_form(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e3));
+        let mut in_place = geometry.clone();
+        in_place.remove_repeated_points_mut();
+        assert_eq!(geometry.remove_repeated_points(), in_place);
+    }
+
+    // Nothing is left to remove after the first pass.
+    #[hegel::test]
+    fn removing_repeated_points_is_idempotent(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e3));
+        let once = geometry.remove_repeated_points();
+        assert_eq!(once.remove_repeated_points(), once);
+    }
+
+    // For a `LineString` the docs say "consecutive" repeated points, so the
+    // output has no two adjacent coordinates equal, and only such coordinates
+    // may have been dropped.
+    #[hegel::test]
+    fn a_line_string_keeps_one_coord_from_each_run(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e3, 24));
+        let deduped = line_string.remove_repeated_points();
+        assert!(deduped.0.windows(2).all(|w| w[0] != w[1]));
+        let mut expected = line_string.0.clone();
+        expected.dedup();
+        assert_eq!(deduped.0, expected);
+    }
+
+    // A `MultiPoint` has "repeated points removed" without the "consecutive"
+    // qualifier, so no point may appear twice at all.
+    #[hegel::test]
+    fn a_multi_point_keeps_no_duplicates(tc: hegel::TestCase) {
+        let points: Vec<Point<f64>> = tc
+            .draw(generators::vecs(coords(20.0)).max_size(24))
+            .into_iter()
+            .map(Point::from)
+            .collect();
+        let deduped = MultiPoint::new(points).remove_repeated_points();
+        for (i, point) in deduped.iter().enumerate() {
+            assert!(
+                !deduped.0[..i].contains(point),
+                "{point:?} appears twice in {deduped:?}"
+            );
+        }
+    }
+
+    // "For `Point`, `Line`, `Rect` and `Triangle` the geometry remains the
+    // same."
+    #[hegel::test]
+    fn zero_and_one_dimensional_primitives_are_left_alone(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e3));
+        if matches!(
+            geometry,
+            Geometry::Point(_) | Geometry::Line(_) | Geometry::Rect(_) | Geometry::Triangle(_)
+        ) {
+            assert_eq!(geometry.remove_repeated_points(), geometry);
+        }
+    }
+}

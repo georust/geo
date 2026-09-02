@@ -1139,3 +1139,99 @@ mod idx_tests {
         assert!(result[1].interiors().is_empty());
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::{SimplifyVw, SimplifyVwPreserve};
+    use crate::utils::pbt_gens::line_strings;
+    use crate::{Coord, LineString};
+    use hegel::generators;
+
+    fn epsilons(tc: &hegel::TestCase) -> f64 {
+        tc.draw(generators::floats::<f64>().min_value(1e-6).max_value(1e6))
+    }
+
+    // `simplify_vw_idx` returns "the indices of the points retained by
+    // `SimplifyVw::simplify_vw`, relative to the input geometry".
+    //
+    // Epsilon is kept strictly positive: at zero the two disagree, pinned by
+    // `simplify_vw_idx_ignores_a_zero_epsilon` below.
+    #[hegel::test]
+    fn simplify_vw_idx_indexes_the_output_of_simplify_vw(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let epsilon = epsilons(&tc);
+        let indices = line_string.simplify_vw_idx(epsilon);
+        assert!(
+            indices.windows(2).all(|w| w[0] < w[1]),
+            "indices are not strictly increasing: {indices:?}"
+        );
+        let indexed: Vec<Coord<f64>> = indices.iter().map(|&i| line_string.0[i]).collect();
+        assert_eq!(indexed, line_string.simplify_vw(epsilon).0);
+    }
+
+    #[hegel::test]
+    fn simplify_vw_preserve_idx_indexes_the_output_of_simplify_vw_preserve(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let epsilon = epsilons(&tc);
+        let indices = line_string.simplify_vw_preserve_idx(epsilon);
+        let indexed: Vec<Coord<f64>> = indices.iter().map(|&i| line_string.0[i]).collect();
+        assert_eq!(indexed, line_string.simplify_vw_preserve(epsilon).0);
+    }
+
+    // "An `epsilon` less than or equal to zero will return an unaltered version
+    // of the geometry."
+    #[hegel::test]
+    fn a_non_positive_epsilon_leaves_the_geometry_alone(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let epsilon = tc.draw(generators::floats::<f64>().min_value(-1e6).max_value(0.0));
+        assert_eq!(line_string.simplify_vw(epsilon), line_string);
+        assert_eq!(line_string.simplify_vw_preserve(epsilon), line_string);
+    }
+
+    // Both variants only drop vertices, so the output is a subsequence of the
+    // input.
+    #[hegel::test]
+    fn simplify_vw_retains_a_subsequence_of_the_input(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let simplified = line_string.simplify_vw(epsilons(&tc));
+        let mut remaining = line_string.0.iter();
+        for coord in &simplified.0 {
+            assert!(
+                remaining.any(|candidate| candidate == coord),
+                "{simplified:?} is not a subsequence of {line_string:?}"
+            );
+        }
+    }
+
+    // The removal rule is documented as "if the area of this triangle is less
+    // than `epsilon`, we will remove the point", so a larger epsilon can only
+    // remove more.
+    #[hegel::test]
+    fn a_larger_epsilon_never_retains_more_points(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let small = epsilons(&tc);
+        let large = small * tc.draw(generators::floats::<f64>().min_value(1.0).max_value(1e3));
+        assert!(
+            line_string.simplify_vw(large).0.len() <= line_string.simplify_vw(small).0.len(),
+            "epsilon {large} kept more points than {small}"
+        );
+    }
+
+    // KNOWN FAILURE, georust/geo#1605 (open): `simplify_vw` guards `epsilon <= 0` in
+    // `visvalingam`, but `simplify_vw_idx` calls `visvalingam_indices`, which
+    // has no such guard. Its removal loop breaks on `area > epsilon`, so a
+    // collinear triple has `0.0 > 0.0 == false` and the middle point is dropped
+    // — contradicting both "an `epsilon` less than or equal to zero will return
+    // an unaltered version of the geometry" and `simplify_vw_idx`'s promise to
+    // report the points `simplify_vw` retains.
+    #[test]
+    #[ignore = "geo#1605: simplify_vw_idx does not honour a non-positive epsilon"]
+    fn simplify_vw_idx_ignores_a_zero_epsilon() {
+        let line_string = LineString::from(vec![
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 1.0, y: 0.0 },
+            Coord { x: 2.0, y: 0.0 },
+        ]);
+        assert_eq!(line_string.simplify_vw_idx(0.0), vec![0, 1, 2]);
+    }
+}

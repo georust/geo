@@ -264,3 +264,66 @@ mod test {
         );
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::ChaikinSmoothing;
+    use crate::utils::pbt_gens::{monotone_line_strings, star_polygons};
+    use crate::{Euclidean, Length};
+    use hegel::generators;
+
+    fn iterations(tc: &hegel::TestCase) -> usize {
+        tc.draw(generators::integers::<usize>().min_value(1).max_value(4))
+    }
+
+    // "This implementation preserves the start and end vertices of an open
+    // linestring". The generator's x values strictly increase, so the string is
+    // open.
+    #[hegel::test]
+    fn smoothing_preserves_the_ends_of_an_open_line_string(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        let smoothed = line_string.chaikin_smoothing(iterations(&tc));
+        assert_eq!(smoothed.0.first(), line_string.0.first());
+        assert_eq!(smoothed.0.last(), line_string.0.last());
+    }
+
+    // "Each iteration of the smoothing doubles the number of vertices of the
+    // geometry": an open string of n coordinates yields the 2(n-1) midpoints
+    // plus its two retained ends.
+    #[hegel::test]
+    fn each_iteration_doubles_an_open_line_strings_vertices(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        let n = line_string.0.len();
+        assert_eq!(line_string.chaikin_smoothing(1).0.len(), 2 * n);
+    }
+
+    // Every new vertex is a convex combination of two neighbours, so smoothing
+    // cannot leave the convex hull of the input — in particular it cannot
+    // lengthen a closed ring's perimeter.
+    #[hegel::test]
+    fn smoothing_a_ring_never_lengthens_it(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        let smoothed = ring.chaikin_smoothing(iterations(&tc));
+        let before = Euclidean.length(&ring);
+        let after = Euclidean.length(&smoothed);
+        assert!(
+            after <= before * (1.0 + 1e-9),
+            "smoothing lengthened the ring: {before} -> {after}"
+        );
+    }
+
+    // Smoothing "smoothes the corner between start and end of a closed
+    // linestring", so a closed ring comes back closed.
+    #[hegel::test]
+    fn smoothing_keeps_a_closed_ring_closed(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        assert!(ring.chaikin_smoothing(iterations(&tc)).is_closed());
+    }
+
+    // Zero iterations is no smoothing at all.
+    #[hegel::test]
+    fn zero_iterations_leaves_the_geometry_alone(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        assert_eq!(line_string.chaikin_smoothing(0), line_string);
+    }
+}

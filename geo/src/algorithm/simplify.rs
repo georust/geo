@@ -624,3 +624,157 @@ mod test {
         assert_eq!(actual, expected);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::Simplify;
+    use crate::utils::pbt_gens::{line_strings, monotone_line_strings, star_polygons};
+    use crate::{Coord, Euclidean, Length, LineString};
+    use hegel::generators;
+
+    fn epsilons(tc: &hegel::TestCase) -> f64 {
+        tc.draw(hegel::one_of!(
+            generators::floats::<f64>().min_value(0.0).max_value(1e4),
+            generators::floats::<f64>().min_value(-1e4).max_value(0.0),
+        ))
+    }
+
+    // `simplify_idx` returns "the indices of the points retained by
+    // `Simplify::simplify`, relative to the input geometry", so mapping the
+    // indices back through the input must reproduce `simplify`'s output, and
+    // the indices must be strictly increasing and in bounds.
+    #[hegel::test]
+    fn simplify_idx_indexes_the_output_of_simplify(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let epsilon = epsilons(&tc);
+        let indices = Simplify::simplify_idx(&line_string, epsilon);
+        assert!(
+            indices.windows(2).all(|w| w[0] < w[1]),
+            "indices are not strictly increasing: {indices:?}"
+        );
+        let indexed: Vec<Coord<f64>> = indices.iter().map(|&i| line_string.0[i]).collect();
+        assert_eq!(indexed, line_string.simplify(epsilon).0);
+    }
+
+    // "An `epsilon` less than or equal to zero will return an unaltered version
+    // of the geometry."
+    #[hegel::test]
+    fn a_non_positive_epsilon_leaves_the_geometry_alone(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let epsilon = tc.draw(generators::floats::<f64>().min_value(-1e6).max_value(0.0));
+        assert_eq!(line_string.simplify(epsilon), line_string);
+    }
+
+    // RDP only ever drops vertices, so the output is a subsequence of the input.
+    #[hegel::test]
+    fn simplify_retains_a_subsequence_of_the_input(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e6, 24));
+        let epsilon = epsilons(&tc);
+        let simplified = line_string.simplify(epsilon);
+        let mut remaining = line_string.0.iter();
+        for coord in &simplified.0 {
+            assert!(
+                remaining.any(|candidate| candidate == coord),
+                "{simplified:?} is not a subsequence of {line_string:?}"
+            );
+        }
+    }
+
+    // Retaining a subsequence of vertices can only shorten the polyline, by the
+    // triangle inequality — the property `fuzz/fuzz_targets/simplify.rs` checks
+    // for polygon rings.
+    //
+    // Coordinates are capped at 1e150 to keep the cross product inside
+    // `Euclidean.distance(coord, &Line)` clear of overflow; see
+    // `simplify_drops_a_point_farther_than_epsilon` below.
+    #[hegel::test]
+    fn simplify_never_lengthens_a_line_string(tc: hegel::TestCase) {
+        let line_string = tc.draw(line_strings(1e150, 24));
+        let epsilon = epsilons(&tc);
+        let simplified = line_string.simplify(epsilon);
+        let before = Euclidean.length(&line_string);
+        let after = Euclidean.length(&simplified);
+        assert!(
+            after <= before * (1.0 + 1e-9) + 1e-9,
+            "simplification lengthened the line string: {before} -> {after}"
+        );
+    }
+
+    // However aggressive the epsilon, a simplified ring keeps enough vertices
+    // to stay a ring: `POLYGON_INITIAL_MIN` is 4, which is what
+    // `simplify_line_string_polygon_initial_min` and `dont_oversimplify` above
+    // pin for particular inputs.
+    #[hegel::test]
+    fn simplifying_a_polygon_leaves_each_ring_with_four_coords(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let epsilon = epsilons(&tc);
+        let simplified = polygon.simplify(epsilon);
+        assert!(simplified.exterior().0.len() >= 4);
+        assert!(simplified.exterior().is_closed());
+    }
+
+    // Every retained vertex is at most `epsilon` from the simplified output:
+    // "points closer than `epsilon` distance from the simplified output may be
+    // discarded", so a vertex farther than `epsilon` may not be. Distances are
+    // measured against the output polyline with an independent point-to-segment
+    // formula.
+    //
+    // The input is x-monotone so that the discarded vertex's nearest point on
+    // the output is on a segment RDP actually considered; a self-crossing input
+    // can put a dropped vertex far from the output without RDP being wrong.
+    #[hegel::test]
+    fn discarded_vertices_are_within_epsilon_of_the_output(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 16));
+        let epsilon = tc.draw(generators::floats::<f64>().min_value(1e-3).max_value(1e3));
+        let simplified = line_string.simplify(epsilon);
+        for coord in &line_string.0 {
+            let distance = distance_to_polyline(*coord, &simplified);
+            assert!(
+                distance <= epsilon * (1.0 + 1e-9) + 1e-9,
+                "{coord:?} is {distance} from the simplified output, beyond epsilon {epsilon}"
+            );
+        }
+    }
+
+    /// Least distance from `coord` to any segment of `line_string`, by the
+    /// projection formula, so the check does not reuse the distance code
+    /// `compute_rdp` calls.
+    fn distance_to_polyline(coord: Coord<f64>, line_string: &LineString<f64>) -> f64 {
+        line_string
+            .lines()
+            .map(|line| {
+                let d = line.end - line.start;
+                let length_squared = d.x * d.x + d.y * d.y;
+                let t = if length_squared == 0.0 {
+                    0.0
+                } else {
+                    (((coord - line.start).x * d.x + (coord - line.start).y * d.y) / length_squared)
+                        .clamp(0.0, 1.0)
+                };
+                let nearest = line.start + d * t;
+                (coord - nearest).x.hypot((coord - nearest).y)
+            })
+            .fold(f64::INFINITY, f64::min)
+    }
+
+    // KNOWN FAILURE, georust/geo#1606: `simplify` drops the middle vertex, which
+    // sits about 3.0 from the output, for an `epsilon` of 2.0. Coordinates this
+    // large also trip the library's own `debug_assert_ne!(farthest_index, 0)`
+    // above, so this test panics rather than failing its assertion.
+    #[test]
+    #[ignore = "geo#1606: simplify drops a vertex farther than epsilon at large coordinates"]
+    fn simplify_drops_a_point_farther_than_epsilon() {
+        let line_string = LineString::from(vec![
+            Coord {
+                x: 0.0,
+                y: -8.988465674311469e307,
+            },
+            Coord { x: 0.0, y: 0.0 },
+            Coord { x: 3.0, y: -0.0 },
+        ]);
+        let simplified = line_string.simplify(2.0);
+        for coord in &line_string.0 {
+            assert!(distance_to_polyline(*coord, &simplified) <= 2.0);
+        }
+    }
+}

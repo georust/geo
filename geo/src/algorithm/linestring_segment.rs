@@ -358,3 +358,63 @@ mod test {
         );
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::LineStringSegmentize;
+    use crate::utils::pbt_gens::monotone_line_strings;
+    use crate::{Euclidean, Length};
+    use hegel::generators;
+
+    // "Segments a LineString into `segment_count` equal length LineStrings as a
+    // MultiLineString", and `None` is returned only "when `segment_count` is
+    // equal to 0 or when a point cannot be interpolated on a `Line` segment".
+    #[hegel::test]
+    fn segmentize_returns_the_requested_number_of_segments(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        let n = tc.draw(generators::integers::<usize>().min_value(1).max_value(64));
+        let segments = line_string
+            .line_segmentize(n)
+            .expect("a positive count on a finite line string");
+        assert_eq!(segments.0.len(), n);
+    }
+
+    #[hegel::test]
+    fn a_zero_segment_count_is_rejected(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        assert!(line_string.line_segmentize(0).is_none());
+    }
+
+    // The segments partition the input, so their lengths add up to it.
+    #[hegel::test]
+    fn segmentize_preserves_total_length(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        let n = tc.draw(generators::integers::<usize>().min_value(1).max_value(64));
+        let segments = line_string
+            .line_segmentize(n)
+            .expect("a positive count on a finite line string");
+        assert_relative_eq!(
+            Euclidean.length(&segments),
+            Euclidean.length(&line_string),
+            max_relative = 1e-9
+        );
+    }
+
+    // The segments are of "equal length", and they run end to start so that
+    // together they retrace the input.
+    #[hegel::test]
+    fn the_segments_are_of_equal_length_and_join_up(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        let n = tc.draw(generators::integers::<usize>().min_value(1).max_value(64));
+        let segments = line_string
+            .line_segmentize(n)
+            .expect("a positive count on a finite line string");
+        let expected = Euclidean.length(&line_string) / n as f64;
+        for segment in &segments.0 {
+            assert_relative_eq!(Euclidean.length(segment), expected, max_relative = 1e-9);
+        }
+        for pair in segments.0.windows(2) {
+            assert_eq!(pair[0].0.last(), pair[1].0.first());
+        }
+    }
+}
