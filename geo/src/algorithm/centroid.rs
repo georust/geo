@@ -1165,3 +1165,93 @@ mod test {
         assert_eq!(centroid.y(), 2.0);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use crate::utils::pbt_gens::{convex_polygons, coords, disjoint_multi_polygons, star_polygons};
+    use crate::{Area, BoundingRect, Centroid, Contains, Intersects, Translate};
+
+    // Translating a shape moves its centroid by the same offset. The polygon
+    // implementation shifts each ring by its first coordinate to keep this true
+    // far from the origin — see `centroid_polygon_numerical_stability` above.
+    #[hegel::test]
+    fn centroid_is_translation_equivariant(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let offset = tc.draw(coords(1e8));
+        let centroid = polygon
+            .centroid()
+            .expect("star polygons have positive area");
+        let translated = polygon
+            .translate(offset.x, offset.y)
+            .centroid()
+            .expect("translation preserves positive area");
+        // The offset dominates the residual: shifting coordinates by up to 1e8
+        // costs about `ulp(1e8)` each, and the area-weighted mean amplifies that
+        // by the ratio of extent to area. The slack sizes that cost rather than
+        // granting the library room for a wrong answer.
+        let scale = offset.x.abs().max(offset.y.abs()).max(1.0);
+        let tol = 1024.0 * f64::EPSILON * scale;
+        assert!(
+            (translated.x() - (centroid.x() + offset.x)).abs() <= tol
+                && (translated.y() - (centroid.y() + offset.y)).abs() <= tol,
+            "centroid {centroid:?} translated by {offset:?} gave {translated:?}"
+        );
+    }
+
+    // "The geometric centroid of a convex object always lies in the object" —
+    // the `Centroid` trait docs. The generator's exteriors are cyclic polygons,
+    // hence convex.
+    #[hegel::test]
+    fn the_centroid_of_a_convex_polygon_lies_inside_it(tc: hegel::TestCase) {
+        let polygon = tc.draw(convex_polygons());
+        let centroid = polygon.centroid().expect("convex polygons have area");
+        assert!(
+            polygon.contains(&centroid),
+            "centroid {centroid:?} is not inside {polygon:?}"
+        );
+    }
+
+    // The centroid is an average of points of the geometry, so it cannot fall
+    // outside the geometry's bounding rectangle.
+    #[hegel::test]
+    fn centroid_lies_within_the_bounding_rect(tc: hegel::TestCase) {
+        let multi_polygon = tc.draw(disjoint_multi_polygons());
+        let centroid = multi_polygon.centroid().expect("members have area");
+        let rect = multi_polygon
+            .bounding_rect()
+            .expect("members have coordinates");
+        assert!(
+            rect.intersects(&centroid),
+            "centroid {centroid:?} lies outside bounding rect {rect:?}"
+        );
+    }
+
+    // A `MultiPolygon`'s centroid is documented as "the mean of the centroids of
+    // its polygons, weighted by the area of the polygons".
+    #[hegel::test]
+    fn multi_polygon_centroid_is_the_area_weighted_mean_of_member_centroids(tc: hegel::TestCase) {
+        let multi_polygon = tc.draw(disjoint_multi_polygons());
+        let mut weight = 0.0;
+        let (mut x, mut y) = (0.0, 0.0);
+        for polygon in multi_polygon.iter() {
+            let area = polygon.unsigned_area();
+            let centroid = polygon.centroid().expect("members have area");
+            weight += area;
+            x += area * centroid.x();
+            y += area * centroid.y();
+        }
+        let centroid = multi_polygon.centroid().expect("members have area");
+        assert_relative_eq!(
+            centroid.x(),
+            x / weight,
+            max_relative = 1e-9,
+            epsilon = 1e-9
+        );
+        assert_relative_eq!(
+            centroid.y(),
+            y / weight,
+            max_relative = 1e-9,
+            epsilon = 1e-9
+        );
+    }
+}

@@ -571,3 +571,95 @@ mod test {
         );
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use crate::utils::pbt_gens::{coords, polygons_with_holes, star_polygons};
+    use crate::{Area, LineString, MapCoords, Polygon, Translate};
+
+    // Planar area does not depend on where the origin is. `sum_line_determinants`
+    // shifts each ring by its first coordinate for exactly this reason, and
+    // `area_polygon_numerical_stability` above pins one instance of it.
+    #[hegel::test]
+    fn signed_area_is_invariant_under_translation(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let offset = tc.draw(coords(1e8));
+        let area = polygon.signed_area();
+        let translated = polygon.translate(offset.x, offset.y).signed_area();
+        // The shift moves each coordinate onto a coarser part of the f64 grid,
+        // so the determinant sum loses about `ulp(offset)` per vertex scaled by
+        // the polygon extent. This tolerance sizes that loss; it is not slack
+        // for a logic error, which would move the area by whole regions.
+        let tol =
+            1e-9 * area.abs() + 64.0 * f64::EPSILON * offset.x.abs().max(offset.y.abs()) * 2e3;
+        assert!(
+            (translated - area).abs() <= tol,
+            "area moved from {area} to {translated} under translation by {offset:?}"
+        );
+    }
+
+    // The `Area` doc example reverses a ring and shows `signed_area` going from
+    // 30. to -30. while `unsigned_area` stays 30.
+    #[hegel::test]
+    fn reversing_a_ring_negates_its_signed_area(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let reversed = Polygon::new(
+            LineString::new(polygon.exterior().0.iter().rev().copied().collect()),
+            vec![],
+        );
+        // The two summations visit the same terms in opposite order, so they
+        // may round differently.
+        assert_relative_eq!(
+            reversed.signed_area(),
+            -polygon.signed_area(),
+            max_relative = 1e-9
+        );
+    }
+
+    #[hegel::test]
+    fn unsigned_area_is_the_magnitude_of_signed_area(tc: hegel::TestCase) {
+        let polygon = tc.draw(polygons_with_holes());
+        assert_eq!(polygon.unsigned_area(), polygon.signed_area().abs());
+    }
+
+    // A polygon's area is its exterior less its holes. The generator's holes are
+    // disjoint and strictly inside the exterior, so measuring each ring on its
+    // own gives an independent oracle; the sign convention comes from the note
+    // on the `Polygon` impl that "the sign of the output is the same as that of
+    // the exterior shell".
+    #[hegel::test]
+    fn polygon_area_is_its_exterior_less_its_holes(tc: hegel::TestCase) {
+        let polygon = tc.draw(polygons_with_holes());
+        let ring_area = |ring: &LineString<f64>| Polygon::new(ring.clone(), vec![]).unsigned_area();
+        let expected =
+            ring_area(polygon.exterior()) - polygon.interiors().iter().map(ring_area).sum::<f64>();
+        assert_relative_eq!(polygon.unsigned_area(), expected, max_relative = 1e-9);
+    }
+
+    // The `MultiPolygon` impl is documented as "a straight-forward summation of
+    // the signed or unsigned areas of the individual polygons".
+    #[hegel::test]
+    fn multi_polygon_area_sums_its_members(tc: hegel::TestCase) {
+        let multi_polygon = tc.draw(crate::utils::pbt_gens::disjoint_multi_polygons());
+        let expected: f64 = multi_polygon.iter().map(|p| p.unsigned_area()).sum();
+        assert_eq!(multi_polygon.unsigned_area(), expected);
+    }
+
+    // Area is quadratic in a uniform coordinate scaling: every determinant
+    // summed by `sum_line_determinants` picks up a factor of `factor^2`.
+    #[hegel::test]
+    fn scaling_coordinates_scales_area_by_the_square_of_the_factor(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let factor = tc.draw(
+            hegel::generators::floats::<f64>()
+                .min_value(0.1)
+                .max_value(10.0),
+        );
+        let scaled = polygon.map_coords(|c| (c.x * factor, c.y * factor).into());
+        assert_relative_eq!(
+            scaled.unsigned_area(),
+            polygon.unsigned_area() * factor * factor,
+            max_relative = 1e-9
+        );
+    }
+}

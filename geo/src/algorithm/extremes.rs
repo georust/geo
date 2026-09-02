@@ -129,3 +129,56 @@ mod test {
         assert!(actual.is_none());
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::Extremes;
+    use crate::utils::pbt_gens::geometries;
+    use crate::{BoundingRect, CoordsIter};
+
+    // `extremes` reports "the extreme coordinates and indices of a geometry", so
+    // each `Extreme` must name a coordinate that actually attains that bound,
+    // and the index must be the first one that does — the implementation
+    // compares strictly, keeping the earliest.
+    #[hegel::test]
+    fn each_extreme_is_the_first_coord_attaining_that_bound(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e12));
+        let Some(outcome) = geometry.extremes() else {
+            return;
+        };
+        let coords: Vec<_> = geometry.exterior_coords_iter().collect();
+        for (extreme, key) in [
+            (&outcome.x_min, 0),
+            (&outcome.x_max, 0),
+            (&outcome.y_min, 1),
+            (&outcome.y_max, 1),
+        ] {
+            let component = |c: &crate::Coord<f64>| if key == 0 { c.x } else { c.y };
+            assert_eq!(coords[extreme.index], extreme.coord);
+            let first = coords
+                .iter()
+                .position(|c| component(c) == component(&extreme.coord))
+                .expect("the extreme coord came from this iterator");
+            assert_eq!(first, extreme.index);
+        }
+        for coord in &coords {
+            assert!(coord.x >= outcome.x_min.coord.x && coord.x <= outcome.x_max.coord.x);
+            assert!(coord.y >= outcome.y_min.coord.y && coord.y <= outcome.y_max.coord.y);
+        }
+    }
+
+    // Both traits are blanket-implemented over `CoordsIter`, and both summarise
+    // the same coordinate extremes, so the bounds have to agree.
+    #[hegel::test]
+    fn extremes_agree_with_the_bounding_rect(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e12));
+        let (Some(outcome), Some(rect)) = (geometry.extremes(), geometry.bounding_rect()) else {
+            assert!(geometry.extremes().is_none() && geometry.bounding_rect().is_none());
+            return;
+        };
+        assert_eq!(outcome.x_min.coord.x, rect.min().x);
+        assert_eq!(outcome.y_min.coord.y, rect.min().y);
+        assert_eq!(outcome.x_max.coord.x, rect.max().x);
+        assert_eq!(outcome.y_max.coord.y, rect.max().y);
+    }
+}

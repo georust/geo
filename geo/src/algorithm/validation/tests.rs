@@ -488,3 +488,87 @@ mod gdal_test_cases {
         assert!(polygon.is_valid());
     }
 }
+
+mod hegel_props {
+    use crate::algorithm::validation::Validation;
+    use crate::utils::pbt_gens::{
+        convex_polygons, disjoint_multi_polygons, geometries, polygons_with_holes, star_polygons,
+    };
+    use crate::{Geometry, Polygon};
+
+    fn assert_valid(polygon: &Polygon<f64>) {
+        assert!(
+            polygon.is_valid(),
+            "{polygon:?} reported invalid: {:?}",
+            polygon.validation_errors()
+        );
+    }
+
+    // Star-shaped rings are simple by construction (see the generator), so the
+    // rules listed on `InvalidPolygon` are all satisfied and the validator must
+    // accept them. This also guards the generator the other properties rely on.
+    #[hegel::test]
+    fn star_polygons_are_valid(tc: hegel::TestCase) {
+        assert_valid(&tc.draw(star_polygons()));
+    }
+
+    #[hegel::test]
+    fn convex_polygons_are_valid(tc: hegel::TestCase) {
+        assert_valid(&tc.draw(convex_polygons()));
+    }
+
+    // The generator places each hole in its own cell of a grid inscribed in the
+    // exterior, so interior rings are contained in the exterior and pairwise
+    // disjoint.
+    #[hegel::test]
+    fn polygons_with_disjoint_holes_are_valid(tc: hegel::TestCase) {
+        assert_valid(&tc.draw(polygons_with_holes()));
+    }
+
+    // `InvalidMultiPolygon` requires valid, non-overlapping members touching at
+    // most at points; the generator spaces members further apart than their
+    // diameter.
+    #[hegel::test]
+    fn multi_polygons_of_spaced_out_members_are_valid(tc: hegel::TestCase) {
+        let multi_polygon = tc.draw(disjoint_multi_polygons());
+        assert!(
+            multi_polygon.is_valid(),
+            "{multi_polygon:?} reported invalid: {:?}",
+            multi_polygon.validation_errors()
+        );
+    }
+
+    // `Geometry`'s validity is documented as its inner variant's validity:
+    // "e.g. `Geometry::Polygon(polygon)` is valid if and only if `polygon` is
+    // valid."
+    #[hegel::test]
+    fn wrapping_a_geometry_in_the_enum_preserves_validity(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e3));
+        let inner_valid = match &geometry {
+            Geometry::Point(g) => g.is_valid(),
+            Geometry::Line(g) => g.is_valid(),
+            Geometry::LineString(g) => g.is_valid(),
+            Geometry::Polygon(g) => g.is_valid(),
+            Geometry::MultiPoint(g) => g.is_valid(),
+            Geometry::MultiLineString(g) => g.is_valid(),
+            Geometry::MultiPolygon(g) => g.is_valid(),
+            Geometry::GeometryCollection(g) => g.is_valid(),
+            Geometry::Rect(g) => g.is_valid(),
+            Geometry::Triangle(g) => g.is_valid(),
+        };
+        assert_eq!(geometry.is_valid(), inner_valid);
+    }
+
+    // `check_validation` is documented to "return the first reason of
+    // invalidity", and `validation_errors` to return them all, so the two must
+    // agree on both whether the geometry is valid and on the leading error.
+    #[hegel::test]
+    fn check_validation_reports_the_first_of_all_validation_errors(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e3));
+        let all = geometry.validation_errors();
+        match geometry.check_validation() {
+            Ok(()) => assert!(all.is_empty(), "valid geometry reported errors: {all:?}"),
+            Err(first) => assert_eq!(Some(&first), all.first()),
+        }
+    }
+}

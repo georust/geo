@@ -418,3 +418,80 @@ mod test {
         );
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use crate::utils::pbt_gens::geometries;
+    use crate::{BoundingRect, CoordsIter, Geometry};
+
+    // The crate documents the result as "the axis-aligned bounding rectangle of
+    // a geometry", so every coordinate must lie within it and each of the four
+    // bounds must be attained by some coordinate — otherwise the rectangle is
+    // not the bounding one. The oracle iterates exterior coords because the
+    // `Polygon` and `MultiPolygon` impls deliberately ignore interior rings.
+    #[hegel::test]
+    fn bounding_rect_is_the_tightest_rect_covering_every_coord(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e12));
+        let Some(rect) = geometry.bounding_rect() else {
+            return;
+        };
+        let coords: Vec<_> = geometry.exterior_coords_iter().collect();
+        for coord in &coords {
+            assert!(
+                (rect.min().x..=rect.max().x).contains(&coord.x)
+                    && (rect.min().y..=rect.max().y).contains(&coord.y),
+                "{coord:?} lies outside {rect:?}"
+            );
+        }
+        assert!(coords.iter().any(|c| c.x == rect.min().x));
+        assert!(coords.iter().any(|c| c.x == rect.max().x));
+        assert!(coords.iter().any(|c| c.y == rect.min().y));
+        assert!(coords.iter().any(|c| c.y == rect.max().y));
+    }
+
+    // The `Output` type is `Option<Rect>` exactly for the geometries that can be
+    // empty, and `None` is only used when a geometry contributes no coordinates.
+    #[hegel::test]
+    fn bounding_rect_is_none_only_for_geometries_without_coords(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e12));
+        assert_eq!(
+            geometry.bounding_rect().is_none(),
+            geometry.exterior_coords_iter().count() == 0
+        );
+    }
+
+    // A `Coord`'s bounding rect is documented to "have zero width and zero
+    // height", so merging it into the geometry's own rect must be a no-op.
+    #[hegel::test]
+    fn bounding_rect_covers_the_bounding_rect_of_each_coord(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e12));
+        let Some(rect) = geometry.bounding_rect() else {
+            return;
+        };
+        for coord in geometry.exterior_coords_iter() {
+            let coord_rect = coord.bounding_rect();
+            assert_eq!(coord_rect.min(), coord_rect.max());
+            assert_eq!(super::bounding_rect_merge(rect, coord_rect), rect);
+        }
+    }
+
+    // Wrapping a geometry in the `Geometry` enum changes nothing about it, so the
+    // delegating impl must produce the same rectangle.
+    #[hegel::test]
+    fn wrapping_in_the_geometry_enum_preserves_the_bounding_rect(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e12));
+        let expected = match &geometry {
+            Geometry::Point(g) => Some(g.bounding_rect()),
+            Geometry::Line(g) => Some(g.bounding_rect()),
+            Geometry::LineString(g) => g.bounding_rect(),
+            Geometry::Polygon(g) => g.bounding_rect(),
+            Geometry::MultiPoint(g) => g.bounding_rect(),
+            Geometry::MultiLineString(g) => g.bounding_rect(),
+            Geometry::MultiPolygon(g) => g.bounding_rect(),
+            Geometry::GeometryCollection(g) => g.bounding_rect(),
+            Geometry::Rect(g) => Some(g.bounding_rect()),
+            Geometry::Triangle(g) => Some(g.bounding_rect()),
+        };
+        assert_eq!(geometry.bounding_rect(), expected);
+    }
+}
