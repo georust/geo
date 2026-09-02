@@ -575,3 +575,80 @@ mod test {
         assert_eq!(empty_multipolygon, rotated_empty_multipolygon);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::Rotate;
+    use crate::utils::pbt_gens::{coords, monotone_line_strings, star_polygons};
+    use crate::{AffineOps, AffineTransform, Area, Euclidean, Length, Point};
+    use hegel::generators;
+
+    fn degrees(tc: &hegel::TestCase) -> f64 {
+        tc.draw(
+            generators::floats::<f64>()
+                .min_value(-720.0)
+                .max_value(720.0),
+        )
+    }
+
+    // "a rotated point should always equal itself" — the comment on
+    // `test_rotate_center_and_centroid` above: for a `Point` both pivots are
+    // the point itself, so it is a fixed point of its own rotation. The
+    // comparison is approximate because `AffineTransform::rotate` folds the
+    // pivot into the matrix offsets, so the cancellation is only exact in real
+    // arithmetic (91 degrees about (0, 1) lands one ulp low).
+    #[hegel::test]
+    fn rotating_a_point_about_itself_returns_the_point(tc: hegel::TestCase) {
+        let point = Point::from(tc.draw(coords(1e3)));
+        let angle = degrees(&tc);
+        for rotated in [
+            point.rotate_around_center(angle),
+            point.rotate_around_centroid(angle),
+        ] {
+            let tolerance = 16.0 * f64::EPSILON * point.x().abs().max(point.y().abs()).max(1.0);
+            assert!(
+                (rotated.x() - point.x()).abs() <= tolerance
+                    && (rotated.y() - point.y()).abs() <= tolerance,
+                "{point:?} rotated by {angle} about itself gave {rotated:?}"
+            );
+        }
+    }
+
+    // `rotate_around_point` is implemented as an `AffineTransform::rotate`, and
+    // the trait's performance note tells callers to compose transforms when
+    // they want several at once — which only makes sense if the two routes
+    // agree.
+    #[hegel::test]
+    fn rotate_around_point_matches_the_affine_rotation(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let origin = Point::from(tc.draw(coords(1e3)));
+        let angle = degrees(&tc);
+        assert_eq!(
+            polygon.rotate_around_point(angle, origin),
+            polygon.affine_transform(&AffineTransform::rotate(angle, origin))
+        );
+    }
+
+    // Rotation is a rigid motion, so it changes neither lengths nor areas.
+    #[hegel::test]
+    fn rotation_preserves_length(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 12));
+        let angle = degrees(&tc);
+        assert_relative_eq!(
+            Euclidean.length(&line_string.rotate_around_center(angle)),
+            Euclidean.length(&line_string),
+            max_relative = 1e-9
+        );
+    }
+
+    #[hegel::test]
+    fn rotation_preserves_unsigned_area(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let angle = degrees(&tc);
+        assert_relative_eq!(
+            polygon.rotate_around_centroid(angle).unsigned_area(),
+            polygon.unsigned_area(),
+            max_relative = 1e-9
+        );
+    }
+}

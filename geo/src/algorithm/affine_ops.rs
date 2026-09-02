@@ -643,3 +643,236 @@ mod tests {
         assert_eq!(point.affine_transform(&composed), Point::new(8., 0.));
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::{AffineOps, AffineTransform};
+    use crate::utils::pbt_gens::{coords, geometries, star_polygons};
+    use crate::{Coord, MapCoords};
+    use hegel::generators::{self, Generator, PrintableGenerator};
+
+    /// Transforms built from the four documented constructors and their
+    /// `compose`-based mutators. Generating transforms this way rather than
+    /// from six arbitrary matrix entries keeps them in the range of shapes
+    /// callers actually build, and keeps `det` well away from zero for the
+    /// inverse property.
+    fn transforms() -> impl PrintableGenerator<AffineTransform<f64>> {
+        hegel::compose!(|tc| {
+            let mut transform = AffineTransform::identity();
+            let steps = tc.draw_silent(generators::integers::<usize>().max_value(4));
+            for _ in 0..steps {
+                let origin = tc.draw_silent(coords(1e3));
+                let factor = || {
+                    tc.draw_silent(hegel::one_of!(
+                        generators::floats::<f64>().min_value(0.25).max_value(4.0),
+                        generators::floats::<f64>().min_value(-4.0).max_value(-0.25),
+                    ))
+                };
+                transform = match tc.draw_silent(generators::integers::<u8>().max_value(3)) {
+                    0 => {
+                        let offset = tc.draw_silent(coords(1e3));
+                        transform.translated(offset.x, offset.y)
+                    }
+                    1 => transform.scaled(factor(), factor(), origin),
+                    2 => transform.rotated(
+                        tc.draw_silent(
+                            generators::floats::<f64>()
+                                .min_value(-360.0)
+                                .max_value(360.0),
+                        ),
+                        origin,
+                    ),
+                    _ => transform.skewed(
+                        tc.draw_silent(
+                            generators::floats::<f64>().min_value(-45.0).max_value(45.0),
+                        ),
+                        tc.draw_silent(
+                            generators::floats::<f64>().min_value(-45.0).max_value(45.0),
+                        ),
+                        origin,
+                    ),
+                };
+            }
+            transform
+        })
+        .print_as_debug()
+    }
+
+    fn assert_coords_close(actual: Coord<f64>, expected: Coord<f64>, scale: f64) {
+        let tolerance = 1e-9 * scale;
+        assert!(
+            (actual.x - expected.x).abs() <= tolerance
+                && (actual.y - expected.y).abs() <= tolerance,
+            "{actual:?} differs from {expected:?} by more than {tolerance}"
+        );
+    }
+
+    // `compose` is documented as cumulative — "the new transform is *added* to
+    // the existing transform" — and `test_compose` above pins the order:
+    // applying `a` then `b` equals applying `a.compose(&b)`.
+    #[hegel::test]
+    fn composing_transforms_matches_applying_them_in_turn(tc: hegel::TestCase) {
+        let (first, second) = (tc.draw(transforms()), tc.draw(transforms()));
+        let coord = tc.draw(coords(1e3));
+        let stepwise = second.apply(first.apply(coord));
+        let composed = first.compose(&second).apply(coord);
+        assert_coords_close(
+            composed,
+            stepwise,
+            stepwise.x.abs().max(stepwise.y.abs()).max(1.0),
+        );
+    }
+
+    // "Composing a transform with its inverse yields the identity matrix". The
+    // matrix entries are only equal up to rounding, so the check is that the
+    // round trip returns each coordinate rather than that the matrices match
+    // exactly.
+    #[hegel::test]
+    fn composing_a_transform_with_its_inverse_is_the_identity(tc: hegel::TestCase) {
+        let transform = tc.draw(transforms());
+        let coord = tc.draw(coords(1e3));
+        let inverse = transform
+            .inverse()
+            .expect("transforms built from these constructors have non-zero determinant");
+        // `inverse` only promises `None` for an exactly zero determinant, so a
+        // nearly singular transform round-trips with an error set by its
+        // condition number. The slack below scales with that; it protects the
+        // test's tolerance rather than granting the library room to be wrong.
+        let determinant = transform.a() * transform.e() - transform.b() * transform.d();
+        let norm = transform
+            .a()
+            .abs()
+            .max(transform.b().abs())
+            .max(transform.d().abs())
+            .max(transform.e().abs());
+        let condition = (norm * norm / determinant.abs()).max(1.0);
+        assert_coords_close(
+            transform.compose(&inverse).apply(coord),
+            coord,
+            coord.x.abs().max(coord.y.abs()).max(1.0) * condition,
+        );
+    }
+
+    #[hegel::test]
+    fn compose_many_folds_compose(tc: hegel::TestCase) {
+        let parts: Vec<AffineTransform<f64>> = tc.draw(generators::vecs(transforms()).max_size(4));
+        let folded = parts
+            .iter()
+            .fold(AffineTransform::identity(), |acc, next| acc.compose(next));
+        assert_eq!(AffineTransform::identity().compose_many(&parts), folded);
+    }
+
+    // The identity matrix leaves coordinates alone, and `Default` is documented
+    // as the identity.
+    #[hegel::test]
+    fn the_identity_transform_leaves_coords_untouched(tc: hegel::TestCase) {
+        let coord = tc.draw(coords(1e300));
+        assert_eq!(
+            AffineTransform::<f64>::default(),
+            AffineTransform::identity()
+        );
+        assert_eq!(AffineTransform::identity().apply(coord), coord);
+    }
+
+    // "The equations for transforming coordinates `(x, y) -> (x', y')` are
+    // given as follows: `x' = ax + by + xoff`, `y' = dx + ey + yoff`."
+    #[hegel::test]
+    fn apply_follows_the_documented_equations(tc: hegel::TestCase) {
+        let transform = tc.draw(transforms());
+        let coord = tc.draw(coords(1e3));
+        assert_eq!(
+            transform.apply(coord),
+            crate::coord! {
+                x: transform.a() * coord.x + transform.b() * coord.y + transform.xoff(),
+                y: transform.d() * coord.x + transform.e() * coord.y + transform.yoff(),
+            }
+        );
+    }
+
+    // The six accessors name the six values `new` takes, so rebuilding a
+    // transform from them must reproduce it.
+    #[hegel::test]
+    fn a_transform_rebuilds_from_its_accessors(tc: hegel::TestCase) {
+        let transform = tc.draw(transforms());
+        assert_eq!(
+            AffineTransform::new(
+                transform.a(),
+                transform.b(),
+                transform.xoff(),
+                transform.d(),
+                transform.e(),
+                transform.yoff(),
+            ),
+            transform
+        );
+    }
+
+    // The past-participle methods are documented to *add* a transform to the
+    // existing one, while the present-tense constructors create a fresh one:
+    // `t.scaled(..)` is therefore `t.compose(&scale(..))`.
+    #[hegel::test]
+    fn the_mutating_methods_compose_the_constructed_transform(tc: hegel::TestCase) {
+        let transform = tc.draw(transforms());
+        let origin = tc.draw(coords(1e3));
+        let offset = tc.draw(coords(1e3));
+        let degrees = tc.draw(
+            generators::floats::<f64>()
+                .min_value(-360.0)
+                .max_value(360.0),
+        );
+        assert_eq!(
+            transform.translated(offset.x, offset.y),
+            transform.compose(&AffineTransform::translate(offset.x, offset.y))
+        );
+        assert_eq!(
+            transform.scaled(2.0, 3.0, origin),
+            transform.compose(&AffineTransform::scale(2.0, 3.0, origin))
+        );
+        assert_eq!(
+            transform.rotated(degrees, origin),
+            transform.compose(&AffineTransform::rotate(degrees, origin))
+        );
+        assert_eq!(
+            transform.skewed(10.0, 20.0, origin),
+            transform.compose(&AffineTransform::skew(10.0, 20.0, origin))
+        );
+    }
+
+    // `affine_transform` applies the transform "immutably, outputting a new
+    // geometry", `affine_transform_mut` applies it in place; both are the same
+    // operation.
+    #[hegel::test]
+    fn the_mutable_and_immutable_forms_agree(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e3));
+        let transform = tc.draw(transforms());
+        let mut in_place = geometry.clone();
+        in_place.affine_transform_mut(&transform);
+        assert_eq!(geometry.affine_transform(&transform), in_place);
+    }
+
+    // `AffineOps` is blanket-implemented through `map_coords` of
+    // `transform.apply`, so the two routes must produce identical geometries.
+    #[hegel::test]
+    fn affine_transform_maps_apply_over_the_coords(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let transform = tc.draw(transforms());
+        assert_eq!(
+            polygon.affine_transform(&transform),
+            polygon.map_coords(|c| transform.apply(c))
+        );
+    }
+
+    // `rotate` fixes its origin: the matrix offsets are chosen so that the
+    // pivot maps to itself.
+    #[hegel::test]
+    fn rotation_fixes_its_origin(tc: hegel::TestCase) {
+        let origin = tc.draw(coords(1e3));
+        let degrees = tc.draw(
+            generators::floats::<f64>()
+                .min_value(-360.0)
+                .max_value(360.0),
+        );
+        let rotated = AffineTransform::rotate(degrees, origin).apply(origin);
+        assert_coords_close(rotated, origin, origin.x.abs().max(origin.y.abs()).max(1.0));
+    }
+}

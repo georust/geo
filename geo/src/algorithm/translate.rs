@@ -154,3 +154,76 @@ mod test {
         assert_eq!(rotated.interiors()[0].0, correct_inside);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::Translate;
+    use crate::utils::pbt_gens::{geometries, star_polygons};
+    use crate::{AffineOps, AffineTransform, Coord, LineString};
+    use hegel::generators::{self, Generator, PrintableGenerator};
+
+    /// Line strings with integer coordinates, where translation is exact.
+    fn integer_line_strings() -> impl PrintableGenerator<LineString<i32>> {
+        generators::vecs(
+            generators::tuples!(generators::integers::<i16>(), generators::integers::<i16>())
+                .map(|(x, y)| Coord {
+                    x: x as i32,
+                    y: y as i32,
+                })
+                .print_as_debug(),
+        )
+        .map(LineString::new)
+        .print_as_debug()
+    }
+
+    // `Translate` is implemented for any `CoordNum`, so on integers the offsets
+    // cancel exactly and translating back must restore the input.
+    #[hegel::test]
+    fn translating_integer_coords_and_back_restores_them(tc: hegel::TestCase) {
+        let line_string = tc.draw(integer_line_strings());
+        let (dx, dy) = tc.draw(generators::tuples!(
+            generators::integers::<i16>(),
+            generators::integers::<i16>()
+        ));
+        assert_eq!(
+            line_string
+                .translate(dx as i32, dy as i32)
+                .translate(-(dx as i32), -(dy as i32)),
+            line_string
+        );
+    }
+
+    // "Translate a Geometry along its axes by the given offsets", so successive
+    // translations add up.
+    #[hegel::test]
+    fn successive_translations_add_their_offsets(tc: hegel::TestCase) {
+        let line_string = tc.draw(integer_line_strings());
+        let a = tc.draw(generators::integers::<i16>()) as i32;
+        let b = tc.draw(generators::integers::<i16>()) as i32;
+        assert_eq!(
+            line_string.translate(a, 0).translate(b, 0),
+            line_string.translate(a + b, 0)
+        );
+    }
+
+    #[hegel::test]
+    fn translate_matches_the_affine_translation(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let offset = tc.draw(crate::utils::pbt_gens::coords(1e6));
+        assert_eq!(
+            polygon.translate(offset.x, offset.y),
+            polygon.affine_transform(&AffineTransform::translate(offset.x, offset.y))
+        );
+    }
+
+    // "Apply `transform` immutably, outputting a new geometry" versus "Apply
+    // `transform` to mutate `self`".
+    #[hegel::test]
+    fn translate_mut_matches_translate(tc: hegel::TestCase) {
+        let geometry = tc.draw(geometries(1e6));
+        let offset = tc.draw(crate::utils::pbt_gens::coords(1e6));
+        let mut in_place = geometry.clone();
+        in_place.translate_mut(offset.x, offset.y);
+        assert_eq!(geometry.translate(offset.x, offset.y), in_place);
+    }
+}
