@@ -1010,3 +1010,379 @@ mod test {
         let _ = multi_poly.contains(&multi_poly);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use crate::coordinate_position::CoordPos;
+    use crate::utils::pbt_gens::{coords, disjoint_multi_polygons, polygons_with_holes};
+    use crate::{
+        Contains, ContainsProperly, Coord, CoordinatePosition, Covers, Geometry, Intersects, Line,
+        LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Relate,
+        Triangle, Within, coord,
+    };
+    use hegel::generators::{self, Generator, PrintableGenerator};
+
+    /// Geometries on the integer grid `[-4, 4]^2` that `Validation` accepts.
+    ///
+    /// Small integer coordinates make the geometries interact constantly and
+    /// keep the kernel's arithmetic exact. Validity is by construction:
+    /// endpoints of a `Line` are distinct, a `LineString` has at least two
+    /// distinct coordinates, a `Triangle`'s vertices are not collinear, and
+    /// polygons are built from rectangles and triangles.
+    ///
+    /// `Relate` documents only two preconditions — no `NaN` coordinates, and
+    /// no geometry collection with overlapping polygons — but degenerate
+    /// geometry reaches assertions inside it, so the domain here stays with
+    /// what the crate's own validity model admits. The reproducers at the end
+    /// of this module pin what happens outside it.
+    fn relatable_geometries() -> impl PrintableGenerator<Geometry<f64>> {
+        fn grid(tc: &hegel::TestCase) -> Coord<f64> {
+            let component = || generators::integers::<i8>().min_value(-4).max_value(4);
+            let (x, y) = tc.draw_silent(generators::tuples!(component(), component()));
+            coord! { x: x as f64, y: y as f64 }
+        }
+        fn distinct_pair(tc: &hegel::TestCase) -> (Coord<f64>, Coord<f64>) {
+            let a = grid(tc);
+            let mut b = grid(tc);
+            if a == b {
+                b.x += 1.0;
+            }
+            (a, b)
+        }
+        // Rects with a zero-width or zero-height extent are degenerate, and
+        // `Relate` mislabels them — see `relate_mislabels_a_degenerate_rect`.
+        fn rect(tc: &hegel::TestCase) -> Rect<f64> {
+            let a = grid(tc);
+            let mut b = grid(tc);
+            if b.x == a.x {
+                b.x += 1.0;
+            }
+            if b.y == a.y {
+                b.y += 1.0;
+            }
+            Rect::new(a, b)
+        }
+        // Paths are x-monotone, hence simple: `Relate` mislabels a
+        // self-intersecting line string that contains one of its own segments —
+        // see `relate_mislabels_a_self_intersecting_line_string`.
+        fn path(tc: &hegel::TestCase) -> LineString<f64> {
+            let n = tc.draw_silent(generators::integers::<usize>().min_value(2).max_value(6));
+            let mut x = -4.0;
+            LineString::new(
+                (0..n)
+                    .map(|_| {
+                        let coord = coord! { x: x, y: grid(tc).y };
+                        x += tc.draw_silent(generators::integers::<i8>().min_value(1).max_value(2))
+                            as f64;
+                        coord
+                    })
+                    .collect(),
+            )
+        }
+        fn triangle(tc: &hegel::TestCase) -> Triangle<f64> {
+            let (a, b) = distinct_pair(tc);
+            let mut c = grid(tc);
+            let collinear = robust::orient2d(
+                robust::Coord { x: a.x, y: a.y },
+                robust::Coord { x: b.x, y: b.y },
+                robust::Coord { x: c.x, y: c.y },
+            ) == 0.0;
+            if collinear {
+                c.x += b.y - a.y;
+                c.y += a.x - b.x;
+            }
+            Triangle::new(a, b, c)
+        }
+        hegel::one_of!(
+            hegel::compose!(|tc| { Geometry::Point(grid(tc).into()) }),
+            hegel::compose!(|tc| {
+                Geometry::MultiPoint(MultiPoint::new(
+                    (0..tc.draw_silent(generators::integers::<usize>().max_value(4)))
+                        .map(|_| grid(tc).into())
+                        .collect(),
+                ))
+            }),
+            hegel::compose!(|tc| {
+                let (a, b) = distinct_pair(tc);
+                Geometry::Line(Line::new(a, b))
+            }),
+            hegel::compose!(|tc| { Geometry::LineString(path(tc)) }),
+            hegel::compose!(|tc| {
+                Geometry::MultiLineString(MultiLineString::new(
+                    (0..tc.draw_silent(generators::integers::<usize>().min_value(1).max_value(3)))
+                        .map(|_| path(tc))
+                        .collect(),
+                ))
+            }),
+            hegel::compose!(|tc| { Geometry::Rect(rect(tc)) }),
+            hegel::compose!(|tc| { Geometry::Triangle(triangle(tc)) }),
+            hegel::compose!(|tc| { Geometry::Polygon(triangle(tc).to_polygon()) }),
+            hegel::compose!(|tc| {
+                Geometry::MultiPolygon(MultiPolygon::new(vec![rect(tc).to_polygon()]))
+            }),
+        )
+        .print_as_debug()
+    }
+
+    fn relatable_pairs() -> impl PrintableGenerator<(Geometry<f64>, Geometry<f64>)> {
+        generators::tuples!(relatable_geometries(), relatable_geometries())
+    }
+
+    // `Contains` is documented as the DE-9IM relation the `IntersectionMatrix`
+    // calls `is_contains`, and most impls are generated from `Relate`. The
+    // specialized ones — `Rect`, `Triangle`, `Line`, `Polygon` against points —
+    // have to agree with the general path.
+    #[hegel::test]
+    fn contains_agrees_with_relate(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        assert_eq!(a.contains(&b), a.relate(&b).is_contains());
+    }
+
+    #[hegel::test]
+    fn covers_agrees_with_relate(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        assert_eq!(a.covers(&b), a.relate(&b).is_covers());
+    }
+
+    #[hegel::test]
+    fn intersects_agrees_with_relate(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        assert_eq!(a.intersects(&b), a.relate(&b).is_intersects());
+    }
+
+    // `ContainsProperly` is documented to delegate to
+    // `IntersectionMatrix::is_contains_properly`, with a faster specialized
+    // path "when checking between `Polygon` and `MultiPolygon`". The left-hand
+    // geometry is valid here: the fast path disagrees with `Relate` when it
+    // holds a zero-area member, pinned by
+    // `contains_properly_on_a_degenerate_member_disagrees_with_relate`.
+    #[hegel::test]
+    fn contains_properly_agrees_with_relate(tc: hegel::TestCase) {
+        let a = tc.draw(polygons_with_holes());
+        let b = tc.draw(relatable_geometries());
+        assert_eq!(a.contains_properly(&b), a.relate(&b).is_contains_properly());
+    }
+
+    #[hegel::test]
+    fn multi_polygon_contains_properly_agrees_with_relate(tc: hegel::TestCase) {
+        let a = tc.draw(disjoint_multi_polygons());
+        let b = tc.draw(relatable_geometries());
+        assert_eq!(a.contains_properly(&b), a.relate(&b).is_contains_properly());
+    }
+
+    // `Contains` requires the interior of `rhs` to have "non-empty
+    // (set-theoretic) intersection" with `self`, which is strictly stronger
+    // than `Intersects` — "either boundary or interior of Self has non-empty
+    // intersection with the boundary or interior of Rhs".
+    #[hegel::test]
+    fn contains_implies_intersects(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        if a.contains(&b) {
+            assert!(
+                a.intersects(&b),
+                "{a:?} contains {b:?} but does not intersect it"
+            );
+        }
+    }
+
+    // `Covers` "does not distinguish between points in the boundary and in the
+    // interior of geometries", and its first documented mask is exactly the
+    // `is_contains` mask, so containment implies covering.
+    #[hegel::test]
+    fn contains_implies_covers(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        if a.contains(&b) {
+            assert!(a.covers(&b), "{a:?} contains {b:?} but does not cover it");
+        }
+    }
+
+    // "If Geometry `b` has any interaction with the boundary of Geometry `a`,
+    // then the result is `false`", so the `is_contains_properly` mask
+    // `T**FF*FF*` is the `is_contains` mask `T*****FF*` with two more cells
+    // forced empty.
+    #[hegel::test]
+    fn contains_properly_implies_contains(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        let matrix = a.relate(&b);
+        if matrix.is_contains_properly() {
+            assert!(matrix.is_contains());
+        }
+    }
+
+    // `Within` is documented as "equivalent to `Contains` with the arguments
+    // swapped"; the same swap must show up in the intersection matrix as
+    // `is_within`.
+    #[hegel::test]
+    fn within_is_contains_with_the_arguments_swapped(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        assert_eq!(a.is_within(&b), b.contains(&a));
+        assert_eq!(b.relate(&a).is_contains(), a.relate(&b).is_within());
+    }
+
+    // The matrix is indexed by the position of a point of `a` against a point
+    // of `b`, so swapping the arguments transposes it.
+    #[hegel::test]
+    fn swapping_the_arguments_transposes_the_intersection_matrix(tc: hegel::TestCase) {
+        let (a, b) = tc.draw(relatable_pairs());
+        let forward = a.relate(&b);
+        let backward = b.relate(&a);
+        for lhs in [CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
+            for rhs in [CoordPos::Inside, CoordPos::OnBoundary, CoordPos::Outside] {
+                assert_eq!(forward.get(lhs, rhs), backward.get(rhs, lhs));
+            }
+        }
+    }
+
+    // `Polygon::contains` for a coordinate is defined as the coordinate being
+    // `Inside`, and `Polygon::intersects` as its not being `Outside`.
+    #[hegel::test]
+    fn coordinate_position_decides_polygon_containment(tc: hegel::TestCase) {
+        let polygon = tc.draw(polygons_with_holes());
+        let coord = tc.draw(coords(2e3));
+        let position = polygon.coordinate_position(&coord);
+        assert_eq!(polygon.contains(&coord), position == CoordPos::Inside);
+        assert_eq!(
+            polygon.intersects(&Point::from(coord)),
+            position != CoordPos::Outside
+        );
+    }
+
+    // KNOWN FAILURE, not filed upstream: `RelateOperation` labels its graph
+    // nodes through a map keyed with `total_cmp`, which separates `-0.0` from
+    // `0.0`, while the segment intersection that creates those nodes compares
+    // with `==`, which does not. A ring holding a negative zero therefore
+    // leaves a node labelled for only one of the two geometries and
+    // `Node::update_intersection_matrix` panics on its own `assert!` — in
+    // release builds as well. Related to georust/geo#1578, which is the same
+    // ordering mismatch in the sweep module.
+    #[test]
+    #[ignore = "Relate panics on a ring containing a negative zero"]
+    fn relate_panics_on_a_ring_holding_a_negative_zero() {
+        let point = Point::new(0.0, 0.0);
+        let polygon = Polygon::new(
+            vec![
+                coord! { x: 1.0, y: 0.0 },
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 1.0, y: -0.0 },
+            ]
+            .into(),
+            vec![],
+        );
+        assert!(!point.relate(&polygon).is_contains());
+    }
+
+    // KNOWN FAILURE, not filed upstream: the specialized
+    // `MultiPolygon::contains_properly` path only asks whether the right-hand
+    // geometry's coordinates fall inside some member. Here the right-hand
+    // polygon is a zero-area member of the left-hand multi polygon, so its
+    // point lies on the left-hand boundary and the documented `T**FF*FF*` mask
+    // does not hold; `Relate::is_contains_properly` and `Contains` both say
+    // false.
+    #[test]
+    #[ignore = "MultiPolygon::contains_properly disagrees with Relate on a zero-area member"]
+    fn contains_properly_on_a_degenerate_member_disagrees_with_relate() {
+        let degenerate: Polygon<f64> = Polygon::new(vec![coord! { x: 0.5, y: 0.5 }].into(), vec![]);
+        let triangle: Polygon<f64> = Polygon::new(
+            vec![
+                coord! { x: 0.0, y: 0.0 },
+                coord! { x: 0.0, y: 1.0 },
+                coord! { x: 1.0, y: 0.0 },
+            ]
+            .into(),
+            vec![],
+        );
+        let a = MultiPolygon::new(vec![degenerate.clone(), triangle]);
+        let b = MultiPolygon::new(vec![degenerate]);
+        assert_eq!(a.contains_properly(&b), a.relate(&b).is_contains_properly());
+    }
+
+    // KNOWN FAILURE, not filed upstream: the line string's last segment is
+    // exactly the line, so the line's interior cannot meet the line string's
+    // exterior — but `Relate` reports `EI` as one-dimensional and `II` as a
+    // single point. The line string is self-intersecting (its last segment
+    // crosses its first), which `InvalidLineString` permits.
+    #[test]
+    #[ignore = "Relate mislabels a self-intersecting line string against its own segment"]
+    fn relate_mislabels_a_self_intersecting_line_string() {
+        let line_string: LineString<f64> = vec![
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: -1.0 },
+            coord! { x: 2.0, y: 2.0 },
+        ]
+        .into();
+        let line = Line::new(coord! { x: 0.0, y: -1.0 }, coord! { x: 2.0, y: 2.0 });
+        assert_eq!(
+            line_string.contains(&line),
+            line_string.relate(&line).is_contains()
+        );
+    }
+
+    // KNOWN FAILURE, not filed upstream: `Covers` gives different answers for
+    // the same two geometries depending on whether they are passed as concrete
+    // types or wrapped in the `Geometry` enum, which only dispatches to the
+    // concrete impls.
+    #[test]
+    #[ignore = "Geometry::covers disagrees with the concrete impl it dispatches to"]
+    fn covers_does_not_depend_on_the_geometry_wrapper() {
+        let line_string: LineString<f64> = vec![
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 1.0, y: 0.0 },
+            coord! { x: 0.0, y: -1.0 },
+            coord! { x: 2.0, y: 2.0 },
+        ]
+        .into();
+        let line = Line::new(coord! { x: 0.0, y: -1.0 }, coord! { x: 2.0, y: 2.0 });
+        assert_eq!(
+            line_string.covers(&line),
+            Geometry::LineString(line_string.clone()).covers(&Geometry::Line(line))
+        );
+    }
+
+    // KNOWN FAILURE, not filed upstream: a `Rect` with zero height is a
+    // segment, which cannot cover the unit square, and `Covers` agrees — but
+    // `Relate::is_covers` reports that it does. `InvalidRect` only rejects
+    // non-finite coordinates, so a degenerate rect is inside the crate's own
+    // validity model.
+    #[test]
+    #[ignore = "Relate::is_covers is wrong for a degenerate Rect"]
+    fn relate_mislabels_a_degenerate_rect() {
+        let segment = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 0.0 });
+        let square = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        assert_eq!(segment.covers(&square), segment.relate(&square).is_covers());
+    }
+
+    // KNOWN FAILURE, not filed upstream: `Relate` reports a zero-length `Line`
+    // as one-dimensional, so the interior-interior cell disagrees with the
+    // transposed matrix and with `HasDimensions`, which documents a "degenerate
+    // line" as a point. Relating the equivalent `Point` gives the expected
+    // `F0FFFF212`.
+    #[test]
+    #[ignore = "Relate treats a zero-length Line as one-dimensional"]
+    fn relate_treats_a_zero_length_line_as_a_point() {
+        let line = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 0.0, y: 0.0 });
+        let rect = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        assert_eq!(
+            line.relate(&rect).get(CoordPos::Inside, CoordPos::Inside),
+            rect.relate(&line).get(CoordPos::Inside, CoordPos::Inside)
+        );
+    }
+
+    // KNOWN FAILURE, not filed upstream: a `Polygon` whose exterior is empty is
+    // empty, and `Intersects` agrees when it has no interior rings — but with
+    // interiors present it tests them and reports an intersection that `Relate`
+    // does not.
+    #[test]
+    #[ignore = "Intersects consults the interior rings of an empty polygon"]
+    fn an_empty_polygon_with_interior_rings_intersects_nothing() {
+        let polygon = Polygon::new(
+            crate::LineString::new(vec![]),
+            vec![vec![coord! { x: 0.0, y: 0.0 }].into()],
+        );
+        let point = Point::new(0.0, 0.0);
+        assert_eq!(
+            point.intersects(&polygon),
+            point.relate(&polygon).is_intersects()
+        );
+    }
+}
