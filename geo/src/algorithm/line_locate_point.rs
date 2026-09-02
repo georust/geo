@@ -267,3 +267,73 @@ mod test {
         assert_eq!(line.line_locate_point(&pt), None);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::LineLocatePoint;
+    use crate::utils::pbt_gens::{coords, monotone_line_strings};
+    use crate::{Closest, ClosestPoint, Distance, Euclidean, InterpolateLine, Length, Point};
+
+    // "Returns a (option of the) fraction of the line's total length
+    // representing the location of the closest point on the line", so the
+    // fraction lies in `[0, 1]`; the `Line` impl clamps it there explicitly.
+    #[hegel::test]
+    fn the_located_fraction_lies_between_zero_and_one(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 10));
+        let point = Point::from(tc.draw(coords(2e3)));
+        let fraction = line_string
+            .line_locate_point(&point)
+            .expect("finite coordinates");
+        assert!(
+            (0.0..=1.0).contains(&fraction),
+            "fraction {fraction} is outside [0, 1]"
+        );
+    }
+
+    // "line_locate_point should return the fraction to the closest point, so
+    // interpolating the line with that fraction should yield the closest point"
+    // — the comment on `test_matches_closest_point` in
+    // `line_interpolate_point`.
+    #[hegel::test]
+    fn interpolating_the_located_fraction_gives_the_closest_point(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 10));
+        let point = Point::from(tc.draw(coords(2e3)));
+        let fraction = line_string
+            .line_locate_point(&point)
+            .expect("finite coordinates");
+        let interpolated = Euclidean
+            .point_at_ratio_from_start(&line_string, fraction)
+            .expect("a non-empty line string");
+        let (Closest::SinglePoint(closest) | Closest::Intersection(closest)) =
+            line_string.closest_point(&point)
+        else {
+            return;
+        };
+        let scale = Euclidean.length(&line_string).max(1.0);
+        assert!(
+            Euclidean.distance(&interpolated, &closest) <= 1e-9 * scale,
+            "interpolating {fraction} gave {interpolated:?}, closest point is {closest:?}"
+        );
+    }
+
+    // A vertex of the line string is on it, so the located fraction points back
+    // at that vertex.
+    #[hegel::test]
+    fn locating_a_vertex_returns_a_fraction_that_interpolates_back_to_it(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 10));
+        let index =
+            tc.draw(hegel::generators::integers::<usize>().max_value(line_string.0.len() - 1));
+        let vertex = Point::from(line_string.0[index]);
+        let fraction = line_string
+            .line_locate_point(&vertex)
+            .expect("finite coordinates");
+        let interpolated = Euclidean
+            .point_at_ratio_from_start(&line_string, fraction)
+            .expect("a non-empty line string");
+        let scale = Euclidean.length(&line_string).max(1.0);
+        assert!(
+            Euclidean.distance(&interpolated, &vertex) <= 1e-9 * scale,
+            "vertex {vertex:?} located at {fraction} interpolates to {interpolated:?}"
+        );
+    }
+}

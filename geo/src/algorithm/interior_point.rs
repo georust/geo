@@ -930,3 +930,117 @@ mod test {
         let _ = poly.interior_point();
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::InteriorPoint;
+    use crate::utils::pbt_gens::{
+        disjoint_multi_polygons, geometries, grid_coords, polygons_with_holes,
+    };
+    use crate::{BoundingRect, Contains, Geometry, HasDimensions, Intersects, MapCoords};
+    use hegel::generators::{Generator, PrintableGenerator};
+
+    /// Arbitrary geometries with signed zeros normalised away: the interior
+    /// point search reaches `Relate`, which panics on a ring holding a negative
+    /// zero — see
+    /// `contains::hegel_props::relate_panics_on_a_ring_holding_a_negative_zero`.
+    fn normalised_geometries() -> impl PrintableGenerator<Geometry<f64>> {
+        geometries(1e3)
+            .map(|geometry| geometry.map_coords(|c| crate::coord! { x: c.x + 0.0, y: c.y + 0.0 }))
+            .print_as_debug()
+    }
+
+    // "An interior point is a point that's guaranteed to intersect a given
+    // geometry, and will be strictly on the interior of the geometry if
+    // possible, or on the edge if the geometry has zero area."
+    //
+    // `Triangle` is covered separately below: its impl returns the centroid
+    // unconditionally, which rounds outside a sliver or collinear triangle —
+    // pinned by `the_interior_point_of_a_collinear_triangle_misses_it`.
+    #[hegel::test]
+    fn an_interior_point_intersects_its_geometry(tc: hegel::TestCase) {
+        let geometry = tc.draw(normalised_geometries());
+        tc.assume(!matches!(geometry, Geometry::Triangle(_)));
+        if let Some(point) = geometry.interior_point() {
+            assert!(
+                geometry.intersects(&point),
+                "{point:?} does not intersect {geometry:?}"
+            );
+        }
+    }
+
+    // The same guarantee for triangles that are not slivers: vertices on the
+    // integer grid, with the three of them not collinear.
+    #[hegel::test]
+    fn the_interior_point_of_a_fat_triangle_intersects_it(tc: hegel::TestCase) {
+        let triangle = crate::Triangle::new(
+            tc.draw(grid_coords()),
+            tc.draw(grid_coords()),
+            tc.draw(grid_coords()),
+        );
+        let [a, b, c] = triangle.to_array();
+        tc.assume(
+            robust::orient2d(
+                robust::Coord { x: a.x, y: a.y },
+                robust::Coord { x: b.x, y: b.y },
+                robust::Coord { x: c.x, y: c.y },
+            ) != 0.0,
+        );
+        let point = triangle.interior_point();
+        assert!(
+            triangle.intersects(&point),
+            "{point:?} does not intersect {triangle:?}"
+        );
+    }
+
+    // KNOWN FAILURE, georust/geo#1607: the point `Triangle::interior_point`
+    // returns for a zero-area triangle does not intersect it, though the same
+    // segment as a `Line` returns one that does.
+    #[test]
+    #[ignore = "geo#1607: Triangle::interior_point can miss a zero-area triangle"]
+    fn the_interior_point_of_a_collinear_triangle_misses_it() {
+        let triangle = crate::Triangle::new(
+            crate::coord! { x: 0.0, y: 0.0 },
+            crate::coord! { x: 0.0, y: 0.0 },
+            crate::coord! { x: 3.0, y: 87.0 },
+        );
+        let point = triangle.interior_point();
+        assert!(triangle.intersects(&point));
+    }
+
+    #[hegel::test]
+    fn only_empty_geometries_have_no_interior_point(tc: hegel::TestCase) {
+        let geometry = tc.draw(normalised_geometries());
+        if geometry.interior_point().is_none() {
+            assert!(geometry.is_empty(), "{geometry:?} is not empty");
+        }
+    }
+
+    // "strictly on the interior of the geometry if possible": a polygon with
+    // positive area has an interior, so the point lands inside it.
+    #[hegel::test]
+    fn a_polygon_with_area_gets_a_point_strictly_inside(tc: hegel::TestCase) {
+        let polygon = tc.draw(polygons_with_holes());
+        let point = polygon
+            .interior_point()
+            .expect("polygons with area have an interior point");
+        assert!(
+            polygon.contains(&point),
+            "{point:?} is not inside {polygon:?}"
+        );
+    }
+
+    // The point is chosen from a scan line through the geometry's bounding box,
+    // so it cannot fall outside that box.
+    #[hegel::test]
+    fn the_interior_point_lies_within_the_bounding_rect(tc: hegel::TestCase) {
+        let multi_polygon = tc.draw(disjoint_multi_polygons());
+        let point = multi_polygon
+            .interior_point()
+            .expect("members have positive area");
+        let rect = multi_polygon
+            .bounding_rect()
+            .expect("members have coordinates");
+        assert!(rect.intersects(&point), "{point:?} lies outside {rect:?}");
+    }
+}

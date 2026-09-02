@@ -1811,3 +1811,174 @@ mod test {
         }
     }
 }
+
+/// Hegel property tests for `Euclidean.distance`.
+#[cfg(test)]
+mod hegel_props {
+    use crate::utils::pbt_gens::{grid_coords, monotone_line_strings, star_polygons};
+    use crate::{Coord, Distance, Euclidean, Line, LineString, Point, Rect, coord};
+    use hegel::generators::{self, Generator, PrintableGenerator};
+
+    fn line_strings() -> impl PrintableGenerator<LineString<f64>> {
+        monotone_line_strings(1e3, 10)
+    }
+
+    /// Coordinates that are zero or of magnitude in `[1e-6, 1e6]`, the range
+    /// `fuzz/fuzz_targets/separable_distance.rs` restricts itself to: "Outside
+    /// that range the segment-distance primitive that both sides share loses
+    /// precision". Subnormal-scale coordinates also reach a panic inside
+    /// `rstar` — see `distance_between_subnormal_scale_polygons_panics`.
+    fn bounded_coords() -> impl PrintableGenerator<Coord<f64>> {
+        let component = || {
+            hegel::one_of!(
+                generators::just(0.0),
+                generators::floats::<f64>().min_value(1e-6).max_value(1e6),
+                generators::floats::<f64>().min_value(-1e6).max_value(-1e-6),
+            )
+        };
+        generators::tuples!(component(), component())
+            .map(|(x, y)| coord! { x: x, y: y })
+            .print_as_debug()
+    }
+
+    /// Minimum distance between two line strings by brute force over every
+    /// segment pair — the same oracle `fuzz/fuzz_targets/separable_distance.rs`
+    /// uses.
+    fn brute_force(a: &LineString<f64>, b: &LineString<f64>) -> f64 {
+        a.lines()
+            .flat_map(|p| b.lines().map(move |q| Euclidean.distance(&p, &q)))
+            .fold(f64::INFINITY, f64::min)
+    }
+
+    // "Distance is a symmetric operation" — the comment introducing
+    // `symmetric_distance_impl!` above. That macro only covers mixed-type pairs;
+    // the same-type impls have argument-order-dependent bodies, and
+    // `fast_path_prefix_prune_regression` pins symmetry for one of them.
+    #[hegel::test]
+    fn distance_between_line_strings_is_symmetric(tc: hegel::TestCase) {
+        let (a, b) = (tc.draw(line_strings()), tc.draw(line_strings()));
+        assert_eq!(Euclidean.distance(&a, &b), Euclidean.distance(&b, &a));
+    }
+
+    #[hegel::test]
+    fn distance_between_polygons_is_symmetric(tc: hegel::TestCase) {
+        let (a, b) = (tc.draw(star_polygons()), tc.draw(star_polygons()));
+        assert_eq!(Euclidean.distance(&a, &b), Euclidean.distance(&b, &a));
+    }
+
+    // `separable_geometry_distance_fast` is selected when the two bounding
+    // boxes are "strictly separated along an axis"; translating `b` clear of
+    // `a` in x forces it. The fuzz target checks exactly this against a brute
+    // force segment sweep.
+    #[hegel::test]
+    fn the_separable_fast_path_matches_a_brute_force_segment_sweep(tc: hegel::TestCase) {
+        let a = tc.draw(line_strings());
+        let mut b = tc.draw(line_strings());
+        let a_max_x = a.coords().fold(f64::NEG_INFINITY, |acc, c| acc.max(c.x));
+        let b_min_x = b.coords().fold(f64::INFINITY, |acc, c| acc.min(c.x));
+        let shift = (a_max_x + 1.0) - b_min_x;
+        for coord in &mut b.0 {
+            coord.x += shift;
+        }
+        let expected = brute_force(&a, &b);
+        // Both sides evaluate candidate pairs with the same segment primitive,
+        // so they agree to within rounding unless the pruning is unsound — the
+        // tolerance model the fuzz target uses.
+        let tolerance = 1e-9 * (1.0 + expected);
+        assert!(
+            (Euclidean.distance(&a, &b) - expected).abs() <= tolerance,
+            "fast path gave {} where brute force says {expected}",
+            Euclidean.distance(&a, &b)
+        );
+    }
+
+    // "The closed-form Rect-to-Rect distance must agree with the general
+    // polygon-to-polygon path that the other Rect implementations use" — the
+    // doc comment on `distance_rect_rect_agrees_with_polygon_path` above, which
+    // runs the same check over a fixed pseudorandom sample.
+    #[hegel::test]
+    fn the_closed_form_rect_distance_matches_the_polygon_path(tc: hegel::TestCase) {
+        let rect = |tc: &hegel::TestCase| {
+            let (a, b) = (tc.draw(bounded_coords()), tc.draw(bounded_coords()));
+            Rect::new(a, b)
+        };
+        let (a, b) = (rect(&tc), rect(&tc));
+        assert_relative_eq!(
+            Euclidean.distance(&a, &b),
+            Euclidean.distance(&a.to_polygon(), &b.to_polygon()),
+            epsilon = 1e-9
+        );
+    }
+
+    // "Implements Euclidean distance from a Triangle or a Rect to another
+    // geometry type by converting the Triangle or Rect to a polygon."
+    #[hegel::test]
+    fn rect_to_geometry_distance_goes_through_the_polygon(tc: hegel::TestCase) {
+        let rect = Rect::new(tc.draw(bounded_coords()), tc.draw(bounded_coords()));
+        let line_string = tc.draw(line_strings());
+        assert_eq!(
+            Euclidean.distance(&rect, &line_string),
+            Euclidean.distance(&rect.to_polygon(), &line_string)
+        );
+    }
+
+    // `distance_within` "Returns `true` if the minimum distance between
+    // `origin` and `destination` is less than or equal to `distance`".
+    #[hegel::test]
+    fn distance_within_agrees_with_the_measured_distance(tc: hegel::TestCase) {
+        let (a, b) = (tc.draw(line_strings()), tc.draw(line_strings()));
+        let bound = tc.draw(generators::floats::<f64>().min_value(0.0).max_value(1e4));
+        assert_eq!(
+            Euclidean.distance_within(&a, &b, bound),
+            Euclidean.distance(&a, &b) <= bound
+        );
+    }
+
+    // A point on a segment is at zero distance from it, and the crate's own
+    // deprecated `EuclideanDistance` docs spell out the converse cases: "If a
+    // `Point` lies on a `LineString`, the distance is `0.0`". Endpoints are
+    // drawn on the integer grid so the interpolated point is exact.
+    #[hegel::test]
+    fn a_point_on_a_segment_is_at_zero_distance(tc: hegel::TestCase) {
+        let line = Line::new(tc.draw(grid_coords()), tc.draw(grid_coords()));
+        let halves = (line.start + line.end) / 2.0;
+        for coord in [line.start, line.end, halves] {
+            assert_eq!(Euclidean.distance(&Point::from(coord), &line), 0.0);
+        }
+    }
+
+    // Distance from a point to itself is zero, and the triangle inequality
+    // holds for points.
+    #[hegel::test]
+    fn point_distances_satisfy_the_triangle_inequality(tc: hegel::TestCase) {
+        let a = Point::from(tc.draw(bounded_coords()));
+        let b = Point::from(tc.draw(bounded_coords()));
+        let c = Point::from(tc.draw(bounded_coords()));
+        let direct = Euclidean.distance(a, c);
+        let detour = Euclidean.distance(a, b) + Euclidean.distance(b, c);
+        assert!(
+            direct <= detour * (1.0 + 1e-12),
+            "{direct} exceeds the detour {detour}"
+        );
+    }
+
+    // KNOWN FAILURE, georust/geo#1604 (open, the second half of it): the
+    // general polygon-to-polygon path builds an R-tree and calls
+    // `nearest_neighbor`, which unwraps a `None` for these subnormal-scale
+    // coordinates (`rstar-0.13.0`, `algorithm/nearest_neighbor.rs:52`). Every
+    // coordinate is finite, and the panic reaches release builds.
+    #[test]
+    #[ignore = "geo#1604: Euclidean.distance panics inside rstar at subnormal scale"]
+    fn distance_between_subnormal_scale_polygons_panics() {
+        let a = Rect::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 9.828413039546407e-237, y: 1.4830465425330546e-162 },
+        );
+        let b = Rect::new(
+            coord! { x: 1.1113793747425387e-162, y: 1.1113793747425387e-162 },
+            coord! { x: 4.914206519773204e-237, y: 2.513455854232436e-88 },
+        );
+        let via_polygons: f64 = Euclidean.distance(&a.to_polygon(), &b.to_polygon());
+        assert!(via_polygons.is_finite());
+    }
+}

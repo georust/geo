@@ -345,3 +345,82 @@ mod tests {
         assert_eq!(result, Closest::Intersection(point!(x: 10.5, y: 10.5)));
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::ClosestPoint;
+    use crate::utils::pbt_gens::{coords, grid_coords, monotone_line_strings, star_polygons};
+    use crate::{Closest, Distance, Euclidean, Point};
+
+    // `SinglePoint` is "exactly one place on this object which is closest to the
+    // point", so the distance to it must be the distance to the geometry, which
+    // `best_of_two` itself measures with `Euclidean.distance`.
+    #[hegel::test]
+    fn the_closest_point_on_a_line_string_realises_the_distance(tc: hegel::TestCase) {
+        let line_string = tc.draw(monotone_line_strings(1e3, 10));
+        let point = Point::from(tc.draw(coords(2e3)));
+        let expected = Euclidean.distance(&point, &line_string);
+        match line_string.closest_point(&point) {
+            Closest::SinglePoint(closest) | Closest::Intersection(closest) => {
+                assert_relative_eq!(
+                    Euclidean.distance(&point, &closest),
+                    expected,
+                    max_relative = 1e-9,
+                    epsilon = 1e-9
+                );
+            }
+            Closest::Indeterminate => {}
+        }
+    }
+
+    // "The point actually intersects with the object", so an `Intersection`
+    // result must be at zero distance.
+    #[hegel::test]
+    fn an_intersection_result_is_at_zero_distance(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let point = Point::from(tc.draw(coords(2e3)));
+        if let Closest::Intersection(closest) = polygon.closest_point(&point) {
+            assert_eq!(Euclidean.distance(&point, &closest), 0.0);
+        }
+    }
+
+    // A two-coordinate `LineString` traces exactly one segment, so it must
+    // answer as that `Line` does — the relation
+    // `line_string_with_single_element_behaves_like_line` above checks for one
+    // input. Coordinates come from the integer grid: a segment shorter than
+    // about 1e-161 makes both sides return a NaN point, pinned by
+    // `closest_point_on_a_tiny_segment_is_not_a_number` below.
+    #[hegel::test]
+    fn a_two_coord_line_string_agrees_with_the_line_it_traces(tc: hegel::TestCase) {
+        let start = tc.draw(grid_coords());
+        let end = tc.draw(grid_coords());
+        let point = Point::from(tc.draw(grid_coords()));
+        let line = crate::Line::new(start, end);
+        let line_string = crate::LineString::new(vec![start, end]);
+        assert_eq!(
+            line_string.closest_point(&point),
+            line.closest_point(&point)
+        );
+    }
+
+    // KNOWN FAILURE, georust/geo#1604 (open): `Line::closest_point` projects onto
+    // the segment by dividing by its squared length, which underflows to zero
+    // once the segment is shorter than about 1e-161, so the returned point is
+    // `NaN`. The zero-length case is special-cased to `Indeterminate`; a
+    // segment that is merely tiny is not, and `Intersection` promises a point
+    // that "actually intersects with the object".
+    #[test]
+    #[ignore = "geo#1604: Line::closest_point returns a NaN point for a tiny segment"]
+    fn closest_point_on_a_tiny_segment_is_not_a_number() {
+        let line: crate::Line<f64> = crate::Line::new(
+            crate::coord! { x: 0.0, y: 0.0 },
+            crate::coord! { x: 0.0, y: 1e-200 },
+        );
+        match line.closest_point(&Point::new(0.0, 0.0)) {
+            Closest::SinglePoint(p) | Closest::Intersection(p) => {
+                assert!(p.x().is_finite() && p.y().is_finite(), "got {p:?}");
+            }
+            Closest::Indeterminate => {}
+        }
+    }
+}

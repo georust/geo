@@ -133,3 +133,42 @@ mod test {
         )
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::HausdorffDistance;
+    use crate::utils::pbt_gens::monotone_line_strings;
+    use crate::{CoordsIter, Distance, Euclidean};
+
+    // "The maximum of the distances from a point in any of the sets to the
+    // nearest point in the other set" (Rote, 1991), as the crate's own
+    // documentation puts it — an undirected quantity, so it is symmetric.
+    #[hegel::test]
+    fn hausdorff_distance_is_symmetric(tc: hegel::TestCase) {
+        let a = tc.draw(monotone_line_strings(1e3, 10));
+        let b = tc.draw(monotone_line_strings(1e3, 10));
+        assert_eq!(a.hausdorff_distance(&b), b.hausdorff_distance(&a));
+    }
+
+    // The definition is a maximum over one set of a minimum over the other, so
+    // it is reproduced directly here over the coordinates the implementation
+    // iterates.
+    #[hegel::test]
+    fn hausdorff_distance_matches_its_definition(tc: hegel::TestCase) {
+        let a = tc.draw(monotone_line_strings(1e3, 10));
+        let b = tc.draw(monotone_line_strings(1e3, 10));
+        let directed = |from: &crate::LineString<f64>, to: &crate::LineString<f64>| {
+            from.coords_iter()
+                .map(|p| {
+                    to.coords_iter()
+                        .map(|q| Euclidean.distance(p, q))
+                        .fold(f64::INFINITY, f64::min)
+                })
+                .fold(f64::NEG_INFINITY, f64::max)
+        };
+        assert_eq!(
+            a.hausdorff_distance(&b),
+            directed(&a, &b).max(directed(&b, &a))
+        );
+    }
+}

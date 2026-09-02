@@ -221,3 +221,40 @@ mod test {
         assert_relative_eq!(mars_measure.frechet_distance(&ls, &ls), 0.0);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::FrechetDistance;
+    use crate::utils::pbt_gens::monotone_line_strings;
+    use crate::{Euclidean, HausdorffDistance};
+
+    // The Fréchet distance between two curves does not depend on which is named
+    // first. The implementation reorders its arguments by vertex count before
+    // filling the dynamic-programming table, so the two orders take different
+    // paths through it.
+    #[hegel::test]
+    fn frechet_distance_is_symmetric(tc: hegel::TestCase) {
+        let a = tc.draw(monotone_line_strings(1e3, 10));
+        let b = tc.draw(monotone_line_strings(1e3, 10));
+        assert_eq!(
+            Euclidean.frechet_distance(&a, &b),
+            Euclidean.frechet_distance(&b, &a)
+        );
+    }
+
+    // A coupling of the two vertex sequences realises the Fréchet distance, and
+    // every vertex is matched somewhere along it, so the Fréchet distance
+    // bounds the Hausdorff distance from above. Both implementations here work
+    // on vertices only, which is what makes the comparison exact.
+    #[hegel::test]
+    fn frechet_distance_is_at_least_the_hausdorff_distance(tc: hegel::TestCase) {
+        let a = tc.draw(monotone_line_strings(1e3, 10));
+        let b = tc.draw(monotone_line_strings(1e3, 10));
+        let frechet = Euclidean.frechet_distance(&a, &b);
+        let hausdorff = a.hausdorff_distance(&b);
+        assert!(
+            frechet >= hausdorff * (1.0 - 1e-12),
+            "Frechet {frechet} is below Hausdorff {hausdorff}"
+        );
+    }
+}
