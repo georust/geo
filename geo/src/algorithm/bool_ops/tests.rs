@@ -483,3 +483,158 @@ mod ogc_compliance {
         );
     }
 }
+
+/// Hegel property tests for `BooleanOps`.
+///
+/// The trait describes its operations as "set operations on geometries
+/// considered as a subset of the 2-D plane", well-defined on valid geometries,
+/// so the set-algebra identities on areas must hold. Inputs are the star-shaped
+/// and hole-bearing polygons from `crate::utils::pbt_gens`, which
+/// `Validation` accepts.
+mod hegel_props {
+    use super::{BooleanOps, unary_union};
+    use crate::utils::pbt_gens::{monotone_line_strings, polygons_with_holes, star_polygons};
+    use crate::{Area, Euclidean, Length, MultiLineString, MultiPolygon, OpType, Polygon, Winding};
+
+    /// Every boolean operation snaps its inputs onto a discrete integer grid
+    /// scaled to their combined extent, so an area derived from op output
+    /// carries an error whose magnitude is relative to the magnitude of the
+    /// input — this is the error model spelled out in the comment inside
+    /// `test_unary_union_errors` above, which compares at `max_relative = 1e-5`
+    /// after offsetting by the input area. These properties reuse it. A logic
+    /// error moves areas by whole regions, far outside this band.
+    fn assert_area_eq(actual: f64, expected: f64, scale: f64, context: &str) {
+        let tolerance = 1e-5 * scale;
+        assert!(
+            (actual - expected).abs() <= tolerance,
+            "{context}: {actual} vs {expected}, off by more than {tolerance}"
+        );
+    }
+
+    #[hegel::test]
+    fn union_with_self_preserves_area(tc: hegel::TestCase) {
+        let a = tc.draw(star_polygons());
+        let area = a.unsigned_area();
+        assert_area_eq(a.union(&a).unsigned_area(), area, area, "area(A union A)");
+    }
+
+    #[hegel::test]
+    fn difference_with_self_is_empty(tc: hegel::TestCase) {
+        let a = tc.draw(star_polygons());
+        let area = a.unsigned_area();
+        assert_area_eq(
+            a.difference(&a).unsigned_area(),
+            0.0,
+            area,
+            "area(A minus A)",
+        );
+    }
+
+    #[hegel::test]
+    fn union_and_intersection_satisfy_inclusion_exclusion(tc: hegel::TestCase) {
+        let a = tc.draw(star_polygons());
+        let b = tc.draw(star_polygons());
+        let inputs = a.unsigned_area() + b.unsigned_area();
+        assert_area_eq(
+            a.union(&b).unsigned_area() + a.intersection(&b).unsigned_area(),
+            inputs,
+            inputs,
+            "area(A union B) + area(A cap B)",
+        );
+    }
+
+    // The union is partitioned by the intersection and the two differences. All
+    // four quantities come from op output, so input snapping affects both sides
+    // of the comparison alike.
+    #[hegel::test]
+    fn intersection_and_differences_partition_the_union(tc: hegel::TestCase) {
+        let a = tc.draw(star_polygons());
+        let b = tc.draw(star_polygons());
+        let union = a.union(&b).unsigned_area();
+        let parts = a.intersection(&b).unsigned_area()
+            + a.difference(&b).unsigned_area()
+            + b.difference(&a).unsigned_area();
+        assert_area_eq(parts, union, union, "the three parts of A union B");
+    }
+
+    // `xor` returns "the regions that are in either `self` or `other`, but not
+    // in both".
+    #[hegel::test]
+    fn xor_is_the_union_less_the_intersection(tc: hegel::TestCase) {
+        let a = tc.draw(star_polygons());
+        let b = tc.draw(star_polygons());
+        let union = a.union(&b).unsigned_area();
+        let expected = union - a.intersection(&b).unsigned_area();
+        assert_area_eq(a.xor(&b).unsigned_area(), expected, union, "area(A xor B)");
+    }
+
+    // `unary_union` is documented as an efficient union "of many adjacent /
+    // overlapping geometries", so it must agree with folding `union` over the
+    // same inputs. The discrepancy is measured as the area of the symmetric
+    // difference of the two results, exactly as `test_unary_union_errors` does.
+    #[hegel::test]
+    fn unary_union_agrees_with_a_folded_union(tc: hegel::TestCase) {
+        let polygons: Vec<Polygon<f64>> = tc.draw(
+            hegel::generators::vecs(star_polygons())
+                .min_size(1)
+                .max_size(5),
+        );
+        let mut folded = MultiPolygon::empty();
+        for polygon in &polygons {
+            folded = folded.union(polygon);
+        }
+        let combined = unary_union(polygons.iter());
+        let scale: f64 = polygons.iter().map(|p| p.unsigned_area()).sum();
+        assert_area_eq(
+            combined.xor(&folded).unsigned_area(),
+            0.0,
+            scale,
+            "area(unary_union xor folded union)",
+        );
+    }
+
+    // `intersection`, `union`, `xor` and `difference` are each documented as
+    // `boolean_op` with the corresponding `OpType`, using the default
+    // `FillRule::EvenOdd`.
+    #[hegel::test]
+    fn boolean_op_matches_the_named_operations(tc: hegel::TestCase) {
+        let a = tc.draw(polygons_with_holes());
+        let b = tc.draw(polygons_with_holes());
+        assert_eq!(a.boolean_op(&b, OpType::Intersection), a.intersection(&b));
+        assert_eq!(a.boolean_op(&b, OpType::Union), a.union(&b));
+        assert_eq!(a.boolean_op(&b, OpType::Difference), a.difference(&b));
+        assert_eq!(a.boolean_op(&b, OpType::Xor), a.xor(&b));
+    }
+
+    // `clip` "Returns the portion of `ls` that lies within `self` ... if
+    // `invert` is false, and the difference (`ls - self`) otherwise", so the two
+    // halves must together account for the whole input length. The input is
+    // x-monotone: clipping is a set operation, so a line string that retraces
+    // itself loses the duplicated length and the identity would not apply.
+    #[hegel::test]
+    fn clipping_a_line_string_splits_its_length_in_two(tc: hegel::TestCase) {
+        let polygon = tc.draw(star_polygons());
+        let lines = MultiLineString::new(vec![tc.draw(monotone_line_strings(2e3, 8))]);
+        let inside = Euclidean.length(&polygon.clip(&lines, false));
+        let outside = Euclidean.length(&polygon.clip(&lines, true));
+        let total = Euclidean.length(&lines);
+        // Clipping cuts at snapped intersection points, so the two pieces are
+        // shorter or longer by the snapping error at each cut.
+        assert_relative_eq!(inside + outside, total, max_relative = 1e-5, epsilon = 1e-6);
+    }
+
+    // Exterior rings of boolean-op output are counter-clockwise and interior
+    // rings clockwise — the invariant `i_overlay_integration::test_winding_order`
+    // pins for georust/geo#1309.
+    #[hegel::test]
+    fn union_output_rings_follow_the_standard_winding(tc: hegel::TestCase) {
+        let a = tc.draw(star_polygons());
+        let b = tc.draw(star_polygons());
+        for polygon in a.union(&b) {
+            assert!(polygon.exterior().is_ccw());
+            for interior in polygon.interiors() {
+                assert!(interior.is_cw());
+            }
+        }
+    }
+}

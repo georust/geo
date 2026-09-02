@@ -503,3 +503,121 @@ mod tests {
         assert!(!ls.is_convex());
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::IsConvex;
+    use crate::utils::pbt_gens::{convex_polygons, grid_coords, star_polygons};
+    use crate::{ConvexHull, Coord, LineString, MultiPoint, Point, convex_hull::graham_hull};
+    use hegel::generators::{self, PrintableGenerator};
+
+    fn grid_point_sets() -> impl PrintableGenerator<Vec<Coord<f64>>> {
+        generators::vecs(grid_coords()).max_size(64)
+    }
+
+    fn all_collinear(points: &[Coord<f64>]) -> bool {
+        points.windows(3).all(|w| {
+            robust::orient2d(
+                robust::Coord {
+                    x: w[0].x,
+                    y: w[0].y,
+                },
+                robust::Coord {
+                    x: w[1].x,
+                    y: w[1].y,
+                },
+                robust::Coord {
+                    x: w[2].x,
+                    y: w[2].y,
+                },
+            ) == 0.0
+        })
+    }
+
+    // The generator places every vertex on a circle in strictly increasing
+    // angular order, which is convex, counter-clockwise, and — since three
+    // distinct points of a circle are never collinear — strictly so.
+    #[hegel::test]
+    fn a_ring_inscribed_in_a_circle_is_strictly_ccw_convex(tc: hegel::TestCase) {
+        let polygon = tc.draw(convex_polygons());
+        assert!(
+            polygon.exterior().is_strictly_ccw_convex(),
+            "{:?} was not reported strictly CCW convex",
+            polygon.exterior()
+        );
+    }
+
+    // "The `ConvexHull` algorithm always returns a strictly convex `LineString`
+    // unless the input is empty or collinear" — the `IsConvex` remarks. Both
+    // exceptions are excluded here by construction.
+    #[hegel::test]
+    fn the_hull_of_non_collinear_points_is_strictly_ccw_convex(tc: hegel::TestCase) {
+        let points = tc.draw(grid_point_sets());
+        tc.assume(!all_collinear(&points));
+        let hull = MultiPoint::new(points.iter().copied().map(Point::from).collect()).convex_hull();
+        assert!(
+            hull.exterior().is_strictly_ccw_convex(),
+            "hull {:?} was not reported strictly CCW convex",
+            hull.exterior()
+        );
+    }
+
+    // `graham_hull` "allows computing all the unique points on the convex hull,
+    // as opposed to a strict convex hull that does not include collinear
+    // points", so with `include_on_hull = false` it must agree with quick hull.
+    // Coordinates are on the exact integer grid, where the two algorithms'
+    // differing arithmetic cannot diverge through rounding.
+    #[hegel::test]
+    fn graham_hull_without_collinear_points_matches_quick_hull(tc: hegel::TestCase) {
+        let mut points = tc.draw(grid_point_sets());
+        let quick = MultiPoint::new(points.iter().copied().map(Point::from).collect())
+            .convex_hull()
+            .exterior()
+            .clone();
+        let graham = graham_hull(&mut points, false);
+        assert_eq!(canonical_ring(&graham), canonical_ring(&quick));
+    }
+
+    /// A closed ring rotated to start at its lexicographically least vertex,
+    /// with the repeated closing coordinate dropped. Neither algorithm promises
+    /// a particular start vertex.
+    fn canonical_ring(ring: &LineString<f64>) -> Vec<Coord<f64>> {
+        if ring.0.is_empty() {
+            return Vec::new();
+        }
+        let open = &ring.0[..ring.0.len() - 1];
+        let start = crate::utils::least_index(open);
+        open[start..]
+            .iter()
+            .chain(&open[..start])
+            .copied()
+            .collect()
+    }
+
+    // Strict convexity forbids collinear consecutive vertices, so it is the
+    // stronger of each pair: `convex_orientation(false, ..)` succeeding implies
+    // `convex_orientation(true, ..)` does.
+    #[hegel::test]
+    fn strict_convexity_implies_convexity(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        if ring.is_strictly_ccw_convex() {
+            assert!(ring.is_ccw_convex());
+        }
+        if ring.is_strictly_convex() {
+            assert!(ring.is_convex());
+        }
+    }
+
+    // Convexity is a property of the enclosed set, and reversing a ring only
+    // changes which way round it is wound.
+    #[hegel::test]
+    fn reversing_a_ring_swaps_the_convex_orientation(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        let reversed = LineString::new(ring.0.iter().rev().copied().collect());
+        assert_eq!(ring.is_ccw_convex(), reversed.is_cw_convex());
+        assert_eq!(
+            ring.is_strictly_ccw_convex(),
+            reversed.is_strictly_cw_convex()
+        );
+    }
+}

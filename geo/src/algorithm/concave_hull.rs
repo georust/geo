@@ -882,3 +882,72 @@ mod tests {
         }
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::{ConcaveHull, ConcaveHullOptions};
+    use crate::utils::pbt_gens::grid_coords;
+    use crate::{Area, ConvexHull, Coord, Intersects, MultiPoint, Point};
+    use hegel::generators::{self, PrintableGenerator};
+
+    fn point_sets() -> impl PrintableGenerator<Vec<Coord<f64>>> {
+        generators::vecs(grid_coords()).min_size(3).max_size(32)
+    }
+
+    fn multi_point(coords: &[Coord<f64>]) -> MultiPoint<f64> {
+        MultiPoint::new(coords.iter().copied().map(Point::from).collect())
+    }
+
+    // "Returns a polygon which covers a geometry" — the property
+    // `test_all_points_in_hull` above checks for one fixture.
+    #[hegel::test]
+    fn the_concave_hull_covers_every_input_point(tc: hegel::TestCase) {
+        let coords = tc.draw(point_sets());
+        let concavity = tc.draw(generators::floats::<f64>().min_value(0.5).max_value(1e3));
+        let hull = multi_point(&coords).concave_hull_with_options(ConcaveHullOptions {
+            concavity,
+            length_threshold: 0.0,
+        });
+        for coord in &coords {
+            assert!(
+                hull.intersects(coord),
+                "{coord:?} is not covered by {hull:?}"
+            );
+        }
+    }
+
+    // "Infinity would result in a convex hull": no edge is ever short enough to
+    // drill into, so the starting convex hull is returned unchanged.
+    #[hegel::test]
+    fn an_infinite_concavity_gives_the_convex_hull(tc: hegel::TestCase) {
+        let coords = tc.draw(point_sets());
+        let points = multi_point(&coords);
+        let hull = points.concave_hull_with_options(ConcaveHullOptions {
+            concavity: f64::INFINITY,
+            length_threshold: 0.0,
+        });
+        assert_eq!(hull.exterior(), points.convex_hull().exterior());
+    }
+
+    // The concave hull "does so while trying to further minimize its area by
+    // constructing edges such that the exterior of the polygon incorporates
+    // points that would be interior points in a convex hull", so it never
+    // covers more than the convex hull.
+    #[hegel::test]
+    fn the_concave_hull_is_no_larger_than_the_convex_hull(tc: hegel::TestCase) {
+        let coords = tc.draw(point_sets());
+        let points = multi_point(&coords);
+        let concavity = tc.draw(generators::floats::<f64>().min_value(0.5).max_value(1e3));
+        let concave = points
+            .concave_hull_with_options(ConcaveHullOptions {
+                concavity,
+                length_threshold: 0.0,
+            })
+            .unsigned_area();
+        let convex = points.convex_hull().unsigned_area();
+        assert!(
+            concave <= convex * (1.0 + 1e-9) + 1e-9,
+            "concave hull area {concave} exceeds the convex hull area {convex}"
+        );
+    }
+}

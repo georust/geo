@@ -150,3 +150,109 @@ mod test {
         );
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::MinimumRotatedRect;
+    use crate::utils::pbt_gens::grid_coords;
+    use crate::{Area, BoundingRect, ConvexHull, Coord, Distance, Euclidean, MultiPoint, Point};
+    use hegel::generators::{self, PrintableGenerator};
+
+    fn point_sets() -> impl PrintableGenerator<Vec<Coord<f64>>> {
+        generators::vecs(grid_coords()).max_size(32)
+    }
+
+    fn multi_point(coords: &[Coord<f64>]) -> MultiPoint<f64> {
+        MultiPoint::new(coords.iter().copied().map(Point::from).collect())
+    }
+
+    // "minimum rotated rect is the rectangle that can enclose all points given
+    // and have smallest area of all enclosing rectangles".
+    #[hegel::test]
+    fn the_minimum_rotated_rect_encloses_every_input_point(tc: hegel::TestCase) {
+        let coords = tc.draw(point_sets());
+        let points = multi_point(&coords);
+        let Some(rect) = points.minimum_rotated_rect() else {
+            return;
+        };
+        // The implementation translates a hull vertex to the origin and back
+        // "to improve precision", so a point on the boundary can land a few
+        // ulps outside. The slack is relative to the extent of the input.
+        let scale = coords
+            .iter()
+            .map(|c| c.x.abs().max(c.y.abs()))
+            .fold(1.0_f64, f64::max);
+        for coord in &coords {
+            let distance = Euclidean.distance(&Point::from(*coord), &rect);
+            assert!(
+                distance <= 1e-9 * scale,
+                "{coord:?} lies {distance} outside {rect:?}"
+            );
+        }
+    }
+
+    // The axis-aligned bounding rect is one of the enclosing rectangles, so the
+    // minimum-area one cannot be larger; and every enclosing rectangle covers
+    // the convex hull, so it cannot be smaller than the hull.
+    #[hegel::test]
+    fn its_area_sits_between_the_hull_and_the_bounding_rect(tc: hegel::TestCase) {
+        let coords = tc.draw(point_sets());
+        let points = multi_point(&coords);
+        let Some(rect) = points.minimum_rotated_rect() else {
+            return;
+        };
+        let area = rect.unsigned_area();
+        let hull_area = points.convex_hull().unsigned_area();
+        let bounding_area = points
+            .bounding_rect()
+            .expect("a non-empty point set")
+            .unsigned_area();
+        assert!(
+            area <= bounding_area * (1.0 + 1e-9) + 1e-9,
+            "minimum rotated rect area {area} exceeds the bounding rect area {bounding_area}"
+        );
+        assert!(
+            area >= hull_area * (1.0 - 1e-9) - 1e-9,
+            "minimum rotated rect area {area} is below the hull area {hull_area}"
+        );
+    }
+
+    // Only the convex hull's vertices can be extreme, and the implementation
+    // runs rotating calipers over the hull, so hulling first leaves the same
+    // rectangle. The two runs pick different hull vertices as their precision
+    // origin, so the corners agree only to within rounding and the comparison
+    // is on area.
+    #[hegel::test]
+    fn it_only_depends_on_the_convex_hull(tc: hegel::TestCase) {
+        let coords = tc.draw(point_sets());
+        let points = multi_point(&coords);
+        let (Some(direct), Some(via_hull)) = (
+            points.minimum_rotated_rect(),
+            points.convex_hull().minimum_rotated_rect(),
+        ) else {
+            assert_eq!(
+                points.minimum_rotated_rect(),
+                points.convex_hull().minimum_rotated_rect()
+            );
+            return;
+        };
+        assert_relative_eq!(
+            direct.unsigned_area(),
+            via_hull.unsigned_area(),
+            max_relative = 1e-9,
+            epsilon = 1e-9
+        );
+    }
+
+    // Rotating calipers returns a closed four-corner ring with no holes.
+    #[hegel::test]
+    fn the_result_is_a_closed_quadrilateral(tc: hegel::TestCase) {
+        let coords = tc.draw(point_sets());
+        let Some(rect) = multi_point(&coords).minimum_rotated_rect() else {
+            return;
+        };
+        assert_eq!(rect.exterior().0.len(), 5);
+        assert!(rect.exterior().is_closed());
+        assert!(rect.interiors().is_empty());
+    }
+}

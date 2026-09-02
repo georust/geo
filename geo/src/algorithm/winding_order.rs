@@ -274,3 +274,114 @@ mod test {
         assert_eq!(&ls.points_ccw().collect::<Vec<_>>(), &ccw_ls,);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::{Winding, WindingOrder, triangle_winding_order};
+    use crate::utils::pbt_gens::{grid_coords, star_polygons};
+    use crate::{LineString, Triangle, coord};
+
+    // The generator walks its vertices at strictly increasing angles about a
+    // centre, which is counter-clockwise.
+    #[hegel::test]
+    fn a_ring_traced_at_increasing_angles_is_counter_clockwise(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        assert_eq!(ring.winding_order(), Some(WindingOrder::CounterClockwise));
+    }
+
+    #[hegel::test]
+    fn reversing_a_ring_inverts_its_winding_order(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        let reversed = LineString::new(ring.0.iter().rev().copied().collect());
+        assert_eq!(
+            reversed.winding_order(),
+            ring.winding_order().map(|order| order.inverse())
+        );
+    }
+
+    // `is_cw` and `is_ccw` are documented as "True iff this is wound
+    // clockwise"/"counterclockwise", and `WindingOrder` has no third variant, so
+    // at most one of them can hold.
+    #[hegel::test]
+    fn at_most_one_winding_predicate_holds(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        assert_eq!(
+            ring.is_cw(),
+            ring.winding_order() == Some(WindingOrder::Clockwise)
+        );
+        assert_eq!(
+            ring.is_ccw(),
+            ring.winding_order() == Some(WindingOrder::CounterClockwise)
+        );
+        assert!(!(ring.is_cw() && ring.is_ccw()));
+    }
+
+    // `make_winding_order` changes "the winding order so that it is in this
+    // winding order", and the only way to do that without moving vertices is to
+    // leave the ring alone or reverse it wholesale.
+    #[hegel::test]
+    fn make_winding_order_either_keeps_or_reverses_the_coords(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        let order = if tc.draw(hegel::generators::booleans()) {
+            WindingOrder::Clockwise
+        } else {
+            WindingOrder::CounterClockwise
+        };
+        let mut rewound = ring.clone();
+        rewound.make_winding_order(order);
+        assert_eq!(rewound.winding_order(), Some(order));
+        let reversed: Vec<_> = ring.0.iter().rev().copied().collect();
+        assert!(rewound.0 == ring.0 || rewound.0 == reversed);
+    }
+
+    // `points_cw` and `points_ccw` return the points "either in order, or in
+    // reverse order", so for a ring with a defined winding they are exact
+    // reverses of one another.
+    #[hegel::test]
+    fn points_cw_is_the_reverse_of_points_ccw(tc: hegel::TestCase) {
+        let ring = tc.draw(star_polygons()).exterior().clone();
+        let cw: Vec<_> = ring.points_cw().collect();
+        let ccw: Vec<_> = ring.points_ccw().collect();
+        assert_eq!(cw, ccw.into_iter().rev().collect::<Vec<_>>());
+    }
+
+    // `triangle_winding_order` is a "special cased algorithm" using a plain
+    // cross product, while `LineString::winding_order` goes through the kernel.
+    // On the exact integer grid the cross product is exact, so the two must
+    // agree. Collinear triangles are excluded: they disagree there, pinned by
+    // `a_degenerate_triangle_has_no_winding_order` below.
+    #[hegel::test]
+    fn triangle_winding_order_agrees_with_its_rings_winding(tc: hegel::TestCase) {
+        let triangle = Triangle::new(
+            tc.draw(grid_coords()),
+            tc.draw(grid_coords()),
+            tc.draw(grid_coords()),
+        );
+        let [a, b, c] = triangle.to_array();
+        tc.assume(
+            robust::orient2d(
+                robust::Coord { x: a.x, y: a.y },
+                robust::Coord { x: b.x, y: b.y },
+                robust::Coord { x: c.x, y: c.y },
+            ) != 0.0,
+        );
+        assert_eq!(
+            triangle_winding_order(&triangle),
+            triangle.to_polygon().exterior().winding_order()
+        );
+    }
+
+    // KNOWN FAILURE, georust/geo#1608: `triangle_winding_order` reports a
+    // triangle with two distinct vertices as clockwise, where the same
+    // triangle's exterior ring reports no winding order.
+    #[test]
+    #[ignore = "geo#1608: triangle_winding_order reports a two-vertex triangle as clockwise"]
+    fn a_degenerate_triangle_has_no_winding_order() {
+        let triangle = Triangle::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: -1.0 },
+        );
+        assert_eq!(triangle_winding_order(&triangle), None);
+    }
+}

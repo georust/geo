@@ -146,3 +146,58 @@ mod test {
         assert_eq!(oriented.interiors()[0].0, oriented_int_ls.0);
     }
 }
+
+#[cfg(test)]
+mod hegel_props {
+    use super::{Direction, Orient};
+    use crate::utils::pbt_gens::{disjoint_multi_polygons, polygons_with_holes};
+    use crate::{Area, Winding};
+
+    // "By default, the exterior ring of a Polygon is oriented counter-clockwise,
+    // and any interior rings are oriented clockwise"; `Reversed` swaps both.
+    #[hegel::test]
+    fn orient_gives_each_ring_the_documented_winding(tc: hegel::TestCase) {
+        let polygon = tc.draw(polygons_with_holes());
+        let reverse = tc.draw(hegel::generators::booleans());
+        let direction = if reverse {
+            Direction::Reversed
+        } else {
+            Direction::Default
+        };
+        let oriented = polygon.orient(direction);
+        assert_eq!(oriented.exterior().is_cw(), reverse);
+        for interior in oriented.interiors() {
+            assert_eq!(interior.is_ccw(), reverse);
+        }
+    }
+
+    #[hegel::test]
+    fn orient_is_idempotent(tc: hegel::TestCase) {
+        let polygon = tc.draw(polygons_with_holes());
+        let oriented = polygon.orient(Direction::Default);
+        assert_eq!(oriented.orient(Direction::Default), oriented);
+    }
+
+    // Orienting only reverses rings, which leaves the enclosed region — and so
+    // its area — untouched.
+    #[hegel::test]
+    fn orient_preserves_unsigned_area(tc: hegel::TestCase) {
+        let polygon = tc.draw(polygons_with_holes());
+        assert_relative_eq!(
+            polygon.orient(Direction::Reversed).unsigned_area(),
+            polygon.unsigned_area(),
+            max_relative = 1e-12
+        );
+    }
+
+    // The `MultiPolygon` impl orients each member independently.
+    #[hegel::test]
+    fn orienting_a_multi_polygon_orients_each_member(tc: hegel::TestCase) {
+        let multi_polygon = tc.draw(disjoint_multi_polygons());
+        let expected: Vec<_> = multi_polygon
+            .iter()
+            .map(|p| p.orient(Direction::Default))
+            .collect();
+        assert_eq!(multi_polygon.orient(Direction::Default).0, expected);
+    }
+}
