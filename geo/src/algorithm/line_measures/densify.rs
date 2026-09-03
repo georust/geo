@@ -542,7 +542,7 @@ mod tests {
 #[cfg(test)]
 mod hegel_props {
     use super::Densify;
-    use crate::utils::pbt_gens::{monotone_line_strings, star_polygons};
+    use crate::utils::pbt_gens::{monotone_line_strings, polygons_with_holes};
     use crate::{Distance, Euclidean, Length};
     use hegel::generators;
 
@@ -595,13 +595,14 @@ mod hegel_props {
         );
     }
 
-    // A polygon is densified ring by ring, so the ring count and hole count are
-    // untouched and each ring stays closed.
+    // A polygon is densified ring by ring, so its holes survive and every ring
+    // stays closed.
     #[hegel::test]
     fn densifying_a_polygon_keeps_its_rings_closed(tc: hegel::TestCase) {
-        let polygon = tc.draw(star_polygons());
+        let polygon = tc.draw(polygons_with_holes());
         let densified = Euclidean.densify(&polygon, max_segment_lengths(&tc));
         assert_eq!(densified.interiors().len(), polygon.interiors().len());
         assert!(densified.exterior().is_closed());
+        assert!(densified.interiors().iter().all(|ring| ring.is_closed()));
     }
 }
