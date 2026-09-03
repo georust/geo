@@ -48,7 +48,7 @@ rand_pcg = "0.10.1"
 [dev-dependencies]
 approx = ">= 0.4.0, < 0.6.0"
 geo-test-fixtures = { path = "../geo-test-fixtures" }
-hegeltest = "0.35.0"
+hegel = { package = "hegeltest", version = "0.35.0" }
 jts-test-runner = { path = "../jts-test-runner" }
 pretty_env_logger = "0.4"
 wkt = "0.14.0"
