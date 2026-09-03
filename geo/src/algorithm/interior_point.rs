@@ -993,11 +993,11 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, georust/geo#1607: the point `Triangle::interior_point`
+    // KNOWN FAILURE, #1607: the point `Triangle::interior_point`
     // returns for a zero-area triangle does not intersect it, though the same
     // segment as a `Line` returns one that does.
     #[test]
-    #[ignore = "geo#1607: Triangle::interior_point can miss a zero-area triangle"]
+    #[ignore = "#1607: Triangle::interior_point can miss a zero-area triangle"]
     fn the_interior_point_of_a_collinear_triangle_misses_it() {
         let triangle = crate::Triangle::new(
             crate::coord! { x: 0.0, y: 0.0 },

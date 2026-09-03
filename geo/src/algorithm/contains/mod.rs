@@ -1050,7 +1050,8 @@ mod hegel_props {
             (a, b)
         }
         // Rects with a zero-width or zero-height extent are degenerate, and
-        // `Relate` mislabels them — see `relate_mislabels_a_degenerate_rect`.
+        // `Relate` and `Covers` disagree on them — see
+        // `relate_and_covers_disagree_on_a_degenerate_rect`.
         fn rect(tc: &hegel::TestCase) -> Rect<f64> {
             let a = grid(tc);
             let mut b = grid(tc);
@@ -1062,9 +1063,9 @@ mod hegel_props {
             }
             Rect::new(a, b)
         }
-        // Paths are x-monotone, hence simple: `Relate` mislabels a
-        // self-intersecting line string that contains one of its own segments —
-        // see `relate_mislabels_a_self_intersecting_line_string`.
+        // Paths are x-monotone, hence simple: `Relate` and `Contains` disagree
+        // on a self-intersecting line string against one of its own segments —
+        // see `relate_and_contains_disagree_on_a_self_intersecting_line_string`.
         fn path(tc: &hegel::TestCase) -> LineString<f64> {
             let n = tc.draw_silent(generators::integers::<usize>().min_value(2).max_value(6));
             let mut x = -4.0;
@@ -1247,16 +1248,16 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, not filed upstream: `RelateOperation` labels its graph
+    // KNOWN FAILURE, raised in #1609: `RelateOperation` labels its graph
     // nodes through a map keyed with `total_cmp`, which separates `-0.0` from
     // `0.0`, while the segment intersection that creates those nodes compares
     // with `==`, which does not. A ring holding a negative zero therefore
     // leaves a node labelled for only one of the two geometries and
     // `Node::update_intersection_matrix` panics on its own `assert!` — in
-    // release builds as well. Related to georust/geo#1578, which is the same
+    // release builds as well. Related to #1578, which is the same
     // ordering mismatch in the sweep module.
     #[test]
-    #[ignore = "Relate panics on a ring containing a negative zero"]
+    #[ignore = "open question, see #1609: Relate panics on a ring containing a negative zero"]
     fn relate_panics_on_a_ring_holding_a_negative_zero() {
         let point = Point::new(0.0, 0.0);
         let polygon = Polygon::new(
@@ -1271,17 +1272,18 @@ mod hegel_props {
         assert!(!point.relate(&polygon).is_contains());
     }
 
-    // KNOWN FAILURE, not filed upstream: the specialized
+    // KNOWN FAILURE, raised in #1609: the specialized
     // `MultiPolygon::contains_properly` path only asks whether the right-hand
     // geometry's coordinates fall inside some member. Here the right-hand
     // polygon is a zero-area member of the left-hand multi polygon, so its
-    // point lies on the left-hand boundary and the documented `T**FF*FF*` mask
-    // does not hold; `Relate::is_contains_properly` and `Contains` both say
-    // false.
+    // point is inside the triangle but also on the left-hand boundary, and the
+    // documented `T**FF*FF*` mask does not hold: `Relate::is_contains_properly`
+    // says false where the specialized path says true.
     #[test]
-    #[ignore = "MultiPolygon::contains_properly disagrees with Relate on a zero-area member"]
+    #[ignore = "open question, see #1609: MultiPolygon::contains_properly disagrees with Relate on a zero-area member"]
     fn contains_properly_on_a_degenerate_member_disagrees_with_relate() {
-        let degenerate: Polygon<f64> = Polygon::new(vec![coord! { x: 0.5, y: 0.5 }].into(), vec![]);
+        let degenerate: Polygon<f64> =
+            Polygon::new(vec![coord! { x: 0.25, y: 0.25 }].into(), vec![]);
         let triangle: Polygon<f64> = Polygon::new(
             vec![
                 coord! { x: 0.0, y: 0.0 },
@@ -1296,14 +1298,14 @@ mod hegel_props {
         assert_eq!(a.contains_properly(&b), a.relate(&b).is_contains_properly());
     }
 
-    // KNOWN FAILURE, not filed upstream: the line string's last segment is
+    // KNOWN FAILURE, raised in #1609: the line string's last segment is
     // exactly the line, so the line's interior cannot meet the line string's
     // exterior — but `Relate` reports `EI` as one-dimensional and `II` as a
     // single point. The line string is self-intersecting (its last segment
     // crosses its first), which `InvalidLineString` permits.
     #[test]
-    #[ignore = "Relate mislabels a self-intersecting line string against its own segment"]
-    fn relate_mislabels_a_self_intersecting_line_string() {
+    #[ignore = "open question, see #1609: Relate and Contains disagree on a self-intersecting line string against its own segment"]
+    fn relate_and_contains_disagree_on_a_self_intersecting_line_string() {
         let line_string: LineString<f64> = vec![
             coord! { x: 0.0, y: 0.0 },
             coord! { x: 1.0, y: 0.0 },
@@ -1318,12 +1320,12 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, not filed upstream: `Covers` gives different answers for
+    // KNOWN FAILURE, raised in #1609: `Covers` gives different answers for
     // the same two geometries depending on whether they are passed as concrete
     // types or wrapped in the `Geometry` enum, which only dispatches to the
     // concrete impls.
     #[test]
-    #[ignore = "Geometry::covers disagrees with the concrete impl it dispatches to"]
+    #[ignore = "open question, see #1609: Geometry::covers disagrees with the concrete impl it dispatches to"]
     fn covers_does_not_depend_on_the_geometry_wrapper() {
         let line_string: LineString<f64> = vec![
             coord! { x: 0.0, y: 0.0 },
@@ -1339,26 +1341,26 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, not filed upstream: a `Rect` with zero height is a
+    // KNOWN FAILURE, raised in #1609: a `Rect` with zero height is a
     // segment, which cannot cover the unit square, and `Covers` agrees — but
     // `Relate::is_covers` reports that it does. `InvalidRect` only rejects
     // non-finite coordinates, so a degenerate rect is inside the crate's own
     // validity model.
     #[test]
-    #[ignore = "Relate::is_covers is wrong for a degenerate Rect"]
-    fn relate_mislabels_a_degenerate_rect() {
+    #[ignore = "open question, see #1609: Relate::is_covers and Covers disagree on a zero-height Rect"]
+    fn relate_and_covers_disagree_on_a_degenerate_rect() {
         let segment = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 0.0 });
         let square = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
         assert_eq!(segment.covers(&square), segment.relate(&square).is_covers());
     }
 
-    // KNOWN FAILURE, not filed upstream: `Relate` reports a zero-length `Line`
+    // KNOWN FAILURE, raised in #1609: `Relate` reports a zero-length `Line`
     // as one-dimensional, so the interior-interior cell disagrees with the
     // transposed matrix and with `HasDimensions`, which documents a "degenerate
     // line" as a point. Relating the equivalent `Point` gives the expected
     // `F0FFFF212`.
     #[test]
-    #[ignore = "Relate treats a zero-length Line as one-dimensional"]
+    #[ignore = "open question, see #1609: Relate treats a zero-length Line as one-dimensional"]
     fn relate_treats_a_zero_length_line_as_a_point() {
         let line = Line::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 0.0, y: 0.0 });
         let rect = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
@@ -1368,21 +1370,28 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, not filed upstream: a `Polygon` whose exterior is empty is
-    // empty, and `Intersects` agrees when it has no interior rings — but with
-    // interiors present it tests them and reports an intersection that `Relate`
-    // does not.
+    // KNOWN FAILURE, raised in #1609: a `Polygon` whose exterior is empty is
+    // empty, and `Relate` agrees. `Intersects` for a `Line` also checks the
+    // interior rings, so with one present it reports an intersection.
     #[test]
-    #[ignore = "Intersects consults the interior rings of an empty polygon"]
+    #[ignore = "open question, see #1609: Intersects and Relate disagree on an empty polygon with interior rings"]
     fn an_empty_polygon_with_interior_rings_intersects_nothing() {
         let polygon = Polygon::new(
-            crate::LineString::new(vec![]),
-            vec![vec![coord! { x: 0.0, y: 0.0 }].into()],
+            LineString::new(vec![]),
+            vec![
+                vec![
+                    coord! { x: 0.0, y: 0.0 },
+                    coord! { x: 0.0, y: 1.0 },
+                    coord! { x: 1.0, y: 1.0 },
+                    coord! { x: 1.0, y: 0.0 },
+                ]
+                .into(),
+            ],
         );
-        let point = Point::new(0.0, 0.0);
+        let line = Line::new(coord! { x: -1.0, y: 0.5 }, coord! { x: 2.0, y: 0.5 });
         assert_eq!(
-            point.intersects(&polygon),
-            point.relate(&polygon).is_intersects()
+            polygon.intersects(&line),
+            polygon.relate(&line).is_intersects()
         );
     }
 }

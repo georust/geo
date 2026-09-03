@@ -342,7 +342,7 @@ mod hegel_props {
     /// `quick_hull` forms is representable in f64. The magnitude-dependent
     /// failures pinned by `hull_at_large_coordinates_leaves_an_input_outside`
     /// cannot arise here, so orientation properties hold on this domain while
-    /// georust/geo#1566 is open.
+    /// #1566 is open.
     fn grid_point_sets() -> impl PrintableGenerator<Vec<Coord<f64>>> {
         generators::vecs(grid_coords()).max_size(64)
     }
@@ -472,13 +472,13 @@ mod hegel_props {
         assert_eq!(indexed, multi_point.convex_hull().exterior().0);
     }
 
-    // KNOWN FAILURE, georust/geo#1566 (open): `hull_set` picks its pivot with a
+    // KNOWN FAILURE, #1566 (open): `hull_set` picks its pivot with a
     // naive dot product (`p_orth.x * p_diff.x + p_orth.y * p_diff.y`), so once
     // candidate scores collide after rounding an interior point can be chosen
     // and the returned ring is not a hull. Here (63, 0) ends up strictly right
     // of the edge (0,0) -> (0,1), and the ring visits (0,0) twice.
     #[test]
-    #[ignore = "georust/geo#1566"]
+    #[ignore = "#1566: convex_hull returns a ring that is not a hull at large coordinates"]
     fn hull_at_large_coordinates_leaves_an_input_outside() {
         let points = [
             Coord { x: 0.0, y: 0.0 },
@@ -500,12 +500,12 @@ mod hegel_props {
         }
     }
 
-    // KNOWN FAILURE, same root cause as georust/geo#1566: the pivot score
+    // KNOWN FAILURE, same root cause as #1566: the pivot score
     // overflows to infinity for these finite coordinates, `inf - inf` gives
     // NaN, and the `max_by(|a, b| a.partial_cmp(b).unwrap())` in `hull_set`
     // unwraps `None`. Release builds panic too.
     #[test]
-    #[ignore = "georust/geo#1566"]
+    #[ignore = "#1566 (same pivot arithmetic): convex_hull panics at large finite coordinates"]
     fn hull_panics_at_large_finite_coordinates() {
         let points = [
             Coord { x: 0.0, y: 0.0 },

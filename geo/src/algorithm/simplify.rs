@@ -757,12 +757,12 @@ mod hegel_props {
             .fold(f64::INFINITY, f64::min)
     }
 
-    // KNOWN FAILURE, georust/geo#1606: `simplify` drops the middle vertex, which
+    // KNOWN FAILURE, #1606: `simplify` drops the middle vertex, which
     // sits about 3.0 from the output, for an `epsilon` of 2.0. Coordinates this
     // large also trip the library's own `debug_assert_ne!(farthest_index, 0)`
     // above, so this test panics rather than failing its assertion.
     #[test]
-    #[ignore = "geo#1606: simplify drops a vertex farther than epsilon at large coordinates"]
+    #[ignore = "#1606: simplify drops a vertex farther than epsilon at large coordinates"]
     fn simplify_drops_a_point_farther_than_epsilon() {
         let line_string = LineString::from(vec![
             Coord {

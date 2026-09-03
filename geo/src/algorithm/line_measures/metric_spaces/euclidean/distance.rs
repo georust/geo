@@ -1962,13 +1962,13 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, georust/geo#1604 (open, the second half of it): the
+    // KNOWN FAILURE, #1604 (open, the second half of it): the
     // general polygon-to-polygon path builds an R-tree and calls
     // `nearest_neighbor`, which unwraps a `None` for these subnormal-scale
     // coordinates (`rstar-0.13.0`, `algorithm/nearest_neighbor.rs:52`). Every
     // coordinate is finite, and the panic reaches release builds.
     #[test]
-    #[ignore = "geo#1604: Euclidean.distance panics inside rstar at subnormal scale"]
+    #[ignore = "#1604: Euclidean.distance panics inside rstar at subnormal scale"]
     fn distance_between_subnormal_scale_polygons_panics() {
         let a = Rect::new(
             coord! { x: 0.0, y: 0.0 },

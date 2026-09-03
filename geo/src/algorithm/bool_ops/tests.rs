@@ -625,7 +625,7 @@ mod hegel_props {
 
     // Exterior rings of boolean-op output are counter-clockwise and interior
     // rings clockwise — the invariant `i_overlay_integration::test_winding_order`
-    // pins for georust/geo#1309.
+    // pins for #1309.
     #[hegel::test]
     fn union_output_rings_follow_the_standard_winding(tc: hegel::TestCase) {
         let a = tc.draw(star_polygons());

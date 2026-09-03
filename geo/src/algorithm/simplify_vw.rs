@@ -1217,7 +1217,7 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, georust/geo#1605 (open): `simplify_vw` guards `epsilon <= 0` in
+    // KNOWN FAILURE, #1605 (open): `simplify_vw` guards `epsilon <= 0` in
     // `visvalingam`, but `simplify_vw_idx` calls `visvalingam_indices`, which
     // has no such guard. Its removal loop breaks on `area > epsilon`, so a
     // collinear triple has `0.0 > 0.0 == false` and the middle point is dropped
@@ -1225,7 +1225,7 @@ mod hegel_props {
     // an unaltered version of the geometry" and `simplify_vw_idx`'s promise to
     // report the points `simplify_vw` retains.
     #[test]
-    #[ignore = "geo#1605: simplify_vw_idx does not honour a non-positive epsilon"]
+    #[ignore = "#1605: simplify_vw_idx does not honour a non-positive epsilon"]
     fn simplify_vw_idx_ignores_a_zero_epsilon() {
         let line_string = LineString::from(vec![
             Coord { x: 0.0, y: 0.0 },

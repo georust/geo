@@ -403,14 +403,14 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, georust/geo#1604 (open): `Line::closest_point` projects onto
+    // KNOWN FAILURE, #1604 (open): `Line::closest_point` projects onto
     // the segment by dividing by its squared length, which underflows to zero
     // once the segment is shorter than about 1e-161, so the returned point is
     // `NaN`. The zero-length case is special-cased to `Indeterminate`; a
     // segment that is merely tiny is not, and `Intersection` promises a point
     // that "actually intersects with the object".
     #[test]
-    #[ignore = "geo#1604: Line::closest_point returns a NaN point for a tiny segment"]
+    #[ignore = "#1604: Line::closest_point returns a NaN point for a tiny segment"]
     fn closest_point_on_a_tiny_segment_is_not_a_number() {
         let line: crate::Line<f64> = crate::Line::new(
             crate::coord! { x: 0.0, y: 0.0 },

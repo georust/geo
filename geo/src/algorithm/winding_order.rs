@@ -371,11 +371,11 @@ mod hegel_props {
         );
     }
 
-    // KNOWN FAILURE, georust/geo#1608: `triangle_winding_order` reports a
+    // KNOWN FAILURE, #1608: `triangle_winding_order` reports a
     // triangle with two distinct vertices as clockwise, where the same
     // triangle's exterior ring reports no winding order.
     #[test]
-    #[ignore = "geo#1608: triangle_winding_order reports a two-vertex triangle as clockwise"]
+    #[ignore = "#1608: triangle_winding_order reports a two-vertex triangle as clockwise"]
     fn a_degenerate_triangle_has_no_winding_order() {
         let triangle = Triangle::new(
             coord! { x: 0.0, y: 0.0 },
