@@ -119,17 +119,27 @@ pub fn normalize_longitude<T: CoordFloat + FromPrimitive>(coord: T) -> T {
 
 /// Generators shared by the hegel property tests throughout the crate.
 ///
-/// Geometry types are foreign to hegel, so nothing here can implement
-/// `PrettyPrintable`: each generator ends in `print_as_debug()`, and the draws
-/// it makes internally are silent so that a counterexample reports the
-/// assembled geometry rather than the floats it was built from.
+/// hegel is the library of the `hegeltest` dev-dependency, documented at
+/// <https://docs.rs/hegeltest>. A `#[hegel::test]` function is an ordinary
+/// `#[test]` whose body runs 100 times over inputs drawn from generators like
+/// these with `tc.draw(..)`. When a run panics, hegel shrinks the inputs and
+/// prints them as `let` bindings above the panic message, so a failing case can
+/// be pasted into a plain `#[test]`. It also saves the case under `.hegel/`
+/// (gitignored, and not written in CI) and replays it first on the next run.
+/// `tc.assume(cond)` rejects the current input when `cond` is false. Rejected
+/// inputs do not count towards the 100, and a test that rejects most of its
+/// inputs fails a health check.
+///
+/// Every generator here ends in `print_as_debug()` and draws its parts
+/// silently, so a counterexample is printed as the assembled geometry rather
+/// than the floats it was built from. `hegel::compose!` turns a closure that
+/// draws from `tc` into a generator.
 #[cfg(test)]
 pub(crate) mod pbt_gens {
     use crate::{
         Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect, Triangle, coord,
     };
-    use hegel::compose;
     use hegel::generators::{self, Generator, PrintableGenerator};
     use std::f64::consts::TAU;
 
@@ -201,7 +211,7 @@ pub(crate) mod pbt_gens {
     /// tolerances in the area- and length-comparison properties are sized
     /// against; they are not claims about the library's domain.
     pub(crate) fn star_polygons() -> impl PrintableGenerator<Polygon<f64>> {
-        compose!(|tc| {
+        hegel::compose!(|tc| {
             let centre = draw_coord(tc, 1e3);
             Polygon::new(draw_star_ring(tc, centre, 0.5, 1e3), vec![])
         })
@@ -228,7 +238,7 @@ pub(crate) mod pbt_gens {
 
     /// Convex polygons without holes.
     pub(crate) fn convex_polygons() -> impl PrintableGenerator<Polygon<f64>> {
-        compose!(|tc| {
+        hegel::compose!(|tc| {
             let centre = draw_coord(tc, 1e3);
             Polygon::new(draw_cyclic_ring(tc, centre).0, vec![])
         })
@@ -242,7 +252,7 @@ pub(crate) mod pbt_gens {
     /// holes lie strictly inside the exterior and never meet one another —
     /// what `InvalidPolygon` requires of interior rings.
     pub(crate) fn polygons_with_holes() -> impl PrintableGenerator<Polygon<f64>> {
-        compose!(|tc| {
+        hegel::compose!(|tc| {
             let centre = draw_coord(tc, 1e3);
             let (exterior, inscribed) = draw_cyclic_ring(tc, centre);
             // The largest axis-aligned square inside the inscribed circle has
@@ -278,7 +288,7 @@ pub(crate) mod pbt_gens {
     /// so no two can touch — the non-overlap condition
     /// `InvalidMultiPolygon` checks.
     pub(crate) fn disjoint_multi_polygons() -> impl PrintableGenerator<MultiPolygon<f64>> {
-        compose!(|tc| {
+        hegel::compose!(|tc| {
             let origin = draw_coord(tc, 1e3);
             let radius = tc.draw_silent(float(0.5, 1e2));
             let cells = tc.draw_silent(
@@ -303,7 +313,7 @@ pub(crate) mod pbt_gens {
 
     /// Finite coordinates with both components in `[-max_coord, max_coord]`.
     pub(crate) fn coords(max_coord: f64) -> impl PrintableGenerator<Coord<f64>> {
-        compose!(|tc| { draw_coord(tc, max_coord) }).print_as_debug()
+        hegel::compose!(|tc| { draw_coord(tc, max_coord) }).print_as_debug()
     }
 
     /// Coordinates on the integer grid `[-64, 64]^2`.
@@ -312,7 +322,7 @@ pub(crate) mod pbt_gens {
     /// exact in f64, so duplicate and exactly-collinear points are common and
     /// a property can compare against exact arithmetic.
     pub(crate) fn grid_coords() -> impl PrintableGenerator<Coord<f64>> {
-        compose!(|tc| {
+        hegel::compose!(|tc| {
             let component = || generators::integers::<i8>().min_value(-64).max_value(64);
             let (x, y) = tc.draw_silent(generators::tuples!(component(), component()));
             coord! { x: x as f64, y: y as f64 }
@@ -326,7 +336,7 @@ pub(crate) mod pbt_gens {
         max_coord: f64,
         max_len: usize,
     ) -> impl PrintableGenerator<LineString<f64>> {
-        compose!(|tc| {
+        hegel::compose!(|tc| {
             let n = tc.draw_silent(generators::integers::<usize>().max_value(max_len));
             LineString::new((0..n).map(|_| draw_coord(tc, max_coord)).collect())
         })
@@ -343,7 +353,7 @@ pub(crate) mod pbt_gens {
         max_coord: f64,
         max_len: usize,
     ) -> impl PrintableGenerator<LineString<f64>> {
-        compose!(|tc| {
+        hegel::compose!(|tc| {
             let n = tc.draw_silent(
                 generators::integers::<usize>()
                     .min_value(2)
@@ -379,51 +389,53 @@ pub(crate) mod pbt_gens {
             tc.draw_silent(generators::integers::<usize>().max_value(3))
         }
         hegel::one_of!(
-            compose!(|tc| { Geometry::Point(point(tc, max_coord)) }),
-            compose!(|tc| {
+            hegel::compose!(|tc| { Geometry::Point(point(tc, max_coord)) }),
+            hegel::compose!(|tc| {
                 Geometry::Line(Line::new(
                     draw_coord(tc, max_coord),
                     draw_coord(tc, max_coord),
                 ))
             }),
-            compose!(|tc| { Geometry::LineString(tc.draw_silent(line_strings(max_coord, 12))) }),
-            compose!(|tc| {
+            hegel::compose!(|tc| {
+                Geometry::LineString(tc.draw_silent(line_strings(max_coord, 12)))
+            }),
+            hegel::compose!(|tc| {
                 Geometry::Polygon(Polygon::new(
                     ring(tc, max_coord),
                     (0..count(tc)).map(|_| ring(tc, max_coord)).collect(),
                 ))
             }),
-            compose!(|tc| {
+            hegel::compose!(|tc| {
                 Geometry::MultiPoint(MultiPoint::new(
                     (0..count(tc)).map(|_| point(tc, max_coord)).collect(),
                 ))
             }),
-            compose!(|tc| {
+            hegel::compose!(|tc| {
                 Geometry::MultiLineString(MultiLineString::new(
                     (0..count(tc)).map(|_| ring(tc, max_coord)).collect(),
                 ))
             }),
-            compose!(|tc| {
+            hegel::compose!(|tc| {
                 Geometry::MultiPolygon(MultiPolygon::new(
                     (0..count(tc))
                         .map(|_| Polygon::new(ring(tc, max_coord), vec![]))
                         .collect(),
                 ))
             }),
-            compose!(|tc| {
+            hegel::compose!(|tc| {
                 Geometry::Rect(Rect::new(
                     draw_coord(tc, max_coord),
                     draw_coord(tc, max_coord),
                 ))
             }),
-            compose!(|tc| {
+            hegel::compose!(|tc| {
                 Geometry::Triangle(Triangle::new(
                     draw_coord(tc, max_coord),
                     draw_coord(tc, max_coord),
                     draw_coord(tc, max_coord),
                 ))
             }),
-            compose!(|tc| {
+            hegel::compose!(|tc| {
                 Geometry::GeometryCollection(GeometryCollection::new_from(
                     (0..count(tc))
                         .map(|_| Geometry::Point(point(tc, max_coord)))
