@@ -1014,7 +1014,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use crate::coordinate_position::CoordPos;
-    use crate::utils::pbt_gens::{coords, disjoint_multi_polygons, polygons_with_holes};
+    use crate::utils::hegel_gens::{coords, disjoint_multi_polygons, polygons_with_holes};
     use crate::{
         Contains, ContainsProperly, Coord, CoordinatePosition, Covers, Geometry, Intersects, Line,
         LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect, Relate,

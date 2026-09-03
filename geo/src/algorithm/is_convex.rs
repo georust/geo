@@ -507,7 +507,7 @@ mod tests {
 #[cfg(test)]
 mod hegel_props {
     use super::IsConvex;
-    use crate::utils::pbt_gens::{convex_polygons, grid_coords, star_polygons};
+    use crate::utils::hegel_gens::{convex_polygons, grid_coords, star_polygons};
     use crate::{ConvexHull, Coord, LineString, MultiPoint, Point, convex_hull::graham_hull};
     use hegel::generators::{self, PrintableGenerator};
 

@@ -109,7 +109,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::RectOps;
-    use crate::utils::pbt_gens::coords;
+    use crate::utils::hegel_gens::coords;
     use crate::{Intersects, Rect};
 
     fn rects(tc: &hegel::TestCase) -> Rect<f64> {

@@ -137,7 +137,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::HausdorffDistance;
-    use crate::utils::pbt_gens::monotone_line_strings;
+    use crate::utils::hegel_gens::monotone_line_strings;
     use crate::{CoordsIter, Distance, Euclidean};
 
     // "The maximum of the distances from a point in any of the sets to the

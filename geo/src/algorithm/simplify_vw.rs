@@ -1143,7 +1143,7 @@ mod idx_tests {
 #[cfg(test)]
 mod hegel_props {
     use super::{SimplifyVw, SimplifyVwPreserve};
-    use crate::utils::pbt_gens::line_strings;
+    use crate::utils::hegel_gens::line_strings;
     use crate::{Coord, LineString};
     use hegel::generators;
 

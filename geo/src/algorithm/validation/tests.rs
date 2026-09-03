@@ -491,7 +491,7 @@ mod gdal_test_cases {
 
 mod hegel_props {
     use crate::algorithm::validation::Validation;
-    use crate::utils::pbt_gens::{
+    use crate::utils::hegel_gens::{
         convex_polygons, disjoint_multi_polygons, geometries, polygons_with_holes, star_polygons,
     };
     use crate::{Geometry, Polygon};

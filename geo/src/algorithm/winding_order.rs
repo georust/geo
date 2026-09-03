@@ -278,7 +278,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::{Winding, WindingOrder, triangle_winding_order};
-    use crate::utils::pbt_gens::{grid_coords, star_polygons};
+    use crate::utils::hegel_gens::{grid_coords, star_polygons};
     use crate::{LineString, Triangle, coord};
 
     // The generator walks its vertices at strictly increasing angles about a

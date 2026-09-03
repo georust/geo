@@ -225,7 +225,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::FrechetDistance;
-    use crate::utils::pbt_gens::monotone_line_strings;
+    use crate::utils::hegel_gens::monotone_line_strings;
     use crate::{Euclidean, HausdorffDistance};
 
     // The Fréchet distance between two curves does not depend on which is named

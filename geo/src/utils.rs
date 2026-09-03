@@ -135,7 +135,7 @@ pub fn normalize_longitude<T: CoordFloat + FromPrimitive>(coord: T) -> T {
 /// than the floats it was built from. `hegel::compose!` turns a closure that
 /// draws from `tc` into a generator.
 #[cfg(test)]
-pub(crate) mod pbt_gens {
+pub(crate) mod hegel_gens {
     use crate::{
         Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
         MultiPolygon, Point, Polygon, Rect, Triangle, coord,

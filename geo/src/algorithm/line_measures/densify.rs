@@ -542,7 +542,7 @@ mod tests {
 #[cfg(test)]
 mod hegel_props {
     use super::Densify;
-    use crate::utils::pbt_gens::{monotone_line_strings, polygons_with_holes};
+    use crate::utils::hegel_gens::{monotone_line_strings, polygons_with_holes};
     use crate::{Distance, Euclidean, Length};
     use hegel::generators;
 

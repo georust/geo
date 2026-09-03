@@ -886,7 +886,7 @@ mod tests {
 #[cfg(test)]
 mod hegel_props {
     use super::{ConcaveHull, ConcaveHullOptions};
-    use crate::utils::pbt_gens::grid_coords;
+    use crate::utils::hegel_gens::grid_coords;
     use crate::{Area, ConvexHull, Coord, Intersects, MultiPoint, Point};
     use hegel::generators::{self, PrintableGenerator};
 

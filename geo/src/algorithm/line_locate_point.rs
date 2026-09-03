@@ -271,7 +271,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::LineLocatePoint;
-    use crate::utils::pbt_gens::{coords, monotone_line_strings};
+    use crate::utils::hegel_gens::{coords, monotone_line_strings};
     use crate::{Closest, ClosestPoint, Distance, Euclidean, InterpolateLine, Length, Point};
 
     // "Returns a (option of the) fraction of the line's total length

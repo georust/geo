@@ -934,7 +934,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::InteriorPoint;
-    use crate::utils::pbt_gens::{
+    use crate::utils::hegel_gens::{
         disjoint_multi_polygons, geometries, grid_coords, polygons_with_holes,
     };
     use crate::{BoundingRect, Contains, Geometry, HasDimensions, Intersects, MapCoords};

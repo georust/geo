@@ -1815,7 +1815,7 @@ mod test {
 /// Hegel property tests for `Euclidean.distance`.
 #[cfg(test)]
 mod hegel_props {
-    use crate::utils::pbt_gens::{grid_coords, monotone_line_strings, star_polygons};
+    use crate::utils::hegel_gens::{grid_coords, monotone_line_strings, star_polygons};
     use crate::{Coord, Distance, Euclidean, Line, LineString, Point, Rect, coord};
     use hegel::generators::{self, Generator, PrintableGenerator};
 

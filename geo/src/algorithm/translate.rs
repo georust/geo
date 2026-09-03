@@ -158,7 +158,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::Translate;
-    use crate::utils::pbt_gens::{geometries, star_polygons};
+    use crate::utils::hegel_gens::{coords, geometries, star_polygons};
     use crate::{AffineOps, AffineTransform, Coord, LineString};
     use hegel::generators::{self, Generator, PrintableGenerator};
 
@@ -209,7 +209,7 @@ mod hegel_props {
     #[hegel::test]
     fn translate_matches_the_affine_translation(tc: hegel::TestCase) {
         let polygon = tc.draw(star_polygons());
-        let offset = tc.draw(crate::utils::pbt_gens::coords(1e6));
+        let offset = tc.draw(coords(1e6));
         assert_eq!(
             polygon.translate(offset.x, offset.y),
             polygon.affine_transform(&AffineTransform::translate(offset.x, offset.y))
@@ -221,7 +221,7 @@ mod hegel_props {
     #[hegel::test]
     fn translate_mut_matches_translate(tc: hegel::TestCase) {
         let geometry = tc.draw(geometries(1e6));
-        let offset = tc.draw(crate::utils::pbt_gens::coords(1e6));
+        let offset = tc.draw(coords(1e6));
         let mut in_place = geometry.clone();
         in_place.translate_mut(offset.x, offset.y);
         assert_eq!(geometry.translate(offset.x, offset.y), in_place);

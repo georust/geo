@@ -268,7 +268,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::ChaikinSmoothing;
-    use crate::utils::pbt_gens::{monotone_line_strings, star_polygons};
+    use crate::utils::hegel_gens::{monotone_line_strings, star_polygons};
     use crate::{Euclidean, Length};
     use hegel::generators;
 

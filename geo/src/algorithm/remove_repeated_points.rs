@@ -476,7 +476,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::RemoveRepeatedPoints;
-    use crate::utils::pbt_gens::{coords, geometries, line_strings};
+    use crate::utils::hegel_gens::{coords, geometries, line_strings};
     use crate::{Geometry, MultiPoint, Point};
     use hegel::generators;
 

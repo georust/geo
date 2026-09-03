@@ -362,7 +362,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::LineStringSegmentize;
-    use crate::utils::pbt_gens::monotone_line_strings;
+    use crate::utils::hegel_gens::monotone_line_strings;
     use crate::{Euclidean, Length};
     use hegel::generators;
 

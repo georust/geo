@@ -489,11 +489,11 @@ mod ogc_compliance {
 /// The trait describes its operations as "set operations on geometries
 /// considered as a subset of the 2-D plane", well-defined on valid geometries,
 /// so the set-algebra identities on areas must hold. Inputs are the star-shaped
-/// and hole-bearing polygons from `crate::utils::pbt_gens`, which
+/// and hole-bearing polygons from `crate::utils::hegel_gens`, which
 /// `Validation` accepts.
 mod hegel_props {
     use super::{BooleanOps, unary_union};
-    use crate::utils::pbt_gens::{monotone_line_strings, polygons_with_holes, star_polygons};
+    use crate::utils::hegel_gens::{monotone_line_strings, polygons_with_holes, star_polygons};
     use crate::{Area, Euclidean, Length, MultiLineString, MultiPolygon, OpType, Polygon, Winding};
 
     /// Every boolean operation snaps its inputs onto a discrete integer grid

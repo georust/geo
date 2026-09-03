@@ -1168,7 +1168,9 @@ mod test {
 
 #[cfg(test)]
 mod hegel_props {
-    use crate::utils::pbt_gens::{convex_polygons, coords, disjoint_multi_polygons, star_polygons};
+    use crate::utils::hegel_gens::{
+        convex_polygons, coords, disjoint_multi_polygons, star_polygons,
+    };
     use crate::{Area, BoundingRect, Centroid, Contains, Intersects, Translate};
 
     // Translating a shape moves its centroid by the same offset. The polygon

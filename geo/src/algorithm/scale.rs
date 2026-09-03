@@ -132,7 +132,7 @@ where
 #[cfg(test)]
 mod hegel_props {
     use super::Scale;
-    use crate::utils::pbt_gens::{coords, star_polygons};
+    use crate::utils::hegel_gens::{coords, star_polygons};
     use crate::{AffineOps, AffineTransform, Area, BoundingRect, Point};
     use hegel::generators;
 

@@ -421,7 +421,7 @@ mod test {
 
 #[cfg(test)]
 mod hegel_props {
-    use crate::utils::pbt_gens::geometries;
+    use crate::utils::hegel_gens::geometries;
     use crate::{BoundingRect, CoordsIter, Geometry};
 
     // The crate documents the result as "the axis-aligned bounding rectangle of

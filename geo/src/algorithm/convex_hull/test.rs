@@ -322,7 +322,7 @@ fn convex_hull_with_nan_does_not_panic() {
 /// arithmetic mistake with `quick_hull`.
 mod hegel_props {
     use crate::geometry::{Coord, MultiPoint, Point};
-    use crate::utils::pbt_gens::{coords, grid_coords};
+    use crate::utils::hegel_gens::{coords, grid_coords};
     use crate::{ConvexHull, CoordsIter, Polygon};
     use hegel::generators::{self, Generator, PrintableGenerator};
 

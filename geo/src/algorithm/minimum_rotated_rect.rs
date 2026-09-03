@@ -154,7 +154,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::MinimumRotatedRect;
-    use crate::utils::pbt_gens::grid_coords;
+    use crate::utils::hegel_gens::grid_coords;
     use crate::{Area, BoundingRect, ConvexHull, Coord, Distance, Euclidean, MultiPoint, Point};
     use hegel::generators::{self, PrintableGenerator};
 

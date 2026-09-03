@@ -133,7 +133,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::Extremes;
-    use crate::utils::pbt_gens::geometries;
+    use crate::utils::hegel_gens::geometries;
     use crate::{BoundingRect, CoordsIter};
 
     // `extremes` reports "the extreme coordinates and indices of a geometry", so

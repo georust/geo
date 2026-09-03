@@ -579,7 +579,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::Rotate;
-    use crate::utils::pbt_gens::{coords, monotone_line_strings, star_polygons};
+    use crate::utils::hegel_gens::{coords, monotone_line_strings, star_polygons};
     use crate::{AffineOps, AffineTransform, Area, Euclidean, Length, Point};
     use hegel::generators;
 

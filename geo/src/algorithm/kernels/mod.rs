@@ -67,7 +67,7 @@ mod hegel_props {
     use super::{Kernel, Orientation};
     use crate::Coord;
     use crate::kernels::{RobustKernel, SimpleKernel};
-    use crate::utils::pbt_gens::{coords, grid_coords};
+    use crate::utils::hegel_gens::{coords, grid_coords};
 
     fn inverse(orientation: Orientation) -> Orientation {
         match orientation {

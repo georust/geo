@@ -574,7 +574,9 @@ mod test {
 
 #[cfg(test)]
 mod hegel_props {
-    use crate::utils::pbt_gens::{coords, polygons_with_holes, star_polygons};
+    use crate::utils::hegel_gens::{
+        coords, disjoint_multi_polygons, polygons_with_holes, star_polygons,
+    };
     use crate::{Area, LineString, MapCoords, Polygon, Translate};
 
     // Planar area does not depend on where the origin is. `sum_line_determinants`
@@ -640,7 +642,7 @@ mod hegel_props {
     // the signed or unsigned areas of the individual polygons".
     #[hegel::test]
     fn multi_polygon_area_sums_its_members(tc: hegel::TestCase) {
-        let multi_polygon = tc.draw(crate::utils::pbt_gens::disjoint_multi_polygons());
+        let multi_polygon = tc.draw(disjoint_multi_polygons());
         let expected: f64 = multi_polygon.iter().map(|p| p.unsigned_area()).sum();
         assert_eq!(multi_polygon.unsigned_area(), expected);
     }

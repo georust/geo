@@ -150,7 +150,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::{Direction, Orient};
-    use crate::utils::pbt_gens::{disjoint_multi_polygons, polygons_with_holes};
+    use crate::utils::hegel_gens::{disjoint_multi_polygons, polygons_with_holes};
     use crate::{Area, Winding};
 
     // "By default, the exterior ring of a Polygon is oriented counter-clockwise,

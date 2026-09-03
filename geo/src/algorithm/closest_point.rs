@@ -349,7 +349,7 @@ mod tests {
 #[cfg(test)]
 mod hegel_props {
     use super::ClosestPoint;
-    use crate::utils::pbt_gens::{coords, grid_coords, monotone_line_strings, star_polygons};
+    use crate::utils::hegel_gens::{coords, grid_coords, monotone_line_strings, star_polygons};
     use crate::{Closest, Distance, Euclidean, Point};
 
     // `SinglePoint` is "exactly one place on this object which is closest to the

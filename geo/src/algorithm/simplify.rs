@@ -628,7 +628,7 @@ mod test {
 #[cfg(test)]
 mod hegel_props {
     use super::Simplify;
-    use crate::utils::pbt_gens::{line_strings, monotone_line_strings, star_polygons};
+    use crate::utils::hegel_gens::{line_strings, monotone_line_strings, star_polygons};
     use crate::{Coord, Euclidean, Length, LineString};
     use hegel::generators;
 
