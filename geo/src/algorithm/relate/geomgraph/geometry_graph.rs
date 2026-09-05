@@ -7,6 +7,8 @@ use super::{
 };
 
 use crate::HasDimensions;
+use crate::dimensions::Dimensions;
+use crate::utils::lex_cmp;
 use crate::{Coord, GeoFloat, GeometryCow, Line, LineString, Point, Polygon};
 
 use crate::relate::geomgraph::RobustLineIntersector;
@@ -161,18 +163,32 @@ where
         }
         match geometry {
             GeometryCow::Line(line) => self.add_line(line),
-            GeometryCow::Rect(rect) => {
+            GeometryCow::Rect(rect) => match rect.dimensions() {
                 // PERF: avoid this conversion/clone?
-                self.add_polygon(&rect.to_polygon());
-            }
+                Dimensions::TwoDimensional => self.add_polygon(&rect.to_polygon()),
+                // A rect with no width or height bounds no area. Added as a polygon, its
+                // ring collapses and the graph gives it a two-dimensional interior.
+                Dimensions::OneDimensional => self.add_line(&Line::new(rect.min(), rect.max())),
+                Dimensions::ZeroDimensional => self.add_point(&rect.min().into()),
+                Dimensions::Empty => unreachable!("a rect is never empty"),
+            },
             GeometryCow::Point(point) => {
                 self.add_point(point);
             }
             GeometryCow::Polygon(polygon) => self.add_polygon(polygon),
-            GeometryCow::Triangle(triangle) => {
+            GeometryCow::Triangle(triangle) => match triangle.dimensions() {
                 // PERF: avoid this conversion/clone?
-                self.add_polygon(&triangle.to_polygon());
-            }
+                Dimensions::TwoDimensional => self.add_polygon(&triangle.to_polygon()),
+                // A triangle with collinear vertices bounds no area. Its point set is the
+                // segment between the two extreme vertices.
+                Dimensions::OneDimensional => {
+                    let mut coords = triangle.to_array();
+                    coords.sort_unstable_by(lex_cmp);
+                    self.add_line(&Line::new(coords[0], coords[2]))
+                }
+                Dimensions::ZeroDimensional => self.add_point(&triangle.v1().into()),
+                Dimensions::Empty => unreachable!("a triangle is never empty"),
+            },
             GeometryCow::LineString(line_string) => self.add_line_string(line_string),
             GeometryCow::MultiPoint(multi_point) => {
                 for point in &multi_point.0 {

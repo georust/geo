@@ -113,8 +113,54 @@ relate_impl![
 
 #[cfg(test)]
 mod tests {
+    use super::Relate;
+    use crate::{Rect, Triangle, coord, wkt};
+
     #[test]
     fn run_jts_relate_tests() {
         jts_test_runner::assert_jts_tests_succeed("*Relate*.xml");
+    }
+
+    // https://github.com/georust/geo/issues/1611
+    #[test]
+    fn degenerate_rect_relates_as_a_line() {
+        let square = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        let flat = Rect::new(coord! { x: 0.0, y: 0.25 }, coord! { x: 1.0, y: 0.25 });
+        let line_string = wkt!(LINESTRING(0.0 0.25,1.0 0.25));
+        assert_eq!(square.relate(&flat), square.relate(&line_string));
+        assert!(square.relate(&flat).is_contains());
+    }
+
+    // https://github.com/georust/geo/issues/1611
+    #[test]
+    fn degenerate_rect_relates_as_a_point() {
+        let origin = wkt!(POINT(0.0 0.0));
+        let dot = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 0.0, y: 0.0 });
+        assert_eq!(origin.relate(&dot), origin.relate(&origin));
+        assert!(origin.relate(&dot).is_contains());
+    }
+
+    #[test]
+    fn degenerate_triangle_relates_as_a_line() {
+        let square = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+        // The middle vertex lies between the other two, so the point set is one segment.
+        let flat = Triangle::new(
+            coord! { x: 0.0, y: 0.25 },
+            coord! { x: 1.0, y: 0.25 },
+            coord! { x: 0.5, y: 0.25 },
+        );
+        let line_string = wkt!(LINESTRING(0.0 0.25,1.0 0.25));
+        assert_eq!(square.relate(&flat), square.relate(&line_string));
+    }
+
+    #[test]
+    fn degenerate_triangle_relates_as_a_point() {
+        let origin = wkt!(POINT(0.0 0.0));
+        let dot = Triangle::new(
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+            coord! { x: 0.0, y: 0.0 },
+        );
+        assert_eq!(origin.relate(&dot), origin.relate(&origin));
     }
 }
