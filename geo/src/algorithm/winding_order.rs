@@ -217,15 +217,10 @@ where
 /// special cased algorithm for finding the winding of a triangle
 pub fn triangle_winding_order<T: GeoFloat>(tri: &Triangle<T>) -> Option<WindingOrder> {
     let [a, b, c] = tri.to_array();
-    let ab = b - a;
-    let ac = c - a;
-
-    let cross_prod = ab.x * ac.y - ab.y * ac.x;
-
-    match cross_prod.total_cmp(&T::zero()) {
-        std::cmp::Ordering::Less => Some(WindingOrder::Clockwise),
-        std::cmp::Ordering::Equal => None,
-        std::cmp::Ordering::Greater => Some(WindingOrder::CounterClockwise),
+    match T::Ker::orient2d(a, b, c) {
+        Orientation::Clockwise => Some(WindingOrder::Clockwise),
+        Orientation::Collinear => None,
+        Orientation::CounterClockwise => Some(WindingOrder::CounterClockwise),
     }
 }
 
@@ -233,6 +228,30 @@ pub fn triangle_winding_order<T: GeoFloat>(tri: &Triangle<T>) -> Option<WindingO
 mod test {
     use super::*;
     use crate::Point;
+    use crate::wkt;
+
+    // https://github.com/georust/geo/issues/1608
+    #[test]
+    fn triangle_winding_order_with_two_distinct_vertices() {
+        for triangle in [
+            wkt!(TRIANGLE(0.0 0.0, 0.0 0.0, 0.0 -1.0)),
+            wkt!(TRIANGLE(0.0 0.0, 0.0 0.0, 0.0 1.0)),
+        ] {
+            assert_eq!(triangle_winding_order(&triangle), None);
+            // The ring through the same vertices agrees.
+            assert_eq!(triangle.to_polygon().exterior().winding_order(), None);
+        }
+    }
+
+    // The cross product of the raw coordinates rounds to zero.
+    #[test]
+    fn triangle_winding_order_near_degenerate() {
+        let triangle = wkt!(TRIANGLE(0.5 0.5000000000000002, 12.0 12.0, 24.0 24.0));
+        assert_eq!(
+            triangle_winding_order(&triangle),
+            Some(WindingOrder::CounterClockwise)
+        );
+    }
 
     #[test]
     fn robust_winding_float() {
