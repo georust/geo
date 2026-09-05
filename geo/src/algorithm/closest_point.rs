@@ -67,7 +67,18 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
         let direction_vector = Point::from(self.end - self.start);
         let to_p = Point::from(p.0 - self.start);
 
-        let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
+        let numerator = to_p.dot(direction_vector);
+        let squared_length = direction_vector.dot(direction_vector);
+        let t = if squared_length == F::zero() && numerator == F::zero() {
+            // Avoid 0/0 from squared-length underflow, but preserve non-zero
+            // numerators so that infinite projections still clamp to an endpoint.
+            // Project both vectors onto a unit direction to avoid squaring the
+            // length and keep t == 1 when p is the end point.
+            let unit_direction = direction_vector / line_length;
+            to_p.dot(unit_direction) / direction_vector.dot(unit_direction)
+        } else {
+            numerator / squared_length
+        };
 
         // check the cases where the closest point is "outside" the line
         if t < F::zero() {
@@ -212,6 +223,153 @@ mod tests {
     closest!(intersects: mid_point, (50.0, 50.0));
     closest!(in_line_far_away, (1000.0, 1000.0) => Closest::SinglePoint(Point::new(100.0, 100.0)));
     closest!(perpendicular_from_50_50, (0.0, 100.0) => Closest::SinglePoint(Point::new(50.0, 50.0)));
+
+    fn assert_finite(closest: Closest<f64>) {
+        let point = match closest {
+            Closest::Intersection(point) | Closest::SinglePoint(point) => point,
+            Closest::Indeterminate => panic!("expected a finite closest point"),
+        };
+
+        assert!(
+            point.x().is_finite(),
+            "non-finite x coordinate: {closest:?}"
+        );
+        assert!(
+            point.y().is_finite(),
+            "non-finite y coordinate: {closest:?}"
+        );
+    }
+
+    #[test]
+    fn tiny_axis_aligned_line_has_finite_closest_points() {
+        let tiny = 1e-162;
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(0.0, tiny);
+        let line = Line::new(start, end);
+
+        let at_start = line.closest_point(&start);
+        assert_finite(at_start);
+        assert_eq!(at_start, Closest::Intersection(start));
+
+        let at_end = line.closest_point(&end);
+        assert_finite(at_end);
+        assert_eq!(at_end, Closest::Intersection(end));
+
+        let off_segment = Point::new(tiny, tiny / 2.0);
+        let closest = line.closest_point(&off_segment);
+        assert_finite(closest);
+        let Closest::SinglePoint(closest) = closest else {
+            panic!("expected a single closest point, got {closest:?}");
+        };
+        assert_eq!(closest.x(), 0.0);
+        assert_relative_eq!(closest.y() / tiny, 0.5, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn tiny_diagonal_line_has_finite_closest_points() {
+        let tiny = 1e-162;
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(tiny, tiny);
+        let line = Line::new(start, end);
+
+        let at_start = line.closest_point(&start);
+        assert_finite(at_start);
+        assert_eq!(at_start, Closest::Intersection(start));
+
+        let at_end = line.closest_point(&end);
+        assert_finite(at_end);
+        assert_eq!(at_end, Closest::Intersection(end));
+
+        let off_segment = Point::new(-tiny, 2.0 * tiny);
+        let closest = line.closest_point(&off_segment);
+        assert_finite(closest);
+        let Closest::SinglePoint(closest) = closest else {
+            panic!("expected a single closest point, got {closest:?}");
+        };
+        assert_relative_eq!(closest.x() / tiny, 0.5, max_relative = 1e-15);
+        assert_relative_eq!(closest.y() / tiny, 0.5, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn line_with_infinite_length_start_intersection() {
+        let line = Line::<f64>::new((0.0, 0.0), (1.3e308, 1.3e308));
+        let start = line.start_point();
+        assert!(Euclidean.length(&line).is_infinite());
+        assert_eq!(line.closest_point(&start), Closest::Intersection(start));
+    }
+
+    #[test]
+    fn line_projection_preserves_cancellation() {
+        let line = Line::<f64>::new((0.0, 0.0), (3.0, 4.0));
+        let k = 2.0_f64.powi(54);
+        let point = Point::new(-4.0 * k, 3.0 * k);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(line.start_point())
+        );
+    }
+
+    #[test]
+    fn tiny_line_preserves_nonzero_projection_clamping() {
+        let tiny = 2.0_f64.powi(-550);
+        let k = 2.0_f64.powi(54);
+        let line = Line::new((0.0, 0.0), (3.0 * tiny, 4.0 * tiny));
+        let point = Point::new(4.0 * k - 64.0, -3.0 * k + 56.0);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(line.end_point())
+        );
+    }
+
+    #[test]
+    fn tiny_f32_line_has_finite_closest_points() {
+        let tiny = 1e-23_f32;
+        let line = Line::new((0.0, 0.0), (0.0, tiny));
+        for endpoint in [line.start_point(), line.end_point()] {
+            assert_eq!(
+                line.closest_point(&endpoint),
+                Closest::Intersection(endpoint)
+            );
+        }
+        let point = Point::new(tiny, tiny / 2.0);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(Point::new(0.0, tiny / 2.0))
+        );
+    }
+
+    #[test]
+    fn tiny_unequal_component_line_clamps_in_both_directions() {
+        let tiny = 1e-163;
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(3.0 * tiny, 4.0 * tiny);
+        let before_start = Point::new(-3.0 * tiny, -4.0 * tiny);
+        let beyond_end = Point::new(6.0 * tiny, 8.0 * tiny);
+
+        for line in [Line::new(start, end), Line::new(end, start)] {
+            for endpoint in [start, end] {
+                assert_eq!(
+                    line.closest_point(&endpoint),
+                    Closest::Intersection(endpoint)
+                );
+            }
+            assert_eq!(
+                line.closest_point(&before_start),
+                Closest::SinglePoint(start)
+            );
+            assert_eq!(line.closest_point(&beyond_end), Closest::SinglePoint(end));
+
+            // The offset (-4, 3) is perpendicular to the direction (3, 4).
+            let point = Point::new(-2.5 * tiny, 5.0 * tiny);
+            let closest = line.closest_point(&point);
+            assert_finite(closest);
+            let Closest::SinglePoint(closest) = closest else {
+                panic!("expected a single closest point, got {closest:?}");
+            };
+            assert_relative_eq!(closest.x() / tiny, 1.5, max_relative = 1e-15);
+            assert_relative_eq!(closest.y() / tiny, 2.0, max_relative = 1e-15);
+        }
+    }
 
     fn a_square(width: f32) -> LineString<f32> {
         LineString::from(vec![

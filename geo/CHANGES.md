@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- FIX: `Line::closest_point` no longer produces NaN coordinates solely because the squared length of a very short, non-zero segment underflows.
+  - <https://github.com/georust/geo/issues/1604>
+
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 
 - Add `Intersects<Coord>` and `Intersects<Point>` implementations for `IntervalTreeMultiPolygon`. Unlike the existing `Contains` impls, these return `true` for points on the polygon's boundary.
