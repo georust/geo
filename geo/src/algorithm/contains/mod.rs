@@ -111,6 +111,7 @@ pub(crate) use impl_contains_geometry_for;
 mod test {
     use crate::BoundingRect;
     use crate::Contains;
+    use crate::Covers;
     use crate::Relate;
     use crate::indexed::IntervalTreeMultiPolygon;
     use crate::line_string;
@@ -648,6 +649,38 @@ mod test {
         assert!(!tri.contains(&pt));
         let pt: Point = (0.5, 0.5).into();
         assert!(!tri.contains(&pt));
+    }
+
+    // https://github.com/georust/geo/issues/1611
+    #[test]
+    fn rect_contains_degenerate_rect() {
+        let square = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 1.0 });
+
+        // A zero-height rect strictly inside the square.
+        let inside = Rect::new(coord! { x: 0.0, y: 0.25 }, coord! { x: 1.0, y: 0.25 });
+        assert!(square.contains(&inside));
+
+        // The same rect lying along the square's boundary is covered, not contained.
+        let on_edge = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 1.0, y: 0.0 });
+        assert!(!square.contains(&on_edge));
+        assert!(square.covers(&on_edge));
+
+        // A zero-size rect is a point: inside the square, on its boundary, and itself.
+        let inside_dot = Rect::new(coord! { x: 0.5, y: 0.5 }, coord! { x: 0.5, y: 0.5 });
+        assert!(square.contains(&inside_dot));
+        let corner_dot = Rect::new(coord! { x: 0.0, y: 0.0 }, coord! { x: 0.0, y: 0.0 });
+        assert!(!square.contains(&corner_dot));
+        assert!(corner_dot.contains(&corner_dot));
+
+        // A zero-height rect contains a shorter one along the same line.
+        let shorter = Rect::new(coord! { x: 0.2, y: 0.25 }, coord! { x: 0.8, y: 0.25 });
+        assert!(inside.contains(&shorter));
+        // But not one of its own end points, which lie on its boundary.
+        let end = Rect::new(coord! { x: 0.0, y: 0.25 }, coord! { x: 0.0, y: 0.25 });
+        assert!(!inside.contains(&end));
+
+        // A two-dimensional rect still contains itself.
+        assert!(square.contains(&square));
     }
 
     #[test]
