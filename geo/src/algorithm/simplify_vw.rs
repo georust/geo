@@ -76,8 +76,9 @@ fn visvalingam_indices<T>(orig: &LineString<T>, epsilon: T) -> Vec<usize>
 where
     T: CoordFloat,
 {
-    // No need to continue without at least three points
-    if orig.0.len() < 3 {
+    // No need to continue without at least three points, and an epsilon of zero or less
+    // removes nothing
+    if orig.0.len() < 3 || epsilon <= T::zero() {
         return orig.0.iter().enumerate().map(|(idx, _)| idx).collect();
     }
 
@@ -208,10 +209,6 @@ fn visvalingam<T>(orig: &LineString<T>, epsilon: T) -> Vec<Coord<T>>
 where
     T: CoordFloat,
 {
-    // Epsilon must be greater than zero for any meaningful simplification to happen
-    if epsilon <= T::zero() {
-        return orig.0.to_vec();
-    }
     let subset = visvalingam_indices(orig, epsilon);
     // filter orig using the indices
     // using get would be more robust here, but the input subset is guaranteed to be valid in this case
@@ -830,8 +827,18 @@ where
 mod test {
     use super::{SimplifyVw, SimplifyVwPreserve, visvalingam, vwp_wrapper};
     use crate::{
-        Coord, LineString, MultiLineString, MultiPolygon, Point, Polygon, line_string, polygon,
+        Coord, LineString, MultiLineString, MultiPolygon, Point, Polygon, line_string, polygon, wkt,
     };
+
+    // https://github.com/georust/geo/issues/1605
+    #[test]
+    fn simplify_vw_idx_keeps_every_index_at_epsilon_zero() {
+        let line_string = wkt!(LINESTRING(0.0 0.0, 1.0 0.0, 2.0 0.0));
+        for epsilon in [0.0, -1.0] {
+            assert_eq!(line_string.simplify_vw(epsilon), line_string);
+            assert_eq!(line_string.simplify_vw_idx(epsilon), vec![0, 1, 2]);
+        }
+    }
 
     // See https://github.com/georust/geo/issues/1049
     #[test]
