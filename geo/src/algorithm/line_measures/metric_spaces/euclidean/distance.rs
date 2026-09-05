@@ -975,7 +975,9 @@ mod test {
     use super::*;
     use crate::orient::{Direction, Orient};
     use crate::wkt;
-    use crate::{Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon};
+    use crate::{
+        Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
+    };
     use geo_types::{coord, polygon, private_utils::line_segment_distance};
 
     #[test]
@@ -1000,6 +1002,33 @@ mod test {
         // Point is on the line
         let zero_dist = line_segment_distance(p1, p1, p2);
         assert_relative_eq!(zero_dist, 0.0);
+    }
+
+    // https://github.com/georust/geo/issues/1610
+    #[test]
+    fn point_line_distance_at_large_coordinates() {
+        let origin = wkt!(POINT(0.0 0.0));
+        for line in [
+            wkt! { LINE(0.0 -1e100,3.0 -0.0) },
+            wkt! { LINE(0.0 -1e200,3.0 -0.0) },
+            wkt! { LINE(0.0 -8.988465674311469e307,3.0 -0.0) },
+        ] {
+            // The end of the segment is the nearest point to the origin.
+            assert_relative_eq!(Euclidean.distance(&origin, &line), 3.0);
+        }
+    }
+
+    // https://github.com/georust/geo/issues/1604
+    #[test]
+    fn polygon_distance_at_small_coordinates() {
+        let a = wkt!(RECT(0.0 0.0,9.828413039546407e-237 1.4830465425330546e-162));
+        let b = wkt!(RECT(
+            1.1113793747425387e-162 1.1113793747425387e-162,
+            4.914206519773204e-237 2.513455854232436e-88
+        ));
+        // A NaN from the segment distance used to empty the rstar queue and panic here.
+        let distance: f64 = Euclidean.distance(&a.to_polygon(), &b.to_polygon());
+        assert!(distance.is_finite());
     }
 
     #[test]
