@@ -26,17 +26,37 @@ where
     }
 }
 
+// The interior of a rect is the product of its interior on each axis: the open interval
+// where the extent is non-zero, and the single value where it is zero. Two rects contain
+// one another only if these interiors meet on both axes, which a comparison of the
+// bounds alone does not show.
+fn axis_interiors_intersect<T: CoordNum>(a_min: T, a_max: T, b_min: T, b_max: T) -> bool {
+    match (a_min < a_max, b_min < b_max) {
+        (true, true) => {
+            let lower = if a_min > b_min { a_min } else { b_min };
+            let upper = if a_max < b_max { a_max } else { b_max };
+            lower < upper
+        }
+        (true, false) => a_min < b_min && b_min < a_max,
+        (false, true) => b_min < a_min && a_min < b_max,
+        (false, false) => a_min == b_min,
+    }
+}
+
 impl<T> Contains<Rect<T>> for Rect<T>
 where
     T: CoordNum,
 {
     fn contains(&self, other: &Rect<T>) -> bool {
-        // TODO: check for degenerate rectangle (which is a line or a point)
-        // All points of LineString must be in the polygon ?
+        // `other` must not reach outside `self`, and the two interiors must meet. A rect
+        // with no width or height is a line or a point, and one that lies along the
+        // boundary of `self` is covered but not contained.
         self.min().x <= other.min().x
             && self.max().x >= other.max().x
             && self.min().y <= other.min().y
             && self.max().y >= other.max().y
+            && axis_interiors_intersect(self.min().x, self.max().x, other.min().x, other.max().x)
+            && axis_interiors_intersect(self.min().y, self.max().y, other.min().y, other.max().y)
     }
 }
 
