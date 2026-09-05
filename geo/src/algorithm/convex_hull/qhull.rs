@@ -1,4 +1,5 @@
-use super::{swap_with_first_and_remove, trivial_hull};
+use super::{graham_hull, swap_with_first_and_remove, trivial_hull};
+use crate::IsConvex;
 use crate::kernels::{Kernel, Orientation};
 use crate::utils::{lex_cmp, partition_slice};
 use crate::{Coord, CoordNum, GeoNum, LineString, coord};
@@ -48,7 +49,37 @@ where
     let hull = quick_hull_kernel::<T, Coord<T>>(points);
     let mut ls: LineString<T> = hull.into();
     ls.close();
-    ls
+    if is_hull(&ls) {
+        return ls;
+    }
+    // `hull_set` ranks candidates by a floating point inner product while every side test
+    // uses the kernel. At large magnitudes the two disagree, an interior point is taken
+    // for the farthest one, and the ring comes back self-intersecting. Graham's scan
+    // needs only the kernel, so it cannot disagree with itself.
+    graham_hull(points, false)
+}
+
+// A farthest point that is not on the hull is added to the ring, but no point that
+// belongs on the hull is dropped: a true farthest point stays on one side of the wrong
+// one and is reached later. A wrong point therefore sits inside the true hull and makes
+// the ring turn the wrong way, which a strict convexity test finds.
+//
+// Collinear input gives a hull that is never strictly convex, so accept that separately.
+// Graham's scan returns nothing at all for input that is a single repeated point.
+fn is_hull<T: GeoNum>(hull: &LineString<T>) -> bool {
+    if hull.is_strictly_ccw_convex() {
+        return true;
+    }
+    let coords = &hull.0;
+    let Some(first) = coords.first() else {
+        return true;
+    };
+    let Some(other) = coords.iter().find(|c| *c != first) else {
+        return true;
+    };
+    coords
+        .iter()
+        .all(|c| T::Ker::orient2d(*first, *other, *c) == Orientation::Collinear)
 }
 
 /// Index-tracking analogue of [`quick_hull`]. Returns input indices of the
@@ -80,7 +111,22 @@ where
     if !indices.is_empty() && indices.first() != indices.last() {
         indices.push(indices[0]);
     }
-    indices
+    let ring: LineString<T> = indices.iter().map(|i| points[*i]).collect();
+    if is_hull(&ring) {
+        return indices;
+    }
+    // See `quick_hull`. Recover the indices by lookup, as the trivial case above does.
+    let mut working = points.to_vec();
+    graham_hull(&mut working, false)
+        .0
+        .iter()
+        .map(|hc| {
+            points
+                .iter()
+                .position(|c| c == hc)
+                .expect("hull vertex must come from the input coords")
+        })
+        .collect()
 }
 
 fn quick_hull_kernel<T, P>(mut points: &mut [P]) -> Vec<P>

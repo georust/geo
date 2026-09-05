@@ -1,6 +1,7 @@
 use super::*;
 use crate::geometry::*;
-use crate::{coord, line_string, polygon};
+use crate::kernels::Orientation;
+use crate::{CoordsIter, GeoNum, Relate, coord, line_string, polygon, wkt};
 
 #[test]
 fn test_zero_points() {
@@ -310,4 +311,35 @@ fn convex_hull_with_nan_does_not_panic() {
         Point::new(1.0, 1.0),
     ]);
     let _ = pts.convex_hull();
+}
+
+// https://github.com/georust/geo/issues/1566
+#[test]
+fn convex_hull_at_large_magnitudes() {
+    let points = wkt!(MULTIPOINT(0.0 0.0,-1.0 9150170671525436.0,63.0 0.0,0.0 1.0));
+    let hull = points.convex_hull();
+
+    // (0, 1) lies inside the triangle formed by the other three.
+    let expected =
+        wkt!(POLYGON((-1.0 9150170671525436.0,0.0 0.0,63.0 0.0,-1.0 9150170671525436.0)));
+    assert!(hull.relate(&expected).is_equal_topo());
+
+    // No input point may lie outside an edge of its own hull.
+    for edge in hull.exterior().lines() {
+        for point in &points {
+            assert_ne!(
+                <f64 as GeoNum>::Ker::orient2d(edge.start, edge.end, point.0),
+                Orientation::Clockwise
+            );
+        }
+    }
+
+    // The indices agree with the coords they name.
+    let coords: Vec<_> = points.exterior_coords_iter().collect();
+    let by_index: LineString<f64> = points
+        .convex_hull_idx()
+        .iter()
+        .map(|i| coords[*i])
+        .collect();
+    assert_eq!(&by_index, hull.exterior());
 }
