@@ -92,6 +92,10 @@ impl<F: CoordFloat> Distance<F, &Point<F>, &Line<F>> for Euclidean {
 
 impl<F: CoordFloat> Distance<F, &Point<F>, &LineString<F>> for Euclidean {
     fn distance(&self, origin: &Point<F>, destination: &LineString<F>) -> F {
+        // A LineString with one coord has no segments.
+        if let [coord] = destination.0.as_slice() {
+            return self.distance(origin.0, *coord);
+        }
         geo_types::private_utils::point_line_string_euclidean_distance(*origin, destination)
     }
 }
@@ -201,7 +205,7 @@ impl<F: GeoFloat> Distance<F, &LineString<F>, &LineString<F>> for Euclidean {
             return separable_geometry_distance_fast(line_string_a, line_string_b, rect_a, rect_b);
         }
 
-        nearest_neighbour_distance(line_string_a, line_string_b)
+        line_string_pair_distance(line_string_a, line_string_b)
     }
 }
 
@@ -245,11 +249,11 @@ impl<F: GeoFloat> Distance<F, &LineString<F>, &Polygon<F>> for Euclidean {
             // check each ring distance, returning the minimum
             let mut mindist: F = Float::max_value();
             for ring in polygon.interiors() {
-                mindist = mindist.min(nearest_neighbour_distance(line_string, ring))
+                mindist = mindist.min(line_string_pair_distance(line_string, ring))
             }
             mindist
         } else {
-            nearest_neighbour_distance(line_string, polygon.exterior())
+            line_string_pair_distance(line_string, polygon.exterior())
         }
     }
 }
@@ -301,7 +305,7 @@ impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
             // check each ring distance, returning the minimum
             let mut mindist: F = Float::max_value();
             for ring in polygon_a.interiors() {
-                mindist = mindist.min(nearest_neighbour_distance(polygon_b.exterior(), ring))
+                mindist = mindist.min(line_string_pair_distance(polygon_b.exterior(), ring))
             }
             return mindist;
         } else if !polygon_b.interiors().is_empty()
@@ -310,11 +314,11 @@ impl<F: GeoFloat> Distance<F, &Polygon<F>, &Polygon<F>> for Euclidean {
         {
             let mut mindist: F = Float::max_value();
             for ring in polygon_b.interiors() {
-                mindist = mindist.min(nearest_neighbour_distance(polygon_a.exterior(), ring))
+                mindist = mindist.min(line_string_pair_distance(polygon_a.exterior(), ring))
             }
             return mindist;
         }
-        nearest_neighbour_distance(polygon_a.exterior(), polygon_b.exterior())
+        line_string_pair_distance(polygon_a.exterior(), polygon_b.exterior())
     }
 }
 
@@ -517,20 +521,39 @@ fn bbox_pruned_min_distance<F: GeoFloat, M>(
     min_distance
 }
 
+/// Minimum distance between two LineStrings of any length
+///
+/// A LineString with one coord has no segments, so it is measured as a Point. An empty
+/// LineString has no coord and does not decrease the minimum that a caller folds over.
+fn line_string_pair_distance<F: GeoFloat>(geom1: &LineString<F>, geom2: &LineString<F>) -> F {
+    match (geom1.0.as_slice(), geom2.0.as_slice()) {
+        ([], _) | (_, []) => Bounded::max_value(),
+        ([coord], _) => Euclidean.distance(&Point(*coord), geom2),
+        (_, [coord]) => Euclidean.distance(geom1, &Point(*coord)),
+        _ => nearest_neighbour_distance(geom1, geom2),
+    }
+}
+
 /// Uses an R* tree and nearest-neighbour lookups to calculate minimum distances
 // This is somewhat slow and memory-inefficient, but certainly better than quadratic time
 fn nearest_neighbour_distance<F: GeoFloat>(geom1: &LineString<F>, geom2: &LineString<F>) -> F {
+    debug_assert!(geom1.0.len() >= 2);
+    debug_assert!(geom2.0.len() >= 2);
     let tree_a = RTree::bulk_load(geom1.lines().map(CachedEnvelope::new).collect());
     let tree_b = RTree::bulk_load(geom2.lines().map(CachedEnvelope::new).collect());
     // Return minimum distance between all geom a points and geom b lines, and all geom b points and geom a lines
     geom2
         .points()
         .fold(Bounded::max_value(), |acc: F, point| {
-            let nearest = tree_a.nearest_neighbor(point).unwrap();
+            let nearest = tree_a
+                .nearest_neighbor(point)
+                .expect("geom1 has at least one segment");
             acc.min(Euclidean.distance(nearest as &Line<F>, &point))
         })
         .min(geom1.points().fold(Bounded::max_value(), |acc, point| {
-            let nearest = tree_b.nearest_neighbor(point).unwrap();
+            let nearest = tree_b
+                .nearest_neighbor(point)
+                .expect("geom2 has at least one segment");
             acc.min(Euclidean.distance(nearest as &Line<F>, &point))
         }))
 }
@@ -1575,6 +1598,46 @@ mod test {
         let expected = 21.713575661323034_f64;
         let d = Euclidean.distance(&ls1, &ls2);
         assert_relative_eq!(d, expected, epsilon = 1e-12);
+    }
+
+    // https://github.com/georust/geo/issues/1596
+    #[test]
+    fn line_string_distance_with_a_single_coord() {
+        let single = wkt!(LINESTRING(0.0 0.0));
+        let segments = wkt!(LINESTRING(3.0 0.0,3.0 4.0));
+        assert_relative_eq!(Euclidean.distance(&single, &segments), 3.0);
+        assert_relative_eq!(Euclidean.distance(&segments, &single), 3.0);
+
+        // Neither side has a segment to measure against.
+        let other = wkt!(LINESTRING(3.0 4.0));
+        assert_relative_eq!(Euclidean.distance(&single, &other), 5.0);
+    }
+
+    #[test]
+    fn point_line_string_distance_with_a_single_coord() {
+        let point = wkt!(POINT(0.0 0.0));
+        let single = wkt!(LINESTRING(3.0 4.0));
+        assert_relative_eq!(Euclidean.distance(&point, &single), 5.0);
+        assert_relative_eq!(Euclidean.distance(&single, &point), 5.0);
+    }
+
+    #[test]
+    fn distance_inside_a_hole_with_an_empty_interior_ring() {
+        // WKT cannot express an empty ring, so it is added after parsing.
+        let (exterior, mut interiors) = wkt!(POLYGON(
+            (0.0 0.0,10.0 0.0,10.0 10.0,0.0 10.0,0.0 0.0),
+            (2.0 2.0,8.0 2.0,8.0 8.0,2.0 8.0,2.0 2.0)
+        ))
+        .into_inner();
+        interiors.push(LineString::new(vec![]));
+        let polygon = Polygon::new(exterior, interiors);
+
+        let line_string = wkt!(LINESTRING(4.0 5.0,6.0 5.0));
+        assert_relative_eq!(Euclidean.distance(&line_string, &polygon), 2.0);
+
+        let inner = wkt!(POLYGON((4.5 4.5,5.5 4.5,5.5 5.5,4.5 5.5,4.5 4.5)));
+        assert_relative_eq!(Euclidean.distance(&inner, &polygon), 2.5);
+        assert_relative_eq!(Euclidean.distance(&polygon, &inner), 2.5);
     }
 
     #[test]
