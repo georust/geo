@@ -5,6 +5,7 @@ use crate::algorithm::{
     centroid::Centroid,
     coords_iter::CoordsIter,
     dimensions::HasDimensions,
+    intersects::Intersects,
     line_intersection::LineIntersection,
     line_measures::{Distance, Euclidean},
     lines_iter::LinesIter,
@@ -14,6 +15,7 @@ use crate::geometry::*;
 // use crate::old_sweep::{Intersections, SweepPoint};
 use crate::GeoFloat;
 use crate::sweep::Intersections;
+use crate::utils::lex_cmp;
 
 /// Calculation of interior points.
 ///
@@ -372,7 +374,16 @@ where
     type Output = Point<T>;
 
     fn interior_point(&self) -> Self::Output {
-        self.centroid()
+        let centroid = self.centroid();
+        if self.intersects(&centroid) {
+            return centroid;
+        }
+        // The centroid of a triangle with no area lies along the collapsed segment, and
+        // rounding can put it off the segment. A vertex cannot miss. Sorted along the
+        // line, the middle vertex lies between the other two.
+        let mut coords = self.to_array();
+        coords.sort_unstable_by(lex_cmp);
+        coords[1].into()
     }
 }
 
@@ -381,7 +392,7 @@ mod test {
     use super::*;
     use crate::{
         algorithm::{contains::Contains, intersects::Intersects},
-        coord, line_string, point, polygon,
+        coord, line_string, point, polygon, wkt,
     };
 
     /// small helper to create a coordinate
@@ -758,6 +769,17 @@ mod test {
             mixed_shapes.interior_point().unwrap()
         )
     }
+    // https://github.com/georust/geo/issues/1607
+    #[test]
+    fn interior_point_of_a_zero_area_triangle_intersects_it() {
+        let triangle = wkt!(TRIANGLE(0.0 0.0, 0.0 0.0, 3.0 87.0));
+        let interior_point = triangle.interior_point();
+        assert!(triangle.intersects(&interior_point));
+        // The same segment as a Line agrees.
+        let line = wkt!(LINE(0.0 0.0, 3.0 87.0));
+        assert!(line.intersects(&line.interior_point()));
+    }
+
     #[test]
     fn triangles() {
         // boring triangle
