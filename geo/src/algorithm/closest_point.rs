@@ -69,9 +69,13 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
 
         let numerator = to_p.dot(direction_vector);
         let squared_length = direction_vector.dot(direction_vector);
-        let t = if squared_length == F::zero() && numerator == F::zero() {
-            // Avoid 0/0 from squared-length underflow, but preserve non-zero
-            // numerators so that infinite projections still clamp to an endpoint.
+        let t = if (squared_length == F::zero() && numerator == F::zero())
+            || !squared_length.is_finite()
+            || !numerator.is_finite()
+        {
+            // Avoid 0/0 from underflow and inf/inf from overflow, but preserve a
+            // non-zero numerator over a zero squared length so that infinite
+            // projections still clamp to an endpoint.
             scaled_projection(direction_vector, to_p)
         } else {
             numerator / squared_length
