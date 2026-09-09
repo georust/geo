@@ -12,8 +12,8 @@ use crate::algorithm::{
 };
 use crate::geometry::*;
 // use crate::old_sweep::{Intersections, SweepPoint};
-use crate::GeoFloat;
 use crate::sweep::Intersections;
+use crate::GeoFloat;
 
 /// Calculation of interior points.
 ///
@@ -381,7 +381,7 @@ mod test {
     use super::*;
     use crate::{
         algorithm::{contains::Contains, intersects::Intersects},
-        coord, line_string, point, polygon,
+        coord, line_string, point, polygon, wkt,
     };
 
     /// small helper to create a coordinate
@@ -932,35 +932,13 @@ mod test {
 
     #[test]
     fn polygon_with_negative_zero_coordinate_does_not_panic() {
-        // Regression for https://github.com/georust/geo/issues/1578: an edge whose
-        // maximum `x` is `-0.0` tripped the sweep line's `intervals_overlap` assertion,
-        // even though `-0.0` and `+0.0` are the same position.
-        let poly = Polygon::new(
-            LineString::from(vec![
-                (-5.0, 0.0),
-                (-0.0, 5.0),
-                (0.0, 10.0),
-                (5.0, 0.0),
-                (-5.0, 0.0),
-            ]),
-            vec![],
-        );
-
+        // https://github.com/georust/geo/issues/1578
+        let poly: Polygon = wkt!(POLYGON((-5.0 0.0, -0.0 5.0, 0.0 10.0, 5.0 0.0, -5.0 0.0)));
         let interior_point = poly.interior_point().unwrap();
         assert!(poly.contains(&interior_point));
 
-        // Replacing `-0.0` with `+0.0` describes the very same polygon, so it must
-        // produce the very same interior point.
-        let positive_zero = Polygon::new(
-            LineString::from(vec![
-                (-5.0, 0.0),
-                (0.0, 5.0),
-                (0.0, 10.0),
-                (5.0, 0.0),
-                (-5.0, 0.0),
-            ]),
-            vec![],
-        );
+        let positive_zero: Polygon =
+            wkt!(POLYGON((-5.0 0.0, 0.0 5.0, 0.0 10.0, 5.0 0.0, -5.0 0.0)));
         assert_eq!(interior_point, positive_zero.interior_point().unwrap());
     }
 }
