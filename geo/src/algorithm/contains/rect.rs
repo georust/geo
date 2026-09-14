@@ -93,11 +93,7 @@ where
                 }
             }
 
-            (TwoDimensional, ZeroDimensional) => {
-                let p = other.min();
-
-                self.min().x < p.x && p.x < self.max().x && self.min().y < p.y && p.y < self.max().y
-            }
+            (TwoDimensional, ZeroDimensional) => self.contains(&other.min()),
 
             (OneDimensional, OneDimensional) => {
                 if self.min().x == self.max().x {
@@ -127,7 +123,7 @@ where
                 }
             }
 
-            (ZeroDimensional, ZeroDimensional) => self.min() == other.min(),
+            (ZeroDimensional, ZeroDimensional) => self.min().contains(&other.min()),
 
             // A geometry cannot contain a higher-dimensional geometry.
             (ZeroDimensional, OneDimensional | TwoDimensional)
