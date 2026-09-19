@@ -1,6 +1,7 @@
 use geo_types::CoordFloat;
 
 use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
+use crate::dimensions::Dimensions;
 use crate::{Area, CoordsIter, HasDimensions, Intersects, geometry::*};
 use crate::{CoordNum, GeoFloat};
 
@@ -31,12 +32,105 @@ where
     T: CoordNum,
 {
     fn contains(&self, other: &Rect<T>) -> bool {
-        // TODO: check for degenerate rectangle (which is a line or a point)
-        // All points of LineString must be in the polygon ?
-        self.min().x <= other.min().x
-            && self.max().x >= other.max().x
-            && self.min().y <= other.min().y
-            && self.max().y >= other.max().y
+        use Dimensions::*;
+
+        // We need to handle dimensions seperately to properly conform to DE-9IM
+        match (self.dimensions(), other.dimensions()) {
+            (TwoDimensional, TwoDimensional) => {
+                self.min().x <= other.min().x
+                    && other.max().x <= self.max().x
+                    && self.min().y <= other.min().y
+                    && other.max().y <= self.max().y
+            }
+
+            (TwoDimensional, OneDimensional) => {
+                let inside_bounds = self.min().x <= other.min().x
+                    && other.max().x <= self.max().x
+                    && self.min().y <= other.min().y
+                    && other.max().y <= self.max().y;
+
+                // If the line is not contained at all, early return.
+                if !inside_bounds {
+                    return false;
+                }
+
+                if other.min().x == other.max().x {
+                    // Vertical line (| represent the line, ==== for rect)
+                    //
+                    // DE-9IM does not accept this as contained (as it is on the boundary)
+                    // │═════════════╗
+                    // │             ║
+                    // │             ║
+                    // │             ║
+                    // │═════════════╝
+                    //
+                    // however, this is.
+                    // ╔═══════│═════╗
+                    // ║       │     ║
+                    // ║       │     ║
+                    // ║       │     ║
+                    // ╚═══════│═════╝
+
+                    self.min().x < other.min().x && other.min().x < self.max().x
+                } else {
+                    // Horizontal line (| represent the line, ==== for rect)
+                    //
+                    // DE-9IM does not accept this as contained (as it is on the boundary)
+                    // ───────────────
+                    // ║             ║
+                    // ║             ║
+                    // ║             ║
+                    // ╚═════════════╝
+                    //
+                    // however, this is.
+                    // ╔═════════════╗
+                    // ║             ║
+                    // ║ ─────────── ║
+                    // ║             ║
+                    // ╚═════════════╝
+
+                    self.min().y < other.min().y && other.min().y < self.max().y
+                }
+            }
+
+            (TwoDimensional, ZeroDimensional) => self.contains(&other.min()),
+
+            (OneDimensional, OneDimensional) => {
+                if self.min().x == self.max().x {
+                    // If the line is vertical we need the other line to also be vertical as well as bounds on y
+                    other.min().x == self.min().x
+                        && other.max().x == self.max().x
+                        && self.min().y <= other.min().y
+                        && other.max().y <= self.max().y
+                } else {
+                    other.min().y == self.min().y
+                        && other.max().y == self.max().y
+                        && self.min().x <= other.min().x
+                        && other.max().x <= self.max().x
+                }
+            }
+
+            (OneDimensional, ZeroDimensional) => {
+                let p = other.min();
+
+                // Need point not on the boundary of the line
+                if self.min().x == self.max().x {
+                    // Vertical line
+                    p.x == self.min().x && self.min().y < p.y && p.y < self.max().y
+                } else {
+                    // Horizontal line
+                    p.y == self.min().y && self.min().x < p.x && p.x < self.max().x
+                }
+            }
+
+            (ZeroDimensional, ZeroDimensional) => self.min().contains(&other.min()),
+
+            // A geometry cannot contain a higher-dimensional geometry.
+            (ZeroDimensional, OneDimensional | TwoDimensional)
+            | (OneDimensional, TwoDimensional) => false,
+
+            (Empty, _) | (_, Empty) => unreachable!("Empty dimension, should not be possible."),
+        }
     }
 }
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `Contains<Rect>` now conforms to DE-9IM semantics, meaning that one or zero dimensional rectangles may react differently. See diagrams in `geo/src/algorithm/contains/rect.rs`.
+
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 
 - Add `Intersects<Coord>` and `Intersects<Point>` implementations for `IntervalTreeMultiPolygon`. Unlike the existing `Contains` impls, these return `true` for points on the polygon's boundary.
