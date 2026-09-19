@@ -34,8 +34,10 @@ where
     }
 }
 
+/// A map key for a node coordinate, ordered by `lex_cmp`. Coordinates must
+/// be non-NaN.
 #[derive(Clone)]
-struct NodeKey<F: GeoFloat>(Coord<F>);
+pub(crate) struct NodeKey<F: GeoFloat>(pub(crate) Coord<F>);
 
 impl<F: GeoFloat> std::cmp::Ord for NodeKey<F> {
     fn cmp(&self, other: &NodeKey<F>) -> std::cmp::Ordering {

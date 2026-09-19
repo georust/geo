@@ -14,6 +14,7 @@ use crate::{BoundingRect, GeoFloat, GeometryCow, HasDimensions};
 mod edge_end_builder;
 pub(crate) mod geomgraph;
 mod relate_operation;
+pub(crate) mod relateng;
 
 /// Topologically relate two geometries based on [DE-9IM](https://en.wikipedia.org/wiki/DE-9IM) semantics.
 ///
