@@ -236,6 +236,9 @@ pub use orient::Orient;
 #[cfg(feature = "proj")]
 pub mod proj;
 
+/// Topological information about nodes (ring intersections) in polygonal geometry.
+pub(crate) mod polygon_node_topology;
+
 /// Relate two geometries based on DE-9IM
 pub mod relate;
 pub use relate::Relate;

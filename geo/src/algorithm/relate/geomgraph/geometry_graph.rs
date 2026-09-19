@@ -64,7 +64,7 @@ where
                 (0..start_of_final_segment).map(move |segment_idx| {
                     let p1 = edge.coords()[segment_idx];
                     let p2 = edge.coords()[segment_idx + 1];
-                    Segment::new(edge_idx, segment_idx, p1, p2)
+                    Segment::new((edge_idx, segment_idx), p1, p2)
                 })
             })
             .collect();

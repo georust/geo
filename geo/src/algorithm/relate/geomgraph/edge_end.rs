@@ -1,4 +1,5 @@
-use super::{CoordNode, Edge, Label, Quadrant};
+use super::{CoordNode, Edge, Label};
+use crate::algorithm::polygon_node_topology::compare_angle;
 use crate::{Coord, GeoFloat, coord};
 
 use std::cell::RefCell;
@@ -32,7 +33,6 @@ where
     coord_0: Coord<F>,
     coord_1: Coord<F>,
     delta: Coord<F>,
-    quadrant: Option<Quadrant>,
 }
 
 impl<F: GeoFloat> fmt::Debug for EdgeEndKey<F> {
@@ -42,7 +42,6 @@ impl<F: GeoFloat> fmt::Debug for EdgeEndKey<F> {
                 "coords",
                 &format!("{:?} -> {:?}", self.coord_0, self.coord_1),
             )
-            .field("quadrant", &self.quadrant)
             .finish()
     }
 }
@@ -53,14 +52,12 @@ where
 {
     pub fn new(coord_0: Coord<F>, coord_1: Coord<F>, label: Label) -> EdgeEnd<F> {
         let delta = coord_1 - coord_0;
-        let quadrant = Quadrant::new(delta.x, delta.y);
         EdgeEnd {
             label,
             key: EdgeEndKey {
                 coord_0,
                 coord_1,
                 delta,
-                quadrant,
             },
         }
     }
@@ -117,22 +114,14 @@ where
 {
     pub(crate) fn compare_direction(&self, other: &EdgeEndKey<F>) -> std::cmp::Ordering {
         use std::cmp::Ordering;
+        // The fast path must stay: `PartialEq` for this type compares deltas,
+        // and `Eq`/`Ord` must agree because the type is a `BTreeMap` key.
         if self.delta == other.delta {
             return Ordering::Equal;
         }
 
-        match (self.quadrant, other.quadrant) {
-            (Some(q1), Some(q2)) if q1 > q2 => Ordering::Greater,
-            (Some(q1), Some(q2)) if q1 < q2 => Ordering::Less,
-            _ => {
-                use crate::kernels::{Kernel, Orientation};
-                match F::Ker::orient2d(other.coord_0, other.coord_1, self.coord_1) {
-                    Orientation::Clockwise => Ordering::Less,
-                    Orientation::CounterClockwise => Ordering::Greater,
-                    Orientation::Collinear => Ordering::Equal,
-                }
-            }
-        }
+        debug_assert_eq!(self.coord_0, other.coord_0);
+        compare_angle(self.coord_0, self.coord_1, other.coord_1)
     }
 }
 
