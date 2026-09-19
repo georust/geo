@@ -1,6 +1,6 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use geo::PreparedGeometry;
-use geo::algorithm::Relate;
+use geo::algorithm::{Intersects, Relate};
 use geo_types::{Coord, LineString, MultiLineString, MultiPolygon, Point, Rect};
 
 /// `members` short line strings of `points` coordinates each, laid out on
@@ -40,6 +40,26 @@ fn criterion_benchmark(c: &mut Criterion) {
                 .collect::<Vec<_>>();
 
             black_box((&plot_polygons, &zone_polygons));
+        });
+    });
+
+    c.bench_function("intersects already prepared polygons", |bencher| {
+        let plot_polygons = plot_polygons
+            .iter()
+            .map(PreparedGeometry::from)
+            .collect::<Vec<_>>();
+
+        let zone_polygons = zone_polygons
+            .iter()
+            .map(PreparedGeometry::from)
+            .collect::<Vec<_>>();
+
+        bencher.iter(|| {
+            for a in &plot_polygons {
+                for b in &zone_polygons {
+                    black_box(a.intersects(b));
+                }
+            }
         });
     });
 
@@ -112,6 +132,19 @@ fn criterion_benchmark(c: &mut Criterion) {
         "relate unprepared multilinestring with polygon",
         |bencher| {
             bencher.iter(|| black_box(mls.relate(&polygon).is_intersects()));
+        },
+    );
+    // The predicate trait short-circuits instead of computing the matrix.
+    c.bench_function(
+        "intersects prepared multilinestring with point",
+        |bencher| {
+            bencher.iter(|| black_box(prepared_mls.intersects(&point)));
+        },
+    );
+    c.bench_function(
+        "intersects prepared multilinestring with polygon",
+        |bencher| {
+            bencher.iter(|| black_box(prepared_mls.intersects(&polygon)));
         },
     );
 
