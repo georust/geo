@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+- Add `Triangle::center`, the mean of the triangle's vertices, mirroring `Rect::center`.
+
 ## 0.7.20 - 2026-07-31
 
 - Add support for `rstar` 0.13 via the `rstar_0_13` feature, alongside the existing `rstar` versions.
