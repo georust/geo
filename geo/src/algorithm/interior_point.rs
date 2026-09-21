@@ -12,8 +12,8 @@ use crate::algorithm::{
 };
 use crate::geometry::*;
 // use crate::old_sweep::{Intersections, SweepPoint};
-use crate::sweep::Intersections;
 use crate::GeoFloat;
+use crate::sweep::Intersections;
 
 /// Calculation of interior points.
 ///
