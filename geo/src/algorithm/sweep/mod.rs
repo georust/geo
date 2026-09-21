@@ -269,12 +269,8 @@ impl<C: Cross> SweepLineIndex<C> {
     }
 }
 
-/// Helper function to check if two intervals overlap on the `x`-axis
-///
-/// This determines which segments might geometrically intersect during the sweep.
-/// We use `total_cmp` for robust floating-point comparisons to handle edge cases
-/// involving very close values.
+/// Returns true if the intervals overlap on the x-axis.
+/// IEEE comparisons treat `-0.0` and `+0.0` as the same position.
 fn intervals_overlap<C: Cross>(s0: &SweepLineInterval<C>, s1: &SweepLineInterval<C>) -> bool {
-    s0.inserted_x.total_cmp(&s1.inserted_x).is_le()
-        && s0.deleted_x.total_cmp(&s1.inserted_x).is_ge()
+    s0.inserted_x <= s1.inserted_x && s0.deleted_x >= s1.inserted_x
 }
