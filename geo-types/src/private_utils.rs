@@ -26,37 +26,41 @@ where
     I: IntoIterator<Item = C>,
 {
     let mut iter = collection.into_iter();
-    if let Some(pnt) = iter.next() {
-        let pnt = pnt.as_ref();
-        let mut xrange = (pnt.x, pnt.x);
-        let mut yrange = (pnt.y, pnt.y);
-        for pnt in iter {
-            let (px, py) = pnt.as_ref().x_y();
-            xrange = get_min_max(px, xrange.0, xrange.1);
-            yrange = get_min_max(py, yrange.0, yrange.1);
+    let first = *iter.next()?.as_ref();
+    // Four independent accumulators, so that consecutive comparisons do not wait for each
+    // other. Each accumulator holds the minimum and maximum corners.
+    let mut acc = [(first, first); 4];
+    'outer: loop {
+        for (min, max) in &mut acc {
+            let Some(pnt) = iter.next() else {
+                break 'outer;
+            };
+            update_min_max(min, max, *pnt.as_ref());
         }
-
-        return Some(Rect::new(
-            coord! {
-                x: xrange.0,
-                y: yrange.0,
-            },
-            coord! {
-                x: xrange.1,
-                y: yrange.1,
-            },
-        ));
     }
-    None
+    let [(mut min, mut max), rest @ ..] = acc;
+    for (other_min, other_max) in rest {
+        update_min_max(&mut min, &mut max, other_min);
+        update_min_max(&mut min, &mut max, other_max);
+    }
+    Some(Rect::new(min, max))
 }
 
-fn get_min_max<T: PartialOrd>(p: T, min: T, max: T) -> (T, T) {
-    if p > max {
-        (min, p)
-    } else if p < min {
-        (p, max)
-    } else {
-        (min, max)
+/// Extend the `min` and `max` corners to include `pnt`. A NaN component does not change a
+/// corner.
+#[inline(always)]
+fn update_min_max<T: CoordNum>(min: &mut Coord<T>, max: &mut Coord<T>, pnt: Coord<T>) {
+    if pnt.x < min.x {
+        min.x = pnt.x;
+    }
+    if pnt.y < min.y {
+        min.y = pnt.y;
+    }
+    if pnt.x > max.x {
+        max.x = pnt.x;
+    }
+    if pnt.y > max.y {
+        max.y = pnt.y;
     }
 }
 
@@ -346,5 +350,40 @@ mod test {
         let point = wkt!(POINT(8.988465674311578e307 9.470887528014527e299));
         let line = wkt!(LINE(0.0 1.8941775056029054e300,1.7976931348623155e308 0.0));
         assert_relative_eq!(line_segment_distance(point.0, line.start, line.end), 0.0);
+    }
+
+    // Each extreme is at each position, for lengths that end in every accumulator.
+    #[test]
+    fn bounding_rect_finds_extremes_at_every_position() {
+        let expected = Rect::new(coord! { x: -1.0, y: -4.0 }, coord! { x: 3.0, y: 2.0 });
+        for len in 2..=10 {
+            for i in 0..len {
+                let mut coords = vec![coord! { x: 0.0, y: 0.0 }; len];
+                coords[i] = coord! { x: -1.0, y: 2.0 };
+                coords[(i + 1) % len] = coord! { x: 3.0, y: -4.0 };
+                assert_eq!(get_bounding_rect(&coords), Some(expected), "{coords:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn bounding_rect_ignores_nan_after_the_first_coord() {
+        let coords = [
+            coord! { x: 1.0, y: 1.0 },
+            coord! { x: f64::NAN, y: 5.0 },
+            coord! { x: 3.0, y: f64::NAN },
+        ];
+        assert_eq!(
+            get_bounding_rect(&coords),
+            Some(Rect::new(
+                coord! { x: 1.0, y: 1.0 },
+                coord! { x: 3.0, y: 5.0 }
+            ))
+        );
+    }
+
+    #[test]
+    fn bounding_rect_of_no_coords_is_none() {
+        assert_eq!(get_bounding_rect::<_, Coord<f64>, f64>([]), None);
     }
 }

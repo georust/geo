@@ -1,5 +1,9 @@
 # Changes
 
+## Unreleased
+
+- Speed up bounding rectangle computation about fivefold by splitting the comparisons across independent accumulators.
+
 ## 0.7.20 - 2026-07-31
 
 - Add support for `rstar` 0.13 via the `rstar_0_13` feature, alongside the existing `rstar` versions.
