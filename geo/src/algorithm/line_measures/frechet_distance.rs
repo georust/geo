@@ -95,14 +95,16 @@ impl<'a, F: CoordFloat> DiscreteFrechetCalculator<'a, F> {
 
         for p_long in self.ls_long.points().skip(1) {
             let d = metric_space.distance(p_long, p_short_0);
-            cur_row[0] = prev_row[0].max(d);
+            // Each cell depends on the cell to its left. Keep that value in `left`, so that
+            // the dependency does not go through a store to and a load from `cur_row`.
+            let mut left = prev_row[0].max(d);
+            cur_row[0] = left;
 
-            for (j, p_short) in self.ls_short.points().enumerate().skip(1) {
+            let cells = cur_row[1..].iter_mut().zip(prev_row.windows(2));
+            for ((cur, prev), p_short) in cells.zip(self.ls_short.points().skip(1)) {
                 let d = metric_space.distance(p_long, p_short);
-                cur_row[j] = {
-                    let best_prev = prev_row[j].min(prev_row[j - 1]).min(cur_row[j - 1]);
-                    d.max(best_prev)
-                };
+                left = d.max(prev[1].min(prev[0]).min(left));
+                *cur = left;
             }
             std::mem::swap(&mut prev_row, &mut cur_row);
         }
