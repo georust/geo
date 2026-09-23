@@ -76,6 +76,26 @@ where
     }
 }
 
+/// `dx.hypot(dy)`, computed as `sqrt(dx² + dy²)` where that is as accurate (see
+/// [`sqrt_of_sum_of_squares_is_accurate`]). `hypot` is a library call that costs several times
+/// more than the square root.
+#[inline]
+pub(crate) fn hypot<F: CoordFloat>(dx: F, dy: F) -> F {
+    let sum = dx * dx + dy * dy;
+    if sqrt_of_sum_of_squares_is_accurate(sum) {
+        sum.sqrt()
+    } else {
+        dx.hypot(dy)
+    }
+}
+
+/// Whether the square root of `sum`, a computed sum of two squares, is as accurate as
+/// `hypot`: the sum is finite, and large enough that a subnormal square cannot change it.
+#[inline]
+pub(crate) fn sqrt_of_sum_of_squares_is_accurate<F: CoordFloat>(sum: F) -> bool {
+    sum.is_finite() && sum >= F::min_positive_value() / F::epsilon()
+}
+
 // The Rust standard library has `max` for `Ord`, but not for `PartialOrd`
 pub fn partial_max<T: PartialOrd>(a: T, b: T) -> T {
     if a > b { a } else { b }

@@ -5,6 +5,7 @@ use crate::algorithm::BoundingRect;
 use crate::algorithm::Intersects;
 use crate::coordinate_position::{CoordPos, coord_pos_relative_to_ring};
 use crate::geometry::*;
+use crate::utils::hypot;
 use crate::{CoordFloat, GeoFloat, GeoNum};
 use num_traits::{Bounded, Float};
 use rstar::RTree;
@@ -31,9 +32,10 @@ macro_rules! symmetric_distance_impl {
 impl<F: CoordFloat> Distance<F, Coord<F>, Coord<F>> for Euclidean {
     fn distance(&self, origin: Coord<F>, destination: Coord<F>) -> F {
         let delta = origin - destination;
-        delta.x.hypot(delta.y)
+        hypot(delta.x, delta.y)
     }
 }
+
 impl<F: CoordFloat> Distance<F, Coord<F>, &Line<F>> for Euclidean {
     fn distance(&self, coord: Coord<F>, line: &Line<F>) -> F {
         ::geo_types::private_utils::point_line_euclidean_distance(Point(coord), *line)
@@ -979,6 +981,46 @@ mod test {
         Line, LineString, MultiLineString, MultiPoint, MultiPolygon, Point, Polygon, Rect,
     };
     use geo_types::{coord, polygon, private_utils::line_segment_distance};
+
+    // The sum of squares overflows.
+    #[test]
+    fn point_distance_at_large_coordinates() {
+        let origin = wkt!(POINT(0.0 0.0));
+        let p = wkt!(POINT(3e200 4e200));
+        assert_relative_eq!(Euclidean.distance(origin, p), 5e200);
+        let origin: Point<f32> = wkt!(POINT(0.0 0.0));
+        let p: Point<f32> = wkt!(POINT(3e20 4e20));
+        assert_relative_eq!(Euclidean.distance(origin, p), 5e20);
+    }
+
+    // The squares underflow.
+    #[test]
+    fn point_distance_at_small_coordinates() {
+        let origin = wkt!(POINT(0.0 0.0));
+        let p = wkt!(POINT(3e-170 4e-170));
+        assert_relative_eq!(
+            Euclidean.distance(origin, p),
+            5e-170,
+            epsilon = 0.0,
+            max_relative = 1e-15
+        );
+        let origin: Point<f32> = wkt!(POINT(0.0 0.0));
+        let p: Point<f32> = wkt!(POINT(3e-25 4e-25));
+        assert_relative_eq!(
+            Euclidean.distance(origin, p),
+            5e-25,
+            epsilon = 0.0,
+            max_relative = 1e-6
+        );
+    }
+
+    // `hypot` is infinite if one difference is infinite, even if the other is NaN.
+    #[test]
+    fn point_distance_with_infinite_and_nan_differences() {
+        let origin = Point::new(0.0, 0.0);
+        let p = Point::new(f64::INFINITY, f64::NAN);
+        assert_eq!(Euclidean.distance(origin, p), f64::INFINITY);
+    }
 
     #[test]
     fn line_segment_distance_test() {
