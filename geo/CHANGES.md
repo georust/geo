@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+- Speed up `HausdorffDistance` about fivefold: compare squared distances and take one square root.
+
 - Speed up `FrechetDistance` about twofold: keep the dependency between neighbouring cells in a register.
 
-- Speed up `Euclidean` distance between points and coordinates about twofold: use `sqrt(dx² + dy²)`, and use `hypot` only where the sum of squares overflows or underflows. `HausdorffDistance` becomes about 30% faster.
+- Speed up `Euclidean` distance between points and coordinates about twofold: use `sqrt(dx² + dy²)`, and use `hypot` only where the sum of squares overflows or underflows.
 
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 

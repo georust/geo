@@ -1,6 +1,7 @@
 use crate::CoordsIter;
 use crate::GeoFloat;
 use crate::algorithm::{Distance, Euclidean};
+use crate::utils::sqrt_of_sum_of_squares_is_accurate;
 use geo_types::{Coord, Point};
 use num_traits::Bounded;
 
@@ -29,29 +30,51 @@ where
     where
         Rhs: CoordsIter<Scalar = T>,
     {
-        // calculate from A -> B
-        let hd1 = self
-            .coords_iter()
-            .map(|c| {
-                rhs.coords_iter()
-                    .map(|c2| Euclidean.distance(c, c2))
-                    .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
-            })
-            .fold(<T as Bounded>::min_value(), |accum, val| accum.max(val));
-
-        // Calculate from B -> A
-        let hd2 = rhs
-            .coords_iter()
-            .map(|c| {
-                self.coords_iter()
-                    .map(|c2| Euclidean.distance(c, c2))
-                    .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
-            })
-            .fold(<T as Bounded>::min_value(), |accum, val| accum.max(val));
-
-        // The max of the two
-        hd1.max(hd2)
+        // Compare squared distances and take one square root. Where a square overflows or
+        // underflows, compute again with the distances.
+        let squared =
+            directed_squared_distance(self, rhs).max(directed_squared_distance(rhs, self));
+        if sqrt_of_sum_of_squares_is_accurate(squared) {
+            return squared.sqrt();
+        }
+        directed_distance(self, rhs).max(directed_distance(rhs, self))
     }
+}
+
+/// The largest distance from a coordinate of `a` to the nearest coordinate of `b`.
+fn directed_distance<T, A, B>(a: &A, b: &B) -> T
+where
+    T: GeoFloat,
+    A: CoordsIter<Scalar = T>,
+    B: CoordsIter<Scalar = T>,
+{
+    a.coords_iter()
+        .map(|c| {
+            b.coords_iter()
+                .map(|c2| Euclidean.distance(c, c2))
+                .fold(<T as Bounded>::max_value(), |accum, val| accum.min(val))
+        })
+        .fold(<T as Bounded>::min_value(), |accum, val| accum.max(val))
+}
+
+/// The square of [`directed_distance`]. It is infinite if `a` or `b` is empty, and it is not
+/// accurate if a square overflows or underflows.
+fn directed_squared_distance<T, A, B>(a: &A, b: &B) -> T
+where
+    T: GeoFloat,
+    A: CoordsIter<Scalar = T>,
+    B: CoordsIter<Scalar = T>,
+{
+    a.coords_iter()
+        .map(|c| {
+            b.coords_iter()
+                .map(|c2| {
+                    let delta = c - c2;
+                    delta.x * delta.x + delta.y * delta.y
+                })
+                .fold(T::infinity(), |accum, val| accum.min(val))
+        })
+        .fold(T::neg_infinity(), |accum, val| accum.max(val))
 }
 
 // ┌───────────────────────────┐
@@ -73,7 +96,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::HausdorffDistance;
-    use crate::{MultiPoint, MultiPolygon, line_string, polygon};
+    use crate::{MultiPoint, MultiPolygon, line_string, polygon, wkt};
 
     #[test]
     fn hd_mpnt_mpnt() {
@@ -131,5 +154,37 @@ mod test {
             2.236068,
             epsilon = 1.0e-6
         )
+    }
+
+    // The squared distances overflow.
+    #[test]
+    fn hd_at_large_coordinates() {
+        let a = wkt!(MULTIPOINT(0.0 0.0,3e200 4e200));
+        let b = wkt!(MULTIPOINT(0.0 0.0));
+        assert_relative_eq!(a.hausdorff_distance(&b), 5e200);
+        let a: MultiPoint<f32> = wkt!(MULTIPOINT(0.0 0.0,3e20 4e20));
+        let b: MultiPoint<f32> = wkt!(MULTIPOINT(0.0 0.0));
+        assert_relative_eq!(a.hausdorff_distance(&b), 5e20);
+    }
+
+    // The squared distances underflow.
+    #[test]
+    fn hd_at_small_coordinates() {
+        let a = wkt!(MULTIPOINT(0.0 0.0,3e-170 4e-170));
+        let b = wkt!(MULTIPOINT(0.0 0.0));
+        assert_relative_eq!(
+            a.hausdorff_distance(&b),
+            5e-170,
+            epsilon = 0.0,
+            max_relative = 1e-15
+        );
+        let a: MultiPoint<f32> = wkt!(MULTIPOINT(0.0 0.0,3e-25 4e-25));
+        let b: MultiPoint<f32> = wkt!(MULTIPOINT(0.0 0.0));
+        assert_relative_eq!(
+            a.hausdorff_distance(&b),
+            5e-25,
+            epsilon = 0.0,
+            max_relative = 1e-6
+        );
     }
 }
