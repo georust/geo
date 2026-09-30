@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `geo-traits`-based area extension traits (`AreaPoint`, `AreaLineString`, `AreaLine`, `AreaPolygon`, `AreaMultiPoint`, `AreaMultiLineString`, `AreaMultiPolygon`, `AreaRect`, `AreaTriangle`, `AreaGeometry`, `AreaGeometryCollection`) in `geo::algorithm::area`, computing planar area for any type implementing the corresponding `geo-traits` trait. The existing `Area` impls for `geo-types` now delegate to them.
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 
 - Add `Intersects<Coord>` and `Intersects<Point>` implementations for `IntervalTreeMultiPolygon`. Unlike the existing `Contains` impls, these return `true` for points on the polygon's boundary.

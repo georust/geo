@@ -1,23 +1,35 @@
 use crate::geometry::*;
 use crate::{CoordFloat, CoordNum};
+use geo_traits::{
+    CoordTrait, GeometryCollectionTrait, GeometryTrait, GeometryType, LineStringTrait, LineTrait,
+    MultiLineStringTrait, MultiPointTrait, MultiPolygonTrait, PointTrait, PolygonTrait, RectTrait,
+    TriangleTrait,
+};
 
-pub(crate) fn twice_signed_ring_area<T>(linestring: &LineString<T>) -> T
+fn to_coord<T: CoordNum>(c: impl CoordTrait<T = T>) -> Coord<T> {
+    Coord { x: c.x(), y: c.y() }
+}
+
+pub(crate) fn twice_signed_ring_area<T>(linestring: &impl LineStringTrait<T = T>) -> T
 where
     T: CoordNum,
 {
     // LineString with less than 3 points is empty, or a
     // single point, or is not closed.
-    if linestring.0.len() < 3 {
+    let num_coords = linestring.num_coords();
+    if num_coords < 3 {
         return T::zero();
     }
 
     // Above test ensures the vector has at least 2 elements.
     // We check if linestring is closed, and return 0 otherwise.
-    if linestring.0.first().unwrap() != linestring.0.last().unwrap() {
+    let first = to_coord(linestring.coord(0).unwrap());
+    let last = to_coord(linestring.coord(num_coords - 1).unwrap());
+    if first != last {
         return T::zero();
     }
 
-    sum_line_determinants(&linestring.0)
+    sum_line_determinants(linestring.coords().map(to_coord))
 }
 
 /// Adds up the determinants of the lines between a series of `points` shifted by the first coordinate.
@@ -29,19 +41,17 @@ where
 /// Note that we can't use the `Centroid` trait as it requires `T: Float` and in fact computes area in the
 /// implementation. Another option is to use the average of the coordinates, but it is not fool-proof to
 /// divide by the length of the linestring (eg. a long line-string with T = u8)
-fn sum_line_determinants<T: CoordNum>(points: &[Coord<T>]) -> T {
-    if points.len() <= 2 {
+fn sum_line_determinants<T: CoordNum>(mut points: impl Iterator<Item = Coord<T>>) -> T {
+    let (Some(shift), Some(second)) = (points.next(), points.next()) else {
         return T::zero();
-    }
+    };
 
     // NOTE: We can ignore the determinant of the first and last line (always zero after shifting)
     let mut sum = T::zero();
+    let mut prev = second - shift;
 
-    let shift = points[0];
-    let mut prev = points[1] - shift;
-
-    for point in &points[2..] {
-        let shifted = *point - shift;
+    for point in points {
+        let shifted = point - shift;
         let line = Line::new(prev, shifted);
 
         sum = sum + line.determinant();
@@ -52,6 +62,10 @@ fn sum_line_determinants<T: CoordNum>(points: &[Coord<T>]) -> T {
 }
 
 /// Signed and unsigned planar area of a geometry.
+///
+/// This is implemented for the [`geo_types`] geometries. To compute the area of any geometry
+/// implementing the [`geo_traits`] traits, use the per-geometry extension traits in this module
+/// instead, e.g. [`AreaPolygon`] or [`AreaGeometry`].
 ///
 /// # Examples
 ///
@@ -87,179 +101,262 @@ where
 }
 
 // Calculation of simple (no interior holes) Polygon area
-pub(crate) fn get_linestring_area<T>(linestring: &LineString<T>) -> T
+pub(crate) fn get_linestring_area<T>(linestring: &impl LineStringTrait<T = T>) -> T
 where
     T: CoordFloat,
 {
     twice_signed_ring_area(linestring) / (T::one() + T::one())
 }
 
-impl<T> Area<T> for Point<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
+/// Implements [`Area`] for a `geo_types` geometry by delegating to its [`geo_traits`]
+/// extension trait.
+macro_rules! impl_area_via_trait {
+    ($bound:ident, $geom:ident, $ext:ident) => {
+        impl<T> Area<T> for $geom<T>
+        where
+            T: $bound,
+        {
+            fn signed_area(&self) -> T {
+                $ext::signed_area(self)
+            }
 
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
+            fn unsigned_area(&self) -> T {
+                $ext::unsigned_area(self)
+            }
+        }
+    };
 }
 
-impl<T> Area<T> for LineString<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
+/// Defines a zero-area extension trait for a [`geo_traits`] geometry type.
+macro_rules! zero_area_trait {
+    ($(#[$meta:meta])* $name:ident, $geo_trait:ident) => {
+        $(#[$meta])*
+        pub trait $name<T>: $geo_trait<T = T>
+        where
+            T: CoordNum,
+        {
+            fn signed_area(&self) -> T {
+                T::zero()
+            }
 
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
+            fn unsigned_area(&self) -> T {
+                T::zero()
+            }
+        }
+
+        impl<T: CoordNum, G: $geo_trait<T = T>> $name<T> for G {}
+    };
 }
 
-impl<T> Area<T> for Line<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
+zero_area_trait!(
+    /// Planar area of any [`PointTrait`] implementor, which is always zero.
+    AreaPoint,
+    PointTrait
+);
+zero_area_trait!(
+    /// Planar area of any [`LineStringTrait`] implementor, which is always zero.
+    AreaLineString,
+    LineStringTrait
+);
+zero_area_trait!(
+    /// Planar area of any [`LineTrait`] implementor, which is always zero.
+    AreaLine,
+    LineTrait
+);
+zero_area_trait!(
+    /// Planar area of any [`MultiPointTrait`] implementor, which is always zero.
+    AreaMultiPoint,
+    MultiPointTrait
+);
+zero_area_trait!(
+    /// Planar area of any [`MultiLineStringTrait`] implementor, which is always zero.
+    AreaMultiLineString,
+    MultiLineStringTrait
+);
 
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
+impl_area_via_trait!(CoordNum, Point, AreaPoint);
+impl_area_via_trait!(CoordNum, LineString, AreaLineString);
+impl_area_via_trait!(CoordNum, Line, AreaLine);
 
+/// Signed and unsigned planar area of any [`PolygonTrait`] implementor.
+///
 /// **Note.** The implementation handles polygons whose
 /// holes do not all have the same orientation. The sign of
 /// the output is the same as that of the exterior shell.
-impl<T> Area<T> for Polygon<T>
+///
+/// # Examples
+///
+/// ```
+/// use geo::polygon;
+/// use geo::area::AreaPolygon;
+///
+/// let polygon = polygon![
+///     (x: 0., y: 0.),
+///     (x: 5., y: 0.),
+///     (x: 5., y: 6.),
+///     (x: 0., y: 6.),
+///     (x: 0., y: 0.),
+/// ];
+///
+/// assert_eq!(AreaPolygon::signed_area(&polygon), 30.);
+/// ```
+pub trait AreaPolygon<T>: PolygonTrait<T = T>
 where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        let area = get_linestring_area(self.exterior());
+        let area = self
+            .exterior()
+            .map_or(T::zero(), |exterior| get_linestring_area(&exterior));
 
         // We could use winding order here, but that would
         // result in computing the shoelace formula twice.
         let is_negative = area < T::zero();
 
-        let area = self.interiors().iter().fold(area.abs(), |total, next| {
-            total - get_linestring_area(next).abs()
+        let area = self.interiors().fold(area.abs(), |total, next| {
+            total - get_linestring_area(&next).abs()
         });
 
         if is_negative { -area } else { area }
     }
 
     fn unsigned_area(&self) -> T {
-        self.signed_area().abs()
+        AreaPolygon::signed_area(self).abs()
     }
 }
 
-impl<T> Area<T> for MultiPoint<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
+impl<T: CoordFloat, G: PolygonTrait<T = T>> AreaPolygon<T> for G {}
 
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
+impl_area_via_trait!(CoordFloat, Polygon, AreaPolygon);
+impl_area_via_trait!(CoordNum, MultiPoint, AreaMultiPoint);
+impl_area_via_trait!(CoordNum, MultiLineString, AreaMultiLineString);
 
-impl<T> Area<T> for MultiLineString<T>
-where
-    T: CoordNum,
-{
-    fn signed_area(&self) -> T {
-        T::zero()
-    }
-
-    fn unsigned_area(&self) -> T {
-        T::zero()
-    }
-}
-
+/// Signed and unsigned planar area of any [`MultiPolygonTrait`] implementor.
+///
 /// **Note.** The implementation is a straight-forward
 /// summation of the signed or unsigned areas of the individual
 /// polygons.
-impl<T> Area<T> for MultiPolygon<T>
+pub trait AreaMultiPolygon<T>: MultiPolygonTrait<T = T>
 where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, next| total + next.signed_area())
+        self.polygons().fold(T::zero(), |total, next| {
+            total + AreaPolygon::signed_area(&next)
+        })
     }
 
     fn unsigned_area(&self) -> T {
-        self.0
-            .iter()
-            .fold(T::zero(), |total, next| total + next.unsigned_area())
+        self.polygons().fold(T::zero(), |total, next| {
+            total + AreaPolygon::unsigned_area(&next)
+        })
     }
 }
 
+impl<T: CoordFloat, G: MultiPolygonTrait<T = T>> AreaMultiPolygon<T> for G {}
+
+impl_area_via_trait!(CoordFloat, MultiPolygon, AreaMultiPolygon);
+
+/// Planar area of any [`RectTrait`] implementor.
+///
 /// Because a `Rect` has no winding order, the area will always be positive.
-impl<T> Area<T> for Rect<T>
+pub trait AreaRect<T>: RectTrait<T = T>
 where
     T: CoordNum,
 {
     fn signed_area(&self) -> T {
-        self.width() * self.height()
+        let (min, max) = (self.min(), self.max());
+        (max.x() - min.x()) * (max.y() - min.y())
     }
 
     fn unsigned_area(&self) -> T {
-        self.width() * self.height()
+        AreaRect::signed_area(self)
     }
 }
 
-impl<T> Area<T> for Triangle<T>
+impl<T: CoordNum, G: RectTrait<T = T>> AreaRect<T> for G {}
+
+impl_area_via_trait!(CoordNum, Rect, AreaRect);
+
+/// Signed and unsigned planar area of any [`TriangleTrait`] implementor.
+pub trait AreaTriangle<T>: TriangleTrait<T = T>
 where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        sum_line_determinants(&self.to_array()) / (T::one() + T::one())
+        sum_line_determinants(self.coords().into_iter().map(to_coord)) / (T::one() + T::one())
     }
 
     fn unsigned_area(&self) -> T {
-        self.signed_area().abs()
+        AreaTriangle::signed_area(self).abs()
     }
 }
 
-impl<T> Area<T> for Geometry<T>
-where
-    T: CoordFloat,
-{
-    crate::geometry_delegate_impl! {
-        fn signed_area(&self) -> T;
-        fn unsigned_area(&self) -> T;
-    }
-}
+impl<T: CoordFloat, G: TriangleTrait<T = T>> AreaTriangle<T> for G {}
 
-impl<T> Area<T> for GeometryCollection<T>
+impl_area_via_trait!(CoordFloat, Triangle, AreaTriangle);
+
+/// Signed and unsigned planar area of any [`GeometryTrait`] implementor.
+pub trait AreaGeometry<T>: GeometryTrait<T = T>
 where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        self.0
-            .iter()
-            .map(|g| g.signed_area())
+        match self.as_type() {
+            GeometryType::Point(g) => AreaPoint::signed_area(g),
+            GeometryType::LineString(g) => AreaLineString::signed_area(g),
+            GeometryType::Polygon(g) => AreaPolygon::signed_area(g),
+            GeometryType::MultiPoint(g) => AreaMultiPoint::signed_area(g),
+            GeometryType::MultiLineString(g) => AreaMultiLineString::signed_area(g),
+            GeometryType::MultiPolygon(g) => AreaMultiPolygon::signed_area(g),
+            GeometryType::GeometryCollection(g) => AreaGeometryCollection::signed_area(g),
+            GeometryType::Rect(g) => AreaRect::signed_area(g),
+            GeometryType::Triangle(g) => AreaTriangle::signed_area(g),
+            GeometryType::Line(g) => AreaLine::signed_area(g),
+        }
+    }
+
+    fn unsigned_area(&self) -> T {
+        match self.as_type() {
+            GeometryType::Point(g) => AreaPoint::unsigned_area(g),
+            GeometryType::LineString(g) => AreaLineString::unsigned_area(g),
+            GeometryType::Polygon(g) => AreaPolygon::unsigned_area(g),
+            GeometryType::MultiPoint(g) => AreaMultiPoint::unsigned_area(g),
+            GeometryType::MultiLineString(g) => AreaMultiLineString::unsigned_area(g),
+            GeometryType::MultiPolygon(g) => AreaMultiPolygon::unsigned_area(g),
+            GeometryType::GeometryCollection(g) => AreaGeometryCollection::unsigned_area(g),
+            GeometryType::Rect(g) => AreaRect::unsigned_area(g),
+            GeometryType::Triangle(g) => AreaTriangle::unsigned_area(g),
+            GeometryType::Line(g) => AreaLine::unsigned_area(g),
+        }
+    }
+}
+
+impl<T: CoordFloat, G: GeometryTrait<T = T>> AreaGeometry<T> for G {}
+
+impl_area_via_trait!(CoordFloat, Geometry, AreaGeometry);
+
+/// Signed and unsigned planar area of any [`GeometryCollectionTrait`] implementor.
+pub trait AreaGeometryCollection<T>: GeometryCollectionTrait<T = T>
+where
+    T: CoordFloat,
+{
+    fn signed_area(&self) -> T {
+        self.geometries()
+            .map(|g| AreaGeometry::signed_area(&g))
             .fold(T::zero(), |acc, next| acc + next)
     }
 
     fn unsigned_area(&self) -> T {
-        self.0
-            .iter()
-            .map(|g| g.unsigned_area())
+        self.geometries()
+            .map(|g| AreaGeometry::unsigned_area(&g))
             .fold(T::zero(), |acc, next| acc + next)
     }
 }
+
+impl<T: CoordFloat, G: GeometryCollectionTrait<T = T>> AreaGeometryCollection<T> for G {}
+
+impl_area_via_trait!(CoordFloat, GeometryCollection, AreaGeometryCollection);
 
 #[cfg(test)]
 mod test {
@@ -569,5 +666,58 @@ mod test {
             0.006547948219252177,
             max_relative = 0.0001
         );
+    }
+
+    #[test]
+    fn geo_traits_extension_traits() {
+        use super::{
+            AreaGeometry, AreaGeometryCollection, AreaMultiPolygon, AreaPolygon, AreaRect,
+            AreaTriangle,
+        };
+        use crate::{Geometry, GeometryCollection, Triangle};
+
+        let exterior =
+            wkt! { POLYGON((0. 0.,10. 0.,10. 10.,0. 10.,0. 0.),(1. 1.,1. 2.,2. 2.,2. 1.,1. 1.)) };
+        // Clockwise exterior gives a negative signed area.
+        let reversed = wkt! { POLYGON((0. 0.,0. 10.,10. 10.,10. 0.,0. 0.)) };
+        let multi = MultiPolygon::new(vec![exterior.clone(), reversed.clone()]);
+        let rect = Rect::new(coord! { x: 0., y: 0. }, coord! { x: 2., y: 3. });
+        let triangle = Triangle::new(
+            coord! { x: 0., y: 0. },
+            coord! { x: 4., y: 0. },
+            coord! { x: 0., y: 3. },
+        );
+
+        // References implement the geo-traits too, and go through the blanket impls
+        assert_relative_eq!(AreaPolygon::signed_area(&&exterior), 99.);
+        assert_relative_eq!(AreaPolygon::signed_area(&&reversed), -100.);
+        assert_relative_eq!(AreaPolygon::unsigned_area(&&reversed), 100.);
+        assert_relative_eq!(AreaMultiPolygon::signed_area(&&multi), -1.);
+        assert_relative_eq!(AreaMultiPolygon::unsigned_area(&&multi), 199.);
+        assert_relative_eq!(AreaRect::signed_area(&&rect), 6.);
+        assert_relative_eq!(AreaTriangle::signed_area(&&triangle), 6.);
+
+        let geometries: Vec<Geometry> = vec![
+            exterior.into(),
+            reversed.into(),
+            multi.into(),
+            rect.into(),
+            triangle.into(),
+            Line::new(coord! { x: 0., y: 0. }, coord! { x: 1., y: 1. }).into(),
+        ];
+        for geometry in &geometries {
+            assert_eq!(
+                AreaGeometry::signed_area(&geometry),
+                Area::signed_area(geometry)
+            );
+            assert_eq!(
+                AreaGeometry::unsigned_area(&geometry),
+                Area::unsigned_area(geometry)
+            );
+        }
+
+        let collection = GeometryCollection::new_from(geometries);
+        assert_relative_eq!(AreaGeometryCollection::signed_area(&&collection), 10.);
+        assert_relative_eq!(AreaGeometryCollection::unsigned_area(&&collection), 410.);
     }
 }
