@@ -415,19 +415,6 @@ where
     }
 }
 
-// Note: We add LinesIter bound to disambiguate from &[Coord] which implements CoordsIter.
-// Coord doesn't implement LinesIter, so this prevents the coherence conflict.
-/*impl<'a, 'l, T, G> private::UnconstrainedRequirementTrait<'a, T> for &[G]
-where
-    'a: 'l,
-    T: SpadeTriangulationFloat + 'a,
-    G: TriangulateDelaunayUnconstrained<'a, T> + LinesIter<'l, Scalar = T>,
-{
-    fn coords(&'a self) -> private::CoordsIter<'a, T> {
-        Box::new(self.iter().flat_map(|g| g.coords()))
-    }
-}*/
-
 impl<'a, 'l, T, G> private::ConstrainedRequirementTrait<'a, T> for &[G]
 where
     'a: 'l,
