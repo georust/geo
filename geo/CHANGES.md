@@ -1,5 +1,12 @@
 # Changes
 
+## 0.33.2 - 2026-10-11
+
+- Unpin the `earcut` dependency and require 0.4.11, which includes the 0.4.10 fix for a panic in `z_order` when a hole has a point below the bounding box of the exterior ring.
+  - <https://github.com/georust/geo/pull/1533>
+  - <https://github.com/georust/geo/issues/1618>
+- The triangles that `TriangulateEarcut` returns can be in a different order or have a different starting vertex: earcut 0.4.11 changes its output order.
+
 ## 0.33.1 - 2026-4-20
 
 - Fix build breakage introduced by semver incompatible earcut dependency release
