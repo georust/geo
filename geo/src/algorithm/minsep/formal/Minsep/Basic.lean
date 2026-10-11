@@ -16,6 +16,7 @@ The main results are
 -/
 import Mathlib.Analysis.Convex.PathConnected
 import Mathlib.Analysis.Convex.Segment
+import Mathlib.Analysis.Convex.Hull
 import Mathlib.Analysis.Real.Sqrt
 import Mathlib.Tactic.Linarith
 import Mathlib.Tactic.Positivity
@@ -26,6 +27,8 @@ import Mathlib.Tactic.FunProp
 import Mathlib.Tactic.Abel
 
 open Set Filter Topology
+
+set_option linter.unusedSimpArgs false
 
 namespace Minsep
 
@@ -198,9 +201,8 @@ theorem convex_hp (a b : Pt) : Convex ℝ (hp a b) := by
   have ht' : t = 1 - s := by linarith
   subst ht'
   have := cross_combo a b x y (1 - s)
-  simp only [hp, mem_setOf_eq] at *
-  rw [show s • x + (1 - s) • y = x + (1 - s) • (y - x) by
-    rw [smul_sub, sub_smul, one_smul]; abel]
+  simp only [hp, mem_ofPred_eq] at *
+  rw [show s • x + (1 - s) • y = x + (1 - s) • (y - x) by ext <;> simp <;> ring]
   rw [this]
   nlinarith [mul_nonneg hs hx, mul_nonneg ht hy]
 
@@ -221,12 +223,11 @@ theorem interior_hp_subset {a b : Pt} (hab : a ≠ b) : interior (hp a b) ⊆ hp
     exact this.mono_left nhdsWithin_le_nhds
   obtain ⟨t, hmem, ht0⟩ := ((ht.eventually hp').and self_mem_nhdsWithin).exists
   have hpos : 0 < (b.1 - a.1) ^ 2 + (b.2 - a.2) ^ 2 := by
-    rcases Prod.ext_iff.not.1 (Ne.symm hab) with h | h
-    · have : b.1 - a.1 ≠ 0 := sub_ne_zero.2 h
+    by_cases h : b.1 - a.1 = 0
+    · have h2 : b.2 - a.2 ≠ 0 := fun h2 => hab (Prod.ext (by linarith) (by linarith))
       positivity
-    · have : b.2 - a.2 ≠ 0 := sub_ne_zero.2 h
-      positivity
-  simp only [hp, hpS, mem_setOf_eq, mem_Ioi] at hmem ht0 ⊢
+    · positivity
+  simp only [hp, hpS, mem_ofPred_eq, mem_Ioi] at hmem ht0 ⊢
   by_contra hcon
   have key : cross a b (p - t • n) = cross a b p - t * ((b.1 - a.1) ^ 2 + (b.2 - a.2) ^ 2) := by
     simp only [cross, n, Prod.fst_sub, Prod.snd_sub, Prod.smul_fst, Prod.smul_snd, smul_eq_mul]
@@ -268,11 +269,11 @@ theorem tri_eq {a b c : Pt} (h : 0 < cross a b c) :
   · refine convexHull_min ?_ (((convex_hp a b).inter (convex_hp b c)).inter (convex_hp c a))
     intro x hx
     simp only [mem_insert_iff, mem_singleton_iff] at hx
-    simp only [triH, hp, mem_inter_iff, mem_setOf_eq]
+    simp only [triH, hp, mem_inter_iff, mem_ofPred_eq]
     rcases hx with rfl | rfl | rfl <;> simp only [cross] at h ⊢ <;>
       refine ⟨⟨?_, ?_⟩, ?_⟩ <;> nlinarith
   · intro p hp'
-    simp only [triH, hp, mem_inter_iff, mem_setOf_eq] at hp'
+    simp only [triH, hp, mem_inter_iff, mem_ofPred_eq] at hp'
     obtain ⟨⟨h1, h2⟩, h3⟩ := hp'
     set D := cross a b c
     have hsum : cross b c p + cross c a p + cross a b p = D := by
@@ -290,7 +291,7 @@ theorem triS_subset_interior {a b c : Pt} (h : 0 < cross a b c) :
   rw [tri_eq h]
   refine interior_maximal ?_ (isOpen_triS a b c)
   intro p hp'
-  simp only [triS, triH, hp, hpS, mem_inter_iff, mem_setOf_eq] at hp' ⊢
+  simp only [triS, triH, hp, hpS, mem_inter_iff, mem_ofPred_eq] at hp' ⊢
   exact ⟨⟨hp'.1.1.le, hp'.1.2.le⟩, hp'.2.le⟩
 
 /-- A point `w` with `w + t (c - w) ∈ U` for every `t ∈ (0, 1]` is in the closure of `U`. -/
@@ -320,11 +321,11 @@ theorem triH_subset_closure_triS {a b c : Pt} (h : 0 < cross a b c) :
   have hg3 : cross c a g = cross a b c / 3 := by
     simp only [g, cross, Prod.smul_fst, Prod.smul_snd, Prod.fst_add, Prod.snd_add, smul_eq_mul]
     ring
-  simp only [triH, hp, mem_inter_iff, mem_setOf_eq] at hw
+  simp only [triH, hp, mem_inter_iff, mem_ofPred_eq] at hw
   obtain ⟨⟨h1, h2⟩, h3⟩ := hw
   apply mem_closure_of_ray (c := g)
   intro t ht0 ht1
-  simp only [triS, hpS, mem_inter_iff, mem_setOf_eq, cross_combo]
+  simp only [triS, hpS, mem_inter_iff, mem_ofPred_eq, cross_combo]
   rw [hg1, hg2, hg3]
   have hD : 0 < t * (cross a b c / 3) := by positivity
   refine ⟨⟨?_, ?_⟩, ?_⟩ <;> nlinarith [mul_nonneg (sub_nonneg.2 ht1) h1,
@@ -344,11 +345,11 @@ region `R`, first meets the complement of `R`. When `t = v` (`l = 0`), the ray l
 at once. -/
 def ExtEnd (R : Set Pt) (v e t : Pt) : Prop :=
   ∃ l : ℝ, 0 ≤ l ∧ t = v + l • e ∧ (∀ μ, 0 < μ → μ < l → v + μ • e ∈ R) ∧
-    (l = 0 → ∃ ε > 0, ∀ μ, 0 < μ → μ < ε → v + μ • e ∉ R) ∧ (0 < l → t ∉ R)
+    (l = 0 → ∃ ε : ℝ, 0 < ε ∧ ∀ μ, 0 < μ → μ < ε → v + μ • e ∉ R) ∧ (0 < l → t ∉ R)
 
 private theorem ExtEnd.aux {R : Set Pt} {v e : Pt} {l l' : ℝ} (hl : 0 ≤ l) (hll : l < l')
     (hin' : ∀ μ, 0 < μ → μ < l' → v + μ • e ∈ R)
-    (h0 : l = 0 → ∃ ε > 0, ∀ μ, 0 < μ → μ < ε → v + μ • e ∉ R)
+    (h0 : l = 0 → ∃ ε : ℝ, 0 < ε ∧ ∀ μ, 0 < μ → μ < ε → v + μ • e ∉ R)
     (hout : 0 < l → v + l • e ∉ R) : False := by
   rcases hl.eq_or_lt with h | h
   · obtain ⟨ε, hε, hε'⟩ := h0 h.symm

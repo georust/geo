@@ -4,6 +4,10 @@ Machine-checked versions of the counterexamples in `../paper_corrections.typ`.
 Each finding is stated against exact rational coordinates, and the geodesic
 underlying each construction is *proved* shortest rather than assumed.
 
+Status: everything builds without `sorry` or warnings. Each `finding_*` theorem
+depends only on the standard axioms (`propext`, `Classical.choice`,
+`Quot.sound`). Check with `#print axioms Minsep.Bridge.finding_bridge`.
+
 | File | Report section | Main theorem |
 | --- | --- | --- |
 | `Minsep/Basic.lean` | — | `single_turn` (shortest-path certificate), `tri_eq`, `ExtEnd.unique` |

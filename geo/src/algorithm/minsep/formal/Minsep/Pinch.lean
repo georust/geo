@@ -13,6 +13,8 @@ import Minsep.Basic
 
 open Set
 
+noncomputable section
+
 namespace Minsep.Pinch
 
 def p1 : Pt := (3, 2)
@@ -29,7 +31,7 @@ def H : Set Pt := convexHull ℝ (P ∪ Q)
 theorem mem_P {z : Pt} :
     z ∈ P ↔ 0 ≤ 6 * z.1 - 3 * z.2 - 12 ∧ 0 ≤ 4 * z.2 - 6 * z.1 + 16 ∧ z.2 ≤ 2 := by
   rw [P, tri_eq (by norm_num [cross, p1, p2, p3])]
-  simp only [triH, hp, mem_inter_iff, mem_setOf_eq, cross, p1, p2, p3]
+  simp only [triH, hp, mem_inter_iff, mem_ofPred_eq, cross, p1, p2, p3]
   constructor
   · rintro ⟨⟨h1, h2⟩, h3⟩; refine ⟨?_, ?_, ?_⟩ <;> linarith
   · rintro ⟨h1, h2, h3⟩; refine ⟨⟨?_, ?_⟩, ?_⟩ <;> linarith
@@ -63,12 +65,12 @@ theorem mem_interior_H {z : Pt} (hz : z ∈ P) (hne : z ≠ p2) : z ∈ interior
     apply hne
     ext <;> simp only [p2] <;> linarith
   apply triS_sub_interior_H
-  simp only [triS, hpS, mem_inter_iff, mem_setOf_eq, cross, p2, q3, q1]
+  simp only [triS, hpS, mem_inter_iff, mem_ofPred_eq, cross, p2, q3, q1]
   refine ⟨⟨?_, ?_⟩, ?_⟩ <;> linarith
 
 theorem p2_not_mem_interior_H : p2 ∉ interior H := by
   intro h
-  have := interior_hp_subset (by simp [q1, p2]) (interior_mono H_sub_left h)
+  have := interior_hp_subset (by norm_num [q1, p2, Prod.ext_iff]) (interior_mono H_sub_left h)
   norm_num [hpS, cross, q1, p2] at this
 
 /-- **§3.5.** `P` meets the boundary of `CH(P ∪ Q)` only at `p2 = (0, -4)`. Both common
@@ -76,7 +78,7 @@ supporting segments lie on that boundary, so both contact `P` at `p2`: `p_b = p_
 the channel is pinched there. -/
 theorem finding_pinch : {z ∈ P | z ∉ interior H} = {p2} := by
   ext z
-  simp only [mem_setOf_eq, mem_singleton_iff]
+  simp only [mem_ofPred_eq, mem_singleton_iff]
   constructor
   · rintro ⟨hz, hint⟩
     by_contra hne
@@ -85,3 +87,5 @@ theorem finding_pinch : {z ∈ P | z ∉ interior H} = {p2} := by
     exact ⟨subset_convexHull ℝ _ (by simp), p2_not_mem_interior_H⟩
 
 end Minsep.Pinch
+
+end

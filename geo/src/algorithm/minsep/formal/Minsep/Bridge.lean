@@ -21,6 +21,10 @@ import Minsep.Basic
 
 open Set
 
+set_option linter.unusedSimpArgs false
+
+noncomputable section
+
 namespace Minsep.Bridge
 
 def p1 : Pt := (0, 2)
@@ -47,7 +51,7 @@ def b1 : Pt := (-18 / 7, -32 / 7)
 
 theorem mem_P {z : Pt} : z ∈ P ↔ 0 ≤ z.1 ∧ z.1 - 2 ≤ z.2 ∧ z.1 + z.2 ≤ 2 := by
   rw [P, tri_eq (by norm_num [cross, p1, p2, p3])]
-  simp only [triH, hp, mem_inter_iff, mem_setOf_eq, cross, p1, p2, p3]
+  simp only [triH, hp, mem_inter_iff, mem_ofPred_eq, cross, p1, p2, p3]
   constructor
   · rintro ⟨⟨h1, h2⟩, h3⟩; refine ⟨?_, ?_, ?_⟩ <;> linarith
   · rintro ⟨h1, h2, h3⟩; refine ⟨⟨?_, ?_⟩, ?_⟩ <;> linarith
@@ -55,7 +59,7 @@ theorem mem_P {z : Pt} : z ∈ P ↔ 0 ≤ z.1 ∧ z.1 - 2 ≤ z.2 ∧ z.1 + z.2
 theorem mem_Q {z : Pt} :
     z ∈ Q ↔ -6 ≤ z.1 ∧ 0 ≤ 4 * z.2 - z.1 + 18 ∧ 4 * z.2 + 3 * z.1 + 26 ≤ 0 := by
   rw [Q, tri_eq (by norm_num [cross, q1, q2, q3])]
-  simp only [triH, hp, mem_inter_iff, mem_setOf_eq, cross, q1, q2, q3]
+  simp only [triH, hp, mem_inter_iff, mem_ofPred_eq, cross, q1, q2, q3]
   constructor
   · rintro ⟨⟨h1, h2⟩, h3⟩; refine ⟨?_, ?_, ?_⟩ <;> linarith
   · rintro ⟨h1, h2, h3⟩; refine ⟨⟨?_, ?_⟩, ?_⟩ <;> linarith
@@ -76,7 +80,7 @@ theorem interior_H_back {z : Pt} (hz : z ∈ interior H) : z.1 + z.2 < 2 := by
     (by simp only [mem_insert_iff, mem_singleton_iff, forall_eq_or_imp, forall_eq];
         norm_num [cross, p3, p1, q1, q2, q3])
   have := interior_hp_subset (by simp [p3, p1]) (interior_mono hsub hz)
-  simp only [hpS, mem_setOf_eq, cross, p3, p1] at this
+  simp only [hpS, mem_ofPred_eq, cross, p3, p1] at this
   linarith
 
 /-- The bottom bridge `q3 → p3` is a hull edge. -/
@@ -95,7 +99,7 @@ theorem H_sub_top : H ⊆ hp p1 q1 := H_sub_hp
 
 theorem interior_H_bottom {z : Pt} (hz : z ∈ interior H) : 0 < 4 * z.2 - 5 * z.1 + 10 := by
   have := interior_hp_subset (by simp [q3, p3]) (interior_mono H_sub_bottom hz)
-  simp only [hpS, mem_setOf_eq, cross, q3, p3] at this
+  simp only [hpS, mem_ofPred_eq, cross, q3, p3] at this
   linarith
 
 theorem b1_mem_Q : b1 ∈ Q := by
@@ -121,7 +125,7 @@ theorem mem_interior_H_of_K4 {z : Pt} (h1 : 0 < -8 * z.2 + 2 * z.1 - 4)
     (h2 : 0 < 4 * z.2 + 3 * z.1 + 26) (h3 : 0 < 4 * z.2 - 5 * z.1 + 10) : z ∈ interior H := by
   refine triS_sub_interior_H (by norm_num [cross, p3, q1, q3]) (Or.inl p3_mem_P)
     (Or.inr q1_mem_Q) (Or.inr q3_mem_Q) ?_
-  simp only [triS, hpS, mem_inter_iff, mem_setOf_eq, cross, p3, q1, q3]
+  simp only [triS, hpS, mem_inter_iff, mem_ofPred_eq, cross, p3, q1, q3]
   refine ⟨⟨?_, ?_⟩, ?_⟩ <;> linarith
 
 /-! ### The geodesic `p1 → p2 → p3` -/
@@ -135,7 +139,7 @@ theorem R_sub_AB : R ⊆ A ∪ B := by
   rintro z ⟨hzH, hzPQ⟩
   have hback := interior_H_back hzH
   by_contra hcon
-  simp only [A, B, hp, mem_union, mem_setOf_eq, cross, p1, p2, p3, not_or, not_le] at hcon
+  simp only [A, B, hp, mem_union, mem_ofPred_eq, cross, p1, p2, p3, not_or, not_le] at hcon
   exact hzPQ (Or.inl (mem_P.2 ⟨by linarith, by linarith, by linarith⟩))
 
 /-- The open triangle `(p1, q1, p2)`, left of the first geodesic segment, is in `R`. -/
@@ -144,7 +148,7 @@ theorem K1_closure : convexHull ℝ ({p1, q1, p2} : Set Pt) ⊆ closure R := by
   intro z hz
   have hint := triS_sub_interior_H (by norm_num [cross, p1, q1, p2]) (Or.inl p1_mem_P)
     (Or.inr q1_mem_Q) (Or.inl p2_mem_P) hz
-  simp only [triS, hpS, mem_inter_iff, mem_setOf_eq, cross, p1, q1, p2] at hz
+  simp only [triS, hpS, mem_inter_iff, mem_ofPred_eq, cross, p1, q1, p2] at hz
   obtain ⟨⟨h1, h2⟩, h3⟩ := hz
   refine ⟨hint, ?_⟩
   rintro (hP | hQ)
@@ -157,11 +161,11 @@ theorem K2_closure : convexHull ℝ ({p3, b1, q3} : Set Pt) ⊆ closure R := by
   intro z hz
   have hint := triS_sub_interior_H (by norm_num [cross, p3, b1, q3]) (Or.inl p3_mem_P)
     (Or.inr b1_mem_Q) (Or.inr q3_mem_Q) hz
-  simp only [triS, hpS, mem_inter_iff, mem_setOf_eq, cross, p3, b1, q3] at hz
+  simp only [triS, hpS, mem_inter_iff, mem_ofPred_eq, cross, p3, b1, q3] at hz
   obtain ⟨⟨h1, h2⟩, h3⟩ := hz
   refine ⟨hint, ?_⟩
   rintro (hP | hQ)
-  · have := (mem_P.1 hP).2.1; linarith
+  · have := (mem_P.1 hP).2.1; norm_num at this; linarith
   · have := (mem_Q.1 hQ).2.2; linarith
 
 theorem p1_mem_K1 : p1 ∈ convexHull ℝ ({p1, q1, p2} : Set Pt) := subset_convexHull ℝ _ (by simp)
@@ -171,7 +175,7 @@ theorem b1_mem_K2 : b1 ∈ convexHull ℝ ({p3, b1, q3} : Set Pt) := subset_conv
 
 theorem p2_mem_K2 : p2 ∈ convexHull ℝ ({p3, b1, q3} : Set Pt) := by
   rw [tri_eq (by norm_num [cross, p3, b1, q3])]
-  simp only [triH, hp, mem_inter_iff, mem_setOf_eq]
+  simp only [triH, hp, mem_inter_iff, mem_ofPred_eq]
   norm_num [cross, p3, b1, q3, p2]
 
 /-- The geodesic lies in the closed channel. -/
@@ -188,10 +192,10 @@ theorem geodesic_shortest (L : List Pt) (hL : PathIn (closure R) (p1 :: L))
   refine single_turn (isClosed_hp _ _) (isClosed_hp _ _)
     (closure_minimal R_sub_AB ((isClosed_hp _ _).union (isClosed_hp _ _)))
     ?_ ?_ (K1_closure p1_mem_K1) ?_ L hL hlast
-  · simp only [A, hp, mem_setOf_eq]; norm_num [cross, p1, p2]
-  · simp only [B, hp, mem_setOf_eq]; norm_num [cross, p3, p2]
+  · simp only [A, hp, mem_ofPred_eq]; norm_num [cross, p1, p2]
+  · simp only [B, hp, mem_ofPred_eq]; norm_num [cross, p3, p2]
   · rintro z ⟨_, hA, hB⟩
-    simp only [A, B, hp, mem_setOf_eq, cross, p1, p2, p3] at hA hB
+    simp only [A, B, hp, mem_ofPred_eq, cross, p1, p2, p3] at hA hB
     simp only [dot, Prod.fst_sub, Prod.snd_sub, p1, p2, p3]
     constructor <;> nlinarith
 
@@ -217,11 +221,11 @@ theorem ext_l0_top : ExtEnd R p2 (p2 - p1) w0 := by
   · intro μ h1 h2
     simp only [Prod.fst_add, Prod.snd_add, Prod.smul_fst, Prod.smul_snd, Prod.fst_sub,
       Prod.snd_sub, smul_eq_mul, p1, p2]
-    refine ⟨mem_interior_H_of_K4 (by norm_num <;> linarith) (by norm_num <;> linarith)
-      (by norm_num <;> linarith), ?_⟩
+    refine ⟨mem_interior_H_of_K4 (by norm_num; linarith) (by norm_num; linarith)
+      (by norm_num; linarith), ?_⟩
     rintro (hP | hQ)
-    · have := (mem_P.1 hP).2.1; norm_num at this <;> linarith
-    · have := (mem_Q.1 hQ).2.2; norm_num at this <;> linarith
+    · have := (mem_P.1 hP).2.1; norm_num at this; linarith
+    · have := (mem_Q.1 hQ).2.2; norm_num at this; linarith
   · intro _ hR
     have := interior_H_bottom hR.1
     norm_num [w0] at this
@@ -233,11 +237,11 @@ theorem ext_l1_bottom : ExtEnd R p2 (p2 - p3) b1 := by
   · intro μ h1 h2
     simp only [Prod.fst_add, Prod.snd_add, Prod.smul_fst, Prod.smul_snd, Prod.fst_sub,
       Prod.snd_sub, smul_eq_mul, p2, p3]
-    refine ⟨mem_interior_H_of_K4 (by norm_num <;> linarith) (by norm_num <;> linarith)
-      (by norm_num <;> linarith), ?_⟩
+    refine ⟨mem_interior_H_of_K4 (by norm_num; linarith) (by norm_num; linarith)
+      (by norm_num; linarith), ?_⟩
     rintro (hP | hQ)
-    · have := (mem_P.1 hP).1; norm_num at this <;> linarith
-    · have := (mem_Q.1 hQ).2.2; norm_num at this <;> linarith
+    · have := (mem_P.1 hP).1; norm_num at this; linarith
+    · have := (mem_Q.1 hQ).2.2; norm_num at this; linarith
   · intro _ hR
     exact hR.2 (Or.inr b1_mem_Q)
 
@@ -302,3 +306,5 @@ theorem finding_orientation :
     linarith
 
 end Minsep.Bridge
+
+end
