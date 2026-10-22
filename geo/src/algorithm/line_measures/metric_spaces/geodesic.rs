@@ -40,7 +40,8 @@ use std::sync::LazyLock;
 /// // ever so slightly different from the wgs84 default.
 /// assert_relative_eq!(
 ///   132675.50185928209, // meters
-///   nad83_geoid.distance(start, finish)
+///   nad83_geoid.distance(start, finish),
+///   epsilon = 1e-9
 /// );
 ///
 /// // Or you can specify whatever radius you want to get some "out of this world" results. 👽
@@ -50,7 +51,8 @@ use std::sync::LazyLock;
 /// let mars_geoid = GeodesicMeasure::new(mars_equatorial_radius, mars_flattening);
 /// assert_relative_eq!(
 ///   70684.36315529353, // meters
-///   mars_geoid.distance(start, finish)
+///   mars_geoid.distance(start, finish),
+///   epsilon = 1e-9
 /// );
 /// ```
 ///
