@@ -133,3 +133,26 @@ mod test {
         assert_eq!(4, partial_min(4, 4));
     }
 }
+/// Generators and helpers shared by the property-based tests that run under `hegel`.
+#[cfg(test)]
+pub(crate) mod property_tests {
+    use crate::{Coord, Triangle, Validation};
+    use hegel::TestCase;
+
+    hegel::derive_generator!(CoordGenerator for Coord {
+        x: f64,
+        y: f64,
+    });
+
+    /// Draws a triangle from three arbitrary coordinates, rejecting the test case if it is not
+    /// valid.
+    pub(crate) fn draw_valid_triangle(tc: &TestCase) -> Triangle<f64> {
+        let triangle = Triangle::new(
+            tc.draw(CoordGenerator::new()),
+            tc.draw(CoordGenerator::new()),
+            tc.draw(CoordGenerator::new()),
+        );
+        tc.assume(triangle.check_validation().is_ok());
+        triangle
+    }
+}
