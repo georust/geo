@@ -1,4 +1,5 @@
 use std::fmt::Debug;
+use std::iter::FlatMap;
 
 use crate::geometry::*;
 use crate::{CoordNum, coord};
@@ -550,6 +551,69 @@ impl<'a, T: CoordNum> CoordsIter for &'a [Coord<T>] {
     }
 }
 
+// ┌──────────────────────────────────────┐
+// │ Implementation for generic reference │
+// └──────────────────────────────────────┘
+impl<'a, G: CoordsIter + Sized> CoordsIter for &'a G {
+    type Iter<'b>
+        = G::Iter<'a>
+    where
+        Self: 'b,
+        'a: 'b;
+
+    type ExteriorIter<'b>
+        = G::ExteriorIter<'a>
+    where
+        Self: 'b,
+        'a: 'b;
+
+    type Scalar = G::Scalar;
+
+    fn coords_iter(&self) -> Self::Iter<'_> {
+        (*self).coords_iter()
+    }
+
+    fn coords_count(&self) -> usize {
+        (*self).coords_count()
+    }
+
+    fn exterior_coords_iter(&self) -> Self::ExteriorIter<'_> {
+        (*self).exterior_coords_iter()
+    }
+}
+
+// ┌──────────────────────────────────┐
+// │ Implementation for generic slice │
+// └──────────────────────────────────┘
+
+impl<'a, G: CoordsIter + Sized> CoordsIter for &'a [G] {
+    type Iter<'b>
+        = FlatMap<slice::Iter<'a, G>, G::Iter<'a>, fn(&'a G) -> G::Iter<'a>>
+    where
+        G: 'b,
+        'a: 'b;
+
+    type ExteriorIter<'b>
+        = FlatMap<slice::Iter<'a, G>, G::ExteriorIter<'a>, fn(&'a G) -> G::ExteriorIter<'a>>
+    where
+        G: 'b,
+        'a: 'b;
+
+    type Scalar = G::Scalar;
+
+    fn coords_iter(&self) -> Self::Iter<'_> {
+        self.iter().flat_map(G::coords_iter)
+    }
+
+    fn coords_count(&self) -> usize {
+        self.iter().map(|g| g.coords_count()).sum()
+    }
+
+    fn exterior_coords_iter(&self) -> Self::ExteriorIter<'_> {
+        self.iter().flat_map(G::exterior_coords_iter)
+    }
+}
+
 // ┌───────────┐
 // │ Utilities │
 // └───────────┘
@@ -914,6 +978,38 @@ mod test {
         let actual_coords = coords.coords_iter().collect::<Vec<_>>();
 
         assert_eq!(coords.to_vec(), actual_coords);
+    }
+
+    #[test]
+    fn test_generic_slice() {
+        let mut expected_coords = vec![];
+        let (polygon, mut coords) = create_polygon();
+        expected_coords.append(&mut coords.clone());
+        expected_coords.append(&mut coords);
+
+        let actual_coords = [polygon.clone(), polygon.clone()]
+            .as_slice()
+            .coords_iter()
+            .collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
+
+        let actual_coords = [&polygon, &polygon]
+            .as_slice()
+            .coords_iter()
+            .collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
+    }
+
+    #[test]
+    fn test_generic_reference() {
+        let mut expected_coords = vec![];
+        let (polygon, mut coords) = create_polygon();
+        expected_coords.append(&mut coords);
+        let actual_coords = (&polygon).coords_iter().collect::<Vec<_>>();
+
+        assert_eq!(expected_coords, actual_coords);
     }
 
     fn create_point() -> (Point, Vec<Coord>) {
