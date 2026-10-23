@@ -1,0 +1,30 @@
+{
+  "name": "geo-web-app",
+  "version": "0.1.0",
+  "description": "Best practice when building web apps.",
+  "main": "index.js",
+  "scripts": {
+    "start": "rimraf dist pkg && RUST_LOG=info webpack-dev-server --open "
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/georust/geo.git"
+  },
+  "keywords": [
+    "webassembly",
+    "wasm",
+    "rust",
+    "webpack"
+  ],
+  "homepage": "https://github.com/georust/geo#readme",
+  "dependencies": {
+    "copy-webpack-plugin": "^12.0.2",
+    "rimraf": "^6.1.2",
+    "serve": "^14.2.4",
+    "webpack-dev-server": "^5.1.0"
+  },
+  "devDependencies": {
+    "@wasm-tool/wasm-pack-plugin": "^1.7.0",
+    "webpack-cli": "^5.1.4"
+  }
+}
