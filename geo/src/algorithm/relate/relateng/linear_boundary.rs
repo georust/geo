@@ -16,6 +16,7 @@ fn is_in_boundary_mod2(degree: usize) -> bool {
     degree % 2 == 1
 }
 
+#[derive(Clone)]
 pub(crate) struct LinearBoundary<F: GeoFloat> {
     vertex_degree: BTreeMap<NodeKey<F>, usize>,
     has_boundary: bool,
