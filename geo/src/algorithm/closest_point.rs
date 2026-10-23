@@ -67,7 +67,19 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
         let direction_vector = Point::from(self.end - self.start);
         let to_p = Point::from(p.0 - self.start);
 
-        let t = to_p.dot(direction_vector) / direction_vector.dot(direction_vector);
+        let numerator = to_p.dot(direction_vector);
+        let squared_length = direction_vector.dot(direction_vector);
+        let t = if (squared_length == F::zero() && numerator == F::zero())
+            || !squared_length.is_finite()
+            || !numerator.is_finite()
+        {
+            // Avoid 0/0 from underflow and inf/inf from overflow, but preserve a
+            // non-zero numerator over a zero squared length so that infinite
+            // projections still clamp to an endpoint.
+            scaled_projection(direction_vector, to_p)
+        } else {
+            numerator / squared_length
+        };
 
         // check the cases where the closest point is "outside" the line
         if t < F::zero() {
@@ -86,6 +98,85 @@ impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
             Closest::SinglePoint(c)
         }
     }
+}
+
+// For a positive, finite magnitude, return the largest power of two no greater
+// than it, together with its exponent. Strip redundant significand zeros before
+// converting back to F: integer_decode may use a wider representation than F.
+fn projection_scale<F: GeoFloat>(magnitude: F) -> (F, i32) {
+    let (mantissa, exponent, _) = magnitude.integer_decode();
+    let trailing = mantissa.trailing_zeros();
+    let reduced = mantissa >> trailing;
+    let leading = u64::BITS - 1 - reduced.leading_zeros();
+    let fraction = F::from(reduced).unwrap() / F::from(1_u64 << leading).unwrap();
+    (
+        magnitude / fraction,
+        i32::from(exponent) + trailing as i32 + leading as i32,
+    )
+}
+
+// Compensate for the rounded product when the two dot-product terms cancel.
+fn compensated_dot<F: GeoFloat>(a: Point<F>, b: Point<F>) -> F {
+    let product = a.y() * b.y();
+    let correction = a.y().mul_add(b.y(), -product);
+    a.x().mul_add(b.x(), product) + correction
+}
+
+// Restore the projection's exponent only as far as endpoint comparisons need.
+// Negative values need only retain their sign; 2 means beyond the end, not an
+// exact projection. Apply powers of two without constructing an infinite factor.
+fn rescale_projection<F: GeoFloat>(mut value: F, mut exponent: i32) -> F {
+    if value <= F::zero() {
+        return value;
+    }
+    let two = F::one() + F::one();
+    while exponent > 0 && value < F::one() {
+        value = value + value;
+        exponent -= 1;
+    }
+    if exponent > 0 {
+        return two;
+    }
+    while exponent < 0 && value != F::zero() {
+        value = value / two;
+        exponent += 1;
+    }
+    value
+}
+
+// Called only for a non-zero direction whose original projection is 0/0.
+fn scaled_projection<F: GeoFloat>(direction: Point<F>, to_point: Point<F>) -> F {
+    let zero = F::zero();
+    // A coordinate with zero direction contributes nothing to the dot product.
+    // Exclude it so a large perpendicular offset cannot erase a small, relevant
+    // query component when choosing the query's scale.
+    let to_point = Point::new(
+        if direction.x() == zero {
+            zero
+        } else {
+            to_point.x()
+        },
+        if direction.y() == zero {
+            zero
+        } else {
+            to_point.y()
+        },
+    );
+    let query_magnitude = to_point.x().abs().max(to_point.y().abs());
+    if query_magnitude == zero {
+        return zero;
+    }
+    let (direction_scale, direction_exponent) =
+        projection_scale(direction.x().abs().max(direction.y().abs()));
+    let (query_scale, query_exponent) = projection_scale(query_magnitude);
+    // Scale independently by powers of two, preserving component ratios while
+    // keeping both dot products in range. Use the same compensated dot product
+    // in the denominator so an end-point query still gives exactly t == 1.
+    let direction = direction / direction_scale;
+    let query = to_point / query_scale;
+    let numerator = compensated_dot(query, direction);
+    let denominator = compensated_dot(direction, direction);
+    rescale_projection(numerator / denominator, query_exponent - direction_exponent)
 }
 
 /// A generic function which takes some iterator of points and gives you the
@@ -212,6 +303,242 @@ mod tests {
     closest!(intersects: mid_point, (50.0, 50.0));
     closest!(in_line_far_away, (1000.0, 1000.0) => Closest::SinglePoint(Point::new(100.0, 100.0)));
     closest!(perpendicular_from_50_50, (0.0, 100.0) => Closest::SinglePoint(Point::new(50.0, 50.0)));
+
+    fn assert_finite(closest: Closest<f64>) {
+        let point = match closest {
+            Closest::Intersection(point) | Closest::SinglePoint(point) => point,
+            Closest::Indeterminate => panic!("expected a finite closest point"),
+        };
+
+        assert!(
+            point.x().is_finite(),
+            "non-finite x coordinate: {closest:?}"
+        );
+        assert!(
+            point.y().is_finite(),
+            "non-finite y coordinate: {closest:?}"
+        );
+    }
+
+    #[test]
+    fn tiny_axis_aligned_line_has_finite_closest_points() {
+        let tiny = 1e-162;
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(0.0, tiny);
+        let line = Line::new(start, end);
+
+        let at_start = line.closest_point(&start);
+        assert_finite(at_start);
+        assert_eq!(at_start, Closest::Intersection(start));
+
+        let at_end = line.closest_point(&end);
+        assert_finite(at_end);
+        assert_eq!(at_end, Closest::Intersection(end));
+
+        let off_segment = Point::new(tiny, tiny / 2.0);
+        let closest = line.closest_point(&off_segment);
+        assert_finite(closest);
+        let Closest::SinglePoint(closest) = closest else {
+            panic!("expected a single closest point, got {closest:?}");
+        };
+        assert_eq!(closest.x(), 0.0);
+        assert_relative_eq!(closest.y() / tiny, 0.5, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn tiny_diagonal_line_has_finite_closest_points() {
+        let tiny = 1e-162;
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(tiny, tiny);
+        let line = Line::new(start, end);
+
+        let at_start = line.closest_point(&start);
+        assert_finite(at_start);
+        assert_eq!(at_start, Closest::Intersection(start));
+
+        let at_end = line.closest_point(&end);
+        assert_finite(at_end);
+        assert_eq!(at_end, Closest::Intersection(end));
+
+        let off_segment = Point::new(-tiny, 2.0 * tiny);
+        let closest = line.closest_point(&off_segment);
+        assert_finite(closest);
+        let Closest::SinglePoint(closest) = closest else {
+            panic!("expected a single closest point, got {closest:?}");
+        };
+        assert_relative_eq!(closest.x() / tiny, 0.5, max_relative = 1e-15);
+        assert_relative_eq!(closest.y() / tiny, 0.5, max_relative = 1e-15);
+    }
+
+    #[test]
+    fn line_with_infinite_length_start_intersection() {
+        let line = Line::<f64>::new((0.0, 0.0), (1.3e308, 1.3e308));
+        let start = line.start_point();
+        assert!(Euclidean.length(&line).is_infinite());
+        assert_eq!(line.closest_point(&start), Closest::Intersection(start));
+    }
+
+    #[test]
+    fn line_projection_preserves_cancellation() {
+        let line = Line::<f64>::new((0.0, 0.0), (3.0, 4.0));
+        let k = 2.0_f64.powi(54);
+        let point = Point::new(-4.0 * k, 3.0 * k);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(line.start_point())
+        );
+    }
+
+    #[test]
+    fn tiny_line_preserves_nonzero_projection_clamping() {
+        let tiny = 2.0_f64.powi(-550);
+        let k = 2.0_f64.powi(54);
+        let line = Line::new((0.0, 0.0), (3.0 * tiny, 4.0 * tiny));
+        let point = Point::new(4.0 * k - 64.0, -3.0 * k + 56.0);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(line.end_point())
+        );
+    }
+
+    #[test]
+    fn tiny_f32_line_has_finite_closest_points() {
+        let tiny = 1e-23_f32;
+        let line = Line::new((0.0, 0.0), (0.0, tiny));
+        for endpoint in [line.start_point(), line.end_point()] {
+            assert_eq!(
+                line.closest_point(&endpoint),
+                Closest::Intersection(endpoint)
+            );
+        }
+        let point = Point::new(tiny, tiny / 2.0);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(Point::new(0.0, tiny / 2.0))
+        );
+    }
+
+    #[test]
+    fn tiny_unequal_component_line_clamps_in_both_directions() {
+        let tiny = 1e-163;
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(3.0 * tiny, 4.0 * tiny);
+        let before_start = Point::new(-3.0 * tiny, -4.0 * tiny);
+        let beyond_end = Point::new(6.0 * tiny, 8.0 * tiny);
+
+        for line in [Line::new(start, end), Line::new(end, start)] {
+            for endpoint in [start, end] {
+                assert_eq!(
+                    line.closest_point(&endpoint),
+                    Closest::Intersection(endpoint)
+                );
+            }
+            assert_eq!(
+                line.closest_point(&before_start),
+                Closest::SinglePoint(start)
+            );
+            assert_eq!(line.closest_point(&beyond_end), Closest::SinglePoint(end));
+
+            // The offset (-4, 3) is perpendicular to the direction (3, 4).
+            let point = Point::new(-2.5 * tiny, 5.0 * tiny);
+            let closest = line.closest_point(&point);
+            assert_finite(closest);
+            let Closest::SinglePoint(closest) = closest else {
+                panic!("expected a single closest point, got {closest:?}");
+            };
+            assert_relative_eq!(closest.x() / tiny, 1.5, max_relative = 1e-15);
+            assert_relative_eq!(closest.y() / tiny, 2.0, max_relative = 1e-15);
+        }
+    }
+
+    #[test]
+    fn tiny_line_preserves_perpendicular_projection() {
+        let tiny = 2.0_f64.powi(-550);
+        let line = Line::new((0.0, 0.0), (3.0 * tiny, 4.0 * tiny));
+        for k in [2.0_f64.powi(54), 2.0_f64.powi(1021)] {
+            let point = Point::new(-4.0 * k, 3.0 * k);
+            assert_eq!(
+                line.closest_point(&point),
+                Closest::SinglePoint(line.start_point())
+            );
+        }
+    }
+
+    #[test]
+    fn tiny_f32_line_preserves_perpendicular_projection() {
+        let tiny = 2.0_f32.powi(-90);
+        let k = 2.0_f32.powi(24);
+        let line = Line::new((0.0, 0.0), (tiny, 41.0 * tiny));
+        let point = Point::new(-41.0 * k, k);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(line.start_point())
+        );
+    }
+
+    #[test]
+    fn tiny_line_preserves_near_perpendicular_projection() {
+        let offset = 2.0_f64.powi(-26);
+        let a = 1.5 + offset;
+        let b = 1.5 - offset;
+        let tiny = 2.0_f64.powi(-900);
+        let k = 2.0_f64.powi(54);
+        let line = Line::new((0.0, 0.0), (a * tiny, b * tiny));
+        // Increase the perpendicular query's y by one ULP. The exact dot
+        // product is positive, but independently rounded products cancel.
+        let point = Point::new(-b * k, (a + f64::EPSILON) * k);
+        assert_eq!(point.dot(Point::from(line.end)), 0.0);
+        assert_eq!(
+            line.closest_point(&point),
+            Closest::SinglePoint(line.end_point())
+        );
+        assert_eq!(
+            line.closest_point(&(-point)),
+            Closest::SinglePoint(line.start_point())
+        );
+    }
+
+    #[test]
+    fn subnormal_line_preserves_points_and_endpoint_clamping() {
+        let q = f64::from_bits(1);
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(0.0, 3.0 * q);
+        for line in [Line::new(start, end), Line::new(end, start)] {
+            for step in -1..=4 {
+                let y = f64::from(step) * q;
+                let expected = Point::new(0.0, f64::from(step.clamp(0, 3)) * q);
+                for x in [-f64::MAX, -12.0 * q, 0.0, 12.0 * q, f64::MAX] {
+                    let closest = if x == 0.0 && (0..=3).contains(&step) {
+                        Closest::Intersection(expected)
+                    } else {
+                        Closest::SinglePoint(expected)
+                    };
+                    assert_eq!(line.closest_point(&Point::new(x, y)), closest);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn subnormal_f32_line_preserves_points_and_endpoint_clamping() {
+        let q = f32::from_bits(1);
+        let start = Point::new(0.0, 0.0);
+        let end = Point::new(0.0, 3.0 * q);
+        for line in [Line::new(start, end), Line::new(end, start)] {
+            for step in -1_i16..=4 {
+                let y = f32::from(step) * q;
+                let expected = Point::new(0.0, f32::from(step.clamp(0, 3)) * q);
+                for x in [-f32::MAX, -12.0 * q, 0.0, 12.0 * q, f32::MAX] {
+                    let closest = if x == 0.0 && (0..=3).contains(&step) {
+                        Closest::Intersection(expected)
+                    } else {
+                        Closest::SinglePoint(expected)
+                    };
+                    assert_eq!(line.closest_point(&Point::new(x, y)), closest);
+                }
+            }
+        }
+    }
 
     fn a_square(width: f32) -> LineString<f32> {
         LineString::from(vec![
