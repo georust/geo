@@ -17,17 +17,18 @@ use std::cell::OnceCell;
 
 use crate::bounding_rect::BoundingRect;
 use crate::coordinate_position::CoordPos;
-use crate::dimensions::Dimensions;
+use crate::dimensions::{Dimensions, HasDimensions};
 use crate::geometry_cow::GeometryCow;
 use crate::rect_ops::RectOps;
 use crate::relate::IntersectionMatrix;
-use crate::{Coord, GeoFloat, Geometry, Line, LineString, Polygon, Rect};
+use crate::{Coord, GeoFloat, LineString, Rect};
 
 use super::edge_segment_intersector::{
     EdgeSegmentIntersector, MutualSegmentSetIntersector, intersect_all,
 };
 use super::im_predicate::RelateMatrixPredicate;
-use super::relate_geometry::RelateGeometry;
+use super::relate_geometry::{GeometryMeta, RelateGeometry};
+use super::relate_point_locator::{Mode, Polygonal};
 use super::topology_computer::TopologyComputer;
 use super::topology_predicate::{
     InputIndex, TopologyPredicate, envelope_covers, envelopes_intersect,
@@ -38,7 +39,8 @@ pub(crate) fn relate<F: GeoFloat>(
     a: &GeometryCow<'_, F>,
     b: &GeometryCow<'_, F>,
 ) -> IntersectionMatrix {
-    RelateNG::new(a).evaluate_matrix(b)
+    let state = PreparedRelateState::default();
+    RelateNG::new(a, &state).evaluate_matrix(b)
 }
 
 /// Evaluates a topological predicate for a pair of geometries, with
@@ -48,33 +50,73 @@ pub(crate) fn eval<F: GeoFloat>(
     b: &GeometryCow<'_, F>,
     predicate: &mut dyn TopologyPredicate<F>,
 ) -> bool {
-    RelateNG::new(a).evaluate(b, predicate)
+    let state = PreparedRelateState::default();
+    RelateNG::new(a, &state).evaluate(b, predicate)
+}
+
+/// The A-side caches of a prepared relate evaluation. The state is fully
+/// owned (segment strings own their coordinates, the area indexes are
+/// owned), so it can live in a `PreparedGeometry` and be shared into
+/// per-call engines without borrowing the geometry.
+pub(crate) struct PreparedRelateState<F: GeoFloat> {
+    /// The A-side segment index, built over all A edges on first use.
+    edge_mutual_int: OnceCell<MutualSegmentSetIntersector<F>>,
+    /// The per-polygonal-element area locators of A.
+    area_locators: super::relate_point_locator::SharedAreaLocators<F>,
+    /// The unique points of A (for the P/P fast path).
+    unique_points:
+        OnceCell<std::collections::BTreeSet<crate::relate::geomgraph::node_map::NodeKey<F>>>,
+    /// The envelope and dimension analysis of A.
+    meta: OnceCell<GeometryMeta<F>>,
+}
+
+impl<F: GeoFloat> Default for PreparedRelateState<F> {
+    fn default() -> Self {
+        Self {
+            edge_mutual_int: OnceCell::new(),
+            area_locators: OnceCell::new(),
+            unique_points: OnceCell::new(),
+            meta: OnceCell::new(),
+        }
+    }
+}
+
+impl<F: GeoFloat> PreparedRelateState<F> {
+    /// The metadata of the A geometry, computed on first use.
+    pub fn meta(&self, a: &GeometryCow<'_, F>) -> &GeometryMeta<F> {
+        self.meta.get_or_init(|| GeometryMeta::of(a))
+    }
 }
 
 pub(crate) struct RelateNG<'a, F: GeoFloat> {
     geom_a: RelateGeometry<'a, F>,
-    /// The cached A-side segment index. In prepared mode it is built over
+    /// The A-side caches. In prepared mode the segment index is built over
     /// all A edges and reused across evaluations; otherwise it is built
-    /// filtered to the first evaluation's envelope (a non-prepared
-    /// instance is single-use, as in JTS).
-    edge_mutual_int: OnceCell<MutualSegmentSetIntersector<F>>,
+    /// filtered to the first evaluation's envelope, so a non-prepared
+    /// instance is single-use, as in JTS.
+    state: &'a PreparedRelateState<F>,
 }
 
 impl<'a, F: GeoFloat> RelateNG<'a, F> {
-    pub fn new(a: &'a GeometryCow<'a, F>) -> Self {
-        Self::new_with_prepared(a, false)
-    }
-
-    /// Creates an instance with cached spatial indexes, for repeated
-    /// evaluations against the same A geometry.
-    pub fn prepare(a: &'a GeometryCow<'a, F>) -> Self {
-        Self::new_with_prepared(a, true)
-    }
-
-    fn new_with_prepared(a: &'a GeometryCow<'a, F>, is_prepared: bool) -> Self {
+    /// An engine for a single evaluation.
+    pub fn new(a: &'a GeometryCow<'a, F>, state: &'a PreparedRelateState<F>) -> Self {
         Self {
-            geom_a: RelateGeometry::new_with_prepared(a, is_prepared),
-            edge_mutual_int: OnceCell::new(),
+            geom_a: RelateGeometry::new(a, Mode::Simple),
+            state,
+        }
+    }
+
+    /// An engine for repeated evaluations against the same A geometry:
+    /// the indexes are stored in the state and reused by every engine
+    /// constructed over it.
+    pub fn prepared(a: &'a GeometryCow<'a, F>, state: &'a PreparedRelateState<F>) -> Self {
+        Self {
+            geom_a: RelateGeometry::with_meta(
+                a,
+                Mode::Prepared(&state.area_locators),
+                *state.meta(a),
+            ),
+            state,
         }
     }
 
@@ -91,12 +133,15 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
         b: &GeometryCow<'_, F>,
         predicate: &mut dyn TopologyPredicate<F>,
     ) -> bool {
+        // The B wrapper is built first so the envelope gate reuses its
+        // cached envelope instead of walking B's coordinates twice (JTS
+        // gets the gate's envelope for free from the Geometry cache).
+        let geom_b = RelateGeometry::new(b, Mode::Simple);
+
         // Fast envelope checks.
-        if !self.has_required_envelope_interaction(b, predicate) {
+        if !self.has_required_envelope_interaction(geom_b.envelope(), predicate) {
             return false;
         }
-
-        let geom_b = RelateGeometry::new(b);
 
         let dim_a = self.geom_a.dimension_real();
         let dim_b = geom_b.dimension_real();
@@ -142,10 +187,9 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
 
     fn has_required_envelope_interaction(
         &self,
-        b: &GeometryCow<'_, F>,
+        env_b: Option<Rect<F>>,
         predicate: &dyn TopologyPredicate<F>,
     ) -> bool {
-        let env_b = b.bounding_rect();
         let env_a = self.geom_a.envelope();
         let mut is_interacts = false;
         if predicate.requires_covers(InputIndex::A) {
@@ -172,7 +216,12 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
         geom_b: &RelateGeometry<'_, F>,
         computer: &mut TopologyComputer<'_, '_, '_, F>,
     ) {
-        let pts_a = self.geom_a.unique_points();
+        // The A-side unique points live in the (possibly shared) state so
+        // prepared use computes them once.
+        let pts_a = self
+            .state
+            .unique_points
+            .get_or_init(|| self.geom_a.compute_unique_points());
         let pts_b = geom_b.unique_points();
 
         let mut num_b_in_a = 0;
@@ -217,7 +266,7 @@ impl<'a, F: GeoFloat> RelateNG<'a, F> {
         } else {
             // In prepared mode the A edge index is reused across
             // evaluations.
-            let mutual = self.edge_mutual_int.get_or_init(|| {
+            let mutual = self.state.edge_mutual_int.get_or_init(|| {
                 let env_extract = if self.geom_a.is_prepared() {
                     None
                 } else {
@@ -301,8 +350,8 @@ fn compute_point<F: GeoFloat>(
 ) {
     let loc_dim_target = geom_target.locate_with_dim(pt);
     let loc_target = loc_dim_target.location();
-    let dim_target = loc_dim_target.dimension_with_exterior(computer.dimension(other(input)));
-    computer.add_point_on_geometry(input, loc_target, dim_target, pt);
+    let dim_target = loc_dim_target.dimension_with_exterior(computer.dimension(input.other()));
+    computer.add_point_on_geometry(input, loc_target, dim_target);
 }
 
 fn compute_line_ends<F: GeoFloat>(
@@ -321,44 +370,25 @@ fn compute_line_ends<F: GeoFloat>(
     let mut has_interior_exterior_intersection = false;
     let mut has_boundary_exterior_intersection = false;
 
-    for elem in linear_elements(geom.geometry()) {
-        let (e0, e1, is_closed, elem_env) = match elem {
-            LinearElement::LineString(ls) => {
-                let first = ls.0[0];
-                let last = ls.0[ls.0.len() - 1];
-                (first, last, ls.is_closed(), ls.bounding_rect())
-            }
-            LinearElement::Line(l) => (
-                l.start,
-                l.end,
-                l.start == l.end,
-                Some(Rect::new(l.start, l.end)),
-            ),
-        };
+    for elem in geom.lines() {
+        let coords = &elem.line.0;
+        let e0 = coords[0];
+        let e1 = coords[coords.len() - 1];
 
         // Once intersections with the target exterior are recorded for
         // both interior and boundary line ends, skip further
         // known-exterior line components.
         if has_interior_exterior_intersection
             && has_boundary_exterior_intersection
-            && !envelopes_intersect(elem_env, geom_target.envelope())
+            && !envelopes_intersect(elem.env, geom_target.envelope())
         {
             continue;
         }
 
-        let loc0 = compute_line_end(geom, input, e0, geom_target, computer);
-        match loc0 {
-            Some(CoordPos::Inside) => has_interior_exterior_intersection = true,
-            Some(CoordPos::OnBoundary) => has_boundary_exterior_intersection = true,
-            _ => {}
-        }
-        if computer.is_result_known() {
-            return true;
-        }
-
-        if !is_closed {
-            let loc1 = compute_line_end(geom, input, e1, geom_target, computer);
-            match loc1 {
+        // A closed line has a single end point.
+        let ends: &[Coord<F>] = if e0 == e1 { &[e0] } else { &[e0, e1] };
+        for &pt in ends {
+            match compute_line_end(geom, input, pt, geom_target, computer) {
                 Some(CoordPos::Inside) => has_interior_exterior_intersection = true,
                 Some(CoordPos::OnBoundary) => has_boundary_exterior_intersection = true,
                 _ => {}
@@ -391,8 +421,8 @@ fn compute_line_end<F: GeoFloat>(
 
     let loc_dim_target = geom_target.locate_with_dim(pt);
     let loc_target = loc_dim_target.location();
-    let dim_target = loc_dim_target.dimension_with_exterior(computer.dimension(other(input)));
-    computer.add_line_end_on_geometry(input, loc_line_end, loc_target, dim_target, pt);
+    let dim_target = loc_dim_target.dimension_with_exterior(computer.dimension(input.other()));
+    computer.add_line_end_on_geometry(input, loc_line_end, loc_target, dim_target);
     if loc_target == CoordPos::Outside {
         return Some(loc_line_end);
     }
@@ -416,9 +446,8 @@ fn compute_area_vertex<F: GeoFloat>(
 
     let mut has_exterior_intersection = false;
 
-    for elem in area_elements(geom.geometry()) {
-        let polygon = elem.polygon();
-        if polygon.exterior().0.is_empty() {
+    for polygon in geom.polygonals().iter().flat_map(Polygonal::polygons) {
+        if polygon.is_empty() {
             continue;
         }
         // Once an intersection with the target exterior is recorded, skip
@@ -460,131 +489,9 @@ fn compute_area_vertex_on_ring<F: GeoFloat>(
     let loc_area = geom.locate_area_vertex(pt);
     let loc_dim_target = geom_target.locate_with_dim(pt);
     let loc_target = loc_dim_target.location();
-    let dim_target = loc_dim_target.dimension_with_exterior(computer.dimension(other(input)));
-    computer.add_area_vertex(input, loc_area, loc_target, dim_target, pt);
+    let dim_target = loc_dim_target.dimension_with_exterior(computer.dimension(input.other()));
+    computer.add_area_vertex(input, loc_area, loc_target, dim_target);
     loc_target == CoordPos::Outside
-}
-
-fn other(input: InputIndex) -> InputIndex {
-    match input {
-        InputIndex::A => InputIndex::B,
-        InputIndex::B => InputIndex::A,
-    }
-}
-
-/// The linear elements of a geometry (LineStrings and Lines), in document
-/// order, skipping empty ones.
-enum LinearElement<'g, F: GeoFloat> {
-    LineString(&'g LineString<F>),
-    Line(&'g Line<F>),
-}
-
-fn linear_elements<'g, F: GeoFloat>(geom: &'g GeometryCow<'g, F>) -> Vec<LinearElement<'g, F>> {
-    let mut elems = Vec::new();
-    match geom {
-        GeometryCow::Line(l) => elems.push(LinearElement::Line(l)),
-        GeometryCow::LineString(ls) => {
-            if !ls.0.is_empty() {
-                elems.push(LinearElement::LineString(ls));
-            }
-        }
-        GeometryCow::MultiLineString(mls) => {
-            for ls in &mls.0 {
-                if !ls.0.is_empty() {
-                    elems.push(LinearElement::LineString(ls));
-                }
-            }
-        }
-        GeometryCow::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                collect_linear_elements(g, &mut elems);
-            }
-        }
-        _ => {}
-    }
-    elems
-}
-
-fn collect_linear_elements<'g, F: GeoFloat>(
-    geom: &'g Geometry<F>,
-    elems: &mut Vec<LinearElement<'g, F>>,
-) {
-    match geom {
-        Geometry::Line(l) => elems.push(LinearElement::Line(l)),
-        Geometry::LineString(ls) => {
-            if !ls.0.is_empty() {
-                elems.push(LinearElement::LineString(ls));
-            }
-        }
-        Geometry::MultiLineString(mls) => {
-            for ls in &mls.0 {
-                if !ls.0.is_empty() {
-                    elems.push(LinearElement::LineString(ls));
-                }
-            }
-        }
-        Geometry::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                collect_linear_elements(g, elems);
-            }
-        }
-        _ => {}
-    }
-}
-
-/// The polygonal elements of a geometry, in document order. Rect and
-/// Triangle elements are converted to owned polygons.
-enum AreaElement<'g, F: GeoFloat> {
-    Polygon(&'g Polygon<F>),
-    Owned(Polygon<F>),
-}
-
-impl<F: GeoFloat> AreaElement<'_, F> {
-    fn polygon(&self) -> &Polygon<F> {
-        match self {
-            AreaElement::Polygon(p) => p,
-            AreaElement::Owned(p) => p,
-        }
-    }
-}
-
-fn area_elements<'g, F: GeoFloat>(geom: &'g GeometryCow<'g, F>) -> Vec<AreaElement<'g, F>> {
-    let mut elems = Vec::new();
-    match geom {
-        GeometryCow::Polygon(p) => elems.push(AreaElement::Polygon(p)),
-        GeometryCow::MultiPolygon(mp) => {
-            elems.extend(mp.0.iter().map(AreaElement::Polygon));
-        }
-        GeometryCow::Rect(r) => elems.push(AreaElement::Owned(r.to_polygon())),
-        GeometryCow::Triangle(t) => elems.push(AreaElement::Owned(t.to_polygon())),
-        GeometryCow::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                collect_area_elements(g, &mut elems);
-            }
-        }
-        _ => {}
-    }
-    elems
-}
-
-fn collect_area_elements<'g, F: GeoFloat>(
-    geom: &'g Geometry<F>,
-    elems: &mut Vec<AreaElement<'g, F>>,
-) {
-    match geom {
-        Geometry::Polygon(p) => elems.push(AreaElement::Polygon(p)),
-        Geometry::MultiPolygon(mp) => {
-            elems.extend(mp.0.iter().map(AreaElement::Polygon));
-        }
-        Geometry::Rect(r) => elems.push(AreaElement::Owned(r.to_polygon())),
-        Geometry::Triangle(t) => elems.push(AreaElement::Owned(t.to_polygon())),
-        Geometry::GeometryCollection(gc) => {
-            for g in &gc.0 {
-                collect_area_elements(g, elems);
-            }
-        }
-        _ => {}
-    }
 }
 
 #[cfg(test)]
@@ -606,7 +513,7 @@ mod tests {
         let cow_m0 = GeometryCow::from(&m0);
 
         let im = relate(&cow_mls, &cow_m0);
-        assert_eq!(format!("{im:?}"), "IntersectionMatrix(1F1F00FF2)");
+        assert_eq!(im, "1F1F00FF2".parse().unwrap());
         assert!(im.is_contains());
 
         let mut contains = super::super::relate_predicate::contains();

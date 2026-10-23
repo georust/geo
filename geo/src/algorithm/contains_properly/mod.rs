@@ -58,17 +58,13 @@ mod triangle;
 
 macro_rules! impl_contains_properly_from_relate {
     ($for:ty,  [$($target:ty),*]) => {
-        $(
-            impl<T> ContainsProperly<$target> for $for
-            where
-                T: GeoFloat
-            {
-                fn contains_properly(&self, target: &$target) -> bool {
-                    use $crate::algorithm::Relate;
-                    self.relate(target).is_contains_properly()
-                }
-            }
-        )*
+        $crate::algorithm::relate::relateng::impl_predicate_from_relate!(
+            ContainsProperly,
+            contains_properly,
+            $crate::algorithm::relate::relateng::relate_predicate::contains_properly(),
+            $for,
+            [$($target),*]
+        );
     };
 }
 use impl_contains_properly_from_relate;

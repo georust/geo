@@ -1,5 +1,4 @@
 <run>
-  <precisionModel scale="1.0" offsetx="0.0" offsety="0.0"/>
 
 <case>
   <desc>LL - disjoint, non-overlapping envelopes</desc>
@@ -62,7 +61,7 @@
 </case>
 
 <case>
-  <desc>Line vs line - pointwise equal short</desc>
+  <desc>Line vs line - pointwise equal</desc>
   <a>
     LINESTRING(20 20, 80 80)
   </a>
@@ -307,5 +306,89 @@
   </test>
 </case>
 
+<case>
+<desc>LL - closed multiline / empty line</desc>
+  <a>
+    MULTILINESTRING ((0 0, 0 1), (0 1, 1 1, 1 0, 0 0))
+  </a>
+  <b>
+    LINESTRING EMPTY
+  </b>
+  <test>
+    <op name="relate" arg1="A" arg2="B" arg3="FF1FFFFF2">true</op>
+  </test>
+</case>
+
+<case>
+<desc>LL - test intersection node computation (see https://github.com/locationtech/jts/issues/396)</desc>
+  <a>
+    LINESTRING (1 0, 0 2, 0 0, 2 2)
+  </a>
+  <b>
+    LINESTRING (0 0, 2 2)
+  </b>
+  <test>
+    <op name="relate" arg1="A" arg2="B" arg3="101F00FF2">true</op>
+  </test>
+  <test><op name="contains"   arg1="A" arg2="B"> true  </op></test>
+  <test><op name="coveredBy"  arg1="A" arg2="B"> false </op></test>
+  <test><op name="covers"     arg1="A" arg2="B"> true  </op></test>
+  <test><op name="crosses"    arg1="A" arg2="B"> false </op></test>
+  <test><op name="disjoint"   arg1="A" arg2="B"> false </op></test>
+  <test><op name="equalsTopo" arg1="A" arg2="B"> false </op></test>
+  <test><op name="intersects" arg1="A" arg2="B"> true  </op></test>
+  <test><op name="overlaps"   arg1="A" arg2="B"> false </op></test>
+  <test><op name="touches"    arg1="A" arg2="B"> false </op></test>
+  <test><op name="within"     arg1="A" arg2="B"> false </op></test>
+</case>
+
+<case>
+<desc>LL - test intersection node computation (see https://github.com/libgeos/geos/issues/933)</desc>
+  <a>
+    MULTILINESTRING ((0 0, 1 1), (0.5 0.5, 1 0.1, -1 0.1))
+  </a>
+  <b>
+    LINESTRING (0 0, 1 1)
+  </b>
+  <test>
+    <op name="relate" arg1="A" arg2="B" arg3="1F1000FF2">true</op>
+  </test>
+  <test><op name="contains"   arg1="A" arg2="B"> true  </op></test>
+  <test><op name="coveredBy"  arg1="A" arg2="B"> false </op></test>
+  <test><op name="covers"     arg1="A" arg2="B"> true  </op></test>
+  <test><op name="crosses"    arg1="A" arg2="B"> false </op></test>
+  <test><op name="disjoint"   arg1="A" arg2="B"> false </op></test>
+  <test><op name="equalsTopo" arg1="A" arg2="B"> false </op></test>
+  <test><op name="intersects" arg1="A" arg2="B"> true  </op></test>
+  <test><op name="overlaps"   arg1="A" arg2="B"> false </op></test>
+  <test><op name="touches"    arg1="A" arg2="B"> false </op></test>
+  <test><op name="within"     arg1="A" arg2="B"> false </op></test>
+</case>
+
+<case>
+  <desc>LmL - topographically equal with no boundary</desc>
+  <a>
+    LINESTRING(0 0, 0 50, 50 50, 50 0, 0 0)
+  </a>
+  <b>
+    MULTILINESTRING((0 0, 0 50), (0 50, 50 50), (50 50, 50 0), (50 0, 0 0))
+  </b>
+<test>
+  <op name="relate" arg3="1FFFFFFF2" arg1="A" arg2="B"> true </op>
+</test>
+</case>
+
+<case>
+  <desc>LmL - equal with boundary intersection</desc>
+  <a>
+    LINESTRING(0 0, 60 0, 60 60, 60 0, 120 0)
+  </a>
+  <b>
+    MULTILINESTRING((0 0, 60 0), (60 0, 120 0), (60 0, 60 60))
+  </b>
+<test>
+  <op name="relate" arg3="10FF0FFF2" arg1="A" arg2="B"> true </op>
+</test>
+</case>
 
 </run>

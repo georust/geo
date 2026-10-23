@@ -48,14 +48,28 @@ pub(crate) struct Case {
     #[serde(default)]
     pub(crate) desc: String,
 
-    #[serde(deserialize_with = "wkt::deserialize_wkt")]
-    pub(crate) a: Geometry,
+    #[serde(deserialize_with = "deserialize_lenient_geometry", default)]
+    pub(crate) a: Option<Geometry>,
 
-    #[serde(deserialize_with = "deserialize_opt_geometry", default)]
+    #[serde(deserialize_with = "deserialize_lenient_geometry", default)]
     pub(crate) b: Option<Geometry>,
 
     #[serde(rename = "test", default)]
     pub(crate) tests: Vec<Test>,
+}
+
+impl Case {
+    fn a(&self) -> Result<&Geometry> {
+        self.a
+            .as_ref()
+            .ok_or_else(|| "geometry A is not representable in geo".into())
+    }
+
+    fn b(&self) -> Result<&Geometry> {
+        self.b
+            .as_ref()
+            .ok_or_else(|| "no geometry b in case".into())
+    }
 }
 
 #[derive(Debug, Deserialize)]
@@ -277,9 +291,25 @@ pub(crate) enum Operation {
     },
 }
 
+/// Resolves the (arg1, arg2) references of a binary predicate op to the
+/// case geometries, supporting both (A, B) and the swapped (B, A) order
+/// used by some fixtures.
+fn binary_args<'c>(case: &'c Case, arg1: &str, arg2: &str) -> Result<(&'c Geometry, &'c Geometry)> {
+    let a = case.a()?;
+    let b = case.b()?;
+    match (arg1.to_uppercase().as_str(), arg2.to_uppercase().as_str()) {
+        ("A", "B") => Ok((a, b)),
+        ("B", "A") => Ok((b, a)),
+        (arg1, arg2) => Err(format!("unsupported op arguments: {arg1}, {arg2}").into()),
+    }
+}
+
 impl OperationInput {
     pub(crate) fn into_operation(self, case: &Case) -> Result<Operation> {
-        let geometry = &case.a;
+        let geometry = case
+            .a
+            .as_ref()
+            .ok_or("geometry A is not representable in geo")?;
         match self {
             Self::BufferInput(BufferInput {
                 arg1,
@@ -307,79 +337,59 @@ impl OperationInput {
                     expected: convex_hull_input.expected,
                 })
             }
-            Self::EqualsTopoInput(equals_topo_input) => {
-                assert_eq!("A", equals_topo_input.arg1);
-                assert_eq!("B", equals_topo_input.arg2);
-                assert!(
-                    case.b.is_some(),
-                    "equalsTopo test case must contain geometry b"
-                );
+            Self::EqualsTopoInput(input) => {
+                let (first, second) = binary_args(case, &input.arg1, &input.arg2)?;
                 Ok(Operation::EqualsTopo {
-                    a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
-                    expected: equals_topo_input.expected,
+                    a: first.clone(),
+                    b: second.clone(),
+                    expected: input.expected,
                 })
             }
             Self::IntersectsInput(input) => {
-                assert_eq!("A", input.arg1);
-                assert_eq!("B", input.arg2);
-                assert!(
-                    case.b.is_some(),
-                    "intersects test case must contain geometry b"
-                );
+                let (first, second) = binary_args(case, &input.arg1, &input.arg2)?;
                 Ok(Operation::Intersects {
-                    subject: geometry.clone(),
-                    clip: case.b.clone().expect("no geometry b in case"),
+                    subject: first.clone(),
+                    clip: second.clone(),
                     expected: input.expected,
                 })
             }
             Self::RelateInput(input) => {
-                assert_eq!("A", input.arg1);
-                assert_eq!("B", input.arg2);
-                assert!(case.b.is_some(), "relate test case must contain geometry b");
+                let (first, second) = binary_args(case, &input.arg1, &input.arg2)?;
                 Ok(Operation::Relate {
-                    a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    a: first.clone(),
+                    b: second.clone(),
                     expected: input.expected,
                 })
             }
             Self::ContainsInput(input) => {
-                assert_eq!("A", input.arg1);
-                assert_eq!("B", input.arg2);
+                let (first, second) = binary_args(case, &input.arg1, &input.arg2)?;
                 Ok(Operation::Contains {
-                    subject: geometry.clone(),
-                    target: case.b.clone().expect("no geometry b in case"),
+                    subject: first.clone(),
+                    target: second.clone(),
                     expected: input.expected,
                 })
             }
             Self::CoversInput(input) => {
-                assert_eq!("A", input.arg1);
-                assert_eq!("B", input.arg2);
+                let (first, second) = binary_args(case, &input.arg1, &input.arg2)?;
                 Ok(Operation::Covers {
-                    subject: geometry.clone(),
-                    target: case.b.clone().expect("no geometry b in case"),
+                    subject: first.clone(),
+                    target: second.clone(),
                     expected: input.expected,
                 })
             }
             Self::WithinInput(input) => {
-                assert_eq!("A", input.arg1);
-                assert_eq!("B", input.arg2);
+                let (first, second) = binary_args(case, &input.arg1, &input.arg2)?;
                 Ok(Operation::Within {
-                    subject: geometry.clone(),
-                    target: case.b.clone().expect("no geometry b in case"),
+                    subject: first.clone(),
+                    target: second.clone(),
                     expected: input.expected,
                 })
             }
             Self::UnionInput(input) => {
-                validate_boolean_op(
-                    &input.arg1,
-                    &input.arg2,
-                    geometry,
-                    case.b.as_ref().expect("no geometry b in case"),
-                )?;
+                validate_boolean_op(&input.arg1, &input.arg2, geometry, case.b()?)?;
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b()?.clone(),
                     op: BoolOp::Union,
                     expected: input.expected,
                 })
@@ -389,7 +399,7 @@ impl OperationInput {
                 assert_eq!("B", input.arg2);
 
                 // Clipping a line string in geo is like a Line x Poly Intersection in JTS
-                match (geometry, case.b.as_ref().expect("no geometry b in case")) {
+                match (geometry, case.b()?) {
                     (
                         Geometry::LineString(_) | Geometry::MultiLineString(_),
                         Geometry::Polygon(_) | Geometry::MultiPolygon(_),
@@ -400,31 +410,26 @@ impl OperationInput {
                     ) => {
                         return Ok(Operation::ClipOp {
                             a: geometry.clone(),
-                            b: case.b.clone().expect("no geometry b in case"),
+                            b: case.b()?.clone(),
                             invert: false,
                             expected: input.expected,
                         });
                     }
                     _ => {
-                        validate_boolean_op(
-                            &input.arg1,
-                            &input.arg2,
-                            geometry,
-                            case.b.as_ref().expect("no geometry b in case"),
-                        )?;
+                        validate_boolean_op(&input.arg1, &input.arg2, geometry, case.b()?)?;
                     }
                 };
 
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b()?.clone(),
                     op: BoolOp::Intersection,
                     expected: input.expected,
                 })
             }
             Self::DifferenceInput(input) => {
                 // Clipping a line string in geo is like a Line x Poly Intersection in JTS
-                match (geometry, case.b.as_ref().expect("no geometry b in case")) {
+                match (geometry, case.b()?) {
                     (
                         Geometry::LineString(_) | Geometry::MultiLineString(_),
                         Geometry::Polygon(_) | Geometry::MultiPolygon(_),
@@ -435,37 +440,27 @@ impl OperationInput {
                     ) => {
                         return Ok(Operation::ClipOp {
                             a: geometry.clone(),
-                            b: case.b.clone().expect("no geometry b in case"),
+                            b: case.b()?.clone(),
                             invert: true,
                             expected: input.expected,
                         });
                     }
                     _ => {
-                        validate_boolean_op(
-                            &input.arg1,
-                            &input.arg2,
-                            geometry,
-                            case.b.as_ref().expect("no geometry b in case"),
-                        )?;
+                        validate_boolean_op(&input.arg1, &input.arg2, geometry, case.b()?)?;
                     }
                 };
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b()?.clone(),
                     op: BoolOp::Difference,
                     expected: input.expected,
                 })
             }
             Self::SymDifferenceInput(input) => {
-                validate_boolean_op(
-                    &input.arg1,
-                    &input.arg2,
-                    geometry,
-                    case.b.as_ref().expect("no geometry b in case"),
-                )?;
+                validate_boolean_op(&input.arg1, &input.arg2, geometry, case.b()?)?;
                 Ok(Operation::BooleanOp {
                     a: geometry.clone(),
-                    b: case.b.clone().expect("no geometry b in case"),
+                    b: case.b()?.clone(),
                     op: BoolOp::Xor,
                     expected: input.expected,
                 })
@@ -474,6 +469,10 @@ impl OperationInput {
             OperationInput::IsValidInput(input) => match input.arg1.as_str() {
                 "A" => Ok(Operation::IsValidOp {
                     subject: geometry.clone(),
+                    expected: input.expected,
+                }),
+                "B" => Ok(Operation::IsValidOp {
+                    subject: case.b()?.clone(),
                     expected: input.expected,
                 }),
                 _ => todo!("Handle {}", input.arg1),
@@ -498,16 +497,29 @@ fn validate_boolean_op(arg1: &str, arg2: &str, a: &Geometry<f64>, b: &Geometry<f
     Ok(())
 }
 
-pub fn deserialize_opt_geometry<'de, D>(
+/// Deserialises an optional WKT geometry, treating WKT that cannot be
+/// represented as a geo geometry (for example a MultiPoint with an EMPTY
+/// point element) as absent instead of failing the whole file. Cases with
+/// an absent geometry are skipped per test, with a log message, rather
+/// than silently dropping every case in the file.
+pub fn deserialize_lenient_geometry<'de, D>(
     deserializer: D,
 ) -> std::result::Result<Option<Geometry>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    #[derive(Debug, Deserialize)]
-    struct Wrapper(#[serde(deserialize_with = "wkt::deserialize_wkt")] Geometry);
+    use wkt::TryFromWkt;
 
-    Option::<Wrapper>::deserialize(deserializer).map(|opt_wrapped| opt_wrapped.map(|w| w.0))
+    let raw = Option::<String>::deserialize(deserializer)?;
+    Ok(
+        raw.and_then(|wkt_str| match Geometry::try_from_wkt_str(&wkt_str) {
+            Ok(geometry) => Some(geometry),
+            Err(e) => {
+                log::warn!("geometry not representable in geo, skipping its cases: {e}: {wkt_str}");
+                None
+            }
+        }),
+    )
 }
 
 pub fn deserialize_from_str<'de, T, D>(deserializer: D) -> std::result::Result<T, D::Error>
