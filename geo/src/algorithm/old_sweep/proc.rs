@@ -271,7 +271,7 @@ impl<C: Cross + Clone> Sweep<C> {
                     let next = (insert_idx < self.active_segments.len())
                         .then(|| self.active_segments[insert_idx].clone());
 
-                    for adj_segment in prev.into_iter().chain(next.into_iter()) {
+                    for adj_segment in prev.into_iter().chain(next) {
                         let geom = adj_segment.geom();
                         if let Some(adj_intersection) = segment.geom().intersect_line_ordered(&geom)
                         {
