@@ -32,7 +32,6 @@ pub(crate) mod intersection_matrix_pattern {
 
 /// Creates a predicate to determine whether two geometries intersect: they
 /// have at least one point in common.
-#[allow(dead_code)] // Not yet routed through a public predicate trait.
 pub(crate) fn intersects() -> IntersectsPredicate {
     IntersectsPredicate::default()
 }
