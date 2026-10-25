@@ -2,9 +2,10 @@
 
 ## Unreleased
 
-- Polygon validation finds ring self-intersections with a sweep instead of comparing every pair of segments, which was quadratic in the ring's size.
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 
+- FIX: a ring whose neighbouring segments overlap, like a flat triangle `POLYGON((0 0,2 0,1 0,0 0))`, is now reported as a self-intersection, as in PostGIS. A ring with too few points is no longer also reported as a self-intersection.
+- Polygon validation finds ring self-intersections with a sweep instead of comparing every pair of segments, which was quadratic in the ring's size.
 - Add `Intersects<Coord>` and `Intersects<Point>` implementations for `IntervalTreeMultiPolygon`. Unlike the existing `Contains` impls, these return `true` for points on the polygon's boundary.
 
 - Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
