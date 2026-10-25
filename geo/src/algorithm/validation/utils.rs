@@ -1,5 +1,5 @@
 use crate::algorithm::sweep::{Cross, Intersections};
-use crate::{Coord, CoordFloat, GeoFloat, LineString, RemoveRepeatedPoints};
+use crate::{Coord, CoordFloat, GeoFloat, Line, LineString, RemoveRepeatedPoints};
 use robust::{Coord as RobustCoord, orient2d};
 
 pub(crate) fn check_coord_is_not_finite<T: CoordFloat>(geom: &Coord<T>) -> bool {
