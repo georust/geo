@@ -22,15 +22,12 @@ where
             .tree()
             .intersection_candidates_with_other_tree(graph.tree())
         {
-            if check_for_self_intersecting_edges || segment_0.edge_idx != segment_1.edge_idx {
-                let edge_0 = &edges[segment_0.edge_idx];
-                let edge_1 = &edges[segment_1.edge_idx];
-                segment_intersector.add_intersections(
-                    edge_0,
-                    segment_0.segment_idx,
-                    edge_1,
-                    segment_1.segment_idx,
-                );
+            let (edge_idx_0, segment_idx_0) = segment_0.payload;
+            let (edge_idx_1, segment_idx_1) = segment_1.payload;
+            if check_for_self_intersecting_edges || edge_idx_0 != edge_idx_1 {
+                let edge_0 = &edges[edge_idx_0];
+                let edge_1 = &edges[edge_idx_1];
+                segment_intersector.add_intersections(edge_0, segment_idx_0, edge_1, segment_idx_1);
             }
         }
     }
@@ -48,14 +45,11 @@ where
         let tree_1 = graph_1.tree();
 
         for (segment_0, segment_1) in tree_0.intersection_candidates_with_other_tree(tree_1) {
-            let edge_0 = &edges_0[segment_0.edge_idx];
-            let edge_1 = &edges_1[segment_1.edge_idx];
-            segment_intersector.add_intersections(
-                edge_0,
-                segment_0.segment_idx,
-                edge_1,
-                segment_1.segment_idx,
-            );
+            let (edge_idx_0, segment_idx_0) = segment_0.payload;
+            let (edge_idx_1, segment_idx_1) = segment_1.payload;
+            let edge_0 = &edges_0[edge_idx_0];
+            let edge_1 = &edges_1[edge_idx_1];
+            segment_intersector.add_intersections(edge_0, segment_idx_0, edge_1, segment_idx_1);
         }
     }
 }
