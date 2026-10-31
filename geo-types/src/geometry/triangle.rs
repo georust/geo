@@ -1,4 +1,4 @@
-use crate::{polygon, Coord, CoordNum, Line, Point, Polygon};
+use crate::{coord, polygon, Coord, CoordFloat, CoordNum, Line, Point, Polygon};
 use core::cmp::Ordering;
 
 /// A bounded 2D area whose three vertices are defined by
@@ -110,6 +110,32 @@ impl<T: CoordNum> Triangle<T> {
     /// ```
     pub fn to_polygon(self) -> Polygon<T> {
         polygon![self.0, self.1, self.2, self.0]
+    }
+}
+
+impl<T: CoordFloat> Triangle<T> {
+    /// Returns the center `Coord` of the `Triangle`: the mean of its three vertices.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use geo_types::{coord, Triangle};
+    ///
+    /// let triangle = Triangle::new(
+    ///     coord! { x: 0., y: 0. },
+    ///     coord! { x: 3., y: 0. },
+    ///     coord! { x: 0., y: 3. },
+    /// );
+    ///
+    /// assert_eq!(triangle.center(), coord! { x: 1., y: 1. });
+    /// ```
+    pub fn center(self) -> Coord<T> {
+        let three = T::one() + T::one() + T::one();
+        let (v1, v2, v3) = (self.v1(), self.v2(), self.v3());
+        coord! {
+            x: (v1.x + v2.x + v3.x) / three,
+            y: (v1.y + v2.y + v3.y) / three,
+        }
     }
 }
 
