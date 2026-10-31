@@ -222,12 +222,10 @@ where
             // It is important that the point be known to be an interior point of both Geometries,
             // since it is possible in a self-intersecting geometry to have a proper intersection
             // on one segment that is also a boundary point of another segment.
-            (Dimensions::OneDimensional, Dimensions::OneDimensional) => {
-                if has_proper_interior {
-                    intersection_matrix
-                        .set_at_least_from_string("0FFFFFFFF")
-                        .expect("error in hardcoded dimensions");
-                }
+            (Dimensions::OneDimensional, Dimensions::OneDimensional) if has_proper_interior => {
+                intersection_matrix
+                    .set_at_least_from_string("0FFFFFFFF")
+                    .expect("error in hardcoded dimensions");
             }
             _ => {}
         }

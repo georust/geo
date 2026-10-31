@@ -13,7 +13,7 @@
 //!
 //! # Supported Types
 //!
-//! Both methods work on any geometry implementing [`CoordsIter`](self::CoordsIter), including:
+//! Both methods work on any geometry implementing [`CoordsIter`], including:
 //! - `Point`, `MultiPoint`: typical use case for site-based Voronoi
 //! - `LineString`, `MultiLineString`: uses vertices as sites
 //! - `Polygon`, `MultiPolygon`: uses exterior/interior ring vertices as sites
