@@ -5,6 +5,7 @@ use crate::algorithm::{
     centroid::Centroid,
     coords_iter::CoordsIter,
     dimensions::HasDimensions,
+    intersects::Intersects,
     line_intersection::LineIntersection,
     line_measures::{Distance, Euclidean},
     lines_iter::LinesIter,
@@ -372,7 +373,14 @@ where
     type Output = Point<T>;
 
     fn interior_point(&self) -> Self::Output {
-        self.centroid()
+        let center = self.centroid();
+
+        if self.intersects(&center) {
+            center
+        } else {
+            // Just use the first vertex if we cannot do anything else.
+            self.v1().into()
+        }
     }
 }
 
@@ -788,6 +796,12 @@ mod test {
         assert_eq!(
             Triangle::new(c(0., 0.5), c(0., 0.5), c(0., 0.5)).interior_point(),
             point!(x: 0., y: 0.5)
+        );
+
+        // degenerate (straight line) triangle
+        assert_eq!(
+            Triangle::new(c(0., 0.), c(0., 0.), c(3., 87.)).interior_point(),
+            point!(x: 0., y: 0.)
         )
     }
 
