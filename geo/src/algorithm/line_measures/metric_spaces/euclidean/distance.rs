@@ -522,16 +522,29 @@ fn bbox_pruned_min_distance<F: GeoFloat, M>(
 fn nearest_neighbour_distance<F: GeoFloat>(geom1: &LineString<F>, geom2: &LineString<F>) -> F {
     let tree_a = RTree::bulk_load(geom1.lines().map(CachedEnvelope::new).collect());
     let tree_b = RTree::bulk_load(geom2.lines().map(CachedEnvelope::new).collect());
+    // A LineString with one coord has no segments, so its tree is empty and holds no
+    // nearest neighbour. If both trees are empty, no segment is available on either
+    // side and the two coords give the distance.
+    if tree_a.size() == 0 && tree_b.size() == 0 {
+        return match (geom1.0.first(), geom2.0.first()) {
+            (Some(coord_a), Some(coord_b)) => Euclidean.distance(*coord_a, *coord_b),
+            _ => Bounded::max_value(),
+        };
+    }
     // Return minimum distance between all geom a points and geom b lines, and all geom b points and geom a lines
     geom2
         .points()
         .fold(Bounded::max_value(), |acc: F, point| {
-            let nearest = tree_a.nearest_neighbor(point).unwrap();
-            acc.min(Euclidean.distance(nearest as &Line<F>, &point))
+            match tree_a.nearest_neighbor(point) {
+                Some(nearest) => acc.min(Euclidean.distance(nearest as &Line<F>, &point)),
+                None => acc,
+            }
         })
         .min(geom1.points().fold(Bounded::max_value(), |acc, point| {
-            let nearest = tree_b.nearest_neighbor(point).unwrap();
-            acc.min(Euclidean.distance(nearest as &Line<F>, &point))
+            match tree_b.nearest_neighbor(point) {
+                Some(nearest) => acc.min(Euclidean.distance(nearest as &Line<F>, &point)),
+                None => acc,
+            }
         }))
 }
 
@@ -1575,6 +1588,19 @@ mod test {
         let expected = 21.713575661323034_f64;
         let d = Euclidean.distance(&ls1, &ls2);
         assert_relative_eq!(d, expected, epsilon = 1e-12);
+    }
+
+    // https://github.com/georust/geo/issues/1596
+    #[test]
+    fn line_string_distance_with_a_single_coord() {
+        let single = wkt!(LINESTRING(0.0 0.0));
+        let segments = wkt!(LINESTRING(3.0 0.0,3.0 4.0));
+        assert_relative_eq!(Euclidean.distance(&single, &segments), 3.0);
+        assert_relative_eq!(Euclidean.distance(&segments, &single), 3.0);
+
+        // Neither side has a segment to measure against.
+        let other = wkt!(LINESTRING(3.0 4.0));
+        assert_relative_eq!(Euclidean.distance(&single, &other), 5.0);
     }
 
     #[test]
