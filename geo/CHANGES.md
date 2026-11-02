@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `CoordsIter` implementation for both slices of elements implementing `CoordsIter` as well as for references to types implementing `CoordsIter`.
+
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 
 - FIX: a ring whose neighbouring segments overlap, like a flat triangle `POLYGON((0 0,2 0,1 0,0 0))`, is now reported as a self-intersection, as in PostGIS. A ring with too few points is no longer also reported as a self-intersection.
