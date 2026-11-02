@@ -513,11 +513,14 @@ fn trace_rings<T: SpadeTriangulationFloat>(
     };
 
     // Collect all boundary directed edge handles (interior on left, exterior on right)
-    let boundary_edges: HashSet<FixedDirectedEdgeHandle> = cdt
+    // in spade's deterministic edge order. Iterating a HashSet here instead
+    // would make ring start points and ring order vary between runs (#1629).
+    let boundary_edges: Vec<FixedDirectedEdgeHandle> = cdt
         .directed_edges()
         .filter(|e| is_face_interior(e.face()) && !is_face_interior(e.rev().face()))
         .map(|e| e.fix())
         .collect();
+    let boundary_set: HashSet<FixedDirectedEdgeHandle> = boundary_edges.iter().copied().collect();
 
     let mut used: HashSet<FixedDirectedEdgeHandle> = HashSet::new();
     let mut rings = Vec::new();
@@ -545,7 +548,7 @@ fn trace_rings<T: SpadeTriangulationFloat>(
             // Inner safety: bounded by the finite number of edges around the vertex
             let mut inner_safety = cdt.num_directed_edges();
             loop {
-                if boundary_edges.contains(&candidate.fix()) && !used.contains(&candidate.fix()) {
+                if boundary_set.contains(&candidate.fix()) && !used.contains(&candidate.fix()) {
                     break;
                 }
                 // If we've come back to the start edge, the ring is complete
