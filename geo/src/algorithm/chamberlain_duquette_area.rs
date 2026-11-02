@@ -11,7 +11,9 @@ use crate::{CoordFloat, EQUATORIAL_EARTH_RADIUS};
 ///
 /// Each edge is taken the short way around in longitude, as [`GeodesicArea`] takes it, so an
 /// edge from 179° to -179° crosses the antimeridian and is 2° wide. An edge spanning exactly 180°
-/// keeps the direction it is written in, and one written from -180° to 180° spans nothing.
+/// keeps the direction it is written in, and one written from -180° to 180° spans nothing. So a
+/// box wider than 180° in longitude, such as one from -100° to 100°, is the narrower box the other
+/// way round (from 100° to 260°).
 ///
 /// A ring that winds around a pole (such as a parallel of latitude, written east or west all the
 /// way around) splits the Earth in two. Its signed area is that of the smaller side: positive when
@@ -111,24 +113,25 @@ where
         // The sum above is the sum over the edges of each edge's change in longitude times the
         // sum of the sines of its ends' latitudes, with the changes in longitude as written. An
         // edge written across more than 180° is taken the short way around instead: its share is
-        // corrected here, so a ring with no such edge gives exactly what it did.
-        let pi = T::from(std::f64::consts::PI).unwrap();
-        let two_pi = pi + pi;
+        // corrected here, so a ring with no such edge gives exactly what it did. The span is
+        // compared in degrees, where an edge written across exactly 180° is exactly 180° (in
+        // radians it can round either side of π).
+        let half_turn = T::from(180).unwrap();
+        let full_turn = half_turn + half_turn;
         let mut turn = T::zero();
         for i in 0..coords_len {
             let a = coords[i];
             let b = coords[(i + 1) % coords_len];
-            let written = b.x.to_radians() - a.x.to_radians();
-            let short = if written.abs() > pi {
-                written - two_pi * (written / two_pi).round()
+            let written = b.x - a.x;
+            if written.abs() > half_turn {
+                let turns = (written / full_turn).round();
+                total = total
+                    - (turns * full_turn).to_radians()
+                        * (a.y.to_radians().sin() + b.y.to_radians().sin());
+                turn = turn + written - turns * full_turn;
             } else {
-                written
-            };
-            if short != written {
-                total =
-                    total + (short - written) * (a.y.to_radians().sin() + b.y.to_radians().sin());
+                turn = turn + written;
             }
-            turn = turn + short;
         }
 
         total = total
@@ -139,14 +142,19 @@ where
         // That is the area between the ring and the equator. A ring winding around a pole
         // encloses the area between it and the pole instead, on its left: 2πR² more for each
         // turn east (less for each turn west). Of the two sides it splits the Earth into, the
-        // smaller is given, negative when it's on the ring's right.
-        let winding = (turn / two_pi).round();
+        // smaller is given, negative when it's on the ring's right (and positive for halves, such
+        // as a ring along the equator: the result is in (-earth/2, earth/2]).
+        let winding = (turn / full_turn).round();
         if winding != T::zero() {
+            let two_pi = T::from(std::f64::consts::TAU).unwrap();
             let r2 = T::from(EQUATORIAL_EARTH_RADIUS).unwrap()
                 * T::from(EQUATORIAL_EARTH_RADIUS).unwrap();
             let earth = two_pi * (r2 + r2);
             total = total + two_pi * r2 * winding;
             total = total - earth * (total / earth).round();
+            if total <= -earth / T::from(2).unwrap() {
+                total = total + earth;
+            }
         }
     }
     total
@@ -351,13 +359,7 @@ mod test {
 
     #[test]
     fn test_edge_spanning_180_degrees_keeps_its_direction() {
-        let half = polygon![
-            (x: 0., y: 10.),
-            (x: 180., y: 10.),
-            (x: 180., y: 20.),
-            (x: 0., y: 20.),
-            (x: 0., y: 10.),
-        ];
+        // From these longitudes, 180° in radians rounds either side of π.
         let quarter = polygon![
             (x: 0., y: 10.),
             (x: 90., y: 10.),
@@ -365,9 +367,38 @@ mod test {
             (x: 0., y: 20.),
             (x: 0., y: 10.),
         ];
+        for west in [0., 10., -172., -8.] {
+            let east = west + 180.;
+            let half = polygon![
+                (x: west, y: 10.),
+                (x: east, y: 10.),
+                (x: east, y: 20.),
+                (x: west, y: 20.),
+                (x: west, y: 10.),
+            ];
+            assert_relative_eq!(
+                2. * quarter.chamberlain_duquette_signed_area(),
+                half.chamberlain_duquette_signed_area(),
+                max_relative = 1e-9
+            );
+        }
+    }
+
+    #[test]
+    fn test_ring_along_equator() {
+        // Either way round, it splits the Earth in halves: half the Earth, positive.
+        let half_earth =
+            2. * std::f64::consts::PI * EQUATORIAL_EARTH_RADIUS * EQUATORIAL_EARTH_RADIUS;
+        let mut ring = parallel(0., &EAST);
         assert_relative_eq!(
-            2. * quarter.chamberlain_duquette_signed_area(),
-            half.chamberlain_duquette_signed_area(),
+            half_earth,
+            ring.chamberlain_duquette_signed_area(),
+            max_relative = 1e-9
+        );
+        ring.exterior_mut(|line_string| line_string.0.reverse());
+        assert_relative_eq!(
+            half_earth,
+            ring.chamberlain_duquette_signed_area(),
             max_relative = 1e-9
         );
     }
