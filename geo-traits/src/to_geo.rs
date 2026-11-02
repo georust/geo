@@ -115,12 +115,8 @@ impl<T: CoordNum, G: MultiPointTrait<T = T>> ToGeoMultiPoint<T> for G {
     fn try_to_multi_point(&self) -> Option<MultiPoint<T>> {
         let mut geo_points = vec![];
         for point in self.points() {
-            if let Some(geo_point) = point.try_to_point() {
-                geo_points.push(geo_point);
-            } else {
-                // Return None if any points are empty
-                return None;
-            }
+            // Return None if any points are empty
+            geo_points.push(point.try_to_point()?);
         }
         Some(MultiPoint::new(geo_points))
     }
@@ -277,12 +273,8 @@ impl<T: CoordNum, G: GeometryCollectionTrait<T = T>> ToGeoGeometryCollection<T> 
     fn try_to_geometry_collection(&self) -> Option<GeometryCollection<T>> {
         let mut geo_geometries = vec![];
         for geom in self.geometries() {
-            if let Some(geo_geom) = geom.try_to_geometry() {
-                geo_geometries.push(geo_geom);
-            } else {
-                // Return None if any points are empty
-                return None;
-            }
+            // Return None if any geometries are empty
+            geo_geometries.push(geom.try_to_geometry()?);
         }
         Some(GeometryCollection::new_from(geo_geometries))
     }

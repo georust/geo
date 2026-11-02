@@ -40,7 +40,8 @@ use std::sync::LazyLock;
 /// // ever so slightly different from the wgs84 default.
 /// assert_relative_eq!(
 ///   132675.50185928209, // meters
-///   nad83_geoid.distance(start, finish)
+///   nad83_geoid.distance(start, finish),
+///   epsilon = 1e-9
 /// );
 ///
 /// // Or you can specify whatever radius you want to get some "out of this world" results. 👽
@@ -50,7 +51,8 @@ use std::sync::LazyLock;
 /// let mars_geoid = GeodesicMeasure::new(mars_equatorial_radius, mars_flattening);
 /// assert_relative_eq!(
 ///   70684.36315529353, // meters
-///   mars_geoid.distance(start, finish)
+///   mars_geoid.distance(start, finish),
+///   epsilon = 1e-9
 /// );
 /// ```
 ///
@@ -511,7 +513,11 @@ mod tests {
                 assert_eq!(route.len(), 13);
                 assert_eq!(route[0], start);
                 assert_eq!(route.last().unwrap(), &end);
-                assert_relative_eq!(route[1], Point::new(17.878754355562464, 24.466667836189565));
+                assert_relative_eq!(
+                    route[1],
+                    Point::new(17.878754355562464, 24.466667836189565),
+                    epsilon = 1e-9
+                );
             }
 
             #[test]
@@ -523,7 +529,11 @@ mod tests {
                     .points_along_line(start, end, max_dist, false)
                     .collect::<Vec<_>>();
                 assert_eq!(route.len(), 11);
-                assert_relative_eq!(route[0], Point::new(17.878754355562464, 24.466667836189565));
+                assert_relative_eq!(
+                    route[0],
+                    Point::new(17.878754355562464, 24.466667836189565),
+                    epsilon = 1e-9
+                );
             }
         }
     }
@@ -539,6 +549,10 @@ mod tests {
         let mars_flattening = 0.00589;
         let mars_geoid = GeodesicMeasure::new(mars_equatorial_radius, mars_flattening);
 
-        assert_relative_eq!(70684.36315529353, mars_geoid.distance(start, finish));
+        assert_relative_eq!(
+            70684.36315529353,
+            mars_geoid.distance(start, finish),
+            epsilon = 1e-9
+        );
     }
 }

@@ -1,4 +1,7 @@
-use crate::{Coord, CoordFloat, GeoFloat, Intersects, LineString, RemoveRepeatedPoints};
+use crate::algorithm::sweep::{Cross, Intersections};
+use crate::{
+    Coord, CoordFloat, GeoFloat, Line, LineIntersection, LineString, RemoveRepeatedPoints,
+};
 use robust::{Coord as RobustCoord, orient2d};
 
 pub(crate) fn check_coord_is_not_finite<T: CoordFloat>(geom: &Coord<T>) -> bool {
@@ -38,19 +41,38 @@ pub(crate) fn check_too_few_points<T: CoordFloat>(geom: &LineString<T>, is_ring:
 }
 
 pub(crate) fn linestring_has_self_intersection<F: GeoFloat>(geom: &LineString<F>) -> bool {
-    // This need more test to see if we detect "spikes" correctly.
-    // Maybe we could also use https://docs.rs/geo/latest/geo/algorithm/line_intersection/fn.line_intersection.html
-    // to compute the intersection, see if it is a single point or not, etc.
-    for (i, line) in geom.lines().enumerate() {
-        for (j, other_line) in geom.lines().enumerate() {
-            if i != j
-                && line.intersects(&other_line)
-                && line.start != other_line.end
-                && line.end != other_line.start
-            {
-                return true;
-            }
-        }
+    // The sweep yields every pair of segments that touch.
+    // Only neighbours that meet at their shared point are allowed.
+    Intersections::from_iter(geom.lines().map(RingSegment))
+        .any(|(a, b, intersection)| !touch_at_shared_point(a.0, b.0, intersection))
+}
+
+/// A ring segment for the sweep.
+#[derive(Clone, Copy)]
+struct RingSegment<F: GeoFloat>(Line<F>);
+
+impl<F: GeoFloat> Cross for RingSegment<F> {
+    type Scalar = F;
+
+    fn line(&self) -> Line<F> {
+        self.0
     }
-    false
+}
+
+/// Whether `a` and `b` are neighbours that touch only at their shared point.
+/// Any other touch, like the overlap at a spike, is a self-intersection.
+fn touch_at_shared_point<F: GeoFloat>(
+    a: Line<F>,
+    b: Line<F>,
+    intersection: LineIntersection<F>,
+) -> bool {
+    let point = match intersection {
+        LineIntersection::SinglePoint { intersection, .. } => intersection,
+        // A zero-length segment from a repeated point overlaps its neighbour in one point.
+        LineIntersection::Collinear { intersection } if intersection.start == intersection.end => {
+            intersection.start
+        }
+        LineIntersection::Collinear { .. } => return false,
+    };
+    (a.end == b.start && point == a.end) || (a.start == b.end && point == a.start)
 }

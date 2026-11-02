@@ -416,7 +416,20 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{coord, line_string, polygon};
+    use crate::{coord, line_string, polygon, wkt};
+
+    // https://github.com/georust/geo/issues/1606
+    #[test]
+    fn simplify_keeps_a_far_vertex_at_large_coordinates() {
+        for line_string in [
+            wkt!(LINESTRING(0.0 -1e100, 0.0 0.0, 3.0 -0.0)),
+            wkt!(LINESTRING(0.0 -1e200, 0.0 0.0, 3.0 -0.0)),
+            wkt!(LINESTRING(0.0 -8.988465674311469e307, 0.0 0.0, 3.0 -0.0)),
+        ] {
+            // The middle vertex is 3.0 from the line between the other two.
+            assert_eq!(line_string.simplify(2.0), line_string);
+        }
+    }
 
     #[test]
     fn recursion_test() {

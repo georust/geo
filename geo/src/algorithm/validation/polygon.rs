@@ -74,11 +74,10 @@ impl<F: GeoFloat> Validation for Polygon<F> {
             };
 
             // Perform the various checks
+            // A ring with too few points always doubles back on itself, so only the first is reported.
             if utils::check_too_few_points(ring, true) {
                 handle_validation_error(InvalidPolygon::TooFewPointsInRing(ring_role))?;
-            }
-
-            if utils::linestring_has_self_intersection(ring) {
+            } else if utils::linestring_has_self_intersection(ring) {
                 handle_validation_error(InvalidPolygon::SelfIntersection(ring_role))?;
             }
 
@@ -684,6 +683,92 @@ mod tests {
             &polygon,
             vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
         );
+    }
+
+    #[test]
+    fn test_polygon_invalid_spike_back_part_way() {
+        let polygon = wkt!(
+            POLYGON((0. 0., 4. 0., 4. 4., 2. 4., 2. 6., 2. 5., 1. 4., 0. 4., 0. 0.))
+        );
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
+        );
+    }
+
+    #[test]
+    fn test_polygon_invalid_edge_doubles_back() {
+        let polygon = wkt!(
+            POLYGON((0. 0., 4. 0., 2. 0., 2. 2., 0. 2., 0. 0.))
+        );
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
+        );
+    }
+
+    #[test]
+    fn test_polygon_invalid_spike_at_start_point() {
+        let polygon = wkt!(
+            POLYGON((2. 6., 2. 4., 4. 4., 4. 0., 0. 0., 0. 4., 2. 4., 2. 6.))
+        );
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
+        );
+    }
+
+    #[test]
+    fn test_polygon_invalid_spike_at_closing_point() {
+        let polygon = wkt!(
+            POLYGON((0. 0., 4. 0., 4. 4., 0. 4., 0. 0., 0. -2., 0. 0.))
+        );
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
+        );
+    }
+
+    #[test]
+    fn test_polygon_invalid_interior_spike() {
+        let polygon = wkt!(
+            POLYGON(
+                (0. 0., 10. 0., 10. 10., 0. 10., 0. 0.),
+                (2. 2., 6. 2., 6. 6., 4. 6., 4. 8., 4. 6., 2. 6., 2. 2.)
+            )
+        );
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Interior(0))]
+        );
+    }
+
+    #[test]
+    fn test_polygon_invalid_flat_triangle() {
+        // All three segments are neighbours, so only their overlap shows the ring is flat.
+        let polygon = wkt!(
+            POLYGON((0. 0., 2. 0., 1. 0., 0. 0.))
+        );
+        assert_validation_errors!(
+            &polygon,
+            vec![InvalidPolygon::SelfIntersection(RingRole::Exterior)]
+        );
+    }
+
+    #[test]
+    fn test_polygon_valid_point_start_end_equal() {
+        let polygon = wkt!(
+            POLYGON((0. 0., 4. 0., 4. 0., 4. 4., 0. 4., 0. 0.))
+        );
+        assert_valid!(&polygon);
+    }
+
+    #[test]
+    fn test_polygon_valid_vertex_on_straight_edge() {
+        let polygon = wkt!(
+            POLYGON((0. 0., 2. 0., 4. 0., 4. 4., 0. 4., 0. 0.))
+        );
+        assert_valid!(&polygon);
     }
 
     #[test]

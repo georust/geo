@@ -130,24 +130,23 @@ where
         //
         // which used to produce the INCORRECT result: (20.31970698357233, 46.76654261437082, NaN)
 
-        let intersection: Coord<F>;
         // false positives for this overzealous clippy https://github.com/rust-lang/rust-clippy/issues/6747
         #[allow(clippy::suspicious_operation_groupings)]
-        if p.start == q.start || p.start == q.end {
-            intersection = p.start;
+        let intersection: Coord<F> = if p.start == q.start || p.start == q.end {
+            p.start
         } else if p.end == q.start || p.end == q.end {
-            intersection = p.end;
+            p.end
             // Now check to see if any endpoint lies on the interior of the other segment.
         } else if p_q1 == Collinear {
-            intersection = q.start;
+            q.start
         } else if p_q2 == Collinear {
-            intersection = q.end;
+            q.end
         } else if q_p1 == Collinear {
-            intersection = p.start;
+            p.start
         } else {
             assert_eq!(q_p2, Collinear);
-            intersection = p.end;
-        }
+            p.end
+        };
         Some(LineIntersection::SinglePoint {
             intersection,
             is_proper: false,
