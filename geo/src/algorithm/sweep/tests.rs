@@ -165,6 +165,25 @@ fn sweep_line_interval_ordering_holds_for_signed_zero() {
     }
 }
 
+/// Regression for https://github.com/georust/geo/issues/1578.
+#[test]
+fn sweep_spans_signed_zero_boundary() {
+    let left = Line::from([(-1.0, 0.0), (-0.0, 0.0)]);
+    let right = Line::from([(0.0, 0.0), (1.0, 0.0)]);
+    let index = SweepLineIndex::new([left, right]);
+    assert!(intervals_overlap(
+        &index.inserted_intervals[0],
+        &index.inserted_intervals[1],
+    ));
+    verify_intersections(&[left, right]);
+
+    let crossing = vec![
+        Line::from([(-1.0, -1.0), (-0.0, 1.0)]),
+        Line::from([(0.0, -1.0), (1.0, 1.0)]),
+    ];
+    verify_intersections(&crossing);
+}
+
 #[test]
 fn test_iterator_behavior() {
     let input = vec![

@@ -389,7 +389,7 @@ mod test {
     use super::*;
     use crate::{
         algorithm::{contains::Contains, intersects::Intersects},
-        coord, line_string, point, polygon,
+        coord, line_string, point, polygon, wkt,
     };
 
     /// small helper to create a coordinate
@@ -942,5 +942,17 @@ mod test {
             ],
         );
         let _ = poly.interior_point();
+    }
+
+    #[test]
+    fn polygon_with_negative_zero_coordinate_does_not_panic() {
+        // https://github.com/georust/geo/issues/1578
+        let poly: Polygon = wkt!(POLYGON((-5.0 0.0, -0.0 5.0, 0.0 10.0, 5.0 0.0, -5.0 0.0)));
+        let interior_point = poly.interior_point().unwrap();
+        assert!(poly.contains(&interior_point));
+
+        let positive_zero: Polygon =
+            wkt!(POLYGON((-5.0 0.0, 0.0 5.0, 0.0 10.0, 5.0 0.0, -5.0 0.0)));
+        assert_eq!(interior_point, positive_zero.interior_point().unwrap());
     }
 }
