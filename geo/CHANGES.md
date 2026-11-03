@@ -4,6 +4,9 @@
 
 - BREAKING: Update the `rstar` dependency to 0.14, and bump the geo MSRV to 1.90, which rstar 0.14 requires.
   - `GeoFloat` now requires `rstar::RTreeNum`. rstar 0.14 removes its blanket `RTreeNum` implementation, which every `GeoFloat` type previously received. `f32` and `f64` implement it; a downstream `GeoFloat` type must now implement `RTreeNum` too.
+- FIX: `Line::closest_point` no longer produces NaN coordinates solely because the squared length of a very short, non-zero segment underflows.
+  - <https://github.com/georust/geo/issues/1604>
+
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
