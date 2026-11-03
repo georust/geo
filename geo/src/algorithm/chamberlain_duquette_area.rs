@@ -7,22 +7,24 @@ use crate::{CoordFloat, EQUATORIAL_EARTH_RADIUS};
 ///
 /// - return value: meters²
 ///
-/// # Edges wider than 180°
+/// # Polygons that cross the antimeridian
 ///
-/// If a ring has an edge spanning more than 180° of longitude that isn't along a parallel, as a
-/// polygon crossing the antimeridian without being cut there does, its wide edges (except along a
-/// pole) are taken the short way around, as [`GeodesicArea`] takes them. Otherwise the ring is
-/// taken as written, as before: boxes and [`Rect`]s are as wide as they are written, and polygons
-/// clipped along parallels are unchanged. So a box across the antimeridian written from 179° to
-/// -179° is 358° wide; write it from 179° to 181° instead. An edge counts as along a parallel if
-/// its ends' latitudes are within 1e-9° (about 4e-5° in `f32`).
+/// A polygon that crosses the antimeridian (180° longitude) is often stored without being split
+/// there, so one of its edges jumps from, say, 179° to -179°. That edge is really 2° wide, but
+/// taken at face value it goes 358° the long way around, and the area comes out wrong. So if a
+/// ring has an edge more than 180° wide that doesn't run along a line of latitude, its wide edges
+/// (except any along a pole) go the short way around, like [`GeodesicArea`] does it.
 ///
-/// A ring taken the short way can wind around a pole. Its polygon then measures the smaller of
-/// the two sides it divides the Earth into, so one bigger than half the Earth measures its
-/// complement. A pole is best written as an edge along it rather than as a single vertex.
+/// A ring whose only wide edges run along a line of latitude is used as written, as before. That
+/// keeps boxes, [`Rect`]s and polygons clipped to a band of latitude the same. It also means a box
+/// from 179° to -179° is still 358° wide. For the 2° box, write it from 179° to 181°.
 ///
-/// Holes are subtracted with their signed area, so a hole wound opposite to its exterior is added
-/// rather than subtracted: a known limitation.
+/// A ring that goes the short way can end up circling a pole. Its area is then the smaller of the
+/// two areas it divides the Earth into. If a ring goes through a pole, write the pole as an edge
+/// along it, such as `(-180, 90)` to `(180, 90)`, rather than as a single point.
+///
+/// One older quirk is unchanged: holes are subtracted using their signed area, so a hole wound
+/// the opposite way to its exterior gets added instead.
 ///
 /// [`GeodesicArea`]: crate::GeodesicArea
 ///
