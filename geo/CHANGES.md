@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- FIX: `ChamberlainDuquetteArea` now gives polygons that cross the antimeridian without being cut there, and rings around a pole that aren't closed along it, their own area: a ring with an edge wider than 180° that isn't along a parallel is taken the short way around, as `GeodesicArea` does.
+  - <https://github.com/georust/geo/pull/1631>
+  - BREAKING: such rings measure differently, including convex hulls or simplifications done in longitude and latitude that span more than 180°. Other rings are computed exactly as before.
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
