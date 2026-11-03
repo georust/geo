@@ -9,37 +9,59 @@ use crate::{CoordFloat, EQUATORIAL_EARTH_RADIUS};
 ///
 /// # Edges
 ///
-/// A ring is taken as written, each edge a straight line in longitude, unless it has an edge
-/// written across more than 180° of longitude that isn't along a parallel of latitude. Then each
-/// of its edges written across more than 180°, except one along a pole, is taken the short way
-/// around, as [`GeodesicArea`] takes it: an edge from (179°, 0°) to (-179°, 1°) crosses the
-/// antimeridian and is 2° wide. (An edge whose change in longitude computes to exactly 180° keeps
-/// the direction it is written in.) So boxes, as wide as they are written, measure as before, as
-/// do latitude bands, polygons clipped along parallels and rings closed along a pole; a box across
-/// the antimeridian written with only its corners, from 179° to -179°, is 358° wide, so it is best
-/// written past 180°, from 179° to 181°, as a polygon or a [`Rect`] (whose corners are sorted). An
-/// edge is along a parallel to within a few units in the last place of its latitude, and along a
-/// pole to within 1e-9° (or the precision of the type, if coarser). A ring with a longitude beyond
-/// ±720°, which isn't a longitude, is taken as written.
+/// Each ring is measured one of two ways:
+///
+/// - **As written**, each edge a straight line in longitude and the sine of latitude, if every
+///   edge written across more than 180° of longitude runs along a parallel of latitude. So boxes
+///   and [`Rect`]s are as wide as they are written, a box from -180° to 180° is the whole band of
+///   latitude, a ring closed along a pole encloses it, and rings with no edge wider than 180° or
+///   clipped along parallels measure exactly as before. A ring with a longitude beyond ±720°,
+///   which isn't a longitude, is also taken as written.
+/// - **The short way around**, as [`GeodesicArea`] takes it, if an edge written across more than
+///   180° is off a parallel. Then each edge written across more than 180°, except one along a
+///   pole, is taken the short way, so an edge from (179°, 0°) to (-179°, 1°) crosses the
+///   antimeridian and is 2° wide. An edge written across 180° (and whole turns, if any) keeps the
+///   direction it is written in.
+///
+/// An edge runs along a parallel if its ends' latitudes differ by no more than 1e-9°, or by a few
+/// units in the last place of the latitude if that is more (in `f32`, about 0.5 m to 5 m), and
+/// along a pole if both ends are that close to it.
+///
+/// So a ring whose only edges wider than 180° run along parallels is taken as written even where
+/// it means to cross the antimeridian. A box written with only its corners from 179° to -179° is
+/// 358° wide, as are grid cells and sectors bounded by parallels written that way (write them past
+/// 180°, from 179° to 181°, as a polygon or a `Rect`, whose corners are sorted), and a ring around
+/// a pole closed from (180°, φ) to (-180°, φ) leaves out the cap beyond φ (close it along the pole
+/// instead). And a ring with an edge wider than 180° off a parallel is taken the short way even
+/// where it was meant the long way, as by a convex hull or a simplification in longitude and
+/// latitude that spans more than 180°.
+///
+/// # Rings around a pole
 ///
 /// A ring taken the short way can wind around a pole, as a coastline written all the way around
-/// Antarctica does when it isn't closed along the pole; one taken as written doesn't, so a ring
-/// along a parallel encloses nothing, and a coastline closed from (180°, φ) to (-180°, φ) leaves
-/// out the cap beyond φ (close such a ring along the pole instead). A polygon whose exterior winds
-/// around a pole measures the smaller of the two sides its rings divide the Earth into: positive
-/// when that side is on the exterior's left (as for a counter-clockwise exterior) and negative
-/// when it's on the right, so its signed area is in (-earth/2, earth/2], and one bigger than half
-/// the Earth, such as an ocean, measures its complement. A hole that winds around a pole in an
-/// exterior that doesn't cuts out the smaller of its sides. Any other polygon measures what it
-/// encloses as written. A pole is best written as an edge along it rather than as a single vertex.
+/// Antarctica does when it isn't closed along the pole. A polygon whose exterior winds around a
+/// pole, unless its holes wind it back, measures the smaller of the two sides its rings divide the
+/// Earth into: positive when that side is on the exterior's left (as for a counter-clockwise
+/// exterior) and negative when it's on the right, so its signed area is in (-earth/2, earth/2],
+/// and one bigger than half the Earth, such as an ocean, measures its complement. A hole wound
+/// like its exterior that winds around a pole, in an exterior that doesn't, cuts out the smaller
+/// of its sides. A ring with more area than its winding can account for, as from a ring taken as
+/// written, isn't reduced. A pole is best written as an edge along it rather than as a single
+/// vertex.
+///
+/// # Signs and holes
 ///
 /// The unsigned area is the absolute value of the signed area (unlike [`GeodesicArea`]'s, which
 /// is the area on the exterior's left). Holes are subtracted with their signed area, so a hole
 /// wound opposite to its exterior (as in OGC Simple Features and RFC 7946, and as `orient` leaves
-/// it) is added rather than subtracted: a known limitation.
+/// it) is added rather than subtracted: a known limitation. [`Triangle::new`] orders its vertices
+/// by their winding in the plane, which across the antimeridian isn't their winding on the
+/// sphere.
 ///
-/// If an area bounds untrusted input, check the input's coordinates first: an edge wider than 180°
-/// can change which side of a ring is measured.
+/// If an area bounds untrusted input, reject or split at the antimeridian any edge wider than 180°
+/// first: such an edge can change what a ring encloses, down to nothing (a band with a corner just
+/// past the tolerance off its parallel measures nothing), and a ring winding around a pole never
+/// measures more than half the Earth.
 ///
 /// [`GeodesicArea`]: crate::GeodesicArea
 ///
@@ -94,23 +116,27 @@ where
     T: CoordFloat,
 {
     fn chamberlain_duquette_signed_area(&self) -> T {
-        let (mut total, mut turns) = ring_area(self.exterior());
-        let exterior_winds = turns != 0;
+        let (mut total, winding) = ring_area(self.exterior());
+        // The polygon is reduced to its smaller side if its exterior winds around a pole, its
+        // holes don't wind it back, and each ring's area is one its winding can account for.
+        let mut net_winding = winding;
+        let mut reducible = winding != 0 && accounted_for(total, winding);
         for hole in self.interiors() {
-            let (area, hole_turns) = ring_area(hole);
-            if exterior_winds {
-                turns = turns.saturating_add(hole_turns);
+            let (area, hole_winding) = ring_area(hole);
+            if winding != 0 {
+                net_winding = net_winding.saturating_sub(hole_winding);
+                reducible = reducible && accounted_for(area, hole_winding);
                 total = total - area;
-            } else if hole_turns != 0 {
+            } else if hole_winding != 0 && accounted_for(area, hole_winding) {
                 // A hole winding around a pole in an exterior that doesn't cuts out the smaller of
                 // its sides.
-                total = total - smaller_side(area, hole_turns);
+                total = total - smaller_side(area);
             } else {
                 total = total - area;
             }
         }
-        if exterior_winds {
-            smaller_side(total, turns)
+        if reducible && net_winding != 0 {
+            smaller_side(total)
         } else {
             total
         }
@@ -121,15 +147,14 @@ where
     }
 }
 
-/// The signed area of a ring in meters², and how many times it winds around a pole. For a ring
-/// that winds, the area is that on its left, to within whole Earths.
+/// The signed area of a ring in meters², and how many times it winds around a pole (east
+/// positive). For a ring that winds, the area is that on its left, to within whole Earths.
 fn ring_area<T>(coords: &LineString<T>) -> (T, i64)
 where
     T: CoordFloat,
 {
     let mut total = T::zero();
     let coords_len = coords.0.len();
-    let half_turn = T::from(180).unwrap();
     let mut as_written = false;
 
     if coords_len > 2 {
@@ -149,12 +174,10 @@ where
             let p3 = coords[upper_index];
             // This sum takes each edge's change in longitude as written. A ring with an edge
             // written across more than 180° that isn't along a parallel (here, the edge from p2 to
-            // p3) is summed the short way around instead, unless it is too far out. The span is
-            // compared in degrees, where an edge written across exactly 180° is exactly 180° (in
-            // radians it can round to just over π).
-            if !as_written && (p3.x - p2.x).abs() > half_turn && !along_parallel(p2, p3) {
+            // p3) is summed the short way around instead, unless it is too far out.
+            if !as_written && wider_than_half_turn(p3.x - p2.x) && !along_parallel(p2, p3) {
                 match short_way_ring_area(&coords.0) {
-                    Some(area_and_turns) => return area_and_turns,
+                    Some(area_and_winding) => return area_and_winding,
                     None => as_written = true,
                 }
             }
@@ -217,7 +240,7 @@ where
     // That is the area between the ring and the equator. A ring winding around a pole encloses
     // the area between it and the pole instead, on its left: 2πR² more for each turn east (less
     // for each turn west).
-    Some((total + tau * r2 * winding, turns_taken_off.abs()))
+    Some((total + tau * r2 * winding, -turns_taken_off))
 }
 
 /// The change in longitude from `a` to `b` (degrees), within ±720°, taken the short way around if
@@ -230,11 +253,12 @@ where
     let half_turn = T::from(180).unwrap();
     let full_turn = half_turn + half_turn;
     let written = b.x - a.x;
-    if written.abs() <= half_turn || along_pole(a, b) {
+    if !wider_than_half_turn(written) || along_pole(a, b) {
         return Some((written, 0));
     }
     let mut turns = (written / full_turn).round();
-    if (written - turns * full_turn).abs() == half_turn {
+    let rest = written - turns * full_turn;
+    if (rest.abs() - half_turn).abs() <= tolerance() && rest.signum() != written.signum() {
         turns = turns - written.signum();
     }
     // Taken from the ends rather than from `written`, which has rounded to the precision of a
@@ -243,46 +267,69 @@ where
     Some((span, turns.to_i64()?))
 }
 
-/// Whether an edge runs along a parallel of latitude, to within a few units in the last place of
-/// its latitude, or along a pole.
+/// The tolerance in degrees within which a change in longitude is 180°, or an edge runs along a
+/// parallel or a pole.
+fn tolerance<T>() -> T
+where
+    T: CoordFloat,
+{
+    T::from(1e-9).unwrap()
+}
+
+/// Whether a change in longitude (degrees) is more than 180°, beyond the tolerance.
+fn wider_than_half_turn<T>(change: T) -> bool
+where
+    T: CoordFloat,
+{
+    change.abs() > T::from(180).unwrap() + tolerance()
+}
+
+/// Whether an edge runs along a parallel of latitude, its ends' latitudes within the tolerance (or
+/// a few units in the last place of the latitude, if more), or along a pole.
 fn along_parallel<T>(a: Coord<T>, b: Coord<T>) -> bool
 where
     T: CoordFloat,
 {
     let ulps = T::from(4).unwrap() * T::epsilon() * a.y.abs().max(b.y.abs());
-    (a.y - b.y).abs() <= ulps || along_pole(a, b)
+    (a.y - b.y).abs() <= ulps.max(tolerance()) || along_pole(a, b)
 }
 
-/// Whether an edge runs along a pole, both ends within 1e-9° of it (or the precision of the type,
-/// if coarser): wherever their longitudes, the edge goes nowhere.
+/// Whether an edge runs along a pole, both ends within the tolerance of it (or the precision of
+/// the type, if coarser): wherever their longitudes, the edge goes nowhere.
 fn along_pole<T>(a: Coord<T>, b: Coord<T>) -> bool
 where
     T: CoordFloat,
 {
     let quarter_turn = T::from(90).unwrap();
-    let tolerance = T::from(1e-9)
-        .unwrap()
-        .max(T::from(360).unwrap() * T::epsilon());
+    let within = tolerance::<T>().max(T::from(360).unwrap() * T::epsilon());
     a.y.signum() == b.y.signum()
-        && quarter_turn - a.y.abs() <= tolerance
-        && quarter_turn - b.y.abs() <= tolerance
+        && quarter_turn - a.y.abs() <= within
+        && quarter_turn - b.y.abs() <= within
 }
 
-/// An area on the left of a polygon winding `turns` times around a pole, reduced by whole Earths
-/// into (-earth/2, earth/2]: the smaller of the two sides it divides the Earth into, negative when
-/// it's on the polygon's right (and positive for halves). An area further out than those turns
-/// can account for (or NaN) comes from a ring taken as written, and is left as it is rather than
-/// reduced to a plausible one.
-fn smaller_side<T>(area: T, turns: i64) -> T
+/// Whether a ring's area is one its winding around a pole can account for, at most a whole Earth
+/// for each turn and one more. A ring taken as written can come to more (or to NaN), which is left
+/// as it is rather than reduced to a plausible area.
+fn accounted_for<T>(area: T, winding: i64) -> bool
+where
+    T: CoordFloat,
+{
+    let earth = T::from(2. * std::f64::consts::TAU).unwrap() * radius_squared();
+    match T::from(winding.unsigned_abs().saturating_add(1)) {
+        Some(turns) => area.abs() <= earth * turns,
+        None => false,
+    }
+}
+
+/// An area on the left of a polygon winding around a pole, reduced by whole Earths into
+/// (-earth/2, earth/2]: the smaller of the two sides it divides the Earth into, negative when
+/// it's on the polygon's right (and positive for halves).
+fn smaller_side<T>(area: T) -> T
 where
     T: CoordFloat,
 {
     let half_earth = T::from(std::f64::consts::TAU).unwrap() * radius_squared();
     let earth = half_earth + half_earth;
-    let most = T::from(turns.saturating_add(1)).map(|turns| earth * turns);
-    if !most.is_some_and(|most| area.abs() <= most) {
-        return area;
-    }
     let area = area - earth * (area / earth).round();
     if area <= -half_earth {
         area + earth
@@ -565,7 +612,7 @@ mod test {
         assert_relative_eq!(
             pentagon::<f32>(false).chamberlain_duquette_signed_area(),
             pentagon::<f32>(true).chamberlain_duquette_signed_area(),
-            max_relative = 2e-3
+            max_relative = 5e-4
         );
     }
 
@@ -643,7 +690,8 @@ mod test {
                 max_relative = 1e-9
             );
         }
-        // In f32, a crossing a few meters off a parallel.
+        // In f32, where a crossing 2 m off a parallel, as here, counts as along it, so the ring
+        // is taken the short way by its other crossing.
         let across: Polygon<f32> = polygon![
             (x: 179.99, y: 45.),
             (x: -179.99, y: 45.00002),
@@ -682,8 +730,7 @@ mod test {
             max_relative = 1e-9
         );
         // From -180° to 180°, a box is the whole band of latitude, here a cap; so it is when the
-        // corners are a few units in the last place off, as after a round trip through Web
-        // Mercator.
+        // corners are a few units in the last place off, or computed a little differently.
         assert_relative_eq!(
             cap_area(80.),
             corner_box(-180., 180., 80., 90.).chamberlain_duquette_signed_area(),
@@ -698,6 +745,29 @@ mod test {
         assert_relative_eq!(
             band_area(10., 20., 360.),
             noisy.chamberlain_duquette_signed_area(),
+            max_relative = 1e-9
+        );
+        let at_equator = polygon![
+            (x: -180., y: 0.),
+            (x: 180., y: -1e-17),
+            (x: 180., y: 10.),
+            (x: -180., y: 10.),
+        ];
+        assert_relative_eq!(
+            band_area(0., 10., 360.),
+            at_equator.chamberlain_duquette_signed_area(),
+            max_relative = 1e-9
+        );
+        // One corner through a round trip to Web Mercator and back, the other not.
+        let mercator = polygon![
+            (x: -180., y: 0.49824634209292074),
+            (x: 180., y: 0.4982463420929226),
+            (x: 180., y: 10.),
+            (x: -180., y: 10.),
+        ];
+        assert_relative_eq!(
+            band_area(0.49824634209292074, 10., 360.),
+            mercator.chamberlain_duquette_signed_area(),
             max_relative = 1e-9
         );
         // Everything north of 60°S, closed along the North Pole.
@@ -721,6 +791,37 @@ mod test {
         assert_relative_eq!(
             cap_area(-60.),
             Polygon::new(LineString::new(nearly), vec![]).chamberlain_duquette_signed_area(),
+            max_relative = 1e-9
+        );
+        // And with a dent across the antimeridian, which takes the ring the short way: its edge
+        // along the North Pole is still taken as written, so the ring still encloses the pole.
+        let dented = polygon![
+            (x: -180., y: -60.),
+            (x: -90., y: -60.),
+            (x: 0., y: -60.),
+            (x: 90., y: -60.),
+            (x: 170., y: -60.),
+            (x: -179., y: -61.),
+            (x: 179., y: -62.),
+            (x: 180., y: -60.),
+            (x: 180., y: 90.),
+            (x: -180., y: 90.),
+        ];
+        let dented_past = polygon![
+            (x: -180., y: -60.),
+            (x: -90., y: -60.),
+            (x: 0., y: -60.),
+            (x: 90., y: -60.),
+            (x: 170., y: -60.),
+            (x: 181., y: -61.),
+            (x: 179., y: -62.),
+            (x: 180., y: -60.),
+            (x: 180., y: 90.),
+            (x: -180., y: 90.),
+        ];
+        assert_relative_eq!(
+            dented_past.chamberlain_duquette_signed_area(),
+            dented.chamberlain_duquette_signed_area(),
             max_relative = 1e-9
         );
         // Strips clipped along parallels, as a clip leaves them: here from 57°W east to 140°E.
@@ -785,7 +886,8 @@ mod test {
             (x: 0., y: 20.),
             (x: 0., y: 10.),
         ];
-        // From all but the first of these, a span of 180° in radians rounds to just over π.
+        // Along parallels, from each of these: in radians, the span from all but the first rounds
+        // to just over π.
         for west in [0., 10., -172., -8.] {
             let east = west + 180.;
             let half = polygon![
@@ -803,28 +905,35 @@ mod test {
         }
     }
 
+    /// The area of a quadrilateral from 10° east 180° to 11°, up to 20°, and back west 180° to 19°,
+    /// in meters².
+    fn half_band() -> f64 {
+        let sin = |lat: f64| lat.to_radians().sin();
+        std::f64::consts::PI / 2.
+            * EQUATORIAL_EARTH_RADIUS
+            * EQUATORIAL_EARTH_RADIUS
+            * (sin(20.) + sin(19.) - sin(10.) - sin(11.))
+    }
+
     #[test]
-    fn test_edge_spanning_540_degrees_keeps_its_direction() {
-        // 540° east is taken as 180° east, the way it is written, rather than 180° west.
-        let short = polygon![
-            (x: 0., y: 10.),
-            (x: 180., y: 11.),
-            (x: 180., y: 20.),
-            (x: 0., y: 19.),
-            (x: 0., y: 10.),
-        ];
-        let long = polygon![
-            (x: -180., y: 10.),
-            (x: 360., y: 11.),
-            (x: 360., y: 20.),
-            (x: -180., y: 19.),
-            (x: -180., y: 10.),
-        ];
-        assert_relative_eq!(
-            short.chamberlain_duquette_signed_area(),
-            long.chamberlain_duquette_signed_area(),
-            max_relative = 1e-12
-        );
+    fn test_edges_off_parallels_spanning_180_degrees_keep_their_direction() {
+        // Written across 180°, or 540°, east and then west: the way they are written, rather than
+        // the other way round. In 0°–360°, 256.2884 - 76.2884 computes to 180.00000000000003.
+        for west in [0., 76.2884, -180.] {
+            let east = if west < 0. { 360. } else { west + 180. };
+            let ring = polygon![
+                (x: west, y: 10.),
+                (x: east, y: 11.),
+                (x: east, y: 20.),
+                (x: west, y: 19.),
+                (x: west, y: 10.),
+            ];
+            assert_relative_eq!(
+                half_band(),
+                ring.chamberlain_duquette_signed_area(),
+                max_relative = 1e-12
+            );
+        }
     }
 
     #[test]
@@ -875,6 +984,15 @@ mod test {
         assert!(with_winding_hole.chamberlain_duquette_signed_area().abs() > earth());
         let in_winding_exterior = Polygon::new(zigzag(80., 1), vec![polar.exterior().clone()]);
         assert!(in_winding_exterior.chamberlain_duquette_signed_area().abs() > earth());
+        // Nor by many turns of the exterior: a hole taken as written covers two Earths.
+        let twice: Polygon<f64> = polygon![
+            (x: -360., y: -90.),
+            (x: 360., y: -90.),
+            (x: 360., y: 90.),
+            (x: -360., y: 90.),
+        ];
+        let many_turns = Polygon::new(zigzag(80., 2), vec![twice.exterior().clone()]);
+        assert!(many_turns.chamberlain_duquette_signed_area().abs() > earth());
     }
 
     #[test]
@@ -906,7 +1024,7 @@ mod test {
         assert_relative_eq!(
             north as f32,
             ring_f32.chamberlain_duquette_signed_area(),
-            max_relative = 1e-4
+            max_relative = 5e-5
         );
     }
 
@@ -934,7 +1052,7 @@ mod test {
         assert_relative_eq!(
             (north - earth()) as f32,
             ring_f32.chamberlain_duquette_signed_area(),
-            max_relative = 1e-4
+            max_relative = 5e-5
         );
     }
 
@@ -981,6 +1099,13 @@ mod test {
         assert_relative_eq!(
             north_of_zigzag(-70.),
             world_but_antarctica.chamberlain_duquette_signed_area(),
+            max_relative = 1e-9
+        );
+        // A band of more than half the Earth: its holes wind it back, so it isn't reduced.
+        let wide_band = Polygon::new(zigzag(-60., 1), vec![zigzag(60., 1)]);
+        assert_relative_eq!(
+            north_of_zigzag(-60.) - north_of_zigzag(60.),
+            wide_band.chamberlain_duquette_signed_area(),
             max_relative = 1e-9
         );
     }
