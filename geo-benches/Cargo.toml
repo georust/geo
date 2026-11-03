@@ -72,6 +72,11 @@ path = "src/convex_hull.rs"
 harness = false
 
 [[bench]]
+name = "closest_point"
+path = "src/closest_point.rs"
+harness = false
+
+[[bench]]
 name = "concave_hull"
 path = "src/concave_hull.rs"
 harness = false

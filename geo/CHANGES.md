@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- FIX: `Line::closest_point` no longer produces NaN coordinates solely because the squared length of a very short, non-zero segment underflows.
+- FIX: `Line::closest_point` no longer produces NaN or inaccurate coordinates when the squared length of a non-zero segment underflows or overflows, or when the difference of two finite coordinates overflows.
   - <https://github.com/georust/geo/issues/1604>
 
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
