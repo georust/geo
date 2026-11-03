@@ -1,6 +1,6 @@
 use crate::Closest;
 use crate::GeoFloat;
-use crate::algorithm::{Euclidean, Intersects, Length};
+use crate::algorithm::Intersects;
 use crate::geometry::*;
 
 use std::iter;
@@ -52,19 +52,18 @@ impl<F: GeoFloat> ClosestPoint<F> for Point<F> {
 #[allow(clippy::many_single_char_names)]
 impl<F: GeoFloat> ClosestPoint<F> for Line<F> {
     fn closest_point(&self, p: &Point<F>) -> Closest<F> {
-        let line_length = Euclidean.length(self);
-        if line_length == F::zero() {
-            // if we've got a zero length line, technically the entire line
-            // is the closest point...
-            return Closest::Indeterminate;
-        }
-
         // For some line AB, there is some point, C, which will be closest to
         // P. The line AB will be perpendicular to CP.
         //
         // Line equation: P = start + t * (end - start)
 
         let direction_vector = Point::from(self.end - self.start);
+        // This is the zero-length test without the cost of a hypot call.
+        if direction_vector.x() == F::zero() && direction_vector.y() == F::zero() {
+            // if we've got a zero length line, technically the entire line
+            // is the closest point...
+            return Closest::Indeterminate;
+        }
         let to_p = Point::from(p.0 - self.start);
 
         let numerator = to_p.dot(direction_vector);
@@ -306,7 +305,7 @@ impl<F: GeoFloat> ClosestPoint<F> for Geometry<F> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::algorithm::{Contains, Distance, Translate};
+    use crate::algorithm::{Contains, Distance, Euclidean, Length, Translate};
     use crate::{point, polygon, wkt};
 
     /// Create a test which checks that we get `$should_be` when trying to find
@@ -654,6 +653,14 @@ mod tests {
 
         let got = line.closest_point(&p);
         assert_eq!(got, should_be);
+    }
+
+    // The length is the smallest subnormal, not zero.
+    #[test]
+    fn subnormal_length_line_is_not_indeterminate() {
+        let line = wkt!(LINE(0. 0.,5e-324 0.));
+        let got = line.closest_point(&wkt!(POINT(5e-324 1.)));
+        assert_eq!(got, Closest::SinglePoint(wkt!(POINT(5e-324 0.))));
     }
 
     #[test]
