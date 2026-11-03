@@ -6,11 +6,10 @@ where
     T: GeoNum,
 {
     fn intersects(&self, rhs: &Coord<T>) -> bool {
-        // First we check if the point is collinear with the line.
-        T::Ker::orient2d(self.start, self.end, *rhs) == Orientation::Collinear
-        // In addition, the point must have _both_ coordinates
-        // within the start and end bounds.
-            && point_in_rect(*rhs, self.start, self.end)
+        // The point must be in the bounding rectangle of the line, and collinear
+        // with it. Do the bounding-rectangle test first: it is less expensive.
+        point_in_rect(*rhs, self.start, self.end)
+            && T::Ker::orient2d(self.start, self.end, *rhs) == Orientation::Collinear
     }
 }
 

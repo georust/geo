@@ -4,6 +4,7 @@
 
 - FIX: `Line::closest_point` no longer produces NaN or inaccurate coordinates when the squared length of a non-zero segment underflows or overflows, or when the difference of two finite coordinates overflows.
   - <https://github.com/georust/geo/issues/1604>
+- `Line` intersection with a `Coord` or `Point` tests the bounding rectangle before the orientation. `Line::closest_point` is about 15% faster on ordinary segments, and about 3 times faster on segments whose coordinates are above 1e154.
 
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
