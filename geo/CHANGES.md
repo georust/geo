@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-- FIX: `ChamberlainDuquetteArea` takes an edge written across more than 180° of longitude the short way around, as `GeodesicArea` does, unless it runs along a parallel. A polygon whose edges cross the antimeridian between different latitudes, such as an island or a coastline left uncut, now gets its own area rather than one off by most of its band of latitude, and a ring winding around a pole (such as a coastline around Antarctica not closed along the pole) gets the area of the smaller side it splits the Earth into rather than a wrong one.
+- FIX: `ChamberlainDuquetteArea` takes a ring the short way around in longitude, as `GeodesicArea` does, when it has an edge written across more than 180° that isn't along a parallel. A polygon that crosses the antimeridian off a parallel, such as an island or a coastline left uncut, now gets its own area rather than one off by most of its band of latitude, and a ring winding around a pole (such as a coastline around Antarctica not closed along the pole) gets the area of the smaller side it splits the Earth into rather than a wrong one.
   - <https://github.com/georust/geo/pull/1631>
-  - BREAKING: a polygon with an edge wider than 180° that isn't along a parallel measures differently. Edges along a parallel are still taken as written, so boxes, `Rect`s, latitude bands and polygons clipped along a parallel are unchanged, and rings with no other edge wider than 180° give exactly what they did.
+  - BREAKING: a ring with an edge wider than 180° that isn't along a parallel measures differently. Any other ring is still taken as written, so boxes, `Rect`s, latitude bands, polygons clipped along parallels and rings closed along a pole give exactly what they did.
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
