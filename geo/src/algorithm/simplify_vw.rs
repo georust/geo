@@ -969,7 +969,9 @@ mod test {
         // simplify an 8k-point LineString, eliminating self-intersections
         let points_ls = geo_test_fixtures::norway_main::<f64>();
         let simplified = vwp_wrapper::<_, 2, 4>(&points_ls, None, 0.0005);
-        assert_eq!(simplified[0].len(), 3278);
+        // The count depends on the rounding of the triangle areas, which changed in
+        // https://github.com/georust/geo/issues/1636
+        assert_eq!(simplified[0].len(), 3276);
     }
 
     #[test]
