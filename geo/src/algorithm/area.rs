@@ -224,7 +224,25 @@ where
     T: CoordFloat,
 {
     fn signed_area(&self) -> T {
-        sum_line_determinants(&self.to_array()) / (T::one() + T::one())
+        // Shift the triangle so that a coord is the origin, so that a small triangle far
+        // from the origin keeps its precision (#1438). The sides from and to that coord
+        // then have a zero determinant. Shift by the coord opposite the longest side, so
+        // that the other two are the shortest: shifting a needle-like triangle by its far
+        // coord can round its other two coords to the same point (#1636). Use hypot()
+        // rather than squared lengths, which can overflow and tie when the sides from
+        // that coord don't.
+        let [a, b, c] = self.to_array();
+        let length = |side: Coord<T>| side.x.hypot(side.y);
+        let (ab, bc, ca) = (length(b - a), length(c - b), length(a - c));
+        // Rotating the coords keeps the orientation
+        let [origin, second, third] = if bc >= ab && bc >= ca {
+            [a, b, c]
+        } else if ca >= ab {
+            [b, c, a]
+        } else {
+            [c, a, b]
+        };
+        Line::new(second - origin, third - origin).determinant() / (T::one() + T::one())
     }
 
     fn unsigned_area(&self) -> T {
@@ -444,6 +462,43 @@ mod test {
         let err = (polygon_area - triangle_area).abs() / polygon_area;
 
         assert!(err < 1e-2);
+    }
+
+    #[test]
+    fn area_needle_triangle_numerical_stability() {
+        // Shifting by the coord far from the short side would round the other two
+        // coords to the same point
+        // https://github.com/georust/geo/issues/1636
+        let far = coord! { x: 1e8, y: 1e8 };
+        let near_a = coord! { x: 0.0, y: 1e-9 };
+        let near_b = coord! { x: 1e-9, y: 0.0 };
+        for (a, b, c) in [
+            (far, near_a, near_b),
+            (near_a, near_b, far),
+            (near_b, far, near_a),
+        ] {
+            // unchecked_winding() so that the clockwise triangle stays clockwise
+            let triangle = Triangle::unchecked_winding(a, b, c);
+            assert_relative_eq!(triangle.signed_area(), 0.1, max_relative = 1e-9);
+            let reversed = Triangle::unchecked_winding(c, b, a);
+            assert_relative_eq!(reversed.signed_area(), -0.1, max_relative = 1e-9);
+        }
+    }
+
+    #[test]
+    fn area_triangle_with_overflowing_side_lengths() {
+        // The squares of all three side lengths overflow, and so does the longest side,
+        // but the sides from the coord opposite it don't
+        // https://github.com/georust/geo/issues/1636
+        let left = coord! { x: -1e308, y: 0.0 };
+        let right = coord! { x: 1e308, y: 0.0 };
+        let top = coord! { x: 0.0, y: 1e-308 };
+        for (a, b, c) in [(left, right, top), (right, top, left), (top, left, right)] {
+            let triangle = Triangle::unchecked_winding(a, b, c);
+            assert_relative_eq!(triangle.signed_area(), 1.0, max_relative = 1e-9);
+            let reversed = Triangle::unchecked_winding(c, b, a);
+            assert_relative_eq!(reversed.signed_area(), -1.0, max_relative = 1e-9);
+        }
     }
 
     #[test]

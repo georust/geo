@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- FIX: `Triangle::signed_area` and `Triangle::unsigned_area` now shift the triangle by the coord opposite its longest side rather than by its first coord. A needle-like triangle far from the origin no longer has an area of 0, and a triangle whose sides from its first coord overflow no longer has an infinite area.
+  - <https://github.com/georust/geo/issues/1636>
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
