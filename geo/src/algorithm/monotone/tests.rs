@@ -28,7 +28,9 @@ fn twice_polygon_area<T: GeoNum + Signed>(poly: &Polygon<T>) -> T {
     area
 }
 
-fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display + RelativeEq>(wkt: &str) {
+fn check_monotone_subdivision<T: GeoFloat + FromStr + Default + Display + RelativeEq + 'static>(
+    wkt: &str,
+) {
     init_log();
     eprintln!("input: {wkt}");
     let input = Polygon::<T>::try_from_wkt_str(wkt).unwrap();
