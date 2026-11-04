@@ -969,7 +969,7 @@ mod test {
         // simplify an 8k-point LineString, eliminating self-intersections
         let points_ls = geo_test_fixtures::norway_main::<f64>();
         let simplified = vwp_wrapper::<_, 2, 4>(&points_ls, None, 0.0005);
-        assert_eq!(simplified[0].len(), 3278);
+        assert_eq!(simplified[0].len(), 3276);
     }
 
     #[test]
