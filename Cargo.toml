@@ -14,3 +14,4 @@ members = [
 # Ensure any transitive dependencies also use the local geo/geo-types
 geo = { path = "geo" }
 geo-types = { path = "geo-types" }
+wkt = { git = "https://github.com/georust/wkt", rev = "f582f6c656736dc751cdb2c7ada88e19f7eb60fb" }
