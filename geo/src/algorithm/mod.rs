@@ -228,6 +228,10 @@ pub use linestring_segment::{LineStringSegmentize, LineStringSegmentizeHaversine
 pub mod map_coords;
 pub use map_coords::{MapCoords, MapCoordsInPlace};
 
+/// Calculate the center of the largest circle inscribed in a `Polygon` or `MultiPolygon`.
+pub mod maximum_inscribed_circle;
+pub use maximum_inscribed_circle::MaximumInscribedCircle;
+
 /// Orient a `Polygon`'s exterior and interior rings.
 pub mod orient;
 pub use orient::Orient;

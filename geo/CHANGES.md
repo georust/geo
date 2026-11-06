@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add `MaximumInscribedCircle` for `Polygon` and `MultiPolygon`, ported from JTS.
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.

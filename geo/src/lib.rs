@@ -118,6 +118,7 @@
 //! - **[`IsConvex`]**: Calculate the convexity of a [`LineString`]
 //! - **[`InteriorPoint`]**:
 //!   Calculates a representative point inside a `Geometry`
+//! - **[`MaximumInscribedCircle`]**: Calculate the center of the largest circle inside a polygon
 //!
 //! ## Topology
 //!
