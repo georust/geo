@@ -139,6 +139,33 @@
 //! }
 //! ```
 //!
+//! # Snapping
+//!
+//! Before triangulation, vertices closer than a snap radius are merged, to
+//! absorb floating-point error in computed intersection points. Detail
+//! smaller than the radius is lost. By default the radius is relative to the
+//! extent of the input ([`SnapRadius::Relative`], `1e-9` of the larger of the
+//! width and height of its bounding rectangle), so the result does not depend
+//! on the units of the input, down to a floor set by floating-point precision.
+//! For a `MultiPolygon`, the extent is that of the whole collection, so a
+//! polygon can snap differently when it is repaired as part of a large
+//! collection than when it is repaired alone.
+//!
+//! [`MakeValid::make_valid_with_config`] takes a [`MakeValidConfig`] to set a
+//! different relative factor or a fixed [`SnapRadius::Absolute`] distance.
+//!
+//! [`SnapRadius::Relative`]: crate::algorithm::repair_polygon::SnapRadius::Relative
+//! [`SnapRadius::Absolute`]: crate::algorithm::repair_polygon::SnapRadius::Absolute
+//! [`MakeValidConfig`]: crate::algorithm::repair_polygon::MakeValidConfig
+//!
+//! ```
+//! # use geo::{MakeValid, Relate, wkt};
+//! // A valid square 6e-5 across. A fixed radius of 1e-4 would remove it.
+//! let square = wkt!(POLYGON((-77.03 38.9, -77.02994 38.9, -77.02994 38.90006, -77.03 38.90006, -77.03 38.9)));
+//! let repaired = square.make_valid().expect("repair failed");
+//! assert!(repaired.relate(&square).is_equal_topo());
+//! ```
+//!
 //! # Complexity
 //!
 //! Let:
@@ -183,8 +210,8 @@ use spade::{ConstrainedDelaunayTriangulation, Triangulation};
 
 use crate::algorithm::area::get_linestring_area;
 use crate::algorithm::triangulate_delaunay::{
-    DelaunayTriangulationConfig, SpadeTriangulationFloat, TriangulationError,
-    split_segments_at_intersections, sweep_line_ord, sweep_normalize_line,
+    SpadeTriangulationFloat, TriangulationError, split_segments_at_intersections, sweep_line_ord,
+    sweep_normalize_line,
 };
 use crate::coordinate_position::{CoordPos, coord_pos_relative_to_ring};
 use crate::{GeoFloat, LinesIter};
@@ -231,6 +258,100 @@ impl From<TriangulationError> for RepairPolygonError {
     }
 }
 
+// ====== Configuration ======
+
+/// How close two vertices must be for [`MakeValid`] to merge them.
+///
+/// Merging nearby vertices absorbs floating-point error in computed
+/// intersection points, which keeps the triangulation robust. Detail smaller
+/// than the radius is lost, so the radius must be small relative to the
+/// features of the input.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SnapRadius<T> {
+    /// A fraction of the extent of the input: the larger of the width and
+    /// height of its bounding rectangle. With `Relative(1e-9)`, a polygon
+    /// 100 units across snaps within `1e-7` units.
+    ///
+    /// The radius has a lower limit of approximately 1,000 times the gap
+    /// between neighbouring floating-point values at the largest absolute
+    /// coordinate of the input. A small geometry far from the origin can have a
+    /// relative radius smaller than this gap. For `f64` coordinates near 100,
+    /// the lower limit is approximately `2.3e-11`.
+    Relative(T),
+    /// A fixed distance in coordinate units, with no lower limit. A radius
+    /// close to the gap between neighbouring floating-point values at the
+    /// coordinates of the input can give invalid output.
+    Absolute(T),
+}
+
+/// Options for [`MakeValid::make_valid_with_config`].
+///
+/// ```
+/// use geo::{MakeValid, Relate, polygon};
+/// use geo::algorithm::repair_polygon::{MakeValidConfig, SnapRadius};
+///
+/// let poly = polygon![(x: 0., y: 0.), (x: 10., y: 0.), (x: 10., y: 10.), (x: 0., y: 10.)];
+/// let config = MakeValidConfig::default().with_snap_radius(SnapRadius::Absolute(0.01));
+/// let repaired = poly.make_valid_with_config(&config).unwrap();
+/// assert!(repaired.relate(&poly).is_equal_topo());
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[non_exhaustive]
+pub struct MakeValidConfig<T> {
+    /// The distance within which vertices are merged before triangulation.
+    /// The default is [`SnapRadius::Relative`] with a factor of `1e-9`.
+    pub snap_radius: SnapRadius<T>,
+}
+
+impl<T: GeoFloat> Default for MakeValidConfig<T> {
+    fn default() -> Self {
+        Self {
+            snap_radius: SnapRadius::Relative(T::from(DEFAULT_RELATIVE_SNAP).unwrap()),
+        }
+    }
+}
+
+impl<T> MakeValidConfig<T> {
+    /// Set the distance within which vertices are merged.
+    pub fn with_snap_radius(mut self, snap_radius: SnapRadius<T>) -> Self {
+        self.snap_radius = snap_radius;
+        self
+    }
+}
+
+/// The default [`SnapRadius::Relative`] factor.
+const DEFAULT_RELATIVE_SNAP: f64 = 1e-9;
+
+/// The lower limit of a relative snap radius is this value times
+/// `T::epsilon()` times the largest absolute coordinate. Floating-point values
+/// near `x` are approximately `x * T::epsilon()` apart.
+const SNAP_FLOOR_FACTOR: f64 = 1024.0;
+
+/// Convert `snap` to an absolute radius for the coordinates of `lines`.
+fn snap_radius_for<T: GeoFloat>(snap: SnapRadius<T>, lines: &[Line<T>]) -> T {
+    let factor = match snap {
+        SnapRadius::Absolute(radius) => return radius,
+        SnapRadius::Relative(factor) => factor,
+    };
+    let mut coords = lines.iter().flat_map(|l| [l.start, l.end]);
+    let Some(first) = coords.next() else {
+        return T::zero();
+    };
+    let (mut min, mut max) = (first, first);
+    for c in coords {
+        min.x = min.x.min(c.x);
+        min.y = min.y.min(c.y);
+        max.x = max.x.max(c.x);
+        max.y = max.y.max(c.y);
+    }
+    let extent = (max.x - min.x).max(max.y - min.y);
+    let magnitude = [min.x, min.y, max.x, max.y]
+        .into_iter()
+        .fold(T::zero(), |m, v| m.max(v.abs()));
+    let floor = magnitude * T::epsilon() * T::from(SNAP_FLOOR_FACTOR).unwrap();
+    (extent * factor).max(floor)
+}
+
 // ====== Public API ======
 
 /// Repair an invalid polygon using constrained Delaunay triangulation.
@@ -238,20 +359,35 @@ impl From<TriangulationError> for RepairPolygonError {
 /// See the [module-level documentation](self) for algorithm details,
 /// examples, complexity analysis, and supported invalidity types.
 pub trait MakeValid<T: GeoFloat> {
-    /// Repair this geometry, producing a valid
-    /// [`MultiPolygon`].
+    /// Repair this geometry, producing a valid [`MultiPolygon`], with the
+    /// default [`MakeValidConfig`].
     ///
     /// Returns [`RepairPolygonError`] if the input contains non-finite
     /// coordinates or if constraint insertion fails.
-    fn make_valid(&self) -> Result<MultiPolygon<T>, RepairPolygonError>;
+    fn make_valid(&self) -> Result<MultiPolygon<T>, RepairPolygonError> {
+        self.make_valid_with_config(&MakeValidConfig::default())
+    }
+
+    /// Repair this geometry, producing a valid [`MultiPolygon`], with the
+    /// given options.
+    ///
+    /// Returns [`RepairPolygonError`] if the input contains non-finite
+    /// coordinates or if constraint insertion fails.
+    fn make_valid_with_config(
+        &self,
+        config: &MakeValidConfig<T>,
+    ) -> Result<MultiPolygon<T>, RepairPolygonError>;
 }
 
 impl<T> MakeValid<T> for Polygon<T>
 where
     T: SpadeTriangulationFloat,
 {
-    fn make_valid(&self) -> Result<MultiPolygon<T>, RepairPolygonError> {
-        repair_polygon(self)
+    fn make_valid_with_config(
+        &self,
+        config: &MakeValidConfig<T>,
+    ) -> Result<MultiPolygon<T>, RepairPolygonError> {
+        repair_from_lines(extract_lines(self), config)
     }
 }
 
@@ -259,36 +395,24 @@ impl<T> MakeValid<T> for MultiPolygon<T>
 where
     T: SpadeTriangulationFloat,
 {
-    fn make_valid(&self) -> Result<MultiPolygon<T>, RepairPolygonError> {
-        repair_multi_polygon(self)
+    fn make_valid_with_config(
+        &self,
+        config: &MakeValidConfig<T>,
+    ) -> Result<MultiPolygon<T>, RepairPolygonError> {
+        repair_from_lines(self.iter().flat_map(extract_lines).collect(), config)
     }
 }
 
 // ====== Core pipeline ======
 
-fn repair_polygon<T: SpadeTriangulationFloat>(
-    polygon: &Polygon<T>,
-) -> Result<MultiPolygon<T>, RepairPolygonError> {
-    let lines = extract_lines(polygon);
-    if lines.is_empty() {
-        return Ok(MultiPolygon::new(vec![]));
-    }
-    repair_from_lines(lines)
-}
-
-fn repair_multi_polygon<T: SpadeTriangulationFloat>(
-    mp: &MultiPolygon<T>,
-) -> Result<MultiPolygon<T>, RepairPolygonError> {
-    let lines: Vec<Line<T>> = mp.iter().flat_map(extract_lines).collect();
-    if lines.is_empty() {
-        return Ok(MultiPolygon::new(vec![]));
-    }
-    repair_from_lines(lines)
-}
-
 fn repair_from_lines<T: SpadeTriangulationFloat>(
     lines: Vec<Line<T>>,
+    config: &MakeValidConfig<T>,
 ) -> Result<MultiPolygon<T>, RepairPolygonError> {
+    if lines.is_empty() {
+        return Ok(MultiPolygon::new(vec![]));
+    }
+
     // Check for non-finite coordinates before they reach the R-tree or
     // triangulation kernel (both of which can panic on NaN).
     for line in &lines {
@@ -302,7 +426,7 @@ fn repair_from_lines<T: SpadeTriangulationFloat>(
         }
     }
 
-    let snap_radius = DelaunayTriangulationConfig::<T>::default().snap_radius;
+    let snap_radius = snap_radius_for(config.snap_radius, &lines);
     let cdt = build_cdt(lines, snap_radius)?;
 
     if cdt.num_inner_faces() == 0 {
