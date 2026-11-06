@@ -744,3 +744,106 @@ fn output_is_deterministic() {
         assert_eq!(bowtie.make_valid().unwrap(), expected);
     }
 }
+
+// ====== Snap radius scales with the input ======
+// The snap radius used to be a fixed 1e-4 coordinate units, which is about
+// 10 m in degrees, so small geographic polygons collapsed.
+
+/// A valid 6e-5 degree square (about 5 m x 7 m in Washington, DC).
+fn small_lonlat_square() -> Polygon<f64> {
+    wkt!(POLYGON((-77.03 38.9, -77.02994 38.9, -77.02994 38.90006, -77.03 38.90006, -77.03 38.9)))
+}
+
+#[test]
+fn small_valid_polygon_in_degrees_survives() {
+    let square = small_lonlat_square();
+    let repaired = square.make_valid().unwrap();
+    assert_valid(&repaired);
+    assert_eq!(repaired.0.len(), 1);
+    assert_eq!(total_area(&repaired), square.unsigned_area());
+}
+
+#[test]
+fn small_valid_polygon_keeps_exact_vertices() {
+    let square = small_lonlat_square();
+    let repaired = square.make_valid().unwrap();
+    let mut got: Vec<_> = repaired.0[0].exterior().coords().copied().collect();
+    let mut want: Vec<_> = square.exterior().coords().copied().collect();
+    let key = |c: &Coord<f64>| (c.x.to_bits(), c.y.to_bits());
+    got.sort_by_key(key);
+    got.dedup();
+    want.sort_by_key(key);
+    want.dedup();
+    assert_eq!(got, want);
+}
+
+#[test]
+fn thin_valid_strip_in_degrees_survives() {
+    // About 90 m x 5 m
+    let strip: Polygon<f64> =
+        wkt!(POLYGON((-77.03 38.9, -77.029 38.9, -77.029 38.90005, -77.03 38.90005, -77.03 38.9)));
+    let repaired = strip.make_valid().unwrap();
+    assert_eq!(repaired.0.len(), 1);
+    assert_eq!(total_area(&repaired), strip.unsigned_area());
+}
+
+#[test]
+fn small_notch_is_kept() {
+    let notched: Polygon<f64> = wkt!(POLYGON((
+        0. 0., 0.0005 0., 0.0005 -0.00003, 0.00053 -0.00003, 0.00053 0.,
+        0.001 0., 0.001 0.001, 0. 0.001, 0. 0.
+    )));
+    let repaired = notched.make_valid().unwrap();
+    assert_valid(&repaired);
+    assert_eq!(repaired.0.len(), 1);
+    assert_relative_eq!(total_area(&repaired), notched.unsigned_area());
+    assert_eq!(repaired.0[0].exterior().0.len(), 9);
+}
+
+#[test]
+fn small_bowtie_is_repaired() {
+    let bowtie: Polygon<f64> =
+        wkt!(POLYGON((0. 0., 0.00006 0.00006, 0.00006 0., 0. 0.00006, 0. 0.)));
+    let repaired = bowtie.make_valid().unwrap();
+    assert_valid(&repaired);
+    assert_eq!(repaired.0.len(), 2);
+    // Two triangles of 3e-5 x 6e-5 / 2 each
+    assert_relative_eq!(total_area(&repaired), 1.8e-9, max_relative = 1e-12);
+}
+
+#[test]
+fn repair_is_scale_invariant() {
+    // The bowtie at 1e-5 scale and at 1e5 scale repairs to the same shape,
+    // scaled. Power-of-two factors keep the comparison exact.
+    let unit: Polygon<f64> = wkt!(POLYGON((0. 0., 2. 2., 2. 0., 0. 2., 0. 0.)));
+    let expected = unit.make_valid().unwrap();
+    for k in [-40, -20, 20, 40] {
+        let s = 2f64.powi(k);
+        use crate::MapCoords;
+        let scaled = unit.map_coords(|c| c * s);
+        let repaired = scaled.make_valid().unwrap();
+        assert_eq!(repaired, expected.map_coords(|c| c * s), "scale 2^{k}");
+    }
+}
+
+#[test]
+fn snap_radius_follows_extent_and_magnitude() {
+    let lines = |p: Polygon<f64>| extract_lines(&p);
+    // Near the origin the extent decides: about 1e-9 of it
+    let r = snap_radius_for(&lines(wkt!(POLYGON((0. 0., 1. 0., 1. 1., 0. 0.)))));
+    assert!(r > 5e-10 && r < 2e-9, "{r}");
+    // Far from the origin with a tiny extent, 16 ulps of the magnitude
+    let r = snap_radius_for(&lines(small_lonlat_square()));
+    assert!(r < 1e-12, "{r}");
+    assert!(r >= 16.0 * f64::EPSILON * 77.0, "{r}");
+    assert_eq!(snap_radius_for::<f64>(&[]), 0.0);
+}
+
+#[test]
+fn small_bowtie_is_repaired_in_f32() {
+    let bowtie: Polygon<f32> =
+        wkt!(POLYGON((0. 0., 0.00006 0.00006, 0.00006 0., 0. 0.00006, 0. 0.)));
+    let repaired = bowtie.make_valid().unwrap();
+    assert_eq!(repaired.0.len(), 2);
+    assert_relative_eq!(repaired.unsigned_area(), 1.8e-9, max_relative = 1e-5);
+}

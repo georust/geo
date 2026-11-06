@@ -183,8 +183,8 @@ use spade::{ConstrainedDelaunayTriangulation, Triangulation};
 
 use crate::algorithm::area::get_linestring_area;
 use crate::algorithm::triangulate_delaunay::{
-    DelaunayTriangulationConfig, SpadeTriangulationFloat, TriangulationError,
-    split_segments_at_intersections, sweep_line_ord, sweep_normalize_line,
+    SpadeTriangulationFloat, TriangulationError, split_segments_at_intersections, sweep_line_ord,
+    sweep_normalize_line,
 };
 use crate::coordinate_position::{CoordPos, coord_pos_relative_to_ring};
 use crate::{GeoFloat, LinesIter};
@@ -302,7 +302,7 @@ fn repair_from_lines<T: SpadeTriangulationFloat>(
         }
     }
 
-    let snap_radius = DelaunayTriangulationConfig::<T>::default().snap_radius;
+    let snap_radius = snap_radius_for(&lines);
     let cdt = build_cdt(lines, snap_radius)?;
 
     if cdt.num_inner_faces() == 0 {
@@ -321,6 +321,39 @@ fn repair_from_lines<T: SpadeTriangulationFloat>(
         .map(LineString::new)
         .collect();
     Ok(assemble_polygons(rings))
+}
+
+/// The radius within which vertices are merged during repair.
+///
+/// Snapping only needs to absorb floating-point error, mostly in computed
+/// intersection points, so the radius scales with the input instead of being
+/// a fixed number of coordinate units. A fixed radius breaks inputs that are
+/// small in their own units: in degrees, the triangulation default of `1e-4`
+/// is about 10 m, so a valid 5 m polygon used to come back empty.
+///
+/// The radius is the larger of:
+/// - `sqrt(ε) / 16` of the input's extent (about `1e-9` for `f64`), and
+/// - `16 ε` of its largest coordinate, so it never falls below the
+///   precision available at the input's location.
+fn snap_radius_for<T: SpadeTriangulationFloat>(lines: &[Line<T>]) -> T {
+    let mut coords = lines.iter().flat_map(|l| [l.start, l.end]);
+    let Some(first) = coords.next() else {
+        return T::zero();
+    };
+    let (mut min, mut max) = (first, first);
+    for c in coords {
+        min.x = min.x.min(c.x);
+        min.y = min.y.min(c.y);
+        max.x = max.x.max(c.x);
+        max.y = max.y.max(c.y);
+    }
+    let extent = (max.x - min.x).max(max.y - min.y);
+    let magnitude = [min.x, min.y, max.x, max.y]
+        .into_iter()
+        .fold(T::zero(), |m, v| m.max(v.abs()));
+    let sixteen = <T as From<f32>>::from(16.0);
+    let eps = T::epsilon();
+    (extent * eps.sqrt() / sixteen).max(magnitude * eps * sixteen)
 }
 
 // ====== Step 1: Extract edges from polygon ======
