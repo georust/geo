@@ -2,7 +2,7 @@ use super::{Contains, impl_contains_from_relate, impl_contains_geometry_for};
 use crate::algorithm::kernels::Kernel;
 use crate::dimensions::Dimensions;
 use crate::geometry::*;
-use crate::{CoordNum, GeoFloat, GeoNum, HasDimensions, Intersects, Orientation};
+use crate::{GeoFloat, GeoNum, HasDimensions, Intersects, Orientation};
 
 // ┌────────────────────────────────┐
 // │ Implementations for LineString │
@@ -152,21 +152,33 @@ impl_contains_geometry_for!(MultiLineString<T>);
 
 impl<T> Contains<Coord<T>> for MultiLineString<T>
 where
-    T: CoordNum,
-    LineString<T>: Contains<Coord<T>>,
+    T: GeoFloat,
 {
+    /// Point containment uses the union semantics of the collection, as
+    /// `relate` does (the Mod-2 boundary rule): an endpoint shared by two
+    /// members lies in the interior of their union and is contained. A
+    /// member-wise check cannot express this.
     fn contains(&self, coord: &Coord<T>) -> bool {
-        self.iter().any(|ls| ls.contains(coord))
+        let end_count = self
+            .0
+            .iter()
+            .filter(|line| !line.0.is_empty())
+            .flat_map(|line| [line.0[0], line.0[line.0.len() - 1]])
+            .filter(|end| end == coord)
+            .count();
+        end_count % 2 == 0
+            && self.0.iter().any(|line| {
+                line.0 == [*coord] || line.lines().any(|segment| segment.intersects(coord))
+            })
     }
 }
 
 impl<T> Contains<Point<T>> for MultiLineString<T>
 where
-    T: CoordNum,
-    LineString<T>: Contains<Point<T>>,
+    T: GeoFloat,
 {
     fn contains(&self, rhs: &Point<T>) -> bool {
-        self.iter().any(|ls| ls.contains(rhs))
+        self.contains(&rhs.0)
     }
 }
 
