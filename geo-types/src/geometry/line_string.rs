@@ -543,7 +543,8 @@ mod approx_integration {
     feature = "rstar_0_10",
     feature = "rstar_0_11",
     feature = "rstar_0_12",
-    feature = "rstar_0_13"
+    feature = "rstar_0_13",
+    feature = "rstar_0_14"
 ))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
@@ -554,13 +555,10 @@ macro_rules! impl_rstar_line_string {
             type Envelope = ::$rstar::AABB<Point<T>>;
 
             fn envelope(&self) -> Self::Envelope {
-                use num_traits::Bounded;
                 let bounding_rect = crate::private_utils::line_string_bounding_rect(self);
                 match bounding_rect {
-                    None => ::$rstar::AABB::from_corners(
-                        Point::new(Bounded::min_value(), Bounded::min_value()),
-                        Point::new(Bounded::max_value(), Bounded::max_value()),
-                    ),
+                    // An empty LineString has an empty envelope, which intersects nothing.
+                    None => <Self::Envelope as ::$rstar::Envelope>::new_empty(),
                     Some(b) => ::$rstar::AABB::from_corners(
                         Point::new(b.min().x, b.min().y),
                         Point::new(b.max().x, b.max().y),
@@ -602,6 +600,9 @@ impl_rstar_line_string!(rstar_0_12);
 
 #[cfg(feature = "rstar_0_13")]
 impl_rstar_line_string!(rstar_0_13);
+
+#[cfg(feature = "rstar_0_14")]
+impl_rstar_line_string!(rstar_0_14);
 
 #[cfg(test)]
 mod test {
@@ -728,5 +729,33 @@ mod test {
     fn test_indexing_out_of_bounds() {
         let ls = wkt! { LINESTRING(0. 0., 1. 1.) };
         let _ = ls[2];
+    }
+
+    #[cfg(feature = "rstar_0_13")]
+    #[test]
+    fn empty_line_string_rstar_envelope_is_empty() {
+        // see https://github.com/georust/geo/issues/1638
+        use rstar_0_13::{Envelope, RTree, RTreeObject, AABB};
+
+        let empty: LineString<f64> = LineString::new(vec![]);
+        assert_eq!(empty.envelope(), AABB::new_empty());
+
+        let tree = RTree::bulk_load(vec![empty]);
+        let query = AABB::from_corners(Point::new(1e6, 1e6), Point::new(1e6 + 1., 1e6 + 1.));
+        assert_eq!(tree.locate_in_envelope_intersecting(query).count(), 0);
+    }
+
+    #[cfg(feature = "rstar_0_14")]
+    #[test]
+    fn empty_line_string_rstar_envelope_is_empty_0_14() {
+        // see https://github.com/georust/geo/issues/1638
+        use rstar_0_14::{Envelope, RTree, RTreeObject, AABB};
+
+        let empty: LineString<f64> = LineString::new(vec![]);
+        assert_eq!(empty.envelope(), AABB::new_empty());
+
+        let tree = RTree::bulk_load(vec![empty]);
+        let query = AABB::from_corners(Point::new(1e6, 1e6), Point::new(1e6 + 1., 1e6 + 1.));
+        assert_eq!(tree.locate_in_envelope_intersecting(query).count(), 0);
     }
 }
