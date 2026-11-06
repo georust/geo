@@ -1,6 +1,7 @@
 # Changes
 
 ## Unreleased
+- Add support for `rstar` 0.14 via the `rstar_0_14` feature, alongside the existing `rstar` versions.
 - Fix the `rstar` envelope of an empty `LineString` (and so of a `Polygon` with an empty exterior, and any `MultiPolygon` containing one) covering the whole plane. It is now `AABB::new_empty()`, so empty geometries no longer match every envelope query.
   - <https://github.com/georust/geo/issues/1638>
 - Add `center` function for `Triangle` type, mirroring `Rect`. Part of ensuring `triangle.interior_point()` is always within the triangle.

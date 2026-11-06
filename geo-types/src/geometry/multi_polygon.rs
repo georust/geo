@@ -248,7 +248,8 @@ mod approx_integration {
     feature = "rstar_0_10",
     feature = "rstar_0_11",
     feature = "rstar_0_12",
-    feature = "rstar_0_13"
+    feature = "rstar_0_13",
+    feature = "rstar_0_14"
 ))]
 macro_rules! impl_rstar_multi_polygon {
     ($rstar:ident) => {
@@ -278,6 +279,9 @@ impl_rstar_multi_polygon!(rstar_0_11);
 impl_rstar_multi_polygon!(rstar_0_12);
 #[cfg(feature = "rstar_0_13")]
 impl_rstar_multi_polygon!(rstar_0_13);
+
+#[cfg(feature = "rstar_0_14")]
+impl_rstar_multi_polygon!(rstar_0_14);
 
 #[cfg(test)]
 mod test {
@@ -429,6 +433,28 @@ mod test {
         // see https://github.com/georust/geo/issues/1638
         use crate::{LineString, Point};
         use rstar_0_13::{Envelope, RTreeObject, AABB};
+
+        let empty_poly: Polygon<f64> = Polygon::new(LineString::new(vec![]), vec![]);
+        assert_eq!(empty_poly.envelope(), AABB::new_empty());
+
+        let empty_mp: MultiPolygon<f64> = MultiPolygon::new(vec![empty_poly.clone()]);
+        assert_eq!(empty_mp.envelope(), AABB::new_empty());
+
+        // An empty member must not widen the envelope of the non-empty members.
+        let poly = polygon![(x: 0., y: 0.), (x: 1., y: 0.), (x: 1., y: 1.), (x: 0., y: 0.)];
+        let mp = MultiPolygon::new(vec![empty_poly, poly]);
+        assert_eq!(
+            mp.envelope(),
+            AABB::from_corners(Point::new(0., 0.), Point::new(1., 1.))
+        );
+    }
+
+    #[cfg(feature = "rstar_0_14")]
+    #[test]
+    fn empty_polygons_rstar_envelope_is_empty_0_14() {
+        // see https://github.com/georust/geo/issues/1638
+        use crate::{LineString, Point};
+        use rstar_0_14::{Envelope, RTreeObject, AABB};
 
         let empty_poly: Polygon<f64> = Polygon::new(LineString::new(vec![]), vec![]);
         assert_eq!(empty_poly.envelope(), AABB::new_empty());

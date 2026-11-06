@@ -543,7 +543,8 @@ mod approx_integration {
     feature = "rstar_0_10",
     feature = "rstar_0_11",
     feature = "rstar_0_12",
-    feature = "rstar_0_13"
+    feature = "rstar_0_13",
+    feature = "rstar_0_14"
 ))]
 macro_rules! impl_rstar_line_string {
     ($rstar:ident) => {
@@ -599,6 +600,9 @@ impl_rstar_line_string!(rstar_0_12);
 
 #[cfg(feature = "rstar_0_13")]
 impl_rstar_line_string!(rstar_0_13);
+
+#[cfg(feature = "rstar_0_14")]
+impl_rstar_line_string!(rstar_0_14);
 
 #[cfg(test)]
 mod test {
@@ -732,6 +736,20 @@ mod test {
     fn empty_line_string_rstar_envelope_is_empty() {
         // see https://github.com/georust/geo/issues/1638
         use rstar_0_13::{Envelope, RTree, RTreeObject, AABB};
+
+        let empty: LineString<f64> = LineString::new(vec![]);
+        assert_eq!(empty.envelope(), AABB::new_empty());
+
+        let tree = RTree::bulk_load(vec![empty]);
+        let query = AABB::from_corners(Point::new(1e6, 1e6), Point::new(1e6 + 1., 1e6 + 1.));
+        assert_eq!(tree.locate_in_envelope_intersecting(query).count(), 0);
+    }
+
+    #[cfg(feature = "rstar_0_14")]
+    #[test]
+    fn empty_line_string_rstar_envelope_is_empty_0_14() {
+        // see https://github.com/georust/geo/issues/1638
+        use rstar_0_14::{Envelope, RTree, RTreeObject, AABB};
 
         let empty: LineString<f64> = LineString::new(vec![]);
         assert_eq!(empty.envelope(), AABB::new_empty());

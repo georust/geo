@@ -379,7 +379,12 @@ pub mod prelude {
 /// }
 /// ```
 pub trait GeoFloat:
-    GeoNum + num_traits::Float + num_traits::Signed + num_traits::Bounded + float_next_after::NextAfter
+    GeoNum
+    + num_traits::Float
+    + num_traits::Signed
+    + num_traits::Bounded
+    + float_next_after::NextAfter
+    + rstar::RTreeNum
 {
 }
 impl<T> GeoFloat for T where
@@ -388,6 +393,7 @@ impl<T> GeoFloat for T where
         + num_traits::Signed
         + num_traits::Bounded
         + float_next_after::NextAfter
+        + rstar::RTreeNum
 {
 }
 
