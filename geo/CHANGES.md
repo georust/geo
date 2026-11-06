@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- FIX: `MakeValid::make_valid` merges vertices within a radius relative to the extent of the input (`1e-9` of the larger side of its bounding rectangle, with a floor set by floating-point precision), not within a fixed `1e-4` coordinate units. Previously, the result depended on the units of the input: polygons less than approximately `1e-4` across became empty, and detail smaller than `1e-4` was removed.
+  - <https://github.com/georust/geo/issues/1640>
+- Add `MakeValid::make_valid_with_config`, which takes a `MakeValidConfig` to set the snap radius as a relative factor or an absolute distance (`SnapRadius`).
+  - <https://github.com/georust/geo/issues/1640>
+  - BREAKING: `make_valid_with_config` is the required method of the trait, and `make_valid` is now provided. Manual implementors of `MakeValid` must implement `make_valid_with_config` instead.
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
