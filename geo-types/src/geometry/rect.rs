@@ -495,7 +495,8 @@ pub struct InvalidRectCoordinatesError;
     feature = "rstar_0_10",
     feature = "rstar_0_11",
     feature = "rstar_0_12",
-    feature = "rstar_0_13"
+    feature = "rstar_0_13",
+    feature = "rstar_0_14"
 ))]
 macro_rules! impl_rstar_rect {
     ($rstar:ident) => {
@@ -539,6 +540,9 @@ impl_rstar_rect!(rstar_0_12);
 
 #[cfg(feature = "rstar_0_13")]
 impl_rstar_rect!(rstar_0_13);
+
+#[cfg(feature = "rstar_0_14")]
+impl_rstar_rect!(rstar_0_14);
 
 #[cfg(test)]
 mod test {
@@ -592,6 +596,16 @@ mod test {
     #[test]
     fn rect_rstar_point_distance2() {
         use rstar_0_13::PointDistance;
+
+        let r = Rect::new((0., 2.), (1., 3.));
+        assert_relative_eq!(r.distance_2(&crate::Point::new(0., 0.)), 4.);
+        assert_relative_eq!(r.distance_2(&crate::Point::new(0.5, 2.5)), 0.);
+    }
+
+    #[cfg(feature = "rstar_0_14")]
+    #[test]
+    fn rect_rstar_point_distance2_0_14() {
+        use rstar_0_14::PointDistance;
 
         let r = Rect::new((0., 2.), (1., 3.));
         assert_relative_eq!(r.distance_2(&crate::Point::new(0., 0.)), 4.);

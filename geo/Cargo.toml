@@ -9,7 +9,7 @@ readme = "../README.md"
 keywords = ["gis", "geo", "geography", "geospatial"]
 autobenches = true
 edition = "2024"
-rust-version = "1.88"
+rust-version = "1.90"
 categories = ["science::geo"]
 
 [features]
@@ -31,13 +31,13 @@ __allow_deprecated_features = []
 earcut = { version = "0.4.11", optional = true }
 spade = { version = "2.10.0", optional = true }
 float_next_after = "2.0.0"
-geo-types = { version = "0.7.19", features = ["approx", "rstar_0_13"] }
+geo-types = { version = "0.7.19", features = ["approx", "rstar_0_14"] }
 geographiclib-rs = { version = "0.2.3", default-features = false }
 log = "0.4.11"
 num-traits = "0.2"
 proj = { version = "0.31.0", optional = true }
 robust = "1.1.0"
-rstar = "0.13.0"
+rstar = "0.14.0"
 serde = { version = "1.0", optional = true, features = ["derive"] }
 thiserror = "2.0.19"
 i_overlay = { version = "4.5.1, < 4.6.0", default-features = false }
