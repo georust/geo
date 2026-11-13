@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- BREAKING: Update the `i_overlay` dependency to 9.1, which fixes several panics in boolean operations.
+  - The re-exported `LineCap` buffer style type now takes a single generic parameter: `LineCap<BoolOpsCoord<T>>` instead of `LineCap<BoolOpsCoord<T>, T>`.
+  - Buffer and boolean operation outputs may differ slightly in vertex placement from previous releases.
+  - `Buffer` uses i_overlay's floating-point construction math (`MathMode::Float`), which is more accurate than its integer default.
+  - <https://github.com/georust/geo/issues/1628>
 - BREAKING: Update the `rstar` dependency to 0.14, and bump the geo MSRV to 1.90, which rstar 0.14 requires.
   - `GeoFloat` now requires `rstar::RTreeNum`. rstar 0.14 removes its blanket `RTreeNum` implementation, which every `GeoFloat` type previously received. `f32` and `f64` implement it; a downstream `GeoFloat` type must now implement `RTreeNum` too.
 - FIX: `Line::closest_point` no longer produces NaN or inaccurate coordinates when the squared length of a non-zero segment underflows or overflows, or when the difference of two finite coordinates overflows.
