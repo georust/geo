@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- BREAKING: Add `BooleanOps` and `unary_union` for geometries with `i16`, `i32` and `i64` coordinates, using i_overlay's integer engines. Input vertices are kept exactly, and edge crossings are rounded to integer coordinates. `i64` coordinates must be within `-2^62 < x, y < 2^62`, or the operation panics.
+  - `BooleanOps::Scalar` is now bounded by the new `BoolOpsScalar` trait, implemented for `f32`, `f64`, `i16`, `i32` and `i64`, rather than `BoolOpsNum`. `BoolOpsScalar` is sealed. Generic code using `BooleanOps::Scalar` as a float needs a `BoolOpsNum` bound. `BoolOpsNum` now requires `BoolOpsScalar`, so it is no longer implemented for custom float types.
 - BREAKING: Update the `i_overlay` dependency to 9.1, which fixes several panics in boolean operations.
   - The re-exported `LineCap` buffer style type now takes a single generic parameter: `LineCap<BoolOpsCoord<T>>` instead of `LineCap<BoolOpsCoord<T>, T>`.
   - Buffer and boolean operation outputs may differ slightly in vertex placement from previous releases.
