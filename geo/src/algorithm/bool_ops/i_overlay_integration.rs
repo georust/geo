@@ -13,7 +13,9 @@ impl<T: GeoFloat + FloatNumber + FromPrimitive> BoolOpsNum for T {}
 #[derive(Copy, Clone, Debug)]
 pub struct BoolOpsCoord<T: BoolOpsNum>(pub(crate) Coord<T>);
 
-impl<T: BoolOpsNum> FloatPointCompatible<T> for BoolOpsCoord<T> {
+impl<T: BoolOpsNum> FloatPointCompatible for BoolOpsCoord<T> {
+    type Scalar = T;
+
     fn from_xy(x: T, y: T) -> Self {
         Self(Coord { x, y })
     }
