@@ -8,7 +8,9 @@ use include_dir::{include_dir, Dir, DirEntry};
 use log::{debug, info};
 use wkt::ToWkt;
 
-use super::{check_buffer_test_case, input, Operation, Result};
+use super::{
+    check_buffer_test_case_with_error_ratio, input, Operation, Result, BUFFER_ERROR_RATIO,
+};
 use geo::algorithm::{
     BooleanOps, Contains, ContainsProperly, Covers, HasDimensions, Intersects, Relate, Within,
 };
@@ -26,6 +28,7 @@ pub struct TestRunner {
     cases: Option<Vec<TestCase>>,
     unexpected_failures: Vec<TestFailure>,
     expected_failures: Vec<TestId>,
+    buffer_error_ratios: Vec<(TestId, f64)>,
     unsupported: Vec<TestCase>,
     successes: Vec<TestCase>,
 }
@@ -63,8 +66,45 @@ impl TestRunner {
                     test_idx: 1,
                 },
             ],
+            // Buffer cases allowed to differ from JTS by more than `BUFFER_ERROR_RATIO`.
+            // Please document any overrides as you add them, and keep each ratio tight.
+            //
+            // i_overlay 9 places round join vertices at a fixed angular step with a shorter
+            // final gap, rather than spacing them evenly like JTS (and i_overlay 4) does.
+            // Ratios are the measured error with ~25% headroom.
+            buffer_error_ratios: [
+                (20, 0.0027),
+                (25, 0.0019),
+                (30, 0.047),
+                (33, 0.0025),
+                (38, 0.0027),
+                (40, 0.0042),
+                (41, 0.009),
+                (50, 0.0018),
+                (58, 0.0029),
+                (77, 0.0026),
+                (91, 0.0021),
+                (95, 0.0025),
+            ]
+            .into_iter()
+            .map(|(case_idx, ratio)| {
+                let test_id = TestId {
+                    file_name: "TestBufferExternal2.xml".to_string(),
+                    case_idx,
+                    test_idx: 0,
+                };
+                (test_id, ratio)
+            })
+            .collect(),
             ..Self::default()
         }
+    }
+
+    fn buffer_error_ratio(&self, test_id: &TestId) -> f64 {
+        self.buffer_error_ratios
+            .iter()
+            .find(|(id, _)| id == test_id)
+            .map_or(BUFFER_ERROR_RATIO, |(_, ratio)| *ratio)
     }
 
     pub fn successes(&self) -> &[TestCase] {
@@ -120,7 +160,10 @@ impl TestRunner {
                 } => {
                     use geo::algorithm::Buffer;
                     let actual = Geometry::from(subject.buffer(*distance));
-                    if let Err(error_description) = check_buffer_test_case(&actual, expected) {
+                    let max_error_ratio = self.buffer_error_ratio(&test_case.test_id);
+                    if let Err(error_description) =
+                        check_buffer_test_case_with_error_ratio(&actual, expected, max_error_ratio)
+                    {
                         debug!(
                             "Buffer failure {:?}. {error_description}",
                             test_case.test_id

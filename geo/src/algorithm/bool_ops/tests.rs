@@ -388,16 +388,15 @@ mod gh_issues {
         // It wasn't part of the test originally provided.
         let expected_c = wkt!(MULTIPOLYGON(
             ((
-                -22.058823 - 3.623188,
+                -22.058825 - 3.623188,
                 -19.064932 - 6.57369,
                 -19.458324 - 3.623188,
-                -22.058823 - 3.623188
+                -22.058825 - 3.623188
             )),
             ((
                 -17.60358 - 8.013862,
                 -17.60358 - 8.013863,
-                -14.705883 - 7.6497912,
-                -14.705883 - 7.649791,
+                -14.705881 - 7.649791,
                 -17.60358 - 8.013862
             ))
         ));
@@ -481,5 +480,255 @@ mod ogc_compliance {
             result.to_wkt(),
             expected.to_wkt(),
         );
+    }
+}
+
+mod integer {
+    use super::super::OpType;
+    use super::*;
+    use crate::{Area, MapCoords, MultiLineString};
+
+    const OPS: [OpType; 4] = [
+        OpType::Intersection,
+        OpType::Union,
+        OpType::Difference,
+        OpType::Xor,
+    ];
+
+    fn to_f64<T: crate::CoordNum + Into<f64>>(mp: &MultiPolygon<T>) -> MultiPolygon<f64> {
+        mp.map_coords(|c| crate::Coord {
+            x: c.x.into(),
+            y: c.y.into(),
+        })
+    }
+
+    #[test]
+    fn i32_ops_match_f64_when_crossings_are_integers() {
+        let a: Polygon<i32> = wkt!(POLYGON((0 0,10 0,10 10,0 10,0 0)));
+        let b: Polygon<i32> = wkt!(POLYGON((5 5,15 5,15 15,5 15,5 5)));
+        let (a_f64, b_f64): (Polygon<f64>, Polygon<f64>) = (a.convert(), b.convert());
+        for op in OPS {
+            let actual = to_f64(&a.boolean_op(&b, op));
+            let expected = a_f64.boolean_op(&b_f64, op);
+            assert!(actual.relate(&expected).is_equal_topo(), "{op:?}");
+        }
+    }
+
+    #[test]
+    fn i16_ops_match_f64_when_crossings_are_integers() {
+        let a: Polygon<i16> = wkt!(POLYGON((0 0,10 0,10 10,0 10,0 0),(2 2,4 2,4 4,2 4,2 2)));
+        let b: Polygon<i16> = wkt!(POLYGON((5 5,15 5,15 15,5 15,5 5)));
+        let (a_f64, b_f64): (Polygon<f64>, Polygon<f64>) = (a.convert(), b.convert());
+        for op in OPS {
+            let actual = to_f64(&a.boolean_op(&b, op));
+            let expected = a_f64.boolean_op(&b_f64, op);
+            assert!(actual.relate(&expected).is_equal_topo(), "{op:?}");
+        }
+    }
+
+    #[test]
+    fn crossings_are_rounded_to_integers() {
+        // The edges cross at (5, 10/3), which is rounded to an integer coordinate.
+        let a: Polygon<i32> = wkt!(POLYGON((0 0,10 0,5 10,0 0)));
+        let b: Polygon<i32> = wkt!(POLYGON((0 5,10 5,5 -5,0 5)));
+        let (a_f64, b_f64): (Polygon<f64>, Polygon<f64>) = (a.convert(), b.convert());
+        for op in OPS {
+            let actual = to_f64(&a.boolean_op(&b, op));
+            let expected = a_f64.boolean_op(&b_f64, op);
+            assert!(
+                (actual.unsigned_area() - expected.unsigned_area()).abs() < 2.0,
+                "{op:?}: {} vs {}",
+                actual.unsigned_area(),
+                expected.unsigned_area()
+            );
+        }
+    }
+
+    #[test]
+    fn i32_full_range() {
+        let left: Polygon<i32> = Polygon::new(
+            vec![
+                (i32::MIN, i32::MIN),
+                (0, i32::MIN),
+                (0, i32::MAX),
+                (i32::MIN, i32::MAX),
+                (i32::MIN, i32::MIN),
+            ]
+            .into(),
+            vec![],
+        );
+        let right: Polygon<i32> = Polygon::new(
+            vec![
+                (-1, i32::MIN),
+                (i32::MAX, i32::MIN),
+                (i32::MAX, i32::MAX),
+                (-1, i32::MAX),
+                (-1, i32::MIN),
+            ]
+            .into(),
+            vec![],
+        );
+        let union = to_f64(&left.union(&right));
+        let expected: MultiPolygon<f64> = MultiPolygon::new(vec![Polygon::new(
+            vec![
+                (i32::MIN as f64, i32::MIN as f64),
+                (i32::MAX as f64, i32::MIN as f64),
+                (i32::MAX as f64, i32::MAX as f64),
+                (i32::MIN as f64, i32::MAX as f64),
+                (i32::MIN as f64, i32::MIN as f64),
+            ]
+            .into(),
+            vec![],
+        )]);
+        assert!(union.relate(&expected).is_equal_topo());
+
+        let intersection = to_f64(&left.intersection(&right));
+        let expected: MultiPolygon<f64> = MultiPolygon::new(vec![Polygon::new(
+            vec![
+                (-1., i32::MIN as f64),
+                (0., i32::MIN as f64),
+                (0., i32::MAX as f64),
+                (-1., i32::MAX as f64),
+                (-1., i32::MIN as f64),
+            ]
+            .into(),
+            vec![],
+        )]);
+        assert!(intersection.relate(&expected).is_equal_topo());
+    }
+
+    #[test]
+    fn i64_within_range() {
+        let big = 1_i64 << 61;
+        let a: Polygon<i64> = Polygon::new(
+            vec![(0, 0), (big, 0), (big, big), (0, big), (0, 0)].into(),
+            vec![],
+        );
+        let b: Polygon<i64> =
+            Polygon::new(vec![(1, 1), (2, 1), (2, 2), (1, 2), (1, 1)].into(), vec![]);
+        let difference = a.difference(&b);
+        assert_eq!(difference.0.len(), 1);
+        assert_eq!(difference[0].interiors().len(), 1);
+        assert_eq!(difference[0].interiors()[0].0.len(), 5);
+    }
+
+    #[test]
+    #[should_panic(expected = "boolean operation coordinates must be within -2^62 < x, y < 2^62")]
+    fn i64_out_of_range_panics() {
+        let big = 1_i64 << 62;
+        let a: Polygon<i64> = Polygon::new(
+            vec![(0, 0), (big, 0), (big, big), (0, big), (0, 0)].into(),
+            vec![],
+        );
+        let _ = a.union(&a);
+    }
+
+    #[test]
+    fn i32_unary_union() {
+        let polygons: Vec<Polygon<i32>> = vec![
+            wkt!(POLYGON((0 0,4 0,4 4,0 4,0 0))),
+            wkt!(POLYGON((4 0,8 0,8 4,4 4,4 0))),
+            wkt!(POLYGON((14 10,18 10,18 14,14 14,14 10))),
+        ];
+        let union = to_f64(&unary_union(&polygons));
+        let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON(((0. 0.,8. 0.,8. 4.,0. 4.,0. 0.)),((14. 10.,18. 10.,18. 14.,14. 14.,14. 10.))));
+        assert!(union.relate(&expected).is_equal_topo());
+    }
+
+    #[test]
+    fn i32_clip() {
+        let square: Polygon<i32> = wkt!(POLYGON((0 0,10 0,10 10,0 10,0 0)));
+        let lines: MultiLineString<i32> = wkt!(MULTILINESTRING((-5 5,15 5),(20 20,30 30)));
+
+        let inside = square.clip(&lines, false);
+        assert_eq!(inside, wkt!(MULTILINESTRING((0 5,10 5))));
+
+        let mut outside = square.clip(&lines, true);
+        outside.0.sort_by_key(|line_string| line_string.0[0].x);
+        assert_eq!(
+            outside,
+            wkt!(MULTILINESTRING((-5 5,0 5),(10 5,15 5),(20 20,30 30)))
+        );
+    }
+}
+
+mod integer_edge_cases {
+    use super::*;
+    use crate::{MultiLineString, Validation};
+
+    fn square(x: i32, y: i32, size: i32) -> Polygon<i32> {
+        Polygon::new(
+            vec![
+                (x, y),
+                (x + size, y),
+                (x + size, y + size),
+                (x, y + size),
+                (x, y),
+            ]
+            .into(),
+            vec![],
+        )
+    }
+
+    #[test]
+    fn empty_inputs() {
+        let empty: Polygon<i32> = Polygon::new(crate::LineString::new(vec![]), vec![]);
+        let a = square(0, 0, 10);
+        assert_eq!(a.union(&empty).0.len(), 1);
+        assert!(a.intersection(&empty).0.is_empty());
+        assert_eq!(a.difference(&empty).0.len(), 1);
+        assert!(empty.union(&empty).0.is_empty());
+        assert!(unary_union::<Polygon<i32>>(&[]).0.is_empty());
+        assert!(a.clip(&MultiLineString::new(vec![]), false).0.is_empty());
+    }
+
+    #[test]
+    fn identical_polygons() {
+        let a = square(0, 0, 10);
+        assert_eq!(a.union(&a).0.len(), 1);
+        assert_eq!(a.intersection(&a).0.len(), 1);
+        assert!(a.difference(&a).0.is_empty());
+        assert!(a.xor(&a).0.is_empty());
+    }
+
+    #[test]
+    fn shared_edge_and_shared_vertex() {
+        let a = square(0, 0, 10);
+        let edge = square(10, 0, 10);
+        let vertex = square(10, 10, 10);
+        assert_eq!(a.union(&edge).0.len(), 1);
+        assert!(a.intersection(&edge).0.is_empty());
+        assert_eq!(a.union(&vertex).0.len(), 2);
+        assert!(a.intersection(&vertex).0.is_empty());
+    }
+
+    #[test]
+    fn hole_and_zero_area_inputs() {
+        let with_hole: Polygon<i32> =
+            wkt!(POLYGON((0 0,10 0,10 10,0 10,0 0),(2 2,8 2,8 8,2 8,2 2)));
+        let inside_hole = square(4, 4, 2);
+        assert!(with_hole.intersection(&inside_hole).0.is_empty());
+        let filled = with_hole.union(&square(2, 2, 6));
+        assert_eq!(filled.0.len(), 1);
+        assert!(filled[0].interiors().is_empty());
+
+        let flat: Polygon<i32> = wkt!(POLYGON((0 0,10 0,5 0,0 0)));
+        assert!(flat.union(&flat).0.is_empty());
+    }
+
+    #[test]
+    fn fill_rules() {
+        // Two overlapping squares in one MultiPolygon: the overlap is a hole under EvenOdd only.
+        let overlapping = MultiPolygon::new(vec![square(0, 0, 10), square(5, 5, 10)]);
+        let even_odd =
+            overlapping.union_with_fill_rule(&MultiPolygon::new(vec![]), FillRule::EvenOdd);
+        let non_zero =
+            overlapping.union_with_fill_rule(&MultiPolygon::new(vec![]), FillRule::NonZero);
+        assert_eq!(even_odd.0.len(), 2);
+        assert_eq!(non_zero.0.len(), 1);
+        assert!(non_zero[0].interiors().is_empty());
+        let as_f64 = |mp: &MultiPolygon<i32>| -> MultiPolygon<f64> { mp.convert() };
+        assert!(as_f64(&even_odd).is_valid());
+        assert!(as_f64(&non_zero).is_valid());
     }
 }
