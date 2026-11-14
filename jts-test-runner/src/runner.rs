@@ -8,7 +8,9 @@ use include_dir::{include_dir, Dir, DirEntry};
 use log::{debug, info};
 use wkt::ToWkt;
 
-use super::{check_buffer_test_case, input, Operation, Result};
+use super::{
+    check_buffer_test_case, check_buffer_test_case_with_distance, input, Operation, Result,
+};
 use geo::algorithm::{
     BooleanOps, Contains, ContainsProperly, Covers, HasDimensions, Intersects, Relate, Within,
 };
@@ -116,11 +118,19 @@ impl TestRunner {
                 Operation::Buffer {
                     subject,
                     distance,
+                    quadrant_segments,
                     expected,
                 } => {
                     use geo::algorithm::Buffer;
                     let actual = Geometry::from(subject.buffer(*distance));
-                    if let Err(error_description) = check_buffer_test_case(&actual, expected) {
+                    // geo can't match a non-default JTS arc resolution, whose boundary can be
+                    // far from ours, so fall back to comparing areas.
+                    let result = if quadrant_segments.is_some() {
+                        check_buffer_test_case(&actual, expected)
+                    } else {
+                        check_buffer_test_case_with_distance(&actual, expected, *distance)
+                    };
+                    if let Err(error_description) = result {
                         debug!(
                             "Buffer failure {:?}. {error_description}",
                             test_case.test_id

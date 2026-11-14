@@ -11,15 +11,16 @@ use crate::geometry::{
     Coord, Geometry, GeometryCollection, Line, LineString, MultiLineString, MultiPoint,
     MultiPolygon, Point, Polygon, Rect, Triangle,
 };
-use i_overlay::mesh::{
+use i_overlay::mesh::float::{
     outline::offset::OutlineOffset,
     stroke::offset::StrokeOffset,
     style::{OutlineStyle, StrokeStyle},
 };
+use i_overlay::mesh::math::MathMode;
 // Re-export these i_overlay style types. Alternatively, we could implement our own version,
 // but they'd be a 1:1 mapping, so it seems overly ceremonious.
 use geo_types::coord;
-pub use i_overlay::mesh::style::{LineCap, LineJoin};
+pub use i_overlay::mesh::float::style::{LineCap, LineJoin};
 use num_traits::Float;
 
 /// Create a new geometry whose boundary is offset the specified distance from the input.
@@ -138,20 +139,11 @@ pub trait Buffer {
 ///     .line_cap(LineCap::Square)
 ///     .line_join(LineJoin::Miter(1.0));
 /// ```
+#[derive(Clone)]
 pub struct BufferStyle<T: BoolOpsNum> {
     distance: T,
-    line_cap: LineCap<BoolOpsCoord<T>, T>,
+    line_cap: LineCap<BoolOpsCoord<T>>,
     line_join: LineJoin<T>,
-}
-
-impl<T: BoolOpsNum> Clone for BufferStyle<T> {
-    fn clone(&self) -> Self {
-        Self {
-            distance: self.distance,
-            line_cap: self.clone_line_cap(),
-            line_join: self.clone_line_join(),
-        }
-    }
 }
 
 impl<T: BoolOpsNum> BufferStyle<T> {
@@ -212,28 +204,9 @@ impl<T: BoolOpsNum> BufferStyle<T> {
     ///
     /// let style = BufferStyle::new(2.0).line_cap(LineCap::Square);
     /// ```
-    pub fn line_cap(mut self, line_cap: LineCap<BoolOpsCoord<T>, T>) -> Self {
+    pub fn line_cap(mut self, line_cap: LineCap<BoolOpsCoord<T>>) -> Self {
         self.line_cap = line_cap;
         self
-    }
-
-    // Annoyingly, i_overlay doesn't implement Clone for LineJoin
-    fn clone_line_join(&self) -> LineJoin<T> {
-        match self.line_join {
-            LineJoin::Bevel => LineJoin::Bevel,
-            LineJoin::Miter(angle) => LineJoin::Miter(angle),
-            LineJoin::Round(angle) => LineJoin::Round(angle),
-        }
-    }
-
-    // Annoyingly, i_overlay doesn't implement Clone for LineCap
-    fn clone_line_cap(&self) -> LineCap<BoolOpsCoord<T>, T> {
-        match &self.line_cap {
-            LineCap::Butt => LineCap::Butt,
-            LineCap::Round(angle) => LineCap::Round(*angle),
-            LineCap::Square => LineCap::Square,
-            LineCap::Custom(points) => LineCap::Custom(points.clone()),
-        }
     }
 
     fn default_join_angle() -> T {
@@ -241,20 +214,26 @@ impl<T: BoolOpsNum> BufferStyle<T> {
         T::from_f32(0.20).expect("valid float constant")
     }
 
+    // i_overlay's default `MathMode::Integer` trades offset accuracy for cross-platform
+    // determinism; `MathMode::Float` is more accurate, so use it for all buffering.
+
     // Used by i_overlay for buffering (Multi)Polygons
     fn outline_style(&self) -> OutlineStyle<T> {
-        OutlineStyle::new(self.distance).line_join(self.clone_line_join())
+        OutlineStyle::new(self.distance)
+            .line_join(self.line_join.clone())
+            .math(MathMode::Float)
     }
 
     // Used by i_overlay for buffering (Multi)LineStrings
-    fn stroke_style(&self) -> StrokeStyle<BoolOpsCoord<T>, T> {
+    fn stroke_style(&self) -> StrokeStyle<BoolOpsCoord<T>> {
         // "Buffer width" is like radius, whereas "stroke width" is more like diameter, so double the
         // "stroke width" to reconcile semantics with "buffer width".
         let two = T::one() + T::one();
         StrokeStyle::new(self.distance * two)
-            .line_join(self.clone_line_join())
-            .end_cap(self.clone_line_cap())
-            .start_cap(self.clone_line_cap())
+            .line_join(self.line_join.clone())
+            .end_cap(self.line_cap.clone())
+            .start_cap(self.line_cap.clone())
+            .math(MathMode::Float)
     }
 }
 
