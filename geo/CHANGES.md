@@ -6,7 +6,7 @@
   - <https://github.com/georust/geo/issues/919>
   - BREAKING: a downstream `impl CoordsIter for &MyType` now conflicts with the new blanket impl for `&G`, and should be removed.
   - Delaunay triangulation of `&[G]` now requires `G: CoordsIter` rather than `G: LinesIter`. Every geometry type in `geo` that implements `LinesIter` also implements `CoordsIter`, so this affects no existing caller.
-- BREAKING: Update the `i_overlay` dependency to 9.1, which fixes several panics in boolean operations.
+- BREAKING: Update the `i_overlay` dependency to 9.2, which fixes several panics in boolean operations.
   - The re-exported `LineCap` buffer style type now takes a single generic parameter: `LineCap<BoolOpsCoord<T>>` instead of `LineCap<BoolOpsCoord<T>, T>`.
   - Buffer and boolean operation outputs may differ slightly in vertex placement from previous releases.
   - `Buffer` uses i_overlay's floating-point construction math (`MathMode::Float`), which is more accurate than its integer default.
