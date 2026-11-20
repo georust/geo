@@ -728,3 +728,19 @@ fn sweep_endpoint_touch_not_split() {
         "shared endpoint should not cause splitting"
     );
 }
+
+/// Output coordinate order must not depend on hash seeds.
+/// <https://github.com/georust/geo/issues/1629>
+#[test]
+fn output_is_deterministic() {
+    let bowtie: Polygon<f64> = wkt!(POLYGON((0. 0., 2. 2., 2. 0., 0. 2., 0. 0.)));
+    let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+        ((0. 2., 0. 0., 1. 1., 0. 2.)),
+        ((1. 1., 2. 0., 2. 2., 1. 1.))
+    ));
+    // Each HashSet gets a fresh RandomState, so repeated calls within one
+    // process would also disagree if iteration order leaked into the output.
+    for _ in 0..20 {
+        assert_eq!(bowtie.make_valid().unwrap(), expected);
+    }
+}

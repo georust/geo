@@ -25,7 +25,7 @@ num-traits = "0.2"
 pretty_env_logger = "0.4"
 rand = "0.10.0"
 rand_distr = "0.6.0"
-rstar = "0.13.0"
+rstar = "0.14.0"
 serde = "1.0.137"
 serde_derive = "1.0.137"
 serde_json = "1.0.81"
@@ -69,6 +69,11 @@ harness = false
 [[bench]]
 name = "convex_hull"
 path = "src/convex_hull.rs"
+harness = false
+
+[[bench]]
+name = "closest_point"
+path = "src/closest_point.rs"
 harness = false
 
 [[bench]]

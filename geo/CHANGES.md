@@ -4,6 +4,17 @@
 
 - FIX: the sweep line no longer trips its `intervals_overlap` debug assertion when a segment's maximum `x` is `-0.0` and another segment begins at `+0.0`. This panicked `interior_point()` (and other sweep-based algorithms) in debug builds on polygons that `Validation::is_valid()` accepts.
   - <https://github.com/georust/geo/issues/1578>
+- BREAKING: Update the `rstar` dependency to 0.14, and bump the geo MSRV to 1.90, which rstar 0.14 requires.
+  - `GeoFloat` now requires `rstar::RTreeNum`. rstar 0.14 removes its blanket `RTreeNum` implementation, which every `GeoFloat` type previously received. `f32` and `f64` implement it; a downstream `GeoFloat` type must now implement `RTreeNum` too.
+- FIX: `Line::closest_point` no longer produces NaN or inaccurate coordinates when the squared length of a non-zero segment underflows or overflows, or when the difference of two finite coordinates overflows.
+  - <https://github.com/georust/geo/issues/1604>
+- `Line` intersection with a `Coord` or `Point` tests the bounding rectangle before the orientation. `Line::closest_point` is about 15% faster on ordinary segments, and about 3 times faster on segments whose coordinates are above 1e154.
+- FIX: `Triangle::signed_area` and `Triangle::unsigned_area` now shift the triangle by the coord opposite its longest side rather than by its first coord. A needle-like triangle far from the origin no longer has an area of 0, and a triangle whose sides from its first coord overflow no longer has an infinite area.
+  - <https://github.com/georust/geo/issues/1636>
+- `Line::closest_point` tests for a zero-length segment without computing its length, which makes it about 20% faster.
+
+- FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
+  - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 
 - FIX: a ring whose neighbouring segments overlap, like a flat triangle `POLYGON((0 0,2 0,1 0,0 0))`, is now reported as a self-intersection, as in PostGIS. A ring with too few points is no longer also reported as a self-intersection.
