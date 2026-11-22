@@ -1,9 +1,11 @@
 # Changes
 
-## Unreleased
+## 0.33.2 - 2026-11-22
 
-- Unpin the `earcut` dependency now that the upstream semver violation has been reverted. 
+- Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
+  `earcut` 0.4.10 and later no longer panic in `z_order` when a hole has a point below the exterior's bounding box.
   - <https://github.com/georust/geo/pull/1533>
+  - <https://github.com/georust/geo/pull/1570>
 
 ## 0.33.1 - 2026-4-20
 
