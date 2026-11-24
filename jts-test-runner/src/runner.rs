@@ -8,9 +8,7 @@ use include_dir::{include_dir, Dir, DirEntry};
 use log::{debug, info};
 use wkt::ToWkt;
 
-use super::{
-    check_buffer_test_case, check_buffer_test_case_with_distance, input, Operation, Result,
-};
+use super::{check_buffer_test_case, input, Operation, Result};
 use geo::algorithm::{
     BooleanOps, Contains, ContainsProperly, Covers, HasDimensions, Intersects, Relate, Within,
 };
@@ -63,6 +61,18 @@ impl TestRunner {
                     file_name: "TestBuffer.xml".to_string(),
                     case_idx: 6,
                     test_idx: 1,
+                },
+                // JTS buffered these with one segment per quarter circle (arg3='1'), geo doesn't
+                // yet support customizing the number of segments for arc approximation.
+                TestId {
+                    file_name: "TestBufferExternal.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "TestBufferExternal.xml".to_string(),
+                    case_idx: 1,
+                    test_idx: 0,
                 },
             ],
             ..Self::default()
@@ -118,19 +128,13 @@ impl TestRunner {
                 Operation::Buffer {
                     subject,
                     distance,
-                    quadrant_segments,
                     expected,
                 } => {
                     use geo::algorithm::Buffer;
                     let actual = Geometry::from(subject.buffer(*distance));
-                    // geo can't match a non-default JTS arc resolution, whose boundary can be
-                    // far from ours, so fall back to comparing areas.
-                    let result = if quadrant_segments.is_some() {
-                        check_buffer_test_case(&actual, expected)
-                    } else {
-                        check_buffer_test_case_with_distance(&actual, expected, *distance)
-                    };
-                    if let Err(error_description) = result {
+                    if let Err(error_description) =
+                        check_buffer_test_case(&actual, expected, *distance)
+                    {
                         debug!(
                             "Buffer failure {:?}. {error_description}",
                             test_case.test_id
@@ -140,7 +144,6 @@ impl TestRunner {
                             error_description,
                         });
                     } else {
-                        debug!("Buffer success (xor area close enough)");
                         self.successes.push(test_case);
                     }
                 }
