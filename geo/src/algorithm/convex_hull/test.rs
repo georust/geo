@@ -311,3 +311,25 @@ fn convex_hull_with_nan_does_not_panic() {
     ]);
     let _ = pts.convex_hull();
 }
+
+#[test]
+fn convex_hull_of_polygon_slice() {
+    let polygon1 = polygon![
+        coord! { x: 0.0, y: 0.0 },
+        coord! { x: 1.0, y: 0.0 },
+        coord! { x: 0.0, y: 1.0 },
+    ];
+    let polygon2 = polygon![
+        coord! { x: 3.0, y: 3.0 },
+        coord! { x: 4.0, y: 3.0 },
+        coord! { x: 4.0, y: 4.0 },
+    ];
+    let expected = MultiPolygon::new(vec![polygon1.clone(), polygon2.clone()]).convex_hull();
+
+    let polygons = [polygon1, polygon2];
+    assert_eq!(polygons.as_slice().convex_hull(), expected);
+
+    // A slice of references works too, through the `CoordsIter` impl for `&G`.
+    let refs = [&polygons[0], &polygons[1]];
+    assert_eq!(refs.as_slice().convex_hull(), expected);
+}
