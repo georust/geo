@@ -121,10 +121,6 @@ pub struct BufferInput {
     #[serde(rename = "arg2", deserialize_with = "deserialize_from_str")]
     pub(crate) distance: f64,
 
-    /// The number of segments JTS used per quarter circle, if not its default.
-    #[serde(rename = "arg3", default)]
-    pub(crate) quadrant_segments: Option<String>,
-
     #[serde(rename = "$value", deserialize_with = "wkt::deserialize_wkt")]
     pub(crate) expected: geo::Geometry,
 }
@@ -219,7 +215,6 @@ pub(crate) enum Operation {
     Buffer {
         subject: Geometry,
         distance: f64,
-        quadrant_segments: Option<String>,
         expected: Geometry,
     },
     Centroid {
@@ -289,14 +284,12 @@ impl OperationInput {
             Self::BufferInput(BufferInput {
                 arg1,
                 distance,
-                quadrant_segments,
                 expected,
             }) => {
                 assert_eq!("A", arg1.to_uppercase());
                 Ok(Operation::Buffer {
                     subject: geometry.clone(),
                     distance,
-                    quadrant_segments,
                     expected,
                 })
             }
