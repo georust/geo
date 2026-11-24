@@ -554,7 +554,7 @@ impl<'a, T: CoordNum> CoordsIter for &'a [Coord<T>] {
 // ┌──────────────────────────────────────┐
 // │ Implementation for generic reference │
 // └──────────────────────────────────────┘
-impl<'a, G: CoordsIter + Sized> CoordsIter for &'a G {
+impl<'a, G: CoordsIter> CoordsIter for &'a G {
     type Iter<'b>
         = G::Iter<'a>
     where
@@ -586,7 +586,7 @@ impl<'a, G: CoordsIter + Sized> CoordsIter for &'a G {
 // │ Implementation for generic slice │
 // └──────────────────────────────────┘
 
-impl<'a, G: CoordsIter + Sized> CoordsIter for &'a [G] {
+impl<'a, G: CoordsIter> CoordsIter for &'a [G] {
     type Iter<'b>
         = FlatMap<slice::Iter<'a, G>, G::Iter<'a>, fn(&'a G) -> G::Iter<'a>>
     where
