@@ -57,17 +57,13 @@ pub(crate) mod geometry_collection;
 
 macro_rules! impl_covers_from_relate {
     ($for:ty,  [$($target:ty),*]) => {
-        $(
-            impl<T> Covers<$target> for $for
-            where
-                T: GeoFloat
-            {
-                fn covers(&self, target: &$target) -> bool {
-                    use $crate::algorithm::Relate;
-                    self.relate(target).is_covers()
-                }
-            }
-        )*
+        $crate::algorithm::relate::relateng::impl_predicate_from_relate!(
+            Covers,
+            covers,
+            $crate::algorithm::relate::relateng::relate_predicate::covers(),
+            $for,
+            [$($target),*]
+        );
     };
 }
 pub(crate) use impl_covers_from_relate;

@@ -42,7 +42,11 @@ pub fn assert_jts_tests_succeed(pattern: &str) {
     }
 
     for success in runner.successes() {
-        if runner.expected_failures().contains(&success.test_id) {
+        if runner
+            .expected_failures()
+            .iter()
+            .any(|expected| expected.matches(success))
+        {
             panic!("Test {:?} was expected to fail, but it passed. Did you fix something? Good job! Update `expected_failures`.", success.test_id);
         }
     }
@@ -136,7 +140,7 @@ mod tests {
         //
         // We'll need to increase this number as more tests are added, but it should never be
         // decreased.
-        let expected_test_count: usize = 11725;
+        let expected_test_count: usize = 12462;
         let actual_test_count = runner.unexpected_failures().len() + runner.successes().len();
         match actual_test_count.cmp(&expected_test_count) {
             Ordering::Less => {
