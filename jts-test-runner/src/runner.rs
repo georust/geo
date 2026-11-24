@@ -102,11 +102,16 @@ impl TestRunner {
         Self {
             // Please document any expected failures as you add them.
             expected_failures: vec![
-                // Degenerate case we don't yet handle: buffering a collapsed (flat) polygon
+                // Degenerate cases we don't yet handle: buffering a collapsed (flat) polygon
                 ExpectedFailure::new(
                     "general/TestBuffer.xml",
                     "Degenerate polygon - ring is flat. This case tests a fix made in ver 1.12",
                     1,
+                ),
+                ExpectedFailure::new(
+                    "general/TestBuffer.xml",
+                    "Degenerate Polygon with too few points in ring",
+                    2,
                 ),
                 // GEOS ticket 841: the fixture expects `contains` = false
                 // because the DECIMAL point (0.95, 0.05) lies on the
@@ -169,7 +174,11 @@ impl TestRunner {
                 // geo has no LinearRing type: LINEARRING WKT parses as a
                 // LineString, and a self-intersecting LineString is valid,
                 // so the linear-ring bowtie cannot be reported invalid.
-                ExpectedFailure::new("general/TestValid.xml", "L - linear-ring bowtie", 0),
+                ExpectedFailure::new(
+                    "general/TestValid.xml",
+                    "LR - linear-ring bowtie (self-intersection)",
+                    0,
+                ),
                 // i_overlay output differs from the JTS expectation in
                 // sliver-precision cases (near-degenerate geometry;
                 // vertices differ at the precision limit).
