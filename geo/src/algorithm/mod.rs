@@ -14,7 +14,7 @@ pub use area::Area;
 
 /// Boolean Operations such as the union, xor, or difference of two geometries.
 pub mod bool_ops;
-pub use bool_ops::{BooleanOps, OpType, unary_union};
+pub use bool_ops::{BoolOpsScalar, BooleanOps, OpType, unary_union};
 
 /// Calculate the bounding rectangle of a `Geometry`.
 pub mod bounding_rect;

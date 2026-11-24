@@ -2,18 +2,13 @@ pub(crate) mod i_overlay_integration;
 #[cfg(test)]
 mod tests;
 
-use i_overlay_integration::BoolOpsCoord;
-pub use i_overlay_integration::BoolOpsNum;
-use i_overlay_integration::convert::{multi_polygon_from_shapes, ring_to_shape_path};
+pub use i_overlay_integration::{BoolOpsNum, BoolOpsScalar};
 
 use crate::geometry::{LineString, MultiLineString, MultiPolygon, Polygon};
 use crate::winding_order::{Winding, WindingOrder};
 
 pub use i_overlay::core::fill_rule::FillRule;
 use i_overlay::core::overlay_rule::OverlayRule;
-use i_overlay::float::clip::FloatClip;
-use i_overlay::float::overlay::FloatOverlay;
-use i_overlay::float::overlay::OverlayOptions;
 use i_overlay::string::clip::ClipRule;
 
 /// Boolean Operations on geometry.
@@ -25,6 +20,21 @@ use i_overlay::string::clip::ClipRule;
 ///
 /// These operations are implemented on [`Polygon`] and the [`MultiPolygon`]
 /// geometries.
+///
+/// # Integer coordinates
+///
+/// Geometries with `i16`, `i32` or `i64` coordinates are supported too, see [`BoolOpsScalar`].
+/// Their input vertices are kept exactly, and the points where edges cross are rounded to the
+/// nearest integer coordinate.
+///
+/// ```
+/// use geo::{BooleanOps, Polygon, wkt};
+///
+/// let a: Polygon<i32> = wkt!(POLYGON((0 0,10 0,10 10,0 10,0 0)));
+/// let b: Polygon<i32> = wkt!(POLYGON((5 5,15 5,15 15,5 15,5 5)));
+/// let intersection = a.intersection(&b);
+/// assert_eq!(intersection, wkt!(MULTIPOLYGON(((5 10,5 5,10 5,10 10,5 10)))));
+/// ```
 ///
 /// # Validity
 ///
@@ -42,7 +52,7 @@ use i_overlay::string::clip::ClipRule;
 /// For union operations on a large number of [`Polygon`]s or [`MultiPolygon`]s,
 /// using [`unary_union`] will yield far better performance.
 pub trait BooleanOps {
-    type Scalar: BoolOpsNum;
+    type Scalar: BoolOpsScalar;
 
     /// The exterior and interior rings of the geometry.
     ///
@@ -94,16 +104,9 @@ pub trait BooleanOps {
         op: OpType,
         fill_rule: FillRule,
     ) -> MultiPolygon<Self::Scalar> {
-        let subject = self.rings().map(ring_to_shape_path).collect::<Vec<_>>();
-        let clip = other.rings().map(ring_to_shape_path).collect::<Vec<_>>();
-        let shapes = FloatOverlay::with_subj_and_clip_custom(
-            &subject,
-            &clip,
-            OverlayOptions::ogc(),
-            Default::default(),
-        )
-        .overlay(op.into(), fill_rule);
-        multi_polygon_from_shapes(shapes)
+        let subject = self.rings().collect::<Vec<_>>();
+        let clip = other.rings().collect::<Vec<_>>();
+        Self::Scalar::overlay(&subject, &clip, op.into(), fill_rule)
     }
 
     /// Returns the overlapping regions shared by both `self` and `other`.
@@ -192,19 +195,12 @@ pub trait BooleanOps {
         invert: bool,
         fill_rule: FillRule,
     ) -> MultiLineString<Self::Scalar> {
-        let subject: Vec<Vec<_>> = multi_line_string
-            .iter()
-            .map(|line_string| line_string.coords().map(|c| BoolOpsCoord(*c)).collect())
-            .collect();
-
-        let clip = self.rings().map(ring_to_shape_path).collect::<Vec<_>>();
-
+        let clip = self.rings().collect::<Vec<_>>();
         let clip_rule = ClipRule {
             invert,
             boundary_included: true,
         };
-        let paths = subject.clip_by(&clip, fill_rule, clip_rule);
-        i_overlay_integration::convert::multi_line_string_from_paths(paths)
+        Self::Scalar::clip_lines(multi_line_string, &clip, fill_rule, clip_rule)
     }
 }
 
@@ -265,11 +261,10 @@ pub fn unary_union<'a, B: BooleanOps + 'a>(
         .flat_map(|boppable| {
             let rings = boppable.rings();
             rings
-                .map(|ring| {
+                .inspect(|ring| {
                     if winding_order.is_none() {
                         winding_order = ring.winding_order();
                     }
-                    ring_to_shape_path(ring)
                 })
                 .collect::<Vec<_>>()
         })
@@ -281,13 +276,10 @@ pub fn unary_union<'a, B: BooleanOps + 'a>(
         FillRule::Negative
     };
 
-    let shapes =
-        FloatOverlay::with_subj_custom(&subject, OverlayOptions::ogc(), Default::default())
-            .overlay(OverlayRule::Subject, fill_rule);
-    multi_polygon_from_shapes(shapes)
+    B::Scalar::overlay(&subject, &[], OverlayRule::Subject, fill_rule)
 }
 
-impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
+impl<T: BoolOpsScalar> BooleanOps for Polygon<T> {
     type Scalar = T;
 
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {
@@ -295,7 +287,7 @@ impl<T: BoolOpsNum> BooleanOps for Polygon<T> {
     }
 }
 
-impl<T: BoolOpsNum> BooleanOps for MultiPolygon<T> {
+impl<T: BoolOpsScalar> BooleanOps for MultiPolygon<T> {
     type Scalar = T;
 
     fn rings(&self) -> impl Iterator<Item = &LineString<Self::Scalar>> {

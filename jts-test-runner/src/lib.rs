@@ -48,18 +48,21 @@ pub fn assert_jts_tests_succeed(pattern: &str) {
     }
 }
 
+// This error threshold is arbitrary. I ratcheted it down until tests started failing.
+// Manually inspecting the output of the borderline cases appeared subjectively "reasonable".
+//
+// In particular, we seem to diverge the most when doing large subtractive (negative buffers)
+// from complex geometries (e.g., polygons with narrow arms that get wholly erased)
+//
+// To inspect which ones fail, you can lower this tolerance and see which test cases fail.
+// Individual JTS test cases can override it in `TestRunner::new`.
+const BUFFER_ERROR_RATIO: f64 = 0.0014;
+
 pub fn check_buffer_test_case(
     actual: &Geometry,
     expected: &Geometry,
 ) -> std::result::Result<(), String> {
-    // This error threshold is arbitrary. I ratcheted it down until tests started failing.
-    // Manually inspecting the output of the borderline cases appeared subjectively "reasonable".
-    //
-    // In particular, we seem to diverge the most when doing large subtractive (negative buffers)
-    // from complex geometries (e.g., polygons with narrow arms that get wholly erased)
-    //
-    // To inspect which ones fail, you can lower this tolerance and see which test cases fail.
-    check_buffer_test_case_with_error_ratio(actual, expected, 0.0014)
+    check_buffer_test_case_with_error_ratio(actual, expected, BUFFER_ERROR_RATIO)
 }
 
 pub fn check_buffer_test_case_with_error_ratio(
