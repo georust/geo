@@ -1004,12 +1004,17 @@ mod test {
 
     #[test]
     fn test_generic_reference() {
-        let mut expected_coords = vec![];
-        let (polygon, mut coords) = create_polygon();
-        expected_coords.append(&mut coords);
-        let actual_coords = (&polygon).coords_iter().collect::<Vec<_>>();
+        // Go through a generic bound, so that the `CoordsIter` impl for `&G` is used,
+        // rather than method resolution auto-dereferencing to the impl for `G`.
+        fn collect<C: CoordsIter>(geometry: C) -> (Vec<Coord<C::Scalar>>, usize) {
+            (geometry.coords_iter().collect(), geometry.coords_count())
+        }
+
+        let (polygon, expected_coords) = create_polygon();
+        let (actual_coords, count) = collect(&polygon);
 
         assert_eq!(expected_coords, actual_coords);
+        assert_eq!(expected_coords.len(), count);
     }
 
     fn create_point() -> (Point, Vec<Coord>) {
