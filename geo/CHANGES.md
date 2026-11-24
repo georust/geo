@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Implement `CoordsIter` for `&[G]` and `&G` where `G: CoordsIter`, so a slice of geometries can be used directly with algorithms built on `CoordsIter`, such as `[polygon1, polygon2].as_slice().convex_hull()`.
+  - <https://github.com/georust/geo/issues/919>
+  - BREAKING: a downstream `impl CoordsIter for &MyType` now conflicts with the new blanket impl for `&G`, and should be removed.
+  - Delaunay triangulation of `&[G]` now requires `G: CoordsIter` rather than `G: LinesIter`. Every geometry type in `geo` that implements `LinesIter` also implements `CoordsIter`, so this affects no existing caller.
 - BREAKING: Update the `rstar` dependency to 0.14, and bump the geo MSRV to 1.90, which rstar 0.14 requires.
   - `GeoFloat` now requires `rstar::RTreeNum`. rstar 0.14 removes its blanket `RTreeNum` implementation, which every `GeoFloat` type previously received. `f32` and `f64` implement it; a downstream `GeoFloat` type must now implement `RTreeNum` too.
 - FIX: `Line::closest_point` no longer produces NaN or inaccurate coordinates when the squared length of a non-zero segment underflows or overflows, or when the difference of two finite coordinates overflows.
@@ -18,7 +22,6 @@
 
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
-- Add `CoordsIter` implementation for both slices of elements implementing `CoordsIter` as well as for references to types implementing `CoordsIter`.
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
 
 - FIX: a ring whose neighbouring segments overlap, like a flat triangle `POLYGON((0 0,2 0,1 0,0 0))`, is now reported as a self-intersection, as in PostGIS. A ring with too few points is no longer also reported as a self-intersection.
