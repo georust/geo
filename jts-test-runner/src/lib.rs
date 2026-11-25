@@ -1,9 +1,7 @@
 mod input;
 
-use approx::relative_eq;
-use geo::{Area, BooleanOps, Geometry, Relate};
+use geo::{Distance, Euclidean, Geometry, Line, LinesIter, MultiPolygon, Point, Relate};
 use input::Operation;
-use log::debug;
 
 mod runner;
 pub use runner::TestRunner;
@@ -48,53 +46,51 @@ pub fn assert_jts_tests_succeed(pattern: &str) {
     }
 }
 
+/// Checks a buffer result against JTS's, with a tolerance scaled by the buffer distance.
 pub fn check_buffer_test_case(
     actual: &Geometry,
     expected: &Geometry,
+    distance: f64,
 ) -> std::result::Result<(), String> {
-    // This error threshold is arbitrary. I ratcheted it down until tests started failing.
-    // Manually inspecting the output of the borderline cases appeared subjectively "reasonable".
-    //
-    // In particular, we seem to diverge the most when doing large subtractive (negative buffers)
-    // from complex geometries (e.g., polygons with narrow arms that get wholly erased)
-    //
-    // To inspect which ones fail, you can lower this tolerance and see which test cases fail.
-    check_buffer_test_case_with_error_ratio(actual, expected, 0.0014)
+    if actual.relate(expected).is_equal_topo() {
+        return Ok(());
+    }
+    let (actual, expected) = (to_multi_polygon(actual), to_multi_polygon(expected));
+
+    // JTS's own BufferResultMatcher allows the boundaries to be up to `|distance| / 100` apart.
+    let tolerance = distance.abs() / 100.0;
+    let boundary_deviation = boundary_hausdorff_distance(&actual, &expected);
+
+    if boundary_deviation > tolerance {
+        Err(format!("boundary deviation: {boundary_deviation}, tolerance: {tolerance}\nactual:\n  {actual:?}\nexpected:\n  {expected:?}"))
+    } else {
+        Ok(())
+    }
 }
 
-pub fn check_buffer_test_case_with_error_ratio(
-    actual: &Geometry,
-    expected: &Geometry,
-    max_error_ratio: f64,
-) -> std::result::Result<(), String> {
-    let im = actual.relate(expected);
-    if im.is_equal_topo() {
-        debug!("Buffer success (equal_topo)");
-        Ok(())
-    } else if relative_eq!(actual, expected) {
-        debug!("Buffer success (relative eq)");
-        Ok(())
-    } else {
-        let diff = match (expected, &actual) {
-            (Geometry::MultiPolygon(expected), Geometry::MultiPolygon(actual)) => {
-                expected.xor(actual)
-            }
-            (Geometry::Polygon(expected), Geometry::MultiPolygon(actual)) => expected.xor(actual),
-            (Geometry::MultiPolygon(expected), Geometry::Polygon(actual)) => expected.xor(actual),
-            (Geometry::Polygon(expected), Geometry::Polygon(actual)) => expected.xor(actual),
-            _ => unreachable!("unexpected comparison"),
-        };
-
-        let diff_area = diff.unsigned_area();
-        let area_error_ratio = diff_area / expected.unsigned_area();
-
-        if area_error_ratio > max_error_ratio {
-            let error_description = format!("diff_area: {diff_area}, area_error_ratio: {area_error_ratio}\nactual:\n  {actual:?}\nexpected:\n  {expected:?}");
-            Err(error_description)
-        } else {
-            Ok(())
-        }
+fn to_multi_polygon(geometry: &Geometry) -> MultiPolygon {
+    match geometry {
+        Geometry::Polygon(polygon) => MultiPolygon::new(vec![polygon.clone()]),
+        Geometry::MultiPolygon(multi_polygon) => multi_polygon.clone(),
+        _ => unreachable!("unexpected buffer result: {geometry:?}"),
     }
+}
+
+/// The largest distance from a point on either boundary to the other boundary, sampling each
+/// segment at quarters like JTS's `DiscreteHausdorffDistance` with a densify fraction of 0.25.
+fn boundary_hausdorff_distance(a: &MultiPolygon, b: &MultiPolygon) -> f64 {
+    let directed = |from: &MultiPolygon, to: &MultiPolygon| {
+        let to: Vec<Line> = to.lines_iter().collect();
+        from.lines_iter()
+            .flat_map(|line| (0..4).map(move |i| line.start + line.delta() * (i as f64 / 4.0)))
+            .map(|coord| {
+                to.iter()
+                    .map(|line| Euclidean.distance(&Point::from(coord), line))
+                    .fold(f64::INFINITY, f64::min)
+            })
+            .fold(0.0, f64::max)
+    };
+    directed(a, b).max(directed(b, a))
 }
 
 #[cfg(test)]
@@ -136,7 +132,7 @@ mod tests {
         //
         // We'll need to increase this number as more tests are added, but it should never be
         // decreased.
-        let expected_test_count: usize = 11725;
+        let expected_test_count: usize = 11723;
         let actual_test_count = runner.unexpected_failures().len() + runner.successes().len();
         match actual_test_count.cmp(&expected_test_count) {
             Ordering::Less => {

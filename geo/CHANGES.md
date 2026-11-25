@@ -4,6 +4,15 @@
 
 - FIX: the sweep line no longer trips its `intervals_overlap` debug assertion when a segment's maximum `x` is `-0.0` and another segment begins at `+0.0`. This panicked `interior_point()` (and other sweep-based algorithms) in debug builds on polygons that `Validation::is_valid()` accepts.
   - <https://github.com/georust/geo/issues/1578>
+- Implement `CoordsIter` for `&[G]` and `&G` where `G: CoordsIter`, so a slice of geometries can be used directly with algorithms built on `CoordsIter`, such as `[polygon1, polygon2].as_slice().convex_hull()`.
+  - <https://github.com/georust/geo/issues/919>
+  - BREAKING: a downstream `impl CoordsIter for &MyType` now conflicts with the new blanket impl for `&G`, and should be removed.
+  - Delaunay triangulation of `&[G]` now requires `G: CoordsIter` rather than `G: LinesIter`. Every geometry type in `geo` that implements `LinesIter` also implements `CoordsIter`, so this affects no existing caller.
+- BREAKING: Update the `i_overlay` dependency to 9.2, which fixes several panics in boolean operations.
+  - The re-exported `LineCap` buffer style type now takes a single generic parameter: `LineCap<BoolOpsCoord<T>>` instead of `LineCap<BoolOpsCoord<T>, T>`.
+  - Buffer and boolean operation outputs may differ slightly in vertex placement from previous releases.
+  - `Buffer` uses i_overlay's floating-point construction math (`MathMode::Float`), which is more accurate than its integer default.
+  - <https://github.com/georust/geo/issues/1628>
 - BREAKING: Update the `rstar` dependency to 0.14, and bump the geo MSRV to 1.90, which rstar 0.14 requires.
   - `GeoFloat` now requires `rstar::RTreeNum`. rstar 0.14 removes its blanket `RTreeNum` implementation, which every `GeoFloat` type previously received. `f32` and `f64` implement it; a downstream `GeoFloat` type must now implement `RTreeNum` too.
 - FIX: `Line::closest_point` no longer produces NaN or inaccurate coordinates when the squared length of a non-zero segment underflows or overflows, or when the difference of two finite coordinates overflows.
@@ -12,6 +21,11 @@
 - FIX: `Triangle::signed_area` and `Triangle::unsigned_area` now shift the triangle by the coord opposite its longest side rather than by its first coord. A needle-like triangle far from the origin no longer has an area of 0, and a triangle whose sides from its first coord overflow no longer has an infinite area.
   - <https://github.com/georust/geo/issues/1636>
 - `Line::closest_point` tests for a zero-length segment without computing its length, which makes it about 20% faster.
+- FIX: `MakeValid::make_valid` merges vertices within a radius relative to the extent of the input (`1e-9` of the larger side of its bounding rectangle, with a floor set by floating-point precision), not within a fixed `1e-4` coordinate units. Previously, the result depended on the units of the input: polygons less than approximately `1e-4` across became empty, and detail smaller than `1e-4` was removed.
+  - <https://github.com/georust/geo/issues/1640>
+- Add `MakeValid::make_valid_with_config`, which takes a `MakeValidConfig` to set the snap radius as a relative factor or an absolute distance (`SnapRadius`).
+  - <https://github.com/georust/geo/issues/1640>
+  - BREAKING: `make_valid_with_config` is the required method of the trait, and `make_valid` is now provided. Manual implementors of `MakeValid` must implement `make_valid_with_config` instead.
 
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>

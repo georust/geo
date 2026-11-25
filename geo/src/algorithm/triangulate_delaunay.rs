@@ -415,24 +415,12 @@ where
     }
 }
 
-// Note: We add LinesIter bound to disambiguate from &[Coord] which implements CoordsIter.
-// Coord doesn't implement LinesIter, so this prevents the coherence conflict.
-impl<'a, 'l, T, G> private::UnconstrainedRequirementTrait<'a, T> for &[G]
+// `&[G]` gets `UnconstrainedRequirementTrait` (the supertrait) from the blanket impl for
+// `CoordsIter`, via `impl CoordsIter for &[G]`, which is why `G: CoordsIter` is required.
+impl<'a, T, G> private::ConstrainedRequirementTrait<'a, T> for &[G]
 where
-    'a: 'l,
     T: SpadeTriangulationFloat + 'a,
-    G: TriangulateDelaunayUnconstrained<'a, T> + LinesIter<'l, Scalar = T>,
-{
-    fn coords(&'a self) -> private::CoordsIter<'a, T> {
-        Box::new(self.iter().flat_map(|g| g.coords()))
-    }
-}
-
-impl<'a, 'l, T, G> private::ConstrainedRequirementTrait<'a, T> for &[G]
-where
-    'a: 'l,
-    T: SpadeTriangulationFloat + 'a,
-    G: TriangulateDelaunay<'a, T> + LinesIter<'l, Scalar = T>,
+    G: TriangulateDelaunay<'a, T> + CoordsIter<Scalar = T>,
 {
     fn lines(&'a self) -> Vec<Line<T>> {
         self.iter().flat_map(|g| g.lines()).collect::<Vec<_>>()

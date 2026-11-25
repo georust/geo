@@ -190,3 +190,8 @@ harness = false
 name = "validation"
 path = "src/validation.rs"
 harness = false
+
+[[bench]]
+name = "make_valid"
+path = "src/make_valid.rs"
+harness = false

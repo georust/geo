@@ -62,6 +62,18 @@ impl TestRunner {
                     case_idx: 6,
                     test_idx: 1,
                 },
+                // JTS buffered these with one segment per quarter circle (arg3='1'), geo doesn't
+                // yet support customizing the number of segments for arc approximation.
+                TestId {
+                    file_name: "TestBufferExternal.xml".to_string(),
+                    case_idx: 0,
+                    test_idx: 0,
+                },
+                TestId {
+                    file_name: "TestBufferExternal.xml".to_string(),
+                    case_idx: 1,
+                    test_idx: 0,
+                },
             ],
             ..Self::default()
         }
@@ -120,7 +132,9 @@ impl TestRunner {
                 } => {
                     use geo::algorithm::Buffer;
                     let actual = Geometry::from(subject.buffer(*distance));
-                    if let Err(error_description) = check_buffer_test_case(&actual, expected) {
+                    if let Err(error_description) =
+                        check_buffer_test_case(&actual, expected, *distance)
+                    {
                         debug!(
                             "Buffer failure {:?}. {error_description}",
                             test_case.test_id
@@ -130,7 +144,6 @@ impl TestRunner {
                             error_description,
                         });
                     } else {
-                        debug!("Buffer success (xor area close enough)");
                         self.successes.push(test_case);
                     }
                 }

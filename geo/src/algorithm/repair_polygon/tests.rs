@@ -744,3 +744,138 @@ fn output_is_deterministic() {
         assert_eq!(bowtie.make_valid().unwrap(), expected);
     }
 }
+
+// ====== Snap radius ======
+// <https://github.com/georust/geo/issues/1640>
+
+/// A valid square 6e-5 across, far from the origin.
+fn small_square_far_from_origin() -> Polygon<f64> {
+    wkt!(POLYGON((-77.03 38.9, -77.02994 38.9, -77.02994 38.90006, -77.03 38.90006, -77.03 38.9)))
+}
+
+#[test]
+fn small_polygon_far_from_origin_survives() {
+    let square = small_square_far_from_origin();
+    let repaired = square.make_valid().unwrap();
+    assert!(repaired.relate(&square).is_equal_topo());
+}
+
+#[test]
+fn absolute_snap_radius_is_used_as_given() {
+    // The previous fixed default merged all the vertices of the square.
+    let config = MakeValidConfig::default().with_snap_radius(SnapRadius::Absolute(1e-4));
+    let repaired = small_square_far_from_origin()
+        .make_valid_with_config(&config)
+        .unwrap();
+    assert_eq!(repaired, MultiPolygon::empty());
+}
+
+#[test]
+fn small_notch_is_kept() {
+    let notched: Polygon<f64> = wkt!(POLYGON((
+        0. 0., 0.0005 0., 0.0005 -0.00003, 0.00053 -0.00003, 0.00053 0.,
+        0.001 0., 0.001 0.001, 0. 0.001, 0. 0.
+    )));
+    let repaired = notched.make_valid().unwrap();
+    assert_valid(&repaired);
+    assert!(repaired.relate(&notched).is_equal_topo());
+}
+
+#[test]
+fn small_bowtie_becomes_two_triangles() {
+    // Side 2^-14, so the crossing at 2^-15 is exact.
+    let bowtie: Polygon<f64> = wkt!(POLYGON((
+        0. 0., 0.00006103515625 0.00006103515625, 0.00006103515625 0.,
+        0. 0.00006103515625, 0. 0.
+    )));
+    let expected: MultiPolygon<f64> = wkt!(MULTIPOLYGON(
+        ((0. 0., 0.000030517578125 0.000030517578125, 0. 0.00006103515625, 0. 0.)),
+        ((0.000030517578125 0.000030517578125, 0.00006103515625 0., 0.00006103515625 0.00006103515625, 0.000030517578125 0.000030517578125))
+    ));
+    let repaired = bowtie.make_valid().unwrap();
+    assert_valid(&repaired);
+    assert!(repaired.relate(&expected).is_equal_topo());
+}
+
+#[test]
+fn default_repair_is_scale_invariant() {
+    use crate::MapCoords;
+    // Scaling by a power of two is exact, so the repair of the scaled input
+    // must be equal to the scaled repair of the input.
+    let bowtie: Polygon<f64> = wkt!(POLYGON((0. 0., 6. 6., 6. 0., 0. 6., 0. 0.)));
+    let scale = 2f64.powi(-30);
+    let scaled = bowtie.map_coords(|c| c * scale);
+    let expected = bowtie.make_valid().unwrap().map_coords(|c| c * scale);
+    assert_eq!(scaled.make_valid().unwrap(), expected);
+}
+
+#[test]
+fn relative_snap_radius_scales_with_extent() {
+    let lines = extract_lines(&wkt!(POLYGON((0. 0., 100. 0., 100. 50., 0. 50., 0. 0.))));
+    assert_relative_eq!(snap_radius_for(SnapRadius::Relative(1e-9), &lines), 1e-7);
+}
+
+#[test]
+fn relative_snap_radius_has_precision_floor() {
+    // A small geometry far from the origin snaps by the floor.
+    let lines = extract_lines(&small_square_far_from_origin());
+    let floor = 77.03 * f64::EPSILON * SNAP_FLOOR_FACTOR;
+    assert_relative_eq!(snap_radius_for(SnapRadius::Relative(0.0), &lines), floor);
+    // The floor scales with the largest absolute coordinate, not the extent.
+    let lines = extract_lines(&wkt!(POLYGON((-2. 0., 1. 0., 1. 1., -2. 0.))));
+    assert_eq!(
+        snap_radius_for(SnapRadius::Relative(0.0), &lines),
+        2. * f64::EPSILON * SNAP_FLOOR_FACTOR
+    );
+}
+
+#[test]
+fn make_valid_with_config_on_multipolygon() {
+    let mp = MultiPolygon::new(vec![small_square_far_from_origin()]);
+    let config = MakeValidConfig::default().with_snap_radius(SnapRadius::Relative(1e-6));
+    let repaired = mp.make_valid_with_config(&config).unwrap();
+    assert!(repaired.relate(&mp).is_equal_topo());
+}
+
+#[test]
+fn default_factor_is_inside_stable_range() {
+    // For this polygon, the output does not change for relative factors from
+    // 1e-12 to 1e-6. At 1e-5, the output loses vertices.
+    let zone = geo_test_fixtures::nl_zones::<f64>().0.swap_remove(86);
+    let expected = zone.make_valid().unwrap();
+    let config = |factor| MakeValidConfig::default().with_snap_radius(SnapRadius::Relative(factor));
+    for factor in [1e-12, 1e-6] {
+        assert_eq!(
+            zone.make_valid_with_config(&config(factor)).unwrap(),
+            expected
+        );
+    }
+    assert_ne!(
+        zone.make_valid_with_config(&config(1e-5)).unwrap(),
+        expected
+    );
+}
+
+#[test]
+fn sliver_below_lower_limit_is_removed() {
+    // The sliver is approximately 1e-6 across, 4.5e6 from the origin: about
+    // 1,000 times the gap between neighbouring f64 values there. With radii of
+    // 0 to 64 times the gap, the number of output polygons is erratic, and at
+    // 4 times the gap the output is invalid.
+    let sliver: Polygon<f64> = wkt!(POLYGON((
+        4499999.70000043 4500000.000000129, 4499999.700000857 4500000.000000257,
+        4499999.700000294 4500000.000000088, 4499999.7000005115 4500000.000000154,
+        4499999.700000845 4500000.000000253, 4499999.700000677 4500000.000000203,
+        4499999.700000282 4500000.000000085, 4499999.700000999 4500000.000000299,
+        4499999.700000729 4500000.000000219, 4499999.700000141 4500000.000000042,
+        4499999.700000991 4500000.000000297, 4499999.700000842 4500000.000000252,
+        4499999.700000587 4500000.000000176, 4499999.700000724 4500000.000000217,
+        4499999.70000083 4500000.000000249, 4499999.700000954 4500000.000000286,
+        4499999.700000843 4500000.000000253, 4499999.700000675 4500000.000000202,
+        4499999.700000845 4500000.000000253, 4499999.700000402 4500000.00000012,
+        4499999.7000003075 4500000.000000092, 4499999.700000168 4500000.00000005,
+        4499999.700000491 4500000.000000147, 4499999.70000064 4500000.000000192,
+        4499999.700000181 4500000.000000054, 4499999.70000043 4500000.000000129
+    )));
+    assert_eq!(sliver.make_valid().unwrap(), MultiPolygon::empty());
+}
