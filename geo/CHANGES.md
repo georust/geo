@@ -1,6 +1,6 @@
 # Changes
 
-## Unreleased
+## 0.34.0 - 2026-11.24
 
 - Implement `CoordsIter` for `&[G]` and `&G` where `G: CoordsIter`, so a slice of geometries can be used directly with algorithms built on `CoordsIter`, such as `[polygon1, polygon2].as_slice().convex_hull()`.
   - <https://github.com/georust/geo/issues/919>
@@ -24,15 +24,12 @@
 - Add `MakeValid::make_valid_with_config`, which takes a `MakeValidConfig` to set the snap radius as a relative factor or an absolute distance (`SnapRadius`).
   - <https://github.com/georust/geo/issues/1640>
   - BREAKING: `make_valid_with_config` is the required method of the trait, and `make_valid` is now provided. Manual implementors of `MakeValid` must implement `make_valid_with_config` instead.
-
 - FIX: `MakeValid::make_valid` now returns rings and polygons in a deterministic order; previously the start vertex of each ring and the order of polygons could vary between runs.
   - <https://github.com/georust/geo/issues/1629>
 - BREAKING: `GeoNum` (and therefore `GeoFloat`) now requires `Send + Sync`. This lets algorithms behind the `multithreading` feature share coordinates across threads without per-algorithm bounds. All supported primitive scalar types already satisfy the bound; only downstream `GeoNum` implementations on non-thread-safe types are affected.
-
 - FIX: a ring whose neighbouring segments overlap, like a flat triangle `POLYGON((0 0,2 0,1 0,0 0))`, is now reported as a self-intersection, as in PostGIS. A ring with too few points is no longer also reported as a self-intersection.
 - Polygon validation finds ring self-intersections with a sweep instead of comparing every pair of segments, which was quadratic in the ring's size.
 - Add `Intersects<Coord>` and `Intersects<Point>` implementations for `IntervalTreeMultiPolygon`. Unlike the existing `Contains` impls, these return `true` for points on the polygon's boundary.
-
 - Add simply connected interior validation for polygons. Polygons with holes that touch at vertices in ways that disconnect the interior (e.g., two holes sharing 2+ vertices, or cycles of holes each sharing a vertex) are now detected as invalid via `Validation::is_valid()`. This aligns with OGC Simple Features and matches PostGIS behavior.
 - BREAKING: adds the `InvalidPolygon::InteriorNotSimplyConnected` error variant.
   - <https://github.com/georust/geo/pull/1472>
@@ -70,6 +67,7 @@
   - <https://github.com/georust/geo/pull/1561>
 - Speed up `Euclidean.distance` between two `Rect`s with a closed form, instead of converting both to polygons.
   - <https://github.com/georust/geo/pull/1561>
+- update to geo-types 0.7.21
 
 ## 0.33.1 - 2026-4-20
 
