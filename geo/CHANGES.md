@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- FIX: the sweep line no longer trips its `intervals_overlap` debug assertion when a segment's maximum `x` is `-0.0` and another segment begins at `+0.0`. This panicked `interior_point()` (and other sweep-based algorithms) in debug builds on polygons that `Validation::is_valid()` accepts.
+  - <https://github.com/georust/geo/issues/1578>
 - Implement `CoordsIter` for `&[G]` and `&G` where `G: CoordsIter`, so a slice of geometries can be used directly with algorithms built on `CoordsIter`, such as `[polygon1, polygon2].as_slice().convex_hull()`.
   - <https://github.com/georust/geo/issues/919>
   - BREAKING: a downstream `impl CoordsIter for &MyType` now conflicts with the new blanket impl for `&G`, and should be removed.
