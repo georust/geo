@@ -20,6 +20,7 @@ use crate::GeoFloat;
 use crate::Point;
 use crate::algorithm::ball_tree::BallTree;
 use crate::algorithm::ball_tree::NodeKind;
+use std::collections::HashMap;
 
 // ---------------------------------------------------------------------------
 // Step 1: Core distances via ball tree k-NN
@@ -724,6 +725,298 @@ impl TreeUnionFind {
 
     fn component_label(&self, x: usize) -> usize {
         self.component_label[x]
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Step 3: Label – build dendrogram from sorted MST edges
+// ---------------------------------------------------------------------------
+
+/// An identifier for a node in the single-linkage dendrogram.
+///
+/// The dendrogram uses two kinds of nodes: original input points and
+/// virtual merged components. Internally they are encoded as a single
+/// dense id where ids `0..n_points` are [`Point`](DendrogramNode::Point)
+/// and ids `n_points..` are [`Virtual`](DendrogramNode::Virtual), with the
+/// virtual id offset so that `Virtual(i)` corresponds to `dendrogram[i]`.
+///
+/// Using an explicit enum (rather than raw `usize` comparisons against
+/// `n_points`) keeps the boundary arithmetic on one conversion site and
+/// prevents point/virtual confusion at call sites.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum DendrogramNode {
+    /// An original input point, identified by its input index.
+    Point(usize),
+    /// A virtual merged component; the payload is the dendrogram entry
+    /// index (i.e. the raw id minus `n_points`).
+    Virtual(usize),
+}
+
+impl DendrogramNode {
+    /// Convert a raw dendrogram id back into its tagged form.
+    #[inline]
+    fn classify(id: usize, n_points: usize) -> Self {
+        if id < n_points {
+            DendrogramNode::Point(id)
+        } else {
+            DendrogramNode::Virtual(id - n_points)
+        }
+    }
+
+    /// Encode this node back into the dense raw-id space used downstream
+    /// as condensed-tree cluster ids.
+    #[inline]
+    fn as_raw_id(self, n_points: usize) -> usize {
+        match self {
+            DendrogramNode::Point(p) => p,
+            DendrogramNode::Virtual(i) => n_points + i,
+        }
+    }
+}
+
+/// A row in the dendrogram (single-linkage style).
+///
+/// When two components merge at distance `distance`, a new virtual node is
+/// created. `left` and `right` identify the merged components (either
+/// original points or previous virtual nodes). `size` is the combined
+/// number of points.
+#[derive(Debug, Clone)]
+struct DendrogramEntry<T> {
+    left: DendrogramNode,
+    right: DendrogramNode,
+    distance: T,
+    size: usize,
+}
+
+/// Build a single-linkage dendrogram by sorting MST edges and merging
+/// components using union-find.
+fn label<T: GeoFloat>(mst: &[MstEdge<T>], n: usize) -> Vec<DendrogramEntry<T>> {
+    // Sort edges by weight
+    let mut sorted_indices: Vec<usize> = (0..mst.len()).collect();
+    sorted_indices.sort_by(|&a, &b| mst[a].weight.total_cmp(&mst[b].weight));
+
+    let mut uf = TreeUnionFind::new(n);
+    let mut dendrogram = Vec::with_capacity(mst.len());
+
+    for &idx in &sorted_indices {
+        let edge = &mst[idx];
+        let root_u = uf.find(edge.u);
+        let root_v = uf.find(edge.v);
+
+        if root_u == root_v {
+            continue;
+        }
+
+        let size_u = uf.size(root_u);
+        let size_v = uf.size(root_v);
+
+        // The dendrogram refers to components by their raw id, which is
+        // either an input point (< n) or a previously merged component
+        // (>= n).
+        let label_u = DendrogramNode::classify(uf.component_label(root_u), n);
+        let label_v = DendrogramNode::classify(uf.component_label(root_v), n);
+
+        let new_label = n + dendrogram.len();
+        uf.union(root_u, root_v, new_label);
+
+        dendrogram.push(DendrogramEntry {
+            left: label_u,
+            right: label_v,
+            distance: edge.weight,
+            size: size_u + size_v,
+        });
+    }
+
+    dendrogram
+}
+
+// ---------------------------------------------------------------------------
+// Step 4: Condense the dendrogram
+// ---------------------------------------------------------------------------
+
+/// An entry in the condensed tree.
+///
+/// Each entry represents a parent-child relationship in the condensed cluster
+/// hierarchy. `lambda` = 1/distance at which the split/fall-out happens.
+#[derive(Debug, Clone)]
+struct CondensedEntry<T> {
+    parent: usize,
+    child: usize,
+    lambda: T,
+    child_size: usize,
+}
+
+/// Condense the single-linkage dendrogram by removing splits that produce
+/// components smaller than `min_cluster_size`. Such small components have
+/// their points "fall out" of the parent cluster individually instead.
+///
+/// `n_points` is the true number of input points, passed in rather than
+/// derived from `dendrogram.len()`: a complete dendrogram has exactly
+/// `n_points - 1` entries, but deriving the count would silently mis-classify
+/// point vs virtual ids if the dendrogram were ever short. (`hdbscan_impl`
+/// rejects incomplete spanning trees before reaching here.)
+fn condense_tree<T: GeoFloat>(
+    dendrogram: &[DendrogramEntry<T>],
+    min_cluster_size: usize,
+    n_points: usize,
+) -> Vec<CondensedEntry<T>> {
+    // An empty dendrogram (fewer than two points) has no virtual root to
+    // expand; `Virtual(n_points - 2)` would also underflow. Nothing condenses.
+    if dendrogram.is_empty() {
+        return Vec::new();
+    }
+    let root = DendrogramNode::Virtual(n_points - 2); // the last virtual node
+
+    let mut result = Vec::new();
+
+    // `relabel` maps a dendrogram node to the condensed-tree cluster id
+    // it now belongs to. Clusters that survive as their own node get a
+    // fresh id from `next_cluster_id`; otherwise they inherit their
+    // parent's id. Un-relabelled virtual nodes fall back to their raw
+    // dense id (`n_points + index`), which is also what downstream cluster
+    // stages (e.g. `get_stability`, `find_clusters`) use as their keys.
+    let mut relabel: HashMap<DendrogramNode, usize> = HashMap::new();
+    let mut next_cluster_id = n_points;
+
+    // A merge distance (mutual-reachability distance) of zero – produced when
+    // enough coincident points drive a core distance to zero – would give
+    // lambda = 1/0 = infinity and poison the stability and GLOSH stages
+    // downstream (they would see non-finite or NaN values). Cap such merges at
+    // the largest finite lambda in the tree (the reciprocal of the smallest
+    // merge distance whose reciprocal is still finite – a subnormal distance
+    // overflows to infinity and is excluded) so every lambda stays finite.
+    // Points that fall out at this capped lambda sit at the cluster core and
+    // score zero in GLOSH. If no merge yields a finite positive lambda (fully
+    // coincident input) any positive fallback works: every merge is then at
+    // the same capped lambda, so all stabilities are zero.
+    let lambda_cap = {
+        let max_finite = dendrogram
+            .iter()
+            .filter(|e| e.distance > T::zero())
+            .map(|e| T::one() / e.distance)
+            .filter(|l| l.is_finite())
+            .fold(T::zero(), T::max);
+        if max_finite > T::zero() {
+            max_finite
+        } else {
+            T::one()
+        }
+    };
+
+    let mut stack = vec![root];
+
+    while let Some(node) = stack.pop() {
+        let virt_idx = match node {
+            // Leaves (original points) do not expand.
+            DendrogramNode::Point(_) => continue,
+            DendrogramNode::Virtual(i) => i,
+        };
+
+        let entry = &dendrogram[virt_idx];
+        // A non-finite reciprocal (distance zero, or subnormal enough to
+        // overflow) is replaced by the cap; a NaN distance also lands here.
+        let lambda = {
+            let l = T::one() / entry.distance;
+            if l.is_finite() { l } else { lambda_cap }
+        };
+
+        let left = entry.left;
+        let right = entry.right;
+        let left_size = node_size(left, dendrogram);
+        let right_size = node_size(right, dendrogram);
+
+        // Determine the parent label (may have been relabelled).
+        let parent_label = *relabel.get(&node).unwrap_or(&node.as_raw_id(n_points));
+
+        let left_big = left_size >= min_cluster_size;
+        let right_big = right_size >= min_cluster_size;
+
+        match (left_big, right_big) {
+            (true, true) => {
+                // True split: both children become new clusters.
+                let left_label = next_cluster_id;
+                next_cluster_id += 1;
+                let right_label = next_cluster_id;
+                next_cluster_id += 1;
+
+                result.push(CondensedEntry {
+                    parent: parent_label,
+                    child: left_label,
+                    lambda,
+                    child_size: left_size,
+                });
+                result.push(CondensedEntry {
+                    parent: parent_label,
+                    child: right_label,
+                    lambda,
+                    child_size: right_size,
+                });
+
+                relabel.insert(left, left_label);
+                relabel.insert(right, right_label);
+
+                stack.push(left);
+                stack.push(right);
+            }
+            (true, false) | (false, true) => {
+                // Exactly one child is big enough: it inherits the parent
+                // label and keeps expanding; the small child's points fall out.
+                let (big, small) = if left_big {
+                    (left, right)
+                } else {
+                    (right, left)
+                };
+                relabel.insert(big, parent_label);
+                stack.push(big);
+                emit_fallout(small, parent_label, lambda, dendrogram, &mut result);
+            }
+            (false, false) => {
+                // Neither child is big enough: all points fall out.
+                emit_fallout(left, parent_label, lambda, dendrogram, &mut result);
+                emit_fallout(right, parent_label, lambda, dendrogram, &mut result);
+            }
+        }
+    }
+
+    result
+}
+
+/// Compute the number of points under a node.
+fn node_size<T>(node: DendrogramNode, dendrogram: &[DendrogramEntry<T>]) -> usize {
+    match node {
+        DendrogramNode::Point(_) => 1,
+        DendrogramNode::Virtual(i) => dendrogram[i].size,
+    }
+}
+
+/// Emit individual point fall-out entries for all points under `node`.
+///
+/// Uses an explicit stack instead of recursion for stack safety on large
+/// dendrograms.
+fn emit_fallout<T: GeoFloat>(
+    node: DendrogramNode,
+    parent: usize,
+    lambda: T,
+    dendrogram: &[DendrogramEntry<T>],
+    result: &mut Vec<CondensedEntry<T>>,
+) {
+    let mut stack = vec![node];
+    while let Some(current) = stack.pop() {
+        match current {
+            DendrogramNode::Point(p) => {
+                result.push(CondensedEntry {
+                    parent,
+                    child: p,
+                    lambda,
+                    child_size: 1,
+                });
+            }
+            DendrogramNode::Virtual(i) => {
+                let entry = &dendrogram[i];
+                stack.push(entry.left);
+                stack.push(entry.right);
+            }
+        }
     }
 }
 
