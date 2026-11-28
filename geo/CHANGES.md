@@ -46,8 +46,6 @@
   - <https://github.com/georust/geo/issues/1537>
   - BREAKING: `SimplifyIdx` and `SimplifyVwIdx` are no longer re-exported from `geo::algorithm` or the `geo::prelude`, so their `simplify_idx` / `simplify_vw_idx` methods no longer collide with the new same-named methods on `Simplify` / `SimplifyVw` under `use geo::prelude::*`. They remain reachable (deprecated) at the crate root as `geo::SimplifyIdx` / `geo::SimplifyVwIdx`; update `use geo::algorithm::SimplifyIdx` (or prelude-glob) imports accordingly.
 - Remove unused `utils::least_and_greatest_index`.
-- Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
-  - <https://github.com/georust/geo/pull/1533>
 - Added `Earcutter` and `TriangulateEarcut::earcut_triangulation_ref` to avoid per-call memory allocations across multiple triangulations.
   - <https://github.com/georust/geo/pull/1534>
 - Rename `TriangulateEarcut::earcut_triangles_raw` to `TriangulateEarcut::earcut_triangulation`
@@ -70,6 +68,13 @@
   - <https://github.com/georust/geo/pull/1561>
 - Speed up `Euclidean.distance` between two `Rect`s with a closed form, instead of converting both to polygons.
   - <https://github.com/georust/geo/pull/1561>
+
+## 0.33.2 - 2026-11-22
+
+- Unpin the `earcut` dependency now that the upstream semver violation has been reverted.
+  `earcut` 0.4.10 and later no longer panic in `z_order` when a hole has a point below the exterior's bounding box.
+  - <https://github.com/georust/geo/pull/1533>
+  - <https://github.com/georust/geo/pull/1570>
 
 ## 0.33.1 - 2026-4-20
 
